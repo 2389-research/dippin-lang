@@ -464,3 +464,7 @@ See `QUICK_REFERENCE.md` for refactoring patterns when a function exceeds the th
 ## License
 
 MIT
+
+## Links
+
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/dippin-lang)
