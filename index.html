@@ -42,7 +42,12 @@
 <!-- Hero -->
 <section class="hero">
 <div class="container">
-  <div class="hero-badge">v0.10.0</div>
+  <div class="hero-badge" id="version-badge">latest</div>
+  <script>
+  fetch('https://api.github.com/repos/2389-research/dippin-lang/releases/latest')
+    .then(r=>r.json()).then(d=>{if(d.tag_name)document.getElementById('version-badge').textContent=d.tag_name})
+    .catch(()=>{})
+  </script>
   <h1>A language for<br><em>AI pipelines</em></h1>
   <p class="hero-sub">
     Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution. Replace escaped DOT strings with real code.
