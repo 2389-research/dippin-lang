@@ -541,6 +541,253 @@ footer {
   border-top: 1px solid var(--border);
 }
 
+/* ── Doc pages ── */
+.doc {
+  padding-top: 7rem;
+  padding-bottom: 4rem;
+}
+
+.doc .container {
+  background: rgba(250, 250, 247, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 3rem;
+  border: 1.5px solid var(--border);
+  max-width: var(--max-w);
+}
+
+.doc-header { margin-bottom: 2.5rem; }
+
+.doc-header h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 0.8rem;
+}
+
+.doc-header p {
+  color: var(--text-soft);
+  font-size: 1.05rem;
+  max-width: 560px;
+}
+
+.doc-body h2 {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 3rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1.5px solid var(--border);
+}
+
+.doc-body h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 2rem 0 0.5rem;
+}
+
+.doc-body p {
+  color: var(--text-mid);
+  margin-bottom: 1rem;
+  max-width: 720px;
+}
+
+.doc-body pre {
+  background: #2A2A30;
+  color: #bbb;
+  padding: 1.2rem;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 2px solid rgba(0,0,0,0.08);
+}
+
+.doc-body table {
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.doc-body th {
+  text-align: left;
+  font-weight: 700;
+  padding: 0.6rem 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.doc-body td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-mid);
+}
+
+/* Command cards */
+.cmd-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.cmd-card:hover {
+  border-color: var(--lavender-deep);
+  transform: translateY(-1px);
+}
+
+.cmd-card h3 { margin-top: 0; }
+
+.cmd-card .cmd-usage {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  margin: 0.3rem 0 0.5rem;
+}
+
+/* Diagnostic cards */
+.diag-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem 1.5rem 1.5rem 2rem;
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.diag-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+}
+
+.diag-card.error::before { background: #E85A5A; }
+.diag-card.warning::before { background: var(--yellow-deep); }
+
+.diag-card .diag-code {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.diag-card.error .diag-code { color: #E85A5A; }
+.diag-card.warning .diag-code { color: var(--yellow-deep); }
+
+/* Flow diagram */
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 2rem;
+}
+
+.flow-step {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.flow-arrow {
+  color: var(--text-soft);
+  font-size: 1.1rem;
+}
+
+/* Pipeline boxes */
+.pipeline-box {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.pipeline-box.lavender { border-color: var(--lavender-deep); background: var(--lavender-light); }
+.pipeline-box.green { border-color: var(--green); background: var(--green-light); }
+.pipeline-box.yellow { border-color: var(--yellow-deep); background: var(--yellow-light); }
+
+/* Group badges */
+.group-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.7rem;
+  border-radius: 99px;
+  margin-bottom: 1rem;
+}
+
+.group-badge.lavender { color: var(--lavender-deep); background: var(--lavender-light); border: 1px solid var(--lavender); }
+.group-badge.green { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.group-badge.yellow { color: #b8960a; background: var(--yellow-light); border: 1px solid var(--yellow); }
+
+/* Warning/info cards */
+.caveat-card {
+  background: var(--yellow-light);
+  border: 1.5px solid var(--yellow);
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.caveat-card h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+
+.caveat-card p {
+  font-size: 0.88rem;
+  color: var(--text-mid);
+  margin-bottom: 0;
+}
+
+/* Decision cards */
+.decision-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.decision-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.decision-card h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.decision-card p {
+  font-size: 0.88rem;
+  color: var(--text-mid);
+}
+
+@media (max-width: 700px) {
+  .doc .container { padding: 1.5rem; border-radius: 0; border-left: none; border-right: none; }
+  .decision-grid { grid-template-columns: 1fr; }
+  .flow-diagram { justify-content: center; }
+}
+
 /* ── Animations ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
