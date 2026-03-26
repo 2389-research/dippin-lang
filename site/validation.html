@@ -50,14 +50,14 @@
   <div class="doc-header">
     <div class="section-label">Diagnostics</div>
     <h1>Validation &amp; Linting</h1>
-    <p>31 diagnostic checks — 9 structural errors and 22 semantic warnings — to catch problems before runtime.</p>
+    <p>34 diagnostic checks — 9 structural errors and 25 semantic warnings — to catch problems before runtime.</p>
   </div>
   <div class="doc-body">
 
     <h2>Overview</h2>
     <p>Dippin provides two levels of analysis:</p>
     <p><strong>Structural validation</strong> (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with <code>dippin validate</code>.</p>
-    <p><strong>Semantic linting</strong> (DIP101-DIP122): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p>
+    <p><strong>Semantic linting</strong> (DIP101-DIP125): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p>
 
     <h3>Diagnostic Format</h3>
     <p>Diagnostics are displayed in a rustc-inspired format:</p>
@@ -140,7 +140,7 @@
   = help: remove the duplicate edge</pre>
     </div>
 
-    <h2>Semantic Warnings (DIP101-DIP122)</h2>
+    <h2>Semantic Warnings (DIP101-DIP125)</h2>
     <p>These flag likely bugs or questionable patterns. Warnings alone exit 0.</p>
 
     <div class="diag-card warning">
@@ -185,6 +185,29 @@
       <pre>warning[DIP115]: node "validate_tests" has goal_gate but no recovery path
   --&gt; pipeline.dip:18:3
   = help: add retry_target or fallback_target</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP123</span> — Tool Command Syntax Error
+      <p>The tool command block has a shell syntax error detectable by <code>bash -n</code> — unclosed quotes, bad redirects, missing <code>fi</code>/<code>done</code>.</p>
+      <pre>warning[DIP123]: tool command has shell syntax error:
+  unexpected EOF while looking for matching `"'
+  --&gt; pipeline.dip:45:5</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP124</span> — Runtime Variable in Tool Command
+      <p>A tool command contains <code>${ctx.*}</code> interpolation. These are Dippin runtime variables that expand to empty strings in the shell.</p>
+      <pre>warning[DIP124]: tool command references ${ctx.api_url}
+  which expands to empty at runtime
+  --&gt; pipeline.dip:50:5</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP125</span> — Binary Not Found
+      <p>The first command in the tool block references a binary not on the current PATH. This is a hint — the deployment environment may differ.</p>
+      <pre>hint[DIP125]: tool command binary "npx" not found on PATH
+  --&gt; pipeline.dip:55:5</pre>
     </div>
 
   </div>
