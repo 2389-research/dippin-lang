@@ -10,9 +10,20 @@
 </head>
 <body>
 
+<!-- Floating dots -->
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
 <nav class="nav">
 <div class="nav-inner">
   <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="nav-links">
     <a href="cli.html" class="active">CLI</a>
     <a href="testing.html">Testing</a>
@@ -23,9 +34,7 @@
 </div>
 </nav>
 
-<div class="drips">
-  <div class="drip pink"></div>
-  <div class="drip green"></div>
+<div class="drip green"></div>
   <div class="drip yellow"></div>
   <div class="drip pink"></div>
   <div class="drip green"></div>
@@ -58,8 +67,6 @@
       <tr><td><code>1</code></td><td>Error — validation failures, parse errors, check-mode drift, parity mismatches</td></tr>
       <tr><td><code>2</code></td><td>Usage error — bad flags, missing arguments, unknown command</td></tr>
     </table>
-
-    <div class="drip-divider"></div>
 
     <h2>Authoring Commands</h2>
     <div class="group-badge lavender">Authoring</div>
@@ -100,8 +107,6 @@
       <p>Generate a starter <code>.dip</code> file from a built-in template. Available templates: <code>minimal</code>, <code>parallel</code>, <code>conditional</code>, <code>review-loop</code>, <code>human-gate</code>. Output always passes <code>dippin validate</code>.</p>
     </div>
 
-    <div class="drip-divider"></div>
-
     <h2>Export Commands</h2>
     <div class="group-badge green">Export</div>
 
@@ -122,8 +127,6 @@
       <div class="cmd-usage">dippin validate-migration &lt;old.dot&gt; &lt;new.dip&gt;</div>
       <p>Check structural parity between a DOT file and a <code>.dip</code> file to verify migration correctness. Reports missing nodes, different edges, and changed conditions.</p>
     </div>
-
-    <div class="drip-divider"></div>
 
     <h2>Analysis Commands</h2>
     <div class="group-badge yellow">Analysis</div>

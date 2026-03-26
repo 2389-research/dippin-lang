@@ -11,10 +11,21 @@
 </head>
 <body>
 
-<!-- ═══ Nav ═══ -->
+<!-- Floating dots -->
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<!-- Nav -->
 <nav class="nav">
 <div class="nav-inner">
   <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="nav-links">
     <a href="cli.html">CLI</a>
     <a href="testing.html">Testing</a>
@@ -25,18 +36,8 @@
 </div>
 </nav>
 
-<div class="drips">
-  <div class="drip pink"></div>
-  <div class="drip green"></div>
-  <div class="drip yellow"></div>
-  <div class="drip pink"></div>
-  <div class="drip green"></div>
-  <div class="drip yellow"></div>
-  <div class="drip pink"></div>
-</div>
-
-<!-- ═══ Hero ═══ -->
-<section class="hero" style="padding-top: 8rem;">
+<!-- Hero -->
+<section class="hero">
 <div class="container">
   <div class="hero-badge">v0.9.1</div>
   <h1>A language for<br><em>AI pipelines</em></h1>
@@ -50,7 +51,7 @@
 </div>
 </section>
 
-<!-- ═══ Comparison ═══ -->
+<!-- Comparison -->
 <section class="compare">
 <div class="container">
   <div class="section-label">Before &amp; After</div>
@@ -125,7 +126,7 @@
 </div>
 </section>
 
-<!-- ═══ Features ═══ -->
+<!-- Features -->
 <section>
 <div class="container">
   <div class="section-label">Features</div>
@@ -143,7 +144,7 @@
     <div class="feature">
       <span class="feature-num">02</span>
       <h3>Typed node kinds</h3>
-      <p><code>agent</code>, <code>tool</code>, <code>human</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Each with typed config fields.</p>
+      <p><code>agent</code>, <code>tool</code>, <code>human</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Each with typed, validated config fields.</p>
     </div>
     <div class="feature">
       <span class="feature-num">03</span>
@@ -158,18 +159,38 @@
     <div class="feature">
       <span class="feature-num">05</span>
       <h3>Scenario testing</h3>
-      <p><code>dippin test</code> injects context, simulates paths, and checks assertions. CI-ready JSON output. Branch-level coverage.</p>
+      <p><code>dippin test</code> injects context, simulates every conditional branch, and checks assertions. CI-ready JSON output.</p>
     </div>
     <div class="feature">
       <span class="feature-num">06</span>
-      <h3>Full toolchain</h3>
-      <p>Format, lint, export to DOT, migrate from DOT, cost estimation, coverage analysis, optimization, health reports, and an LSP server.</p>
+      <h3>LSP server</h3>
+      <p>Built-in Language Server Protocol server. Hover docs, go-to-definition, completions, and live diagnostics in any editor.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">07</span>
+      <h3>VS Code syntax</h3>
+      <p>Syntax highlighting for <code>.dip</code> files. Keywords, node IDs, strings, conditions, and edge operators all colored distinctly.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">08</span>
+      <h3>Cost estimation</h3>
+      <p><code>dippin cost</code> estimates per-run cost by model and provider. <code>dippin optimize</code> suggests cheaper alternatives.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">09</span>
+      <h3>DOT migration</h3>
+      <p><code>dippin migrate</code> converts existing DOT pipelines to Dippin. <code>validate-migration</code> verifies structural parity.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">10</span>
+      <h3>Health reports</h3>
+      <p><code>dippin doctor</code> grades your workflow A&ndash;F with actionable suggestions. Coverage analysis, reachability, termination checks.</p>
     </div>
   </div>
 </div>
 </section>
 
-<!-- ═══ Terminal demos ═══ -->
+<!-- Terminal demos -->
 <section class="terminal-section">
 <div class="container">
   <div class="section-label">In action</div>
@@ -181,9 +202,7 @@
   <div class="terminals">
     <div class="terminal">
       <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
         <span class="terminal-title">validate &amp; lint</span>
       </div>
       <pre><span class="prompt">$</span> dippin validate pipeline.dip
@@ -198,9 +217,7 @@
 
     <div class="terminal">
       <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
         <span class="terminal-title">scenario tests</span>
       </div>
       <pre><span class="prompt">$</span> dippin test pipeline.dip
@@ -214,9 +231,7 @@
 
     <div class="terminal">
       <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
         <span class="terminal-title">health check</span>
       </div>
       <pre><span class="prompt">$</span> dippin doctor pipeline.dip
@@ -232,7 +247,7 @@
 </div>
 </section>
 
-<!-- ═══ Install ═══ -->
+<!-- Install -->
 <section id="install">
 <div class="container">
   <div class="section-label">Install</div>
@@ -243,16 +258,12 @@
     <div class="install-cmd">
       <span class="prompt">$</span> go install github.com/2389-research/dippin-lang/cmd/dippin@latest
     </div>
-
     <div class="install-or">or</div>
-
     <h3>Homebrew</h3>
     <div class="install-cmd">
       <span class="prompt">$</span> brew install 2389-research/tap/dippin
     </div>
-
     <div class="install-or">then</div>
-
     <h3>Verify</h3>
     <div class="install-cmd">
       <span class="prompt">$</span> dippin version
@@ -261,7 +272,7 @@
 </div>
 </section>
 
-<!-- ═══ Footer ═══ -->
+<!-- Footer -->
 <footer>
 <div class="container">
   <div class="footer-inner">

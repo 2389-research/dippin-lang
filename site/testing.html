@@ -10,9 +10,20 @@
 </head>
 <body>
 
+<!-- Floating dots -->
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
 <nav class="nav">
 <div class="nav-inner">
   <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="nav-links">
     <a href="cli.html">CLI</a>
     <a href="testing.html" class="active">Testing</a>
@@ -23,9 +34,7 @@
 </div>
 </nav>
 
-<div class="drips">
-  <div class="drip pink"></div>
-  <div class="drip green"></div>
+<div class="drip green"></div>
   <div class="drip yellow"></div>
   <div class="drip pink"></div>
   <div class="drip green"></div>
@@ -58,8 +67,6 @@
       <div class="flow-arrow">&rarr;</div>
       <div class="flow-step">PASS / FAIL</div>
     </div>
-
-    <div class="drip-divider"></div>
 
     <h2>Test File Format</h2>
     <p>Test files use <code>.test.json</code> extension and are auto-discovered from the workflow path:</p>
@@ -95,8 +102,6 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
       <tr><td><code>path_contains</code></td><td>string[]</td><td>Node IDs that must appear in order (non-contiguous matches allowed)</td></tr>
       <tr><td><code>immediately_after</code></td><td>object</td><td>Map of <code>{"NodeA": "NodeB"}</code> pairs asserting NodeB is the immediate next node after NodeA</td></tr>
     </table>
-
-    <div class="drip-divider"></div>
 
     <h2>Example</h2>
     <p>A workflow that routes based on outcome, with matching test scenarios:</p>
@@ -158,8 +163,6 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
       </div>
     </div>
 
-    <div class="drip-divider"></div>
-
     <h2>Test Output</h2>
 
     <div class="terminal">
@@ -186,8 +189,6 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
   <span class="pass">2 tests: 2 passed, 0 failed</span></pre>
     </div>
 
-    <div class="drip-divider"></div>
-
     <h2>Scenario Keys</h2>
     <p>The <code>scenario</code> object maps context keys to values. The simulator resolves conditions by looking up <code>ctx.&lt;key&gt;</code> in the scenario context.</p>
     <table>
@@ -196,8 +197,6 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
       <tr><td><code>status</code></td><td>Maps to <code>ctx.status</code></td></tr>
       <tr><td><code>tool_stdout</code></td><td>Maps to <code>ctx.tool_stdout</code> — tool command output</td></tr>
     </table>
-
-    <div class="drip-divider"></div>
 
     <h2>Caveats</h2>
 
@@ -215,8 +214,6 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
       <h4>Clearing tool defaults</h4>
       <p>Tool nodes auto-seed <code>ctx.tool_stdout</code> and <code>ctx.outcome</code> to <code>"success"</code>. To test unconditional fallback edges after a tool node, set the key to an empty string: <code>"ToolNode.tool_stdout": ""</code>.</p>
     </div>
-
-    <div class="drip-divider"></div>
 
     <h2>CI Integration</h2>
     <p>Use <code>--format json</code> for machine-readable output. Exit code is 0 if all tests pass, 1 if any fail.</p>
