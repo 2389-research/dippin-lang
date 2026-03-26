@@ -47,14 +47,16 @@ a:hover { opacity: 0.8; }
 
 code {
   font-family: var(--mono);
-  font-size: 0.84em;
+  font-size: 0.82em;
   color: var(--accent);
-  background: rgba(232, 164, 74, 0.07);
-  border: 1px solid rgba(232, 164, 74, 0.14);
-  padding: 0.15em 0.45em;
-  border-radius: 4px;
-  font-weight: 500;
+  background: rgba(232, 164, 74, 0.1);
+  border: 1px solid rgba(232, 164, 74, 0.2);
+  padding: 0.2em 0.5em;
+  border-radius: 5px;
+  font-weight: 600;
   white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  text-shadow: 0 0 12px rgba(232, 164, 74, 0.3);
 }
 
 /* ── Layout ── */
@@ -265,40 +267,62 @@ section { padding: 7rem 0; }
 /* ── Features ── */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 12px;
-  overflow: hidden;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
 }
 
 .feature {
-  background: var(--bg);
-  padding: 2.5rem 2rem;
-  transition: background 0.3s;
+  background: var(--bg-raised);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 2rem 2rem 2rem 2.2rem;
+  position: relative;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+}
+
+.feature::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  opacity: 0.4;
+  transition: opacity 0.3s;
 }
 
 .feature:hover {
-  background: var(--bg-raised);
+  border-color: rgba(232, 164, 74, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }
 
-.feature-icon {
-  font-size: 1.5rem;
-  margin-bottom: 1.2rem;
+.feature:hover::before {
+  opacity: 1;
+}
+
+.feature-num {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+  margin-bottom: 0.8rem;
   display: block;
 }
 
 .feature h3 {
   font-family: var(--sans);
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.6rem;
+  color: var(--text);
 }
 
 .feature p {
   color: var(--text-dim);
   font-size: 0.9rem;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 /* ── Terminal ── */
@@ -444,12 +468,12 @@ footer {
 }
 
 @media (max-width: 900px) {
-  .features-grid { grid-template-columns: 1fr 1fr; }
   .terminals { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
   .features-grid { grid-template-columns: 1fr; }
+  .terminals { grid-template-columns: 1fr; }
   section { padding: 4rem 0; }
   .container { padding: 0 1.2rem; }
 }
@@ -558,34 +582,34 @@ footer {
 
   <div class="features-grid">
     <div class="feature">
-      <span class="feature-icon">&para;</span>
+      <span class="feature-num">01</span>
       <h3>Multi-line prompts</h3>
       <p>Indented blocks with zero escaping. Write real prompts, preserve blank lines, embed variables like <code>${ctx.input}</code>.</p>
     </div>
     <div class="feature">
-      <span class="feature-icon">&loz;</span>
+      <span class="feature-num">02</span>
       <h3>Typed node kinds</h3>
-      <p><code>agent</code>, <code>tool</code>, <code>human</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Not shape overloading.</p>
+      <p><code>agent</code>, <code>tool</code>, <code>human</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Each with typed config fields.</p>
     </div>
     <div class="feature">
-      <span class="feature-icon">&check;</span>
+      <span class="feature-num">03</span>
       <h3>31 diagnostics</h3>
-      <p>Structural validation and semantic lint. Catches dead edges, unreachable nodes, missing prompts, invalid models. Things DOT silently ignores.</p>
+      <p>Structural validation and semantic lint. Dead edges, unreachable nodes, missing prompts, invalid models. Things DOT silently ignores.</p>
     </div>
     <div class="feature">
-      <span class="feature-icon">&zigrarr;</span>
+      <span class="feature-num">04</span>
       <h3>Parallel execution</h3>
-      <p>Native <code>parallel</code> fan-out and <code>fan_in</code> join with per-branch model overrides. Multi-provider consensus patterns in a few lines.</p>
+      <p>Native <code>parallel</code> fan-out and <code>fan_in</code> join with per-branch model overrides. Multi-provider consensus in a few lines.</p>
     </div>
     <div class="feature">
-      <span class="feature-icon">&target;</span>
+      <span class="feature-num">05</span>
       <h3>Scenario testing</h3>
-      <p><code>dippin test</code> injects context, simulates paths, and checks assertions. CI-ready JSON output. Test every conditional branch.</p>
+      <p><code>dippin test</code> injects context, simulates paths, and checks assertions. CI-ready JSON output. Branch-level coverage.</p>
     </div>
     <div class="feature">
-      <span class="feature-icon">&equiv;</span>
+      <span class="feature-num">06</span>
       <h3>Full toolchain</h3>
-      <p>Format, lint, export-dot, migrate from DOT, cost estimation, coverage analysis, optimization, health reports, LSP server.</p>
+      <p>Format, lint, export to DOT, migrate from DOT, cost estimation, coverage analysis, optimization, health reports, and an LSP server.</p>
     </div>
   </div>
 </div>
