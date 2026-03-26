@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dippin — A Language for AI Pipelines</title>
+<meta name="description" content="Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0C0C0E;
+  --bg-raised: #141418;
+  --bg-code: #1A1A20;
+  --text: #E8E4DF;
+  --text-dim: #8A8580;
+  --text-faint: #5A5550;
+  --accent: #E8A44A;
+  --accent-dim: #C4863A;
+  --accent-glow: rgba(232, 164, 74, 0.08);
+  --red: #E85A5A;
+  --green: #6BCB77;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --sans: 'Outfit', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', 'Menlo', monospace;
+  --max-w: 1120px;
+}
+
+html { scroll-behavior: smooth; background: var(--bg); }
+
+body {
+  font-family: var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.65;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--accent); color: var(--bg); }
+
+a { color: var(--accent); text-decoration: none; transition: opacity 0.2s; }
+a:hover { opacity: 0.8; }
+
+/* ── Layout ── */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 2rem; }
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  padding: 6rem 0;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(232, 164, 74, 0.04), transparent),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(232, 164, 74, 0.02), transparent);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s forwards;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 2rem;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.4s forwards;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-sub {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  color: var(--text-dim);
+  max-width: 580px;
+  line-height: 1.7;
+  margin-bottom: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.6s forwards;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.8s forwards;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 2rem;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: all 0.25s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  background: #F0B05A;
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(232, 164, 74, 0.25);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--text-faint);
+}
+
+.btn-ghost:hover {
+  border-color: var(--text-dim);
+  opacity: 1;
+}
+
+/* ── Section helpers ── */
+section { padding: 7rem 0; }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 400;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+}
+
+.section-desc {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  max-width: 560px;
+  margin-bottom: 3.5rem;
+}
+
+/* ── Comparison ── */
+.compare {
+  background: var(--bg-raised);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.compare-panel {
+  position: relative;
+}
+
+.compare-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+  border-radius: 6px 6px 0 0;
+  display: inline-block;
+}
+
+.compare-label.bad {
+  color: var(--red);
+  background: rgba(232, 90, 90, 0.08);
+}
+
+.compare-label.good {
+  color: var(--green);
+  background: rgba(107, 203, 119, 0.08);
+}
+
+.compare-code {
+  background: var(--bg-code);
+  border-radius: 0 8px 8px 8px;
+  padding: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-dim);
+}
+
+.compare-code .kw { color: var(--accent); }
+.compare-code .str { color: #A8D8A8; }
+.compare-code .cmt { color: var(--text-faint); font-style: italic; }
+.compare-code .node { color: #B8C4E8; }
+.compare-code .op { color: var(--text); }
+
+/* ── Features ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.feature {
+  background: var(--bg);
+  padding: 2.5rem 2rem;
+  transition: background 0.3s;
+}
+
+.feature:hover {
+  background: var(--bg-raised);
+}
+
+.feature-icon {
+  font-size: 1.5rem;
+  margin-bottom: 1.2rem;
+  display: block;
+}
+
+.feature h3 {
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+}
+
+.feature p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ── Terminal ── */
+.terminal-section { background: var(--bg-raised); border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+.terminals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.terminal {
+  background: var(--bg-code);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.terminal-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+
+.terminal-title {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  margin-left: auto;
+}
+
+.terminal pre {
+  padding: 1.2rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  overflow-x: auto;
+}
+
+.terminal .prompt { color: var(--accent); }
+.terminal .pass { color: var(--green); }
+.terminal .warn { color: #E8A44A; }
+.terminal .fail { color: var(--red); }
+.terminal .dim { color: var(--text-faint); }
+
+/* ── Install ── */
+.install-box {
+  background: var(--bg-code);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 2.5rem;
+  max-width: 640px;
+}
+
+.install-box h3 {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+}
+
+.install-cmd {
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--text);
+  padding: 1rem 1.2rem;
+  background: var(--bg);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.install-cmd .prompt { color: var(--accent); }
+
+.install-or {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  margin: 1.2rem 0;
+  text-align: center;
+}
+
+/* ── Footer ── */
+footer {
+  padding: 4rem 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-brand {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.85rem;
+}
+
+.footer-links a { color: var(--text-dim); }
+.footer-links a:hover { color: var(--accent); opacity: 1; }
+
+.footer-copy {
+  width: 100%;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .compare-grid { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .terminals { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .features-grid { grid-template-columns: 1fr; }
+  section { padding: 4rem 0; }
+  .container { padding: 0 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ Hero ═══ -->
+<section class="hero">
+<div class="container">
+  <div class="hero-badge">v0.9.1</div>
+  <h1>A language for<br><em>AI pipelines</em></h1>
+  <p class="hero-sub">
+    Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution. Replace escaped DOT strings with real code.
+  </p>
+  <div class="hero-actions">
+    <a href="#install" class="btn btn-primary">Get Started</a>
+    <a href="https://github.com/2389-research/dippin-lang" class="btn btn-ghost">GitHub &rarr;</a>
+  </div>
+</div>
+</section>
+
+<!-- ═══ Comparison ═══ -->
+<section class="compare">
+<div class="container">
+  <div class="section-label">Before &amp; After</div>
+  <div class="section-title">DOT wasn't built for this</div>
+  <p class="section-desc">
+    Graphviz DOT is great for graph visualization. But authoring AI pipelines with multi-line prompts, typed nodes, and conditional edges? It falls apart.
+  </p>
+
+  <div class="compare-grid">
+    <div class="compare-panel">
+      <span class="compare-label bad">Graphviz DOT</span>
+      <div class="compare-code"><pre><span class="kw">digraph</span> Pipeline {
+  Planner [<span class="str">kind="agent"</span>
+    <span class="str">llm_model="claude-opus-4-6"</span>
+    <span class="str">prompt="You are a senior architect.\nAnalyze the request and\nproduce an implementation plan."</span>];
+  Coder [<span class="str">kind="agent"</span>
+    <span class="str">llm_model="claude-sonnet-4-6"</span>
+    <span class="str">prompt="Implement the plan.\nUse best practices."</span>];
+  Review [<span class="str">kind="agent"</span>
+    <span class="str">auto_status="true"</span>
+    <span class="str">prompt="Review the code.\nSet STATUS: success or fail."</span>];
+
+  Planner <span class="op">-></span> Coder;
+  Coder <span class="op">-></span> Review;
+  Review <span class="op">-></span> Done [<span class="str">condition="context.outcome==success"</span>];
+  Review <span class="op">-></span> Coder [<span class="str">condition="context.outcome==fail"</span>
+    <span class="str">restart="true"</span>];
+}</pre></div>
+    </div>
+
+    <div class="compare-panel">
+      <span class="compare-label good">Dippin</span>
+      <div class="compare-code"><pre><span class="kw">workflow</span> <span class="node">CodeReview</span>
+  <span class="kw">goal:</span> <span class="str">"Plan, implement, and review"</span>
+  <span class="kw">start:</span> Planner
+  <span class="kw">exit:</span> Done
+
+  <span class="kw">agent</span> <span class="node">Planner</span>
+    <span class="kw">model:</span> claude-opus-4-6
+    <span class="kw">prompt:</span>
+      You are a senior architect.
+      Analyze the request and
+      produce an implementation plan.
+
+  <span class="kw">agent</span> <span class="node">Coder</span>
+    <span class="kw">model:</span> claude-sonnet-4-6
+    <span class="kw">prompt:</span>
+      Implement the plan.
+      Use best practices.
+
+  <span class="kw">agent</span> <span class="node">Review</span>
+    <span class="kw">auto_status:</span> true
+    <span class="kw">prompt:</span>
+      Review the code.
+      Set STATUS: success or fail.
+
+  <span class="kw">agent</span> <span class="node">Done</span>
+    <span class="kw">prompt:</span> Ship it.
+
+  <span class="kw">edges</span>
+    Planner <span class="op">-></span> Coder
+    Coder <span class="op">-></span> Review
+    Review <span class="op">-></span> Done  <span class="kw">when</span> ctx.outcome = success
+    Review <span class="op">-></span> Coder  <span class="kw">when</span> ctx.outcome = fail  <span class="kw">restart:</span> true</pre></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ Features ═══ -->
+<section>
+<div class="container">
+  <div class="section-label">Features</div>
+  <div class="section-title">Everything a pipeline needs</div>
+  <p class="section-desc">
+    First-class syntax for the things that matter. Not string attributes on a graph node.
+  </p>
+
+  <div class="features-grid">
+    <div class="feature">
+      <span class="feature-icon">&para;</span>
+      <h3>Multi-line prompts</h3>
+      <p>Indented blocks with zero escaping. Write real prompts, preserve blank lines, embed variables like <code>${ctx.input}</code>.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">&loz;</span>
+      <h3>Typed node kinds</h3>
+      <p><code>agent</code>, <code>tool</code>, <code>human</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Not shape overloading.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">&check;</span>
+      <h3>31 diagnostics</h3>
+      <p>Structural validation and semantic lint. Catches dead edges, unreachable nodes, missing prompts, invalid models. Things DOT silently ignores.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">&zigrarr;</span>
+      <h3>Parallel execution</h3>
+      <p>Native <code>parallel</code> fan-out and <code>fan_in</code> join with per-branch model overrides. Multi-provider consensus patterns in a few lines.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">&target;</span>
+      <h3>Scenario testing</h3>
+      <p><code>dippin test</code> injects context, simulates paths, and checks assertions. CI-ready JSON output. Test every conditional branch.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">&equiv;</span>
+      <h3>Full toolchain</h3>
+      <p>Format, lint, export-dot, migrate from DOT, cost estimation, coverage analysis, optimization, health reports, LSP server.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ Terminal demos ═══ -->
+<section class="terminal-section">
+<div class="container">
+  <div class="section-label">In action</div>
+  <div class="section-title">Catch problems before runtime</div>
+  <p class="section-desc">
+    Validate, lint, and test without deploying. Every command works offline against the workflow source.
+  </p>
+
+  <div class="terminals">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">validate &amp; lint</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin validate pipeline.dip
+<span class="pass">validation passed</span>
+
+<span class="prompt">$</span> dippin lint pipeline.dip
+<span class="warn">&#9888; DIP110</span> <span class="dim">empty prompt on agent</span>
+  <span class="dim">"Summarize" [line 45]</span>
+<span class="warn">&#9888; DIP111</span> <span class="dim">tool node without timeout</span>
+  <span class="dim">"RunTests" [line 72]</span></pre>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">scenario tests</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin test pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+  <span class="pass">PASS</span>  happy path &#8212; all reviews pass
+  <span class="pass">PASS</span>  build fails &#8212; restarts loop
+  <span class="pass">PASS</span>  review rejects &#8212; exits clean
+<span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">3 tests: 3 passed, 0 failed</span></pre>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">health check</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin doctor pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Health Report &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+  Grade: <span class="pass">A</span>  <span class="dim">(score: 95/100)</span>
+  Lint:  <span class="pass">0 errors</span>, <span class="warn">2 warnings</span>
+  Coverage: <span class="pass">12/12 nodes reachable</span>
+  Cost: <span class="dim">$0.42/run (estimated)</span>
+<span class="dim">&#9472;&#9472;&#9472; Suggestions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="warn">&#8226;</span> <span class="dim">Add timeout to tool "RunTests"</span></pre>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ Install ═══ -->
+<section id="install">
+<div class="container">
+  <div class="section-label">Install</div>
+  <div class="section-title">One command</div>
+
+  <div class="install-box">
+    <h3>Go install</h3>
+    <div class="install-cmd">
+      <span class="prompt">$</span> go install github.com/2389-research/dippin-lang/cmd/dippin@latest
+    </div>
+
+    <div class="install-or">or</div>
+
+    <h3>Homebrew</h3>
+    <div class="install-cmd">
+      <span class="prompt">$</span> brew install 2389-research/tap/dippin
+    </div>
+
+    <div class="install-or">then</div>
+
+    <h3>Verify</h3>
+    <div class="install-cmd">
+      <span class="prompt">$</span> dippin version
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ Footer ═══ -->
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+</body>
+</html>
