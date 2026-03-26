@@ -4,14 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scenario Testing — Dippin</title>
-<meta name="description" content="Test AI pipeline workflows without deploying. Inject scenarios, simulate paths, and assert outcomes with dippin test.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Nav -->
 <nav class="nav">
 <div class="nav-inner">
   <a href="index.html" class="nav-brand">Dippin</a>
@@ -25,123 +23,83 @@
 </div>
 </nav>
 
-<!-- Hero header -->
+<div class="drips">
+  <div class="drip pink"></div>
+  <div class="drip green"></div>
+  <div class="drip yellow"></div>
+  <div class="drip pink"></div>
+  <div class="drip green"></div>
+  <div class="drip yellow"></div>
+  <div class="drip pink"></div>
+</div>
+
 <section class="doc">
 <div class="container">
   <div class="doc-header">
     <div class="section-label">Testing</div>
-    <h1 class="section-title">Scenario Testing</h1>
-    <p class="section-desc">
-      Test your AI pipeline workflows without deploying. Inject context values, simulate execution paths, and assert outcomes &mdash; all from a JSON file.
-    </p>
+    <h1>Scenario Testing</h1>
+    <p>Inject context values, simulate execution paths, and assert outcomes — all without calling LLMs.</p>
   </div>
-
   <div class="doc-body">
 
-    <!-- How it works -->
     <h2>How It Works</h2>
-    <p>
-      The test runner loads scenarios from a <code>.test.json</code> file, injects context into the simulator, walks the execution graph, and checks assertions against the result.
-    </p>
+    <p>The <code>dippin test</code> command runs scenario-based assertions against workflow files. Test cases inject context values into the simulator and verify the execution path.</p>
 
     <div class="flow-diagram">
-      <div class="flow-step">
-        <div class="flow-box input">.test.json</div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-step">
-        <div class="flow-box process">Load &amp; Parse</div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-step">
-        <div class="flow-box process">Inject Scenario</div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-step">
-        <div class="flow-box process">Simulate Workflow</div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-step">
-        <div class="flow-box decision">Check Assertions</div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-step">
-        <div class="flow-box pass">PASS</div>
-        <span class="flow-arrow" style="color: var(--text-soft);">/</span>
-        <div class="flow-box fail">FAIL</div>
-      </div>
+      <div class="flow-step">.test.json</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Load &amp; Parse</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Inject Scenario</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Simulate Workflow</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Check Assertions</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">PASS / FAIL</div>
     </div>
 
-    <p>
-      Test files are auto-discovered by convention: <code>pipeline.dip</code> looks for <code>pipeline.test.json</code> in the same directory.
-    </p>
+    <div class="drip-divider"></div>
 
-    <!-- Test file format -->
     <h2>Test File Format</h2>
-    <p>
-      Each test case declares a name, an optional scenario (context key-value pairs), and an expect block with assertions.
-    </p>
+    <p>Test files use <code>.test.json</code> extension and are auto-discovered from the workflow path:</p>
+    <pre>pipeline.dip       &rarr; pipeline.test.json
+src/flow.dip       &rarr; src/flow.test.json</pre>
 
+    <h3>Schema</h3>
     <pre>{
-  <span style="color:#B8A9E8">"tests"</span>: [
+  "tests": [
     {
-      <span style="color:#B8A9E8">"name"</span>: <span style="color:#8FD5A6">"descriptive test name"</span>,
-      <span style="color:#B8A9E8">"scenario"</span>: {
-        <span style="color:#B8A9E8">"key"</span>: <span style="color:#8FD5A6">"value"</span>
+      "name": "descriptive test name",
+      "scenario": {
+        "key": "value"
       },
-      <span style="color:#B8A9E8">"expect"</span>: {
-        <span style="color:#B8A9E8">"status"</span>: <span style="color:#8FD5A6">"success"</span>,
-        <span style="color:#B8A9E8">"visited"</span>: [<span style="color:#8FD5A6">"NodeA"</span>, <span style="color:#8FD5A6">"NodeB"</span>],
-        <span style="color:#B8A9E8">"not_visited"</span>: [<span style="color:#8FD5A6">"NodeC"</span>],
-        <span style="color:#B8A9E8">"path_contains"</span>: [<span style="color:#8FD5A6">"NodeA"</span>, <span style="color:#8FD5A6">"NodeB"</span>],
-        <span style="color:#B8A9E8">"immediately_after"</span>: {<span style="color:#B8A9E8">"NodeA"</span>: <span style="color:#8FD5A6">"NodeB"</span>}
+      "expect": {
+        "status": "success",
+        "visited": ["NodeA", "NodeB"],
+        "not_visited": ["NodeC"],
+        "path_contains": ["NodeA", "NodeB"],
+        "immediately_after": {"NodeA": "NodeB"}
       }
     }
   ]
 }</pre>
 
-    <!-- Expectation fields -->
-    <h2>Expectation Fields</h2>
+    <h3>Expectation Fields</h3>
     <p>All expectation fields are optional. Only specified fields are checked.</p>
-
     <table>
-      <thead>
-        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>status</code></td>
-          <td>string</td>
-          <td>Expected simulation status: <code>"success"</code> (reached exit), <code>"fail"</code>, or <code>"dead_end"</code></td>
-        </tr>
-        <tr>
-          <td><code>visited</code></td>
-          <td>string[]</td>
-          <td>Node IDs that must appear in the execution path</td>
-        </tr>
-        <tr>
-          <td><code>not_visited</code></td>
-          <td>string[]</td>
-          <td>Node IDs that must NOT appear in the execution path</td>
-        </tr>
-        <tr>
-          <td><code>path_contains</code></td>
-          <td>string[]</td>
-          <td>Node IDs that must appear in order (non-contiguous matches allowed)</td>
-        </tr>
-        <tr>
-          <td><code>immediately_after</code></td>
-          <td>object</td>
-          <td>Map of <code>{"A": "B"}</code> pairs asserting B is the immediate next node after A</td>
-        </tr>
-      </tbody>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>status</code></td><td>string</td><td>Expected simulation status: <code>"success"</code> (reached exit), <code>"fail"</code>, or <code>"dead_end"</code></td></tr>
+      <tr><td><code>visited</code></td><td>string[]</td><td>Node IDs that must appear in the execution path</td></tr>
+      <tr><td><code>not_visited</code></td><td>string[]</td><td>Node IDs that must NOT appear in the execution path</td></tr>
+      <tr><td><code>path_contains</code></td><td>string[]</td><td>Node IDs that must appear in order (non-contiguous matches allowed)</td></tr>
+      <tr><td><code>immediately_after</code></td><td>object</td><td>Map of <code>{"NodeA": "NodeB"}</code> pairs asserting NodeB is the immediate next node after NodeA</td></tr>
     </table>
 
-    <!-- Full example -->
-    <h2>Full Example</h2>
-    <p>
-      A conditional routing workflow and its test file side by side.
-    </p>
+    <div class="drip-divider"></div>
+
+    <h2>Example</h2>
+    <p>A workflow that routes based on outcome, with matching test scenarios:</p>
 
     <div class="compare-grid">
       <div class="compare-panel">
@@ -166,39 +124,33 @@
     <span class="kw">label:</span> Exit
 
   <span class="kw">edges</span>
-    Start <span class="op">-></span> Pass  <span class="kw">when</span> ctx.outcome = success
-    Start <span class="op">-></span> Fix   <span class="kw">when</span> ctx.outcome = fail
-    Pass <span class="op">-></span> Exit
-    Fix <span class="op">-></span> Exit</pre></div>
+    Start <span class="op">-&gt;</span> Pass  <span class="kw">when</span> ctx.outcome = success
+    Start <span class="op">-&gt;</span> Fix   <span class="kw">when</span> ctx.outcome = fail
+    Pass <span class="op">-&gt;</span> Exit
+    Fix <span class="op">-&gt;</span> Exit</pre></div>
       </div>
 
       <div class="compare-panel">
-        <span class="compare-label info">gate.test.json</span>
+        <span class="compare-label good">gate.test.json</span>
         <div class="compare-code"><pre>{
-  <span class="kw">"tests"</span>: [
+  "tests": [
     {
-      <span class="kw">"name"</span>: <span class="str">"success path"</span>,
-      <span class="kw">"scenario"</span>: {
-        <span class="kw">"outcome"</span>: <span class="str">"success"</span>
-      },
-      <span class="kw">"expect"</span>: {
-        <span class="kw">"status"</span>: <span class="str">"success"</span>,
-        <span class="kw">"visited"</span>: [<span class="str">"Start"</span>, <span class="str">"Pass"</span>, <span class="str">"Exit"</span>],
-        <span class="kw">"not_visited"</span>: [<span class="str">"Fix"</span>]
+      "name": "success path",
+      "scenario": {"outcome": "success"},
+      "expect": {
+        "status": "success",
+        "visited": ["Start", "Pass", "Exit"],
+        "not_visited": ["Fix"]
       }
     },
     {
-      <span class="kw">"name"</span>: <span class="str">"failure path"</span>,
-      <span class="kw">"scenario"</span>: {
-        <span class="kw">"outcome"</span>: <span class="str">"fail"</span>
-      },
-      <span class="kw">"expect"</span>: {
-        <span class="kw">"status"</span>: <span class="str">"success"</span>,
-        <span class="kw">"visited"</span>: [<span class="str">"Start"</span>, <span class="str">"Fix"</span>, <span class="str">"Exit"</span>],
-        <span class="kw">"not_visited"</span>: [<span class="str">"Pass"</span>],
-        <span class="kw">"immediately_after"</span>: {
-          <span class="str">"Start"</span>: <span class="str">"Fix"</span>
-        }
+      "name": "failure path",
+      "scenario": {"outcome": "fail"},
+      "expect": {
+        "status": "success",
+        "visited": ["Start", "Fix", "Exit"],
+        "not_visited": ["Pass"],
+        "immediately_after": {"Start": "Fix"}
       }
     }
   ]
@@ -206,8 +158,9 @@
       </div>
     </div>
 
-    <!-- Terminal output -->
-    <h2>Running Tests</h2>
+    <div class="drip-divider"></div>
+
+    <h2>Test Output</h2>
 
     <div class="terminal">
       <div class="terminal-bar">
@@ -221,74 +174,67 @@
   <span class="pass">PASS</span>  success path
   <span class="pass">PASS</span>  failure path
 <span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-  <span class="pass">2 tests: 2 passed, 0 failed</span></pre>
-    </div>
+  <span class="pass">2 tests: 2 passed, 0 failed</span>
 
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-title">dippin test --verbose</span>
-      </div>
-      <pre><span class="prompt">$</span> dippin test --verbose gate.dip
+<span class="prompt">$</span> dippin test --verbose gate.dip
 <span class="dim">&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
   <span class="pass">PASS</span>  success path
-        <span class="dim">path: Start &#8594; Pass &#8594; Exit</span>
+        <span class="dim">path: Start &rarr; Pass &rarr; Exit</span>
   <span class="pass">PASS</span>  failure path
-        <span class="dim">path: Start &#8594; Fix &#8594; Exit</span>
+        <span class="dim">path: Start &rarr; Fix &rarr; Exit</span>
 <span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="pass">2 tests: 2 passed, 0 failed</span></pre>
     </div>
 
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-title">JSON output for CI</span>
-      </div>
-      <pre><span class="prompt">$</span> dippin --format json test gate.dip
-{
-  <span class="dim">"results"</span>: [
-    {<span class="dim">"name"</span>: <span class="str">"success path"</span>, <span class="dim">"passed"</span>: <span class="pass">true</span>,
-     <span class="dim">"path"</span>: [<span class="str">"Start"</span>, <span class="str">"Pass"</span>, <span class="str">"Exit"</span>]},
-    {<span class="dim">"name"</span>: <span class="str">"failure path"</span>, <span class="dim">"passed"</span>: <span class="pass">true</span>,
-     <span class="dim">"path"</span>: [<span class="str">"Start"</span>, <span class="str">"Fix"</span>, <span class="str">"Exit"</span>]}
-  ],
-  <span class="dim">"passed"</span>: 2, <span class="dim">"failed"</span>: 0, <span class="dim">"total"</span>: 2
-}</pre>
-    </div>
+    <div class="drip-divider"></div>
 
-    <!-- Caveats -->
+    <h2>Scenario Keys</h2>
+    <p>The <code>scenario</code> object maps context keys to values. The simulator resolves conditions by looking up <code>ctx.&lt;key&gt;</code> in the scenario context.</p>
+    <table>
+      <tr><th>Key</th><th>Description</th></tr>
+      <tr><td><code>outcome</code></td><td>Maps to <code>ctx.outcome</code> — the most common routing variable</td></tr>
+      <tr><td><code>status</code></td><td>Maps to <code>ctx.status</code></td></tr>
+      <tr><td><code>tool_stdout</code></td><td>Maps to <code>ctx.tool_stdout</code> — tool command output</td></tr>
+    </table>
+
+    <div class="drip-divider"></div>
+
     <h2>Caveats</h2>
 
     <div class="caveat-card">
-      <h3>Loop breaking and <code>not_visited</code></h3>
-      <p>
-        The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and continues execution. Nodes downstream of the loop exit can still be visited. For workflows with loops, prefer <code>path_contains</code> (checks ordering) over <code>not_visited</code> (can be fragile when the simulator continues past a forced loop exit).
-      </p>
+      <h4>not_visited and loop breaking</h4>
+      <p>The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and continues execution rather than stopping. Nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer <code>path_contains</code> over <code>not_visited</code>.</p>
     </div>
 
     <div class="caveat-card">
-      <h3>Prefer <code>immediately_after</code> for edge routing</h3>
-      <p>
-        When testing which specific edge a node takes, <code>immediately_after</code> is more precise than <code>path_contains</code>. Use it to verify that a conditional edge routes to the expected next node.
-      </p>
+      <h4>immediately_after for edge routing</h4>
+      <p>When testing which specific edge a node takes, <code>immediately_after</code> is more precise than <code>path_contains</code>. Use it to verify that a conditional edge routes to the expected next node.</p>
     </div>
 
     <div class="caveat-card">
-      <h3>Tool node defaults</h3>
-      <p>
-        Tool nodes auto-seed <code>ctx.tool_stdout</code> and <code>ctx.outcome</code> to <code>"success"</code>. To test unconditional fallback edges after a tool node, set the key to an empty string in your scenario to suppress the default.
-      </p>
+      <h4>Clearing tool defaults</h4>
+      <p>Tool nodes auto-seed <code>ctx.tool_stdout</code> and <code>ctx.outcome</code> to <code>"success"</code>. To test unconditional fallback edges after a tool node, set the key to an empty string: <code>"ToolNode.tool_stdout": ""</code>.</p>
     </div>
+
+    <div class="drip-divider"></div>
+
+    <h2>CI Integration</h2>
+    <p>Use <code>--format json</code> for machine-readable output. Exit code is 0 if all tests pass, 1 if any fail.</p>
+    <pre>$ dippin --format json test pipeline.dip
+{
+  "results": [
+    {"name": "happy path", "passed": true, "path": ["Start", "Gate", "Pass", "Exit"]},
+    {"name": "error path", "passed": false, "errors": ["expected status \"fail\", got \"success\""]}
+  ],
+  "passed": 1,
+  "failed": 1,
+  "total": 2
+}</pre>
 
   </div>
 </div>
 </section>
 
-<!-- Footer -->
 <footer>
 <div class="container">
   <div class="footer-inner">

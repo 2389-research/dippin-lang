@@ -4,14 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CLI Reference — Dippin</title>
-<meta name="description" content="Complete CLI reference for the dippin command-line tool. Parsing, validation, linting, export, migration, analysis, and testing commands.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Nav -->
 <nav class="nav">
 <div class="nav-inner">
   <a href="index.html" class="nav-brand">Dippin</a>
@@ -25,198 +23,145 @@
 </div>
 </nav>
 
-<!-- Hero header -->
+<div class="drips">
+  <div class="drip pink"></div>
+  <div class="drip green"></div>
+  <div class="drip yellow"></div>
+  <div class="drip pink"></div>
+  <div class="drip green"></div>
+  <div class="drip yellow"></div>
+  <div class="drip pink"></div>
+</div>
+
 <section class="doc">
 <div class="container">
   <div class="doc-header">
     <div class="section-label">Reference</div>
-    <h1 class="section-title">CLI Reference</h1>
-    <p class="section-desc">
-      Every command the <code>dippin</code> toolchain provides &mdash; from authoring and formatting to analysis and testing. All commands work offline against workflow source files.
-    </p>
+    <h1>CLI Reference</h1>
+    <p>Every command in the dippin toolchain — authoring, export, and analysis.</p>
   </div>
-
   <div class="doc-body">
 
-    <!-- Global flags -->
-    <h2>Global Flags</h2>
+    <h2>Global Usage</h2>
     <pre>dippin [--format text|json] &lt;command&gt; [args]</pre>
+
+    <h3>Global Flags</h3>
     <table>
-      <thead>
-        <tr><th>Flag</th><th>Values</th><th>Default</th><th>Description</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>--format</code></td>
-          <td><code>text</code>, <code>json</code></td>
-          <td><code>text</code></td>
-          <td>Output format for diagnostics. <code>json</code> produces machine-readable arrays for CI and tooling.</td>
-        </tr>
-      </tbody>
+      <tr><th>Flag</th><th>Values</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>--format</code></td><td><code>text</code>, <code>json</code></td><td><code>text</code></td><td>Output format for diagnostics. <code>text</code> produces human-readable output. <code>json</code> produces machine-readable arrays for CI/tooling integration.</td></tr>
     </table>
 
-    <!-- Exit codes -->
-    <h2>Exit Codes</h2>
-    <p>All commands use consistent exit codes.</p>
+    <h3>Exit Codes</h3>
     <table>
-      <thead>
-        <tr><th>Code</th><th>Meaning</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>0</code></td><td>Success &mdash; no issues found, operation completed</td></tr>
-        <tr><td><code>1</code></td><td>Error &mdash; validation failures, parse errors, check-mode drift</td></tr>
-        <tr><td><code>2</code></td><td>Usage error &mdash; bad flags, missing arguments, unknown command</td></tr>
-      </tbody>
+      <tr><th>Code</th><th>Meaning</th></tr>
+      <tr><td><code>0</code></td><td>Success — no issues found, operation completed</td></tr>
+      <tr><td><code>1</code></td><td>Error — validation failures, parse errors, check-mode drift, parity mismatches</td></tr>
+      <tr><td><code>2</code></td><td>Usage error — bad flags, missing arguments, unknown command</td></tr>
     </table>
 
-    <!-- Authoring commands -->
+    <div class="drip-divider"></div>
+
     <h2>Authoring Commands</h2>
-    <span class="cmd-group-label authoring">Authoring</span>
+    <div class="group-badge lavender">Authoring</div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">parse</code></h3>
-      <div class="cmd-syntax">dippin parse &lt;file&gt;</div>
-      <p class="cmd-desc">Parse a workflow file and output the intermediate representation (IR) as JSON. Useful for debugging and tooling integration.</p>
+      <h3>parse</h3>
+      <div class="cmd-usage">dippin parse &lt;file&gt;</div>
+      <p>Parse a workflow file and output the intermediate representation (IR) as JSON. Useful for debugging, tooling integration, and inspecting how the parser interprets your workflow. Accepts <code>.dip</code> or <code>.dot</code> files (auto-detected by extension).</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">validate</code></h3>
-      <div class="cmd-syntax">dippin validate &lt;file&gt;</div>
-      <p class="cmd-desc">Run structural validation checks (DIP001&ndash;DIP009). These are the rules that must pass for a workflow to be executable.</p>
+      <h3>validate</h3>
+      <div class="cmd-usage">dippin validate &lt;file&gt;</div>
+      <p>Run structural validation checks (DIP001-DIP009) on a workflow. Outputs "validation passed" or diagnostic messages. Exit code 1 if any errors found.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">lint</code></h3>
-      <div class="cmd-syntax">dippin lint &lt;file&gt;</div>
-      <p class="cmd-desc">Run all 31 diagnostic rules &mdash; structural validation plus semantic linting (DIP001&ndash;DIP009, DIP101&ndash;DIP122). Warnings don't affect exit code.</p>
+      <h3>lint</h3>
+      <div class="cmd-usage">dippin lint &lt;file&gt;</div>
+      <p>Run both structural validation and semantic linting (DIP001-DIP009 + DIP101-DIP122). All 31 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">check</code></h3>
-      <div class="cmd-syntax">dippin check [--format json|text] &lt;file&gt;</div>
-      <p class="cmd-desc">Parse, validate, and lint in one shot. Defaults to JSON output. Designed for LLM tool-calling loops and CI pipelines.</p>
+      <h3>check</h3>
+      <div class="cmd-usage">dippin check [--format json|text] &lt;file&gt;</div>
+      <p>Parse, validate, and lint in one shot. Designed for LLM tool-calling loops and CI. Defaults to JSON output with <code>valid</code>, <code>errors</code>, <code>warnings</code>, <code>diagnostics</code>, and <code>suggested_actions</code> fields.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">fmt</code></h3>
-      <div class="cmd-syntax">dippin fmt [--check] [--write] &lt;file&gt;</div>
-      <p class="cmd-desc">Format a <code>.dip</code> file to canonical form. Use <code>--check</code> in CI, <code>--write</code> to format in place.</p>
+      <h3>fmt</h3>
+      <div class="cmd-usage">dippin fmt [--check] [--write] &lt;file&gt;</div>
+      <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">new</code></h3>
-      <div class="cmd-syntax">dippin new [--name &lt;name&gt;] [--write &lt;file&gt;] &lt;template&gt;</div>
-      <p class="cmd-desc">Generate a starter <code>.dip</code> file from a built-in template. Templates: <code>minimal</code>, <code>parallel</code>, <code>conditional</code>, <code>review-loop</code>, <code>human-gate</code>.</p>
+      <h3>new</h3>
+      <div class="cmd-usage">dippin new [--name &lt;name&gt;] [--write &lt;file&gt;] &lt;template&gt;</div>
+      <p>Generate a starter <code>.dip</code> file from a built-in template. Available templates: <code>minimal</code>, <code>parallel</code>, <code>conditional</code>, <code>review-loop</code>, <code>human-gate</code>. Output always passes <code>dippin validate</code>.</p>
     </div>
 
-    <!-- Export commands -->
-    <h2>Export &amp; Migration</h2>
-    <span class="cmd-group-label export">Export</span>
+    <div class="drip-divider"></div>
+
+    <h2>Export Commands</h2>
+    <div class="group-badge green">Export</div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">export-dot</code></h3>
-      <div class="cmd-syntax">dippin export-dot [--rankdir=LR|TB] [--prompts] &lt;file&gt;</div>
-      <p class="cmd-desc">Export a workflow to Graphviz DOT format for visualization. Pipe to <code>dot -Tpng</code> to render.</p>
-    </div>
-
-    <div class="cmd-card">
-      <h3><code class="cmd-name">migrate</code></h3>
-      <div class="cmd-syntax">dippin migrate [--output &lt;file&gt;] &lt;file.dot&gt;</div>
-      <p class="cmd-desc">Convert a DOT file to <code>.dip</code> source format. Handles shape mapping, prompt unescaping, and condition prefixing.</p>
+      <h3>export-dot</h3>
+      <div class="cmd-usage">dippin export-dot [--rankdir=LR|TB] [--prompts] &lt;file&gt;</div>
+      <p>Export a workflow to Graphviz DOT format for visualization. Maps node kinds to DOT shapes (agent=box, human=hexagon, tool=parallelogram). Goal gate nodes get red background; restart edges are dashed.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">validate-migration</code></h3>
-      <div class="cmd-syntax">dippin validate-migration &lt;old.dot&gt; &lt;new.dip&gt;</div>
-      <p class="cmd-desc">Check structural parity between a DOT file and a <code>.dip</code> file to verify migration correctness.</p>
+      <h3>migrate</h3>
+      <div class="cmd-usage">dippin migrate [--output &lt;file&gt;] &lt;file.dot&gt;</div>
+      <p>Convert a DOT file to <code>.dip</code> source format. Maps DOT shapes to Dippin node kinds, extracts graph attributes, unescapes prompts, and prefixes bare condition variables with <code>ctx.</code>.</p>
     </div>
 
-    <!-- Analysis commands -->
+    <div class="cmd-card">
+      <h3>validate-migration</h3>
+      <div class="cmd-usage">dippin validate-migration &lt;old.dot&gt; &lt;new.dip&gt;</div>
+      <p>Check structural parity between a DOT file and a <code>.dip</code> file to verify migration correctness. Reports missing nodes, different edges, and changed conditions.</p>
+    </div>
+
+    <div class="drip-divider"></div>
+
     <h2>Analysis Commands</h2>
-    <span class="cmd-group-label analysis">Analysis</span>
+    <div class="group-badge yellow">Analysis</div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">simulate</code></h3>
-      <div class="cmd-syntax">dippin simulate [--scenario key=val] [--interactive] [--all-paths] &lt;file&gt;</div>
-      <p class="cmd-desc">Dry-run a workflow's execution graph without calling LLMs. Emits JSONL events for each node enter, exit, and edge traversal.</p>
-    </div>
-
-    <div class="cmd-card">
-      <h3><code class="cmd-name">cost</code></h3>
-      <div class="cmd-syntax">dippin cost &lt;file&gt;</div>
-      <p class="cmd-desc">Estimate workflow execution cost based on model pricing tables. Breaks down per-node and total costs.</p>
+      <h3>simulate</h3>
+      <div class="cmd-usage">dippin simulate [--scenario key=val] [--interactive] [--all-paths] &lt;file&gt;</div>
+      <p>Dry-run a workflow's execution graph without calling LLMs or running commands. Emits JSONL events (pipeline_start, node_enter, node_exit, edge_traverse, pipeline_end). Use <code>--scenario</code> to inject context values and <code>--all-paths</code> to enumerate all possible paths.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">coverage</code></h3>
-      <div class="cmd-syntax">dippin coverage &lt;file&gt;</div>
-      <p class="cmd-desc">Analyze edge coverage and reachability. Reports which nodes and edges are exercised.</p>
+      <h3>cost</h3>
+      <div class="cmd-usage">dippin cost &lt;file&gt;</div>
+      <p>Estimate workflow execution cost based on model pricing tables. Per-node cost breakdown with turn and token heuristics.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">doctor</code></h3>
-      <div class="cmd-syntax">dippin doctor &lt;file&gt;</div>
-      <p class="cmd-desc">Health report card aggregating lint, coverage, and cost into a letter grade (A&ndash;F) with actionable suggestions.</p>
+      <h3>coverage</h3>
+      <div class="cmd-usage">dippin coverage &lt;file&gt;</div>
+      <p>Analyze edge coverage and reachability. Reports tool output extraction, edge condition matching, and termination analysis.</p>
     </div>
 
     <div class="cmd-card">
-      <h3><code class="cmd-name">test</code></h3>
-      <div class="cmd-syntax">dippin test [--verbose] &lt;file.dip&gt;</div>
-      <p class="cmd-desc">Run scenario tests from <code>.test.json</code> files. Injects context, simulates paths, checks assertions. <a href="testing.html">Learn more &rarr;</a></p>
+      <h3>doctor</h3>
+      <div class="cmd-usage">dippin doctor &lt;file&gt;</div>
+      <p>Health report card aggregating lint, coverage, and cost into a letter grade (A-F). Generates actionable suggestions.</p>
     </div>
 
-    <!-- Terminal demo -->
-    <h2>In Action</h2>
-
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-title">check (JSON output)</span>
-      </div>
-      <pre><span class="prompt">$</span> dippin check pipeline.dip
-{
-  <span class="dim">"valid"</span>: <span class="pass">true</span>,
-  <span class="dim">"errors"</span>: 0,
-  <span class="dim">"warnings"</span>: 0,
-  <span class="dim">"diagnostics"</span>: [],
-  <span class="dim">"suggested_actions"</span>: []
-}
-
-<span class="prompt">$</span> dippin check broken.dip
-{
-  <span class="dim">"valid"</span>: <span class="fail">false</span>,
-  <span class="dim">"errors"</span>: 1,
-  <span class="dim">"warnings"</span>: 2,
-  <span class="dim">"diagnostics"</span>: [
-    {<span class="dim">"code"</span>: <span class="fail">"DIP003"</span>, <span class="dim">"severity"</span>: "error", ...}
-  ]
-}</pre>
-    </div>
-
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-title">generate &amp; validate</span>
-      </div>
-      <pre><span class="prompt">$</span> dippin new --name MyPipeline review-loop --write my_pipeline.dip
-<span class="pass">wrote my_pipeline.dip</span>
-
-<span class="prompt">$</span> dippin validate my_pipeline.dip
-<span class="pass">validation passed</span>
-
-<span class="prompt">$</span> dippin export-dot my_pipeline.dip | dot -Tpng -o pipeline.png
-<span class="dim"># renders workflow graph as PNG</span></pre>
+    <div class="cmd-card">
+      <h3>test</h3>
+      <div class="cmd-usage">dippin test [--verbose] &lt;file.dip&gt;</div>
+      <p>Run scenario tests defined in <code>.test.json</code> files against a workflow. Auto-discovers the test file from the workflow path. Use <code>--verbose</code> to show execution paths.</p>
     </div>
 
   </div>
 </div>
 </section>
 
-<!-- Footer -->
 <footer>
 <div class="container">
   <div class="footer-inner">

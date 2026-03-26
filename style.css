@@ -455,6 +455,71 @@ section { padding: 6rem 0; }
   font-weight: 600;
 }
 
+/* ── Drips ── */
+.drips {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.drip {
+  position: absolute;
+  top: -2px;
+  width: 18px;
+  border-radius: 0 0 50% 50%;
+  animation: dripDown 3s ease-in forwards;
+}
+
+.drip.pink { background: rgba(230, 180, 210, 0.5); }
+.drip.green { background: rgba(150, 210, 160, 0.45); }
+.drip.yellow { background: rgba(245, 220, 130, 0.4); }
+
+.drip:nth-child(1) { left: 8%; height: 35px; animation-delay: 0.3s; }
+.drip:nth-child(2) { left: 22%; height: 28px; animation-delay: 0.8s; }
+.drip:nth-child(3) { left: 38%; height: 42px; animation-delay: 0.1s; }
+.drip:nth-child(4) { left: 52%; height: 22px; animation-delay: 1.2s; }
+.drip:nth-child(5) { left: 65%; height: 38px; animation-delay: 0.5s; }
+.drip:nth-child(6) { left: 78%; height: 30px; animation-delay: 0.9s; }
+.drip:nth-child(7) { left: 91%; height: 26px; animation-delay: 0.2s; }
+
+@keyframes dripDown {
+  0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scaleY(1); transform-origin: top; opacity: 0.7; }
+}
+
+/* Section divider drip */
+.drip-divider {
+  position: relative;
+  height: 20px;
+  overflow: visible;
+}
+
+.drip-divider::before,
+.drip-divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  border-radius: 0 0 50% 50%;
+}
+
+.drip-divider::before {
+  left: 30%;
+  width: 14px;
+  height: 18px;
+  background: rgba(230, 180, 210, 0.35);
+}
+
+.drip-divider::after {
+  left: 65%;
+  width: 12px;
+  height: 14px;
+  background: rgba(150, 210, 160, 0.3);
+}
+
 /* ── Nav ── */
 .nav {
   position: fixed;

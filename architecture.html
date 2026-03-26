@@ -4,14 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Architecture — Dippin</title>
-<meta name="description" content="How the Dippin toolchain is organized — packages, data flow, and key design decisions.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Nav -->
 <nav class="nav">
 <div class="nav-inner">
   <a href="index.html" class="nav-brand">Dippin</a>
@@ -25,58 +23,69 @@
 </div>
 </nav>
 
-<!-- Hero -->
+<div class="drips">
+  <div class="drip pink"></div>
+  <div class="drip green"></div>
+  <div class="drip yellow"></div>
+  <div class="drip pink"></div>
+  <div class="drip green"></div>
+  <div class="drip yellow"></div>
+  <div class="drip pink"></div>
+</div>
+
 <section class="doc">
 <div class="container">
   <div class="doc-header">
     <div class="section-label">Internals</div>
-    <h1 class="section-title">Architecture</h1>
-    <p class="section-desc">How the toolchain is organized</p>
+    <h1>Architecture</h1>
+    <p>How the dippin toolchain is organized — packages, data flow, and design decisions.</p>
   </div>
-
   <div class="doc-body">
 
-    <!-- Compiler Pipeline -->
     <h2>Compiler Pipeline</h2>
-    <p>
-      Dippin is a multi-stage compiler pipeline. Source files are parsed into a canonical intermediate representation,
-      which every downstream tool operates on. This decouples parsing from everything else.
-    </p>
+    <p>Dippin is a multi-stage compiler pipeline. All downstream consumers program against the canonical IR — a set of Go structs defined in the <code>ir</code> package.</p>
 
-    <div class="pipeline-flow">
-      <div class="flow-stage">
-        <div class="flow-box lavender">Source<br><small>.dip / .dot</small></div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-stage">
-        <div class="flow-fan">
-          <div class="flow-box green">Dippin Parser</div>
-          <div class="flow-box green">DOT Parser</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-stage">
-        <div class="flow-box lavender" style="font-size: 0.9rem; padding: 1rem 1.5rem;">ir.Workflow<br><small>Canonical IR</small></div>
-        <span class="flow-arrow">&rarr;</span>
-      </div>
-      <div class="flow-stage">
-        <div class="flow-fan">
-          <div class="flow-box yellow">Validator / Linter</div>
-          <div class="flow-box green">Formatter</div>
-          <div class="flow-box lavender">DOT Exporter</div>
-          <div class="flow-box yellow">Simulator</div>
-          <div class="flow-box green">Cost / Coverage</div>
-          <div class="flow-box lavender">Doctor / Optimize</div>
-          <div class="flow-box yellow">Test Runner</div>
-          <div class="flow-box green">LSP Server</div>
-        </div>
-      </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box lavender">Source File<br>(.dip or .dot)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box green">Dippin Parser<br><code>parser</code></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box yellow">Canonical IR<br><code>ir</code></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box lavender">Outputs</div>
     </div>
 
-    <!-- Package Map -->
-    <h2>Package Map</h2>
-    <p>The codebase is organized into focused, single-responsibility packages.</p>
+    <p>From the canonical IR, multiple output stages fan out:</p>
 
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">IR</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box lavender">Validator / Linter</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">IR</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box green">Formatter</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">IR</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box lavender">DOT Exporter</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">IR</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box green">Simulator</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">IR</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="pipeline-box yellow">Cost / Coverage / Doctor</div>
+    </div>
+
+    <div class="drip-divider"></div>
+
+    <h2>Package Map</h2>
     <pre>dippin-lang/
 ├── ir/                 # Canonical intermediate representation (types only)
 │   ├── ir.go           # Workflow, Node, NodeConfig, RetryConfig, NodeIO
@@ -87,200 +96,131 @@
 ├── parser/             # Lexer + recursive descent parser
 │   ├── lexer.go        # Indentation-aware tokenizer
 │   ├── parser.go       # Produces ir.Workflow from tokens
-│   └── parse_*.go      # Defaults, edges, nodes, stylesheet, helpers
+│   ├── parse_defaults.go  # Defaults block parsing
+│   ├── parse_edges.go     # Edge and condition parsing
+│   ├── parse_nodes.go     # Node declaration parsing
+│   ├── parse_stylesheet.go # Stylesheet section parsing
+│   └── parse_helpers.go   # Shared utilities
 │
 ├── validator/          # Graph validation + semantic linting
-│   ├── validate.go     # 9 structural checks (DIP001–DIP009)
-│   ├── lint.go         # Lint orchestration
-│   └── lint_*.go       # Reachability, conditions, context, model, style
+│   ├── validate.go     # 9 structural checks (DIP001-DIP009)
+│   ├── lint.go         # Lint orchestration (DIP101-DIP122)
+│   └── diagnostic.go   # Diagnostic type, Result, Severity
 │
-├── formatter/          # Canonical .dip source formatter (idempotent)
-├── export/             # DOT graph exporter (IR → Graphviz)
-├── migrate/            # DOT ↔ Dippin migration + parity checker
+├── formatter/          # Canonical .dip source formatter
+├── export/             # DOT graph exporter
+├── migrate/            # DOT &harr; Dippin migration + parity checker
 ├── simulate/           # Reference graph executor (JSONL events)
-├── cost/               # Cost estimation with per-model pricing
-├── coverage/           # Edge coverage and reachability analysis
-├── doctor/             # Health report card (grade A–F)
-├── optimize/           # Model substitution suggestions
+├── cost/               # Cost estimation engine + pricing tables
+├── coverage/           # Edge coverage analysis
+├── doctor/             # Health report card (grade A-F)
+├── optimize/           # Model optimization suggestions
 ├── diff/               # Semantic workflow comparison
 ├── feedback/           # Cost calibration from telemetry
-├── unused/             # Dead-branch detection + wasted cost
-├── graph/              # ASCII DAG rendering (Kahn's algorithm)
+├── unused/             # Dead-branch detection
+├── graph/              # ASCII DAG rendering
 ├── testrunner/         # Scenario test runner
 ├── lsp/                # Language Server Protocol server
-├── scaffold/           # Template scaffolding for "dippin new"
-└── cmd/dippin/         # CLI entry point and command dispatch</pre>
+├── scaffold/           # Template scaffolding for dippin new
+└── cmd/dippin/         # CLI entry point + command handlers</pre>
 
-    <!-- Key Design Decisions -->
+    <div class="drip-divider"></div>
+
     <h2>Key Design Decisions</h2>
 
     <div class="decision-grid">
       <div class="decision-card">
-        <h4>Everything flows through ir.Workflow</h4>
-        <p>
-          The <code>ir</code> package defines the canonical data model. Every tool &mdash; validator, formatter,
-          exporter, simulator &mdash; programs against these structs. The IR contains no syntax details
-          and no DOT shapes. It is a pure semantic representation.
-        </p>
+        <h4>IR as the universal interface</h4>
+        <p>Everything flows through <code>ir.Workflow</code>. Packages import <code>ir</code> but not each other (except analysis packages that compose). This decouples parsing from all downstream consumers.</p>
       </div>
-
       <div class="decision-card">
-        <h4>Packages import ir, not each other</h4>
-        <p>
-          Most packages depend only on <code>ir</code>. The analysis packages (<code>doctor</code>,
-          <code>optimize</code>, <code>diff</code>) compose other analysis packages, but core packages
-          like <code>parser</code>, <code>formatter</code>, and <code>export</code> are fully independent.
-          Zero external dependencies for core packages.
-        </p>
+        <h4>Sealed interfaces</h4>
+        <p>Both <code>NodeConfig</code> and <code>ConditionExpr</code> use Go's sealed interface pattern with unexported methods. Only types within the <code>ir</code> package can implement them, preventing invalid configurations.</p>
       </div>
-
       <div class="decision-card">
-        <h4>Condition.Parsed is populated lazily</h4>
-        <p>
-          The parser stores edge conditions as <code>Condition.Raw</code> (plain text).
-          <code>Condition.Parsed</code> (AST) is only populated by <code>simulate.EnsureConditionsParsed()</code>.
-          Any code reading parsed conditions must call this first &mdash; <code>Lint()</code> does it automatically.
-        </p>
+        <h4>No short-circuiting validation</h4>
+        <p>All 9 structural checks and all 22 semantic checks run unconditionally. A single call reports every issue, not just the first. This enables batch fixing.</p>
       </div>
-
       <div class="decision-card">
-        <h4>Parallel branch simulation</h4>
-        <p>
-          The simulator handles <code>parallel</code> fan-out by visiting all branch nodes before
-          proceeding to the <code>fan_in</code> join point. Path enumeration explores every branch
-          combination for <code>--all-paths</code> mode.
-          Events are emitted as JSONL for machine consumption.
-        </p>
+        <h4>Zero external dependencies</h4>
+        <p>Core packages depend only on the Go standard library. The <code>ir</code> package imports only <code>time</code>. Only the <code>lsp</code> package uses external libraries (go.lsp.dev for JSON-RPC 2.0).</p>
+      </div>
+      <div class="decision-card">
+        <h4>Idempotent formatter</h4>
+        <p>The formatter is the authority on canonical form. <code>Format(Parse(Format(Parse(source))))</code> always equals <code>Format(Parse(source))</code>. The <code>fmt --check</code> command uses this property.</p>
+      </div>
+      <div class="decision-card">
+        <h4>Testable CLI</h4>
+        <p>The <code>Run</code> function accepts <code>args []string</code> and <code>io.Writer</code>, making it fully testable without touching <code>os.Args</code> or <code>os.Stdout</code>. All commands are exercised via this interface.</p>
       </div>
     </div>
 
-    <!-- Dependency Graph -->
+    <div class="drip-divider"></div>
+
     <h2>Dependency Graph</h2>
-    <p>
-      The <code>ir</code> package is a leaf dependency &mdash; it imports only <code>time</code> from
-      the standard library. The dependency structure fans out from ir at the bottom to cmd/dippin at the top.
-    </p>
+    <p>The <code>ir</code> package is a leaf dependency. Most packages import only <code>ir</code>. Analysis packages compose each other.</p>
 
-    <div class="dep-graph">
-      <div class="dep-row">
-        <span class="dep-label">Foundation</span>
-        <div class="dep-box core">ir</div>
-        <div class="dep-box core">event</div>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label"></span>
-        <span class="dep-connector">&uarr;</span>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label">Core</span>
-        <div class="dep-box parse">parser</div>
-        <div class="dep-box parse">formatter</div>
-        <div class="dep-box parse">validator</div>
-        <div class="dep-box parse">export</div>
-        <div class="dep-box parse">migrate</div>
-        <div class="dep-box parse">scaffold</div>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label"></span>
-        <span class="dep-connector">&uarr;</span>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label">Analysis</span>
-        <div class="dep-box analysis">simulate</div>
-        <div class="dep-box analysis">cost</div>
-        <div class="dep-box analysis">coverage</div>
-        <div class="dep-box analysis">graph</div>
-        <div class="dep-box analysis">unused</div>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label"></span>
-        <span class="dep-connector">&uarr;</span>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label">Composed</span>
-        <div class="dep-box compose">doctor</div>
-        <div class="dep-box compose">optimize</div>
-        <div class="dep-box compose">diff</div>
-        <div class="dep-box compose">feedback</div>
-        <div class="dep-box compose">testrunner</div>
-        <div class="dep-box compose">lsp</div>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label"></span>
-        <span class="dep-connector">&uarr;</span>
-      </div>
-
-      <div class="dep-row">
-        <span class="dep-label">Entry</span>
-        <div class="dep-box core" style="font-size: 0.85rem; padding: 0.5rem 1.2rem;">cmd/dippin</div>
-      </div>
+    <h3>Layer 0: Foundation</h3>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">ir</div>
+      <div class="pipeline-box yellow">event</div>
     </div>
 
-    <p>
-      <strong>doctor</strong> composes validator + coverage + cost.
-      <strong>optimize</strong> composes cost.
-      <strong>diff</strong> composes cost.
-      <strong>testrunner</strong> composes simulate.
-      <strong>lsp</strong> imports parser + validator for real-time analysis.
-      The <code>lsp</code> package is the only one with external dependencies (<code>go.lsp.dev</code> for JSON-RPC 2.0).
-    </p>
+    <h3>Layer 1: Direct IR Consumers</h3>
+    <div class="flow-diagram">
+      <div class="pipeline-box lavender">parser</div>
+      <div class="pipeline-box lavender">formatter</div>
+      <div class="pipeline-box lavender">validator</div>
+      <div class="pipeline-box lavender">export</div>
+      <div class="pipeline-box lavender">migrate</div>
+      <div class="pipeline-box lavender">scaffold</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box green">simulate</div>
+      <div class="pipeline-box green">cost</div>
+      <div class="pipeline-box green">coverage</div>
+      <div class="pipeline-box green">graph</div>
+      <div class="pipeline-box green">diff</div>
+    </div>
 
-    <!-- The IR Package -->
-    <h2>The IR Package</h2>
-    <p>
-      The <code>ir</code> package is the heart of the system. It defines the data model that every other package operates on.
-    </p>
+    <h3>Layer 2: Composition</h3>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">doctor</div>
+      <div class="flow-arrow">&larr;</div>
+      <div class="pipeline-box green">validator + coverage + cost</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">optimize</div>
+      <div class="flow-arrow">&larr;</div>
+      <div class="pipeline-box green">cost</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">unused</div>
+      <div class="flow-arrow">&larr;</div>
+      <div class="pipeline-box green">coverage + cost</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">testrunner</div>
+      <div class="flow-arrow">&larr;</div>
+      <div class="pipeline-box green">simulate</div>
+    </div>
+    <div class="flow-diagram">
+      <div class="pipeline-box yellow">lsp</div>
+      <div class="flow-arrow">&larr;</div>
+      <div class="pipeline-box green">parser + validator</div>
+    </div>
 
-    <h3>Design Principles</h3>
-    <p>
-      <strong>Explicit over implicit</strong> &mdash; <code>Node.Kind</code> directly states what the node is.
-      <code>Workflow.Start</code> and <code>Workflow.Exit</code> are named fields, not inferred from declaration order.
-    </p>
-    <p>
-      <strong>Type-safe</strong> &mdash; Each node kind has its own config struct implementing a sealed <code>NodeConfig</code> interface.
-      Invalid field combinations are structurally impossible.
-    </p>
-    <p>
-      <strong>Syntax-independent</strong> &mdash; The IR contains no Dippin syntax details and no DOT shapes.
-      It is a pure semantic representation that could be produced by any frontend.
-    </p>
-
-    <h3>Sealed Interfaces</h3>
-    <p>
-      Both <code>NodeConfig</code> and <code>ConditionExpr</code> use Go's sealed interface pattern &mdash; an
-      unexported method prevents external packages from creating invalid implementations:
-    </p>
-    <pre>type NodeConfig interface { nodeConfig() }   // unexported method
-type AgentConfig struct { ... }
-func (AgentConfig) nodeConfig() {}            // only ir-package types can implement</pre>
-
-    <!-- The CLI -->
-    <h2>The CLI</h2>
-    <p>
-      The CLI (<code>cmd/dippin/cli.go</code>) is a thin orchestration layer: parse global flags, dispatch
-      to a command handler, load the workflow, call the appropriate package function, and render output.
-    </p>
-    <p>
-      <strong>Testability</strong> &mdash; The <code>Run</code> function accepts <code>args []string</code> and
-      <code>io.Writer</code>, making it fully testable without touching <code>os.Args</code> or <code>os.Stdout</code>.
-    </p>
-    <p>
-      <strong>Auto-detection</strong> &mdash; <code>loadWorkflow</code> checks the file extension: <code>.dot</code>
-      routes to <code>migrate.Migrate</code>, <code>.dip</code> routes to the Dippin parser.
-    </p>
+    <h3>Layer 3: CLI</h3>
+    <div class="flow-diagram">
+      <div class="pipeline-box lavender">cmd/dippin</div>
+      <div class="flow-arrow">&larr;</div>
+      <div class="pipeline-box green">all packages</div>
+    </div>
 
   </div>
 </div>
 </section>
 
-<!-- Footer -->
 <footer>
 <div class="container">
   <div class="footer-inner">
