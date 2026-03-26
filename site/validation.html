@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validation & Linting — Dippin</title>
+<meta name="description" content="31 diagnostic codes catch structural errors and semantic warnings in your AI pipeline workflows before runtime.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+<div class="nav-inner">
+  <a href="index.html" class="nav-brand">Dippin</a>
+  <div class="nav-links">
+    <a href="cli.html">CLI</a>
+    <a href="testing.html">Testing</a>
+    <a href="validation.html" class="active">Validation</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<!-- Hero -->
+<section class="doc">
+<div class="container">
+  <div class="doc-header">
+    <div class="section-label">Reference</div>
+    <h1 class="section-title">Validation &amp; Linting</h1>
+    <p class="section-desc">31 diagnostic codes catch problems before runtime</p>
+  </div>
+
+  <div class="doc-body">
+
+    <!-- Overview -->
+    <h2>Overview</h2>
+    <p>
+      Dippin provides two layers of static analysis. <strong>Structural validation</strong> (DIP001&ndash;DIP009)
+      catches errors that must be fixed &mdash; a workflow with any of these cannot execute. <strong>Semantic linting</strong>
+      (DIP101&ndash;DIP122) flags warnings: likely bugs or questionable patterns that should be reviewed but don't block execution.
+    </p>
+    <p>
+      Run <code>dippin validate &lt;file&gt;</code> for structural checks only, or <code>dippin lint &lt;file&gt;</code> for both.
+    </p>
+
+    <!-- Diagnostic format -->
+    <h2>Diagnostic Format</h2>
+    <p>Diagnostics use a rustc-inspired format with code, location, and optional help text:</p>
+    <pre>error[DIP003]: unknown node reference "InterpretX" in edge
+  --&gt; pipeline.dip:45:5
+  = help: did you mean "Interpret"?</pre>
+
+    <p>Each diagnostic includes:</p>
+    <table>
+      <thead>
+        <tr><th>Field</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Code</strong></td><td>Unique identifier (e.g., DIP003)</td></tr>
+        <tr><td><strong>Severity</strong></td><td><code>error</code>, <code>warning</code>, <code>info</code>, or <code>hint</code></td></tr>
+        <tr><td><strong>Message</strong></td><td>Human-readable explanation</td></tr>
+        <tr><td><strong>Location</strong></td><td>File, line, and column</td></tr>
+        <tr><td><strong>Help</strong></td><td>Optional suggestion for fixing</td></tr>
+        <tr><td><strong>Fix</strong></td><td>Optional replacement text</td></tr>
+      </tbody>
+    </table>
+    <p>Use <code>--format json</code> for machine-readable output in CI.</p>
+
+    <!-- Structural Errors -->
+    <h2>Structural Errors (DIP001&ndash;DIP009)</h2>
+    <p>These are hard errors. A workflow with any of these cannot be executed.</p>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP001</span><span class="diag-title">Start Node Missing</span></div>
+      <div class="diag-desc">The workflow must declare a <code>start:</code> field pointing to an existing node.</div>
+      <div class="diag-example">
+        <pre>error[DIP001]: start node does not exist
+  --&gt; pipeline.dip:1:1
+  = help: add "start: &lt;NodeID&gt;" to the workflow header</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP002</span><span class="diag-title">Exit Node Missing</span></div>
+      <div class="diag-desc">The workflow must declare an <code>exit:</code> field pointing to an existing node.</div>
+      <div class="diag-example">
+        <pre>error[DIP002]: exit node does not exist
+  --&gt; pipeline.dip:1:1
+  = help: add "exit: &lt;NodeID&gt;" to the workflow header</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP003</span><span class="diag-title">Unknown Node Reference in Edge</span></div>
+      <div class="diag-desc">Every edge endpoint must reference an existing node. Uses Levenshtein distance to suggest corrections for typos.</div>
+      <div class="diag-example">
+        <pre>error[DIP003]: unknown node reference "InterpretX" in edge
+  --&gt; pipeline.dip:45:5
+  = help: did you mean "Interpret"?</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP004</span><span class="diag-title">Unreachable Node from Start</span></div>
+      <div class="diag-desc">Every node must be reachable from the start node via BFS. Orphaned nodes are dead code.</div>
+      <div class="diag-example">
+        <pre>error[DIP004]: node unreachable from start
+  --&gt; pipeline.dip:20:3
+  = help: add an edge leading to this node, or remove it</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP005</span><span class="diag-title">Unconditional Cycle Detected</span></div>
+      <div class="diag-desc">The graph must be a DAG. Restart edges (<code>restart: true</code>) are excluded from cycle detection.</div>
+      <div class="diag-example">
+        <pre>error[DIP005]: unconditional cycle detected
+  --&gt; pipeline.dip:50:5
+  = help: remove an edge in this cycle or mark it "restart: true"</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP006</span><span class="diag-title">Exit Node Has Outgoing Edges</span></div>
+      <div class="diag-desc">The exit node is terminal &mdash; it must have zero outgoing edges.</div>
+      <div class="diag-example">
+        <pre>error[DIP006]: exit node has outgoing edges
+  --&gt; pipeline.dip:55:5
+  = help: remove outgoing edges from the exit node</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP007</span><span class="diag-title">Parallel/Fan-In Mismatch</span></div>
+      <div class="diag-desc">Every <code>parallel</code> node must have a matching <code>fan_in</code> node with the same set of branch nodes.</div>
+      <div class="diag-example">
+        <pre>error[DIP007]: parallel fan-out/fan-in mismatch
+  --&gt; pipeline.dip:15:3
+  = help: add a matching fan_in node</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP008</span><span class="diag-title">Duplicate Node ID</span></div>
+      <div class="diag-desc">Node IDs must be globally unique within a workflow.</div>
+      <div class="diag-example">
+        <pre>error[DIP008]: duplicate node ID
+  --&gt; pipeline.dip:30:3
+  = help: rename this node or remove the duplicate</pre>
+      </div>
+    </div>
+
+    <div class="diag-card error">
+      <div><span class="diag-code">DIP009</span><span class="diag-title">Duplicate Edge</span></div>
+      <div class="diag-desc">No two edges may have the same (from, to, condition) combination. Different conditions on the same pair are fine.</div>
+      <div class="diag-example">
+        <pre>error[DIP009]: duplicate edge
+  --&gt; pipeline.dip:60:5
+  = help: remove the duplicate edge</pre>
+      </div>
+    </div>
+
+    <!-- Semantic Warnings -->
+    <h2>Semantic Warnings (DIP101&ndash;DIP122)</h2>
+    <p>These are warnings that flag likely bugs. They don't block execution but should be reviewed. Showing the most important ones here.</p>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP101</span><span class="diag-title">Node Only Reachable via Conditional Edges</span></div>
+      <div class="diag-desc">All incoming edges have conditions &mdash; if none match, this node is unreachable at runtime. Automatically suppressed when source conditions are exhaustive (e.g., success + fail).</div>
+      <div class="diag-example">
+        <pre>warning[DIP101]: node "NextPhase" is only reachable through conditional edges
+  --&gt; pipeline.dip:25:3
+  = help: add an unconditional edge, or verify conditions are exhaustive</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP102</span><span class="diag-title">Routing Node Missing Default Edge</span></div>
+      <div class="diag-desc">A node with conditional outgoing edges but no unconditional fallback. Execution gets stuck if no condition matches. Also suppressed for exhaustive conditions.</div>
+      <div class="diag-example">
+        <pre>warning[DIP102]: node "Gate" has conditional edges but no default
+  --&gt; pipeline.dip:35:3
+  = help: add an unconditional edge as a fallback</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP105</span><span class="diag-title">No Success Path to Exit</span></div>
+      <div class="diag-desc">Every path from start to exit goes through at least one conditional edge. If conditions don't match, execution may never reach the exit.</div>
+      <div class="diag-example">
+        <pre>warning[DIP105]: no success path from start to exit
+  --&gt; pipeline.dip:1:1</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP108</span><span class="diag-title">Unknown Model/Provider</span></div>
+      <div class="diag-desc">The model or provider string doesn't match any known LLM provider. Catches typos like <code>claude-sonet-4</code> before they hit production.</div>
+      <div class="diag-example">
+        <pre>warning[DIP108]: unknown model/provider combination
+  --&gt; pipeline.dip:15:5</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP110</span><span class="diag-title">Empty Prompt on Agent</span></div>
+      <div class="diag-desc">An agent node has no prompt text. An agent without a prompt won't produce meaningful output.</div>
+      <div class="diag-example">
+        <pre>warning[DIP110]: empty prompt on agent node
+  --&gt; pipeline.dip:12:3</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP111</span><span class="diag-title">Tool Without Timeout</span></div>
+      <div class="diag-desc">A tool node defines a command but no timeout. Without a timeout, a hanging command blocks the pipeline indefinitely.</div>
+      <div class="diag-example">
+        <pre>warning[DIP111]: tool command has no timeout
+  --&gt; pipeline.dip:35:3</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP115</span><span class="diag-title">Goal Gate Without Recovery Path</span></div>
+      <div class="diag-desc">A node has <code>goal_gate: true</code> but no retry or fallback target. The pipeline has no way to recover if the gate fails.</div>
+      <div class="diag-example">
+        <pre>warning[DIP115]: node "validate_tests" has goal_gate but no recovery
+  --&gt; pipeline.dip:18:3
+  = help: add retry_target or fallback_target</pre>
+      </div>
+    </div>
+
+    <div class="diag-card warning">
+      <div><span class="diag-code">DIP121</span><span class="diag-title">Condition References Variable Not in Writes</span></div>
+      <div class="diag-desc">An edge condition references a variable the source node doesn't declare in <code>writes</code>. Only fires when the source node has non-empty writes declarations.</div>
+      <div class="diag-example">
+        <pre>warning[DIP121]: edge Gate &rarr; Pass: condition references "ctx.score"
+  but node "Gate" does not declare it in writes
+  --&gt; pipeline.dip:45:5</pre>
+      </div>
+    </div>
+
+    <p style="margin-top: 2rem;">
+      This page covers the most important diagnostics. For the full list of all 22 warnings (DIP101&ndash;DIP122), see the
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/docs/validation.md">complete validation reference</a>.
+    </p>
+
+    <!-- Running Validation -->
+    <h2>Running Validation</h2>
+
+    <h3>Structural validation only</h3>
+    <pre>$ dippin validate pipeline.dip</pre>
+    <p>Runs DIP001&ndash;DIP009. Exit code 0 if all pass, 1 if any errors.</p>
+
+    <h3>Full lint (validation + semantic)</h3>
+    <pre>$ dippin lint pipeline.dip</pre>
+    <p>Runs all 31 checks. Exit code 1 only for errors; warnings alone exit 0.</p>
+
+    <h3>JSON output for CI</h3>
+    <pre>$ dippin --format json lint pipeline.dip</pre>
+    <p>Emits diagnostics as a JSON array for machine consumption.</p>
+
+  </div>
+</div>
+</section>
+
+<!-- Footer -->
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+</body>
+</html>
