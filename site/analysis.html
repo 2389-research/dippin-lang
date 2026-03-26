@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analysis Tools — Dippin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Floating dots -->
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="cli.html">CLI</a>
+    <a href="language.html">Language</a>
+    <a href="testing.html">Testing</a>
+    <a href="validation.html">Validation</a>
+    <a href="analysis.html" class="active">Analysis</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="editors.html">Editors</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="doc-header">
+    <div class="section-label">Analysis</div>
+    <h1>Analysis Tools</h1>
+    <p>Cost, coverage, health, optimization, and change tracking.</p>
+  </div>
+  <div class="doc-body">
+
+    <h2>Overview</h2>
+    <p>Dippin includes six analysis commands that inspect workflows for cost, coverage, health, optimization opportunities, and change impact. <code>doctor</code> aggregates cost + coverage + lint into a single grade. Run it first for an overview, then drill into specific commands for details.</p>
+    <div class="flow-diagram">
+      <div class="flow-step">dippin doctor</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">dippin lint</div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-step">dippin coverage</div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-step">dippin cost</div>
+    </div>
+    <p>A typical workflow: run <code>doctor</code> first, then drill into <code>lint</code>, <code>coverage</code>, or <code>cost</code> if the grade is below B. Use <code>optimize</code> after <code>cost</code> shows high costs. Use <code>diff</code> to review changes, and <code>feedback</code> to calibrate after production runs.</p>
+
+    <h2>cost</h2>
+    <p>Estimate execution cost based on model pricing tables. Prompt length estimates input tokens, output tokens are estimated heuristically per turn, and <code>max_turns</code> determines the turn range. Tool and human nodes cost $0. Unknown models are costed at $0 with an assumption note.</p>
+    <pre>$ dippin cost pipeline.dip</pre>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">dippin cost</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin cost pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Cost Estimate &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+                            Min Expected      Max
+  <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span> <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;</span> <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;</span> <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  TOTAL                       $3.21    $3.59   $14.10
+
+<span class="dim">&#9472;&#9472;&#9472; By Provider &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  openai                      $0.38    $0.57    $2.96
+  anthropic                   $2.83    $3.02   $11.13
+
+<span class="dim">&#9472;&#9472;&#9472; Top Cost Drivers &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  CommitWork                  $2.12 <span class="dim">(max)</span>  openai/gpt-5.2
+  ImplementClaude             $2.12 <span class="dim">(max)</span>  anthropic/claude-sonnet-4-6
+  InterpretRequest            $1.44 <span class="dim">(max)</span>  anthropic/claude-opus-4-6
+
+<span class="dim">&#9472;&#9472;&#9472; Assumptions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="warn">&#8226;</span> <span class="dim">unknown model "gemini-3-flash" (provider "gemini"): cost set to $0</span></pre>
+    </div>
+    <p><strong>When to use:</strong> Before deploying a pipeline with expensive models. Compare providers. Identify cost drivers to optimize.</p>
+
+    <h2>coverage</h2>
+    <p>Analyze edge coverage and reachability. For tool nodes, extracts possible outputs from <code>printf</code>/<code>echo</code> patterns in the command, then checks whether outgoing edge conditions cover those outputs.</p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">dippin coverage</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin coverage pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Coverage Analysis &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+<span class="dim">&#9472;&#9472;&#9472; Edge Coverage &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">&#10003;</span> SetupWorkspace               no_conditions
+  <span class="fail">&#10007;</span> ValidateBuild                partial
+      <span class="dim">missing: validation-pass-go</span>
+      <span class="dim">missing: validation-pass-swift</span>
+
+<span class="dim">&#9472;&#9472;&#9472; Reachability &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">&#10003;</span> 30/30 nodes reachable
+
+<span class="dim">&#9472;&#9472;&#9472; Termination &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">&#10003;</span> all paths reach exit: true</pre>
+    </div>
+    <p><strong>When to use:</strong> After writing conditional routing to verify all tool outputs have matching edges. The <code>missing</code> entries tell you exactly which edges to add.</p>
+
+    <h2>doctor</h2>
+    <p>Health report card — a single grade (A-F) aggregating lint, coverage, and cost into one score.</p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">dippin doctor</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin doctor pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Health Report Card &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+  Grade: <span class="pass">A</span>  Score: 95/100
+
+<span class="dim">&#9472;&#9472;&#9472; Lint &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  Errors: <span class="pass">0</span>  Warnings: <span class="warn">1</span>  Hints: 0
+
+<span class="dim">&#9472;&#9472;&#9472; Coverage &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  Reachable: <span class="pass">21/21 nodes</span>
+  <span class="pass">&#10003;</span> All paths terminate
+  <span class="pass">&#10003;</span> All tool outputs covered
+
+<span class="dim">&#9472;&#9472;&#9472; Cost &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  Expected: $2.10  <span class="dim">(range: $1.50 - $8.40)</span>
+
+<span class="dim">&#9472;&#9472;&#9472; Suggestions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="warn">&#8226;</span> <span class="dim">[lint] review lint warnings - run `dippin lint` for details</span></pre>
+    </div>
+
+    <h3>Scoring Breakdown</h3>
+    <p>Starts at 100 points, with deductions for issues:</p>
+    <table>
+      <tr><th>Issue</th><th>Deduction</th></tr>
+      <tr><td>Each lint error</td><td>-15 points</td></tr>
+      <tr><td>Each lint warning</td><td>-5 points</td></tr>
+      <tr><td>Unreachable node</td><td>-10 per node</td></tr>
+      <tr><td>Non-terminating paths</td><td>-20</td></tr>
+      <tr><td>Uncovered tool outputs</td><td>-5 per tool</td></tr>
+    </table>
+
+    <h3>Grades</h3>
+    <table>
+      <tr><th>Grade</th><th>Score Range</th></tr>
+      <tr><td><strong>A</strong></td><td>90-100</td></tr>
+      <tr><td><strong>B</strong></td><td>80-89</td></tr>
+      <tr><td><strong>C</strong></td><td>70-79</td></tr>
+      <tr><td><strong>D</strong></td><td>60-69</td></tr>
+      <tr><td><strong>F</strong></td><td>&lt;60</td></tr>
+    </table>
+
+    <h2>optimize</h2>
+    <p>Suggest cheaper model substitutions without sacrificing quality. Rules include: simple prompts can use cheaper models, nodes in retry loops can use cheaper models for mechanical iterations, and bookkeeping tasks (summary, cleanup, commit) can use cheaper models.</p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">dippin optimize</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin optimize pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Optimization Report &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+<span class="dim">&#9472;&#9472;&#9472; Cost Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  Current:   $3.59 <span class="dim">(expected)</span>
+  Optimized: $0.00 <span class="dim">(expected)</span>
+  Savings:   <span class="pass">$3.59</span> <span class="dim">(expected)</span>
+
+<span class="dim">&#9472;&#9472;&#9472; Suggestions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="warn">&#8226;</span> [InterpretRequest] simple prompt does not need an expensive model
+    claude-opus-4-6 <span class="dim">&#8594;</span> claude-haiku-4-5  <span class="pass">(saves ~$0.41)</span>
+  <span class="warn">&#8226;</span> [CommitWork] bookkeeping task can use a cheaper model
+    gpt-5.2 <span class="dim">&#8594;</span> gpt-4o-mini  <span class="pass">(saves ~$0.30)</span></pre>
+    </div>
+    <p><strong>When to use:</strong> After <code>dippin cost</code> shows high costs. Review each suggestion — some "simple" prompts may actually need a capable model.</p>
+
+    <h2>diff</h2>
+    <p>Semantic comparison between two workflow versions. Unlike text-based <code>diff</code>, this compares graph structure: nodes added/removed, edges changed, field-level modifications, and cost impact.</p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">dippin diff</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin diff v1.dip v2.dip
+<span class="dim">&#9552;&#9552;&#9552; Semantic Diff &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+<span class="dim">&#9472;&#9472;&#9472; Nodes &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">+</span> FinalQualityGate
+
+<span class="dim">&#9472;&#9472;&#9472; Edges &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">+</span> FinalQualityGate -&gt; Exit <span class="dim">[ctx.outcome = fail]</span>
+  <span class="pass">+</span> FinalQualityGate -&gt; PersistSprint <span class="dim">[ctx.outcome = success]</span>
+  <span class="fail">-</span> WriteFinalSprint -&gt; PersistSprint
+
+<span class="dim">&#9472;&#9472;&#9472; Cost Delta &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  Old: $5.35 <span class="dim">(expected)</span>  New: $5.78 <span class="dim">(expected)</span>
+  Delta: <span class="warn">+$0.43</span> <span class="dim">(expected)</span></pre>
+    </div>
+    <p><strong>When to use:</strong> Code review for workflow changes. See exactly what graph structure changed and how it affects cost, rather than parsing indentation diffs.</p>
+
+    <h2>feedback</h2>
+    <p>Compare predicted costs against actual execution telemetry to calibrate estimates. Takes the workflow file (for predicted costs) and a CSV telemetry file with columns: <code>node_id</code>, <code>input_tokens</code>, <code>output_tokens</code>, <code>cost_usd</code>.</p>
+    <pre>$ dippin feedback pipeline.dip telemetry.csv</pre>
+    <p>After running a pipeline in production, export telemetry and feed it back to see how accurate the cost predictions were. Outliers (&gt;2x or &lt;0.5x ratio) are flagged for investigation.</p>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+</body>
+</html>

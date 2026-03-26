@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Language Reference — Dippin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Floating dots -->
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="cli.html">CLI</a>
+    <a href="language.html" class="active">Language</a>
+    <a href="testing.html">Testing</a>
+    <a href="validation.html">Validation</a>
+    <a href="analysis.html">Analysis</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="editors.html">Editors</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="doc-header">
+    <div class="section-label">Syntax</div>
+    <h1>Language Reference</h1>
+    <p>Complete syntax for .dip workflow files.</p>
+  </div>
+  <div class="doc-body">
+
+    <h2>File Structure</h2>
+    <p>Every <code>.dip</code> file contains exactly one workflow. The top-level structure has four sections that must appear in order:</p>
+    <div class="flow-diagram">
+      <div class="flow-step">workflow &lt;name&gt;</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Header<br>goal, start, exit</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Defaults (optional)<br>model, provider, ...</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Node Definitions<br>agent, human, tool, ...</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Edges (optional)<br>A -&gt; B when ...</div>
+    </div>
+    <p>Dippin uses indentation-sensitive syntax (like Python). Use 2 spaces or tabs consistently. The canonical formatter always outputs 2-space indentation.</p>
+
+    <h2>Workflow Header</h2>
+    <p>The workflow declaration is the first line, followed by required and optional header fields:</p>
+    <pre>workflow my_pipeline
+  goal: "Ask user for a task, implement it, review, ship"
+  start: AskUser
+  exit: Done</pre>
+    <table>
+      <tr><th>Field</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>workflow &lt;name&gt;</code></td><td>Yes</td><td>Declares the workflow and its identifier</td></tr>
+      <tr><td><code>goal: &lt;text&gt;</code></td><td>No</td><td>Human-readable objective for this pipeline</td></tr>
+      <tr><td><code>start: &lt;NodeID&gt;</code></td><td>Yes</td><td>Entry point node — execution begins here</td></tr>
+      <tr><td><code>exit: &lt;NodeID&gt;</code></td><td>Yes</td><td>Terminal node — execution ends here</td></tr>
+    </table>
+
+    <h2>Defaults Block</h2>
+    <p>The optional <code>defaults</code> block sets graph-level configuration that applies to all nodes unless overridden at the node level.</p>
+    <pre>  defaults
+    model: claude-opus-4-6
+    provider: anthropic
+    retry_policy: standard
+    max_retries: 3
+    fidelity: high
+    max_restarts: 5
+    cache_tools: true
+    compaction: summary</pre>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>model</code></td><td>String</td><td>Default LLM model for all agent nodes</td></tr>
+      <tr><td><code>provider</code></td><td>String</td><td>Default LLM provider (e.g., "openai", "anthropic")</td></tr>
+      <tr><td><code>retry_policy</code></td><td>String</td><td>Default retry strategy name</td></tr>
+      <tr><td><code>max_retries</code></td><td>Integer</td><td>Default max retry attempts per node</td></tr>
+      <tr><td><code>fidelity</code></td><td>String</td><td>Default checkpoint fidelity level</td></tr>
+      <tr><td><code>max_restarts</code></td><td>Integer</td><td>Max loop restarts before pipeline failure (default: 5)</td></tr>
+      <tr><td><code>cache_tools</code></td><td>Boolean</td><td>Whether to cache tool call results</td></tr>
+      <tr><td><code>compaction</code></td><td>String</td><td>Context compaction mode for long pipelines</td></tr>
+    </table>
+
+    <h2>Node Kinds</h2>
+    <p>There are 6 node kinds, each with its own syntax and configuration:</p>
+    <div class="flow-diagram">
+      <div class="pipeline-box lavender">agent<br>LLM interaction</div>
+      <div class="pipeline-box green">human<br>Decision gate</div>
+      <div class="pipeline-box yellow">tool<br>Shell command</div>
+      <div class="pipeline-box lavender">parallel<br>Fan-out</div>
+      <div class="pipeline-box green">fan_in<br>Join</div>
+      <div class="pipeline-box yellow">subgraph<br>Sub-pipeline</div>
+    </div>
+
+    <h3>agent</h3>
+    <p>Agent nodes invoke an LLM. They are the most configurable node kind. Key fields include <code>model</code>, <code>provider</code>, <code>prompt</code>, <code>system_prompt</code>, <code>max_turns</code>, <code>auto_status</code>, and <code>goal_gate</code>.</p>
+    <pre>  agent Analyze
+    label: "Analyze the request"
+    model: claude-opus-4-6
+    provider: anthropic
+    goal_gate: true
+    auto_status: true
+    reads: human_response
+    writes: analysis
+    prompt:
+      You are a senior software architect.
+      Analyze the following request carefully.</pre>
+
+    <h3>human</h3>
+    <p>Human nodes pause execution and wait for human input. Two modes: <code>choice</code> (predefined options from edge labels) and <code>freeform</code> (open text input).</p>
+    <pre>  human Approve
+    label: "Ship it?"
+    mode: choice
+    default: "yes"</pre>
+
+    <h3>tool</h3>
+    <p>Tool nodes execute shell commands. The command's stdout is captured as <code>ctx.tool_stdout</code> and stderr as <code>ctx.tool_stderr</code>. Always include a <code>timeout</code>.</p>
+    <pre>  tool RunTests
+    label: "Run test suite"
+    timeout: 60s
+    command:
+      #!/bin/sh
+      set -eu
+      pytest --tb=short 2>&amp;1</pre>
+
+    <h3>parallel</h3>
+    <p>Parallel nodes fan execution out to multiple branches that run concurrently. Every <code>parallel</code> must have a matching <code>fan_in</code>.</p>
+    <pre>  parallel FanOut -&gt; TaskA, TaskB, TaskC</pre>
+
+    <h3>fan_in</h3>
+    <p>Fan-in nodes join concurrent branches back together. Sources must match the targets of a corresponding <code>parallel</code> node.</p>
+    <pre>  fan_in Join &lt;- TaskA, TaskB, TaskC</pre>
+
+    <h3>subgraph</h3>
+    <p>Subgraph nodes embed another workflow as a single step. Parameters are passed via the <code>params.*</code> namespace.</p>
+    <pre>  subgraph ReviewProcess
+    ref: review_pipeline
+    params:
+      strict: true
+      model: gpt-5.4</pre>
+
+    <h2>Edges</h2>
+    <p>The <code>edges</code> block defines connections between nodes. Each edge is a single line:</p>
+    <pre>&lt;FromID&gt; -&gt; &lt;ToID&gt; [when &lt;condition&gt;] [label: &lt;text&gt;] [weight: &lt;int&gt;] [restart: true]</pre>
+
+    <h3>Basic and Conditional Edges</h3>
+    <pre>  edges
+    AskUser -&gt; Interpret
+    Interpret -&gt; Validate
+    Validate -&gt; Approve   when ctx.outcome = success
+    Validate -&gt; Retry     when ctx.outcome = fail</pre>
+
+    <h3>Edge Attributes</h3>
+    <table>
+      <tr><th>Attribute</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>when &lt;expr&gt;</code></td><td>Condition</td><td>Boolean guard — edge only traversed if true</td></tr>
+      <tr><td><code>label: &lt;text&gt;</code></td><td>String</td><td>Human-readable label (used for human gate choices)</td></tr>
+      <tr><td><code>weight: &lt;int&gt;</code></td><td>Integer</td><td>Priority hint — higher wins among competing edges</td></tr>
+      <tr><td><code>restart: true</code></td><td>Boolean</td><td>Marks this as a back-edge (loop restart)</td></tr>
+    </table>
+
+    <h3>Restart Edges</h3>
+    <p>Restart edges create controlled loops. When followed, the engine increments a restart counter (max controlled by <code>max_restarts</code>), clears downstream nodes, resets retry budgets, and resumes from the target.</p>
+    <pre>    Task -&gt; Start when ctx.outcome = fail label: "retry" restart: true</pre>
+
+    <h2>Conditions</h2>
+    <p>Conditions appear on edges after the <code>when</code> keyword. All operators perform string comparison.</p>
+
+    <h3>Comparison Operators</h3>
+    <table>
+      <tr><th>Operator</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><code>=</code>, <code>==</code></td><td>String equality</td><td><code>ctx.outcome = success</code></td></tr>
+      <tr><td><code>!=</code></td><td>String inequality</td><td><code>ctx.outcome != fail</code></td></tr>
+      <tr><td><code>contains</code></td><td>Substring match</td><td><code>ctx.response contains "approved"</code></td></tr>
+      <tr><td><code>not contains</code></td><td>Negated substring</td><td><code>ctx.tool_stdout not contains all-done</code></td></tr>
+      <tr><td><code>startswith</code></td><td>Prefix match</td><td><code>ctx.response startswith "yes"</code></td></tr>
+      <tr><td><code>endswith</code></td><td>Suffix match</td><td><code>ctx.response endswith "done"</code></td></tr>
+      <tr><td><code>in</code></td><td>Value in list</td><td><code>ctx.status in "pass,fail,skip"</code></td></tr>
+    </table>
+
+    <h3>Logical Operators</h3>
+    <table>
+      <tr><th>Operator</th><th>Meaning</th><th>Precedence</th></tr>
+      <tr><td><code>not</code></td><td>Logical negation</td><td>Highest</td></tr>
+      <tr><td><code>and</code></td><td>Logical AND</td><td>Medium</td></tr>
+      <tr><td><code>or</code></td><td>Logical OR</td><td>Lowest</td></tr>
+    </table>
+    <p>Parentheses control precedence:</p>
+    <pre>    A -&gt; B when ctx.outcome = success and ctx.score = high
+    A -&gt; C when ctx.outcome = fail or ctx.status = blocked
+    A -&gt; D when (ctx.x = 1 or ctx.y = 2) and ctx.z = 3</pre>
+
+    <h2>Multiline Blocks</h2>
+    <p>Fields like <code>prompt</code> and <code>command</code> support multiline content. Write the key followed by <code>:</code>, then indent the content on subsequent lines:</p>
+    <pre>  agent MyAgent
+    prompt:
+      You are a code reviewer.
+
+      ## Rules
+      - Check for bugs
+      - Check for security issues
+
+      ## Context
+      ${ctx.last_response}</pre>
+    <p>The first content line's indentation sets the baseline. All content is de-indented by that amount. Empty lines are preserved. The block ends when indentation returns to or above the field's level. No quoting or escaping needed.</p>
+    <pre>  tool RunTests
+    timeout: 60s
+    command:
+      #!/bin/sh
+      set -eu
+      if pytest --tb=short 2>&amp;1; then
+        printf 'pass'
+      else
+        printf 'fail'
+        exit 1
+      fi</pre>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+</body>
+</html>
