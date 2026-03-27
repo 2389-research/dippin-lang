@@ -12,8 +12,14 @@
 .playground-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
 .pane { display: flex; flex-direction: column; }
 .pane-label { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--text-soft); }
-#editor { width: 100%; min-height: 400px; font-family: var(--mono); font-size: 0.85rem; line-height: 1.6; background: #2A2A30; color: #ddd; border: 2px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 1rem; resize: vertical; tab-size: 2; }
-#output { width: 100%; min-height: 400px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1rem; overflow: auto; white-space: pre-wrap; }
+/* Editor: textarea over a highlighted pre */
+.editor-wrap { position: relative; min-height: 400px; border-radius: 10px; overflow: hidden; border: 2px solid rgba(0,0,0,0.08); }
+#editor, #editor-highlight { font-family: var(--mono); font-size: 0.85rem; line-height: 1.6; padding: 1rem; margin: 0; tab-size: 2; white-space: pre-wrap; word-wrap: break-word; width: 100%; min-height: 400px; }
+#editor-highlight { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #2A2A30; color: #bbb; pointer-events: none; overflow: hidden; border: none; border-radius: 0; }
+#editor { position: relative; z-index: 1; background: transparent; color: transparent; caret-color: #ddd; border: none; resize: vertical; outline: none; -webkit-text-fill-color: transparent; }
+#editor::selection { background: rgba(180,160,230,0.3); -webkit-text-fill-color: #ddd; }
+/* Output pane */
+#output { width: 100%; min-height: 400px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; background: #2A2A30; color: #bbb; border: 2px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 1rem; overflow: auto; white-space: pre-wrap; }
 .toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
 .toolbar button { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; cursor: pointer; transition: all 0.2s; }
 .toolbar button:hover { border-color: var(--green); background: var(--green-light); }
@@ -63,7 +69,9 @@
   <div class="playground-grid">
     <div class="pane">
       <div class="pane-label">Source (.dip)</div>
-      <textarea id="editor" spellcheck="false">workflow Hello
+      <div class="editor-wrap">
+        <pre id="editor-highlight" aria-hidden="true"></pre>
+        <textarea id="editor" spellcheck="false" oninput="syncHighlight()" onscroll="syncScroll()">workflow Hello
   goal: "Greet the user"
   start: Greeter
   exit: Done
@@ -80,6 +88,7 @@
   edges
     Greeter -> Done
 </textarea>
+      </div>
     </div>
     <div class="pane">
       <div class="pane-label">Output</div>
@@ -90,15 +99,42 @@
 </div>
 </section>
 
+<script src="highlight.js"></script>
 <script src="wasm_exec.js"></script>
 <script>
 const go = new Go();
 let wasmReady = false;
+const editorEl = document.getElementById("editor");
+const highlightEl = document.getElementById("editor-highlight");
+const outputEl = document.getElementById("output");
+
+// Sync editor textarea content to the highlighted pre overlay.
+function syncHighlight() {
+  if (window.dippinHighlight) {
+    highlightEl.innerHTML = dippinHighlight.dippin(editorEl.value) + "\n";
+  }
+}
+function syncScroll() {
+  highlightEl.scrollTop = editorEl.scrollTop;
+  highlightEl.scrollLeft = editorEl.scrollLeft;
+}
+// Initial highlight.
+syncHighlight();
+
+// Tab key inserts 2 spaces instead of changing focus.
+editorEl.addEventListener("keydown", function(e) {
+  if (e.key === "Tab") {
+    e.preventDefault();
+    var s = this.selectionStart, end = this.selectionEnd;
+    this.value = this.value.substring(0, s) + "  " + this.value.substring(end);
+    this.selectionStart = this.selectionEnd = s + 2;
+    syncHighlight();
+  }
+});
 
 WebAssembly.instantiateStreaming(fetch("dippin.wasm"), go.importObject)
   .then(result => {
     go.run(result.instance);
-    // Go functions register asynchronously — poll until ready.
     function waitForWasm() {
       if (typeof dippinLint === "function") {
         wasmReady = true;
@@ -111,26 +147,26 @@ WebAssembly.instantiateStreaming(fetch("dippin.wasm"), go.importObject)
     waitForWasm();
   })
   .catch(err => {
-    document.getElementById("output").textContent = "Failed to load WASM: " + err;
+    outputEl.textContent = "Failed to load WASM: " + err;
   });
 
-function getSource() { return document.getElementById("editor").value; }
+function getSource() { return editorEl.value; }
 
 function runLint() {
   if (!wasmReady) return;
   setActive("btn-lint");
-  const result = dippinLint(getSource());
-  const diags = JSON.parse(result);
+  var result = dippinLint(getSource());
+  var diags = JSON.parse(result);
   if (diags && diags.error) {
-    document.getElementById("output").innerHTML = '<span class="diag-error">Parse error: ' + escapeHtml(diags.error) + '</span>';
+    outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(diags.error) + '</span>';
     return;
   }
   if (!diags || diags.length === 0) {
-    document.getElementById("output").innerHTML = '<span style="color:var(--green-deep)">No issues found.</span>';
+    outputEl.innerHTML = '<span class="hl-pass">No issues found.</span>';
     return;
   }
-  document.getElementById("output").innerHTML = diags.map(d => {
-    const cls = d.severity === "error" ? "diag-error" : d.severity === "warning" ? "diag-warning" : "diag-hint";
+  outputEl.innerHTML = diags.map(function(d) {
+    var cls = d.severity === "error" ? "hl-fail" : d.severity === "warning" ? "hl-warn" : "hl-dim";
     return '<span class="' + cls + '">' + d.severity + '[' + d.code + ']</span>: ' + escapeHtml(d.message);
   }).join("\n");
 }
@@ -138,20 +174,24 @@ function runLint() {
 function runParse() {
   if (!wasmReady) return;
   setActive("btn-parse");
-  const result = dippinParse(getSource());
-  try { document.getElementById("output").textContent = JSON.stringify(JSON.parse(result), null, 2); }
-  catch(e) { document.getElementById("output").textContent = result; }
+  var result = dippinParse(getSource());
+  try {
+    var pretty = JSON.stringify(JSON.parse(result), null, 2);
+    outputEl.innerHTML = dippinHighlight.json(pretty);
+  } catch(e) {
+    outputEl.textContent = result;
+  }
 }
 
 function runFormat() {
   if (!wasmReady) return;
   setActive("btn-format");
-  const result = dippinFormat(getSource());
-  document.getElementById("output").textContent = result;
+  var result = dippinFormat(getSource());
+  outputEl.innerHTML = dippinHighlight.dippin(result);
 }
 
 function setActive(id) {
-  document.querySelectorAll(".toolbar button").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".toolbar button").forEach(function(b) { b.classList.remove("active"); });
   document.getElementById(id).classList.add("active");
 }
 

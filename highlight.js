@@ -181,29 +181,36 @@
     return /^\s*[\[{]/.test(t.trim());
   }
 
+  // Auto-highlight a string and return HTML. Exported for playground use.
+  function autoHighlight(raw) {
+    var h = esc(raw);
+    if (isDiagnostic(raw)) return highlightTerminal(h);
+    if (isDippin(raw)) return highlightDippin(h);
+    if (isTerminal(raw)) return highlightTerminal(h);
+    if (isShell(raw)) return highlightShell(h);
+    if (isJSON(raw)) return highlightJSON(h);
+    return null;
+  }
+
+  // Expose for playground.
+  window.dippinHighlight = {
+    dippin: function (raw) { return highlightDippin(esc(raw)); },
+    json: function (raw) { return highlightJSON(esc(raw)); },
+    auto: autoHighlight
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
-    var pres = document.querySelectorAll(".doc-body pre");
+    // Target all pre elements on the page, not just .doc-body.
+    var pres = document.querySelectorAll("pre");
     pres.forEach(function (pre) {
       // Skip blocks with existing manual markup.
       if (pre.querySelector("span")) return;
+      // Skip blocks inside compare-code (already hand-highlighted).
+      if (pre.closest(".compare-code")) return;
 
       var raw = pre.textContent;
-      var h = esc(raw);
-
-      if (isDiagnostic(raw)) {
-        h = highlightTerminal(h);
-      } else if (isDippin(raw)) {
-        h = highlightDippin(h);
-      } else if (isTerminal(raw)) {
-        h = highlightTerminal(h);
-      } else if (isShell(raw)) {
-        h = highlightShell(h);
-      } else if (isJSON(raw)) {
-        h = highlightJSON(h);
-      } else {
-        return;
-      }
-      pre.innerHTML = h;
+      var h = autoHighlight(raw);
+      if (h) pre.innerHTML = h;
     });
   });
 })();
