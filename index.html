@@ -3,56 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blog — Dippin</title>
-<meta name="description" content="Tutorials, deep dives, and practical guides for every part of the Dippin AI pipeline toolchain.">
-<meta property="og:title" content="Dippin Blog — Tutorials and Guides">
-<meta property="og:description" content="Tutorials, deep dives, and practical guides for every part of the Dippin AI pipeline toolchain.">
+<title>Dippin — A Language for AI Pipelines</title>
+<meta name="description" content="Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution.">
+<meta property="og:title" content="Dippin — A Language for AI Pipelines">
+<meta property="og:description" content="Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution. Replace escaped DOT strings with real code.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/">
 <meta property="og:site_name" content="Dippin">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Dippin Blog — Tutorials and Guides">
-<meta name="twitter:description" content="Tutorials, deep dives, and practical guides for every part of the Dippin AI pipeline toolchain.">
-<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/">
+<meta name="twitter:title" content="Dippin — A Language for AI Pipelines">
+<meta name="twitter:description" content="Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css">
-<style>
-.blog-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
-.post-card {
-  background: white; border: 1.5px solid var(--border); border-radius: 14px;
-  padding: 2rem; position: relative; overflow: hidden;
-  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-  text-decoration: none; display: block; color: inherit;
-}
-.post-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; }
-.post-card:nth-child(5n+1)::before { background: var(--lavender-deep); }
-.post-card:nth-child(5n+2)::before { background: var(--green); }
-.post-card:nth-child(5n+3)::before { background: var(--yellow-deep); }
-.post-card:nth-child(5n+4)::before { background: var(--pink-deep); }
-.post-card:nth-child(5n+5)::before { background: #7EC8E3; }
-.post-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.06); border-color: var(--lavender-deep); }
-.post-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; gap: 1rem; align-items: center; }
-.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
-.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
-.post-tag.deep-dive { color: var(--lavender-deep); background: var(--lavender-light); border: 1px solid var(--lavender); }
-.post-tag.tutorial { color: #b8960a; background: var(--yellow-light); border: 1px solid var(--yellow); }
-.post-tag.reference { color: var(--pink-deep); background: rgba(242,196,212,0.3); border: 1px solid var(--pink); }
-.post-card h3 { font-family: var(--sans); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
-.post-card p { color: var(--text-soft); font-size: 0.9rem; line-height: 1.65; margin: 0; }
-.post-card .read-more { font-family: var(--mono); font-size: 0.75rem; color: var(--green-deep); margin-top: 0.8rem; display: inline-block; font-weight: 600; }
-.topic-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
-.topic-filter button {
-  font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em;
-  padding: 0.35rem 0.9rem; border-radius: 99px; border: 1.5px solid var(--border);
-  background: white; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
-}
-.topic-filter button:hover, .topic-filter button.active { background: var(--green-deep); color: white; border-color: var(--green-deep); }
-@media (max-width: 768px) { .post-card { padding: 1.2rem; } .post-card h3 { font-size: 1rem; } }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- Floating dots -->
 <div class="dots">
   <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   <div class="dot"></div><div class="dot"></div><div class="dot"></div>
@@ -60,116 +28,321 @@
   <div class="dot"></div><div class="dot"></div><div class="dot"></div>
 </div>
 
+<!-- Nav -->
 <nav class="nav">
 <div class="nav-top">
-  <a href="../index.html" class="nav-brand">Dippin</a>
+  <a href="index.html" class="nav-brand">Dippin</a>
   <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
   <div class="nav-primary">
-    <a href="../language.html">Docs</a>
-    <a href="../playground.html">Playground</a>
-    <a href="index.html" class="active">Blog</a>
+    <a href="language.html">Docs</a>
+    <a href="playground.html">Playground</a>
+    <a href="blog/index.html">Blog</a>
     <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
   </div>
 </div>
 <div class="nav-sub">
   <div class="nav-sub-inner">
-    <a href="../cli.html">CLI</a>
-    <a href="../language.html">Language</a>
-    <a href="../testing.html">Testing</a>
-    <a href="../validation.html">Validation</a>
-    <a href="../analysis.html">Analysis</a>
-    <a href="../architecture.html">Architecture</a>
-    <a href="../editors.html">Editors</a>
-    <a href="../changelog.html">Changelog</a>
+    <a href="cli.html">CLI</a>
+    <a href="language.html">Language</a>
+    <a href="testing.html">Testing</a>
+    <a href="validation.html">Validation</a>
+    <a href="analysis.html">Analysis</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="editors.html">Editors</a>
+    <a href="changelog.html">Changelog</a>
   </div>
 </div>
 <div class="nav-mobile">
-  <a href="../language.html">Docs</a>
-  <a href="../playground.html">Playground</a>
-  <a href="index.html">Blog</a>
+  <a href="language.html">Docs</a>
+  <a href="playground.html">Playground</a>
+  <a href="blog/index.html">Blog</a>
   <div class="nav-divider"></div>
-  <a href="../cli.html">CLI</a>
-  <a href="../language.html">Language</a>
-  <a href="../testing.html">Testing</a>
-  <a href="../validation.html">Validation</a>
-  <a href="../analysis.html">Analysis</a>
-  <a href="../architecture.html">Architecture</a>
-  <a href="../editors.html">Editors</a>
-  <a href="../changelog.html">Changelog</a>
+  <a href="cli.html">CLI</a>
+  <a href="language.html">Language</a>
+  <a href="testing.html">Testing</a>
+  <a href="validation.html">Validation</a>
+  <a href="analysis.html">Analysis</a>
+  <a href="architecture.html">Architecture</a>
+  <a href="editors.html">Editors</a>
+  <a href="changelog.html">Changelog</a>
   <div class="nav-divider"></div>
   <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
 </div>
 </nav>
 
-<section class="doc">
+<!-- Hero -->
+<section class="hero">
 <div class="container">
-  <div class="doc-header">
-    <div class="section-label">Learn</div>
-    <h1>Blog</h1>
-    <p>Tutorials, deep dives, and practical guides for every part of the Dippin toolchain.</p>
+  <div class="hero-badge" id="version-badge">latest</div>
+  <script>
+  fetch('https://api.github.com/repos/2389-research/dippin-lang/releases/latest')
+    .then(r=>r.json()).then(d=>{if(d.tag_name)document.getElementById('version-badge').textContent=d.tag_name})
+    .catch(()=>{})
+  </script>
+  <h1>A language for<br><em>AI pipelines</em></h1>
+  <p class="hero-sub">
+    Author multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution. Replace escaped DOT strings with real code.
+  </p>
+  <div class="hero-actions">
+    <a href="#install" class="btn btn-primary">Get Started</a>
+    <a href="https://github.com/2389-research/dippin-lang" class="btn btn-ghost">GitHub &rarr;</a>
   </div>
+</div>
+</section>
 
-  <div class="doc-body">
+<!-- Comparison -->
+<section class="compare">
+<div class="container">
+  <div class="section-label">Before &amp; After</div>
+  <div class="section-title">DOT wasn't built for this</div>
+  <p class="section-desc">
+    Graphviz DOT is great for graph visualization. But authoring AI pipelines with multi-line prompts, typed nodes, and conditional edges? It falls apart.
+  </p>
 
-    <div class="blog-grid">
+  <div class="compare-grid">
+    <div class="compare-panel">
+      <span class="compare-label bad">Graphviz DOT</span>
+      <div class="compare-code"><pre><span class="kw">digraph</span> Pipeline {
+  Planner [<span class="str">kind="agent"</span>
+    <span class="str">llm_model="claude-opus-4-6"</span>
+    <span class="str">prompt="You are a senior architect.\n
+    Analyze the request and\nproduce a plan."</span>];
+  Coder [<span class="str">kind="agent"</span>
+    <span class="str">llm_model="claude-sonnet-4-6"</span>
+    <span class="str">prompt="Implement the plan.\n
+    Use best practices."</span>];
+  Review [<span class="str">kind="agent"</span>
+    <span class="str">auto_status="true"</span>
+    <span class="str">prompt="Review the code.\n
+    Set STATUS: success or fail."</span>];
 
-      <a class="post-card" data-topic="guide" href="getting-started.html">
-        <div class="post-meta">
-          <span class="post-tag guide">Guide</span>
-          Authoring
-        </div>
-        <h3>Getting Started with Dippin</h3>
-        <p>Install the toolchain, write your first workflow, validate it, and export to DOT — in under 5 minutes.</p>
-        <span class="read-more">Read &rarr;</span>
-      </a>
+  Planner <span class="op">-></span> Coder;
+  Coder <span class="op">-></span> Review;
+  Review <span class="op">-></span> Done
+    [<span class="str">condition="context.outcome==success"</span>];
+  Review <span class="op">-></span> Coder
+    [<span class="str">condition="context.outcome==fail"</span>
+     <span class="str">restart="true"</span>];
+}</pre></div>
+    </div>
 
-      <a class="post-card" data-topic="guide" href="scenario-testing.html">
-        <div class="post-meta">
-          <span class="post-tag guide">Guide</span>
-          Testing
-        </div>
-        <h3>Scenario Testing with .test.json</h3>
-        <p>Write deterministic tests for non-deterministic pipelines. Inject context values, assert visited/not-visited nodes, check path ordering, and run in CI.</p>
-        <span class="read-more">Read &rarr;</span>
-      </a>
+    <div class="compare-panel">
+      <span class="compare-label good">Dippin</span>
+      <div class="compare-code"><pre><span class="kw">workflow</span> <span class="node">CodeReview</span>
+  <span class="kw">goal:</span> <span class="str">"Plan, implement, and review"</span>
+  <span class="kw">start:</span> Planner
+  <span class="kw">exit:</span> Done
 
-      <a class="post-card" data-topic="guide" href="migrating-from-dot.html">
-        <div class="post-meta">
-          <span class="post-tag guide">Guide</span>
-          Migration
-        </div>
-        <h3>Migrating from DOT to Dippin</h3>
-        <p>Step-by-step guide: <code>dippin migrate</code>, <code>validate-migration</code> for parity checking, handling model name differences, and verifying nothing broke.</p>
-        <span class="read-more">Read &rarr;</span>
-      </a>
+  <span class="kw">agent</span> <span class="node">Planner</span>
+    <span class="kw">model:</span> claude-opus-4-6
+    <span class="kw">prompt:</span>
+      You are a senior architect.
+      Analyze the request and
+      produce an implementation plan.
 
-      <a class="post-card" data-topic="guide" href="ci-integration.html">
-        <div class="post-meta">
-          <span class="post-tag guide">Guide</span>
-          Integration
-        </div>
-        <h3>CI Integration: Lint, Test, Format in Your Pipeline</h3>
-        <p>Set up GitHub Actions with <code>dippin lint</code>, <code>test</code>, and <code>fmt --check</code>. Exit codes, JSON output for machine parsing, and the dogfooding CI job.</p>
-        <span class="read-more">Read &rarr;</span>
-      </a>
+  <span class="kw">agent</span> <span class="node">Coder</span>
+    <span class="kw">model:</span> claude-sonnet-4-6
+    <span class="kw">prompt:</span>
+      Implement the plan.
+      Use best practices.
 
-      <a class="post-card" data-topic="guide" href="editor-setup.html">
-        <div class="post-meta">
-          <span class="post-tag guide">Guide</span>
-          Tooling
-        </div>
-        <h3>Editor Setup: LSP, VS Code, and Tree-sitter</h3>
-        <p>Get diagnostics, hover docs, go-to-definition, and syntax highlighting in your editor. Covers VS Code extension, Neovim with LSP, and the tree-sitter grammar.</p>
-        <span class="read-more">Read &rarr;</span>
-      </a>
+  <span class="kw">agent</span> <span class="node">Review</span>
+    <span class="kw">auto_status:</span> true
+    <span class="kw">prompt:</span>
+      Review the code.
+      Set STATUS: success or fail.
 
+  <span class="kw">agent</span> <span class="node">Done</span>
+    <span class="kw">prompt:</span> Ship it.
+
+  <span class="kw">edges</span>
+    Planner <span class="op">-></span> Coder
+    Coder <span class="op">-></span> Review
+    Review <span class="op">-></span> Done  <span class="kw">when</span> ctx.outcome = success
+    Review <span class="op">-></span> Coder  <span class="kw">when</span> ctx.outcome = fail  <span class="kw">restart:</span> true</pre></div>
     </div>
   </div>
 </div>
 </section>
 
+<!-- Features -->
+<section>
+<div class="container">
+  <div class="section-label">Features</div>
+  <div class="section-title">Everything a pipeline needs</div>
+  <p class="section-desc">
+    First-class syntax for the things that matter. Not string attributes on a graph node.
+  </p>
+
+  <div class="features-grid">
+    <div class="feature">
+      <span class="feature-num">01</span>
+      <h3>Multi-line prompts</h3>
+      <p>Indented blocks with zero escaping. Write real prompts, preserve blank lines, embed variables like <code>${ctx.input}</code>.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">02</span>
+      <h3>Typed node kinds</h3>
+      <p><code>agent</code>, <code>tool</code>, <code>human</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Each with typed, validated config fields.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">03</span>
+      <h3>35 diagnostics</h3>
+      <p>Structural validation and semantic lint. Dead edges, unreachable nodes, missing prompts, invalid models. Things DOT silently ignores.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">04</span>
+      <h3>Parallel execution</h3>
+      <p>Native <code>parallel</code> fan-out and <code>fan_in</code> join with per-branch model overrides. Multi-provider consensus in a few lines.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">05</span>
+      <h3>Scenario testing</h3>
+      <p><code>dippin test</code> injects context, simulates every conditional branch, and checks assertions. CI-ready JSON output.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">06</span>
+      <h3>LSP server</h3>
+      <p>Built-in Language Server Protocol server. Hover docs, go-to-definition, completions, and live diagnostics in any editor.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">07</span>
+      <h3>VS Code syntax</h3>
+      <p>Syntax highlighting for <code>.dip</code> files. Keywords, node IDs, strings, conditions, and edge operators all colored distinctly.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">08</span>
+      <h3>Cost estimation</h3>
+      <p><code>dippin cost</code> estimates per-run cost by model and provider. <code>dippin optimize</code> suggests cheaper alternatives.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">09</span>
+      <h3>DOT migration</h3>
+      <p><code>dippin migrate</code> converts existing DOT pipelines to Dippin. <code>validate-migration</code> verifies structural parity.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">10</span>
+      <h3>Health reports</h3>
+      <p><code>dippin doctor</code> grades your workflow A&ndash;F with actionable suggestions. Coverage analysis, reachability, termination checks.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Terminal demos -->
+<section class="terminal-section">
+<div class="container">
+  <div class="section-label">In action</div>
+  <div class="section-title">Catch problems before runtime</div>
+  <p class="section-desc">
+    Validate, lint, and test without deploying. Every command works offline against the workflow source.
+  </p>
+
+  <div class="terminals">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">validate &amp; lint</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin validate pipeline.dip
+<span class="pass">validation passed</span>
+
+<span class="prompt">$</span> dippin lint pipeline.dip
+<span class="warn">&#9888; DIP110</span> <span class="dim">empty prompt on agent</span>
+  <span class="dim">"Summarize" [line 45]</span>
+<span class="warn">&#9888; DIP111</span> <span class="dim">tool node without timeout</span>
+  <span class="dim">"RunTests" [line 72]</span></pre>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">scenario tests</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin test pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+  <span class="pass">PASS</span>  happy path &#8212; all reviews pass
+  <span class="pass">PASS</span>  build fails &#8212; restarts loop
+  <span class="pass">PASS</span>  review rejects &#8212; exits clean
+<span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="pass">3 tests: 3 passed, 0 failed</span></pre>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">health check</span>
+      </div>
+      <pre><span class="prompt">$</span> dippin doctor pipeline.dip
+<span class="dim">&#9552;&#9552;&#9552; Health Report &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+  Grade: <span class="pass">A</span>  <span class="dim">(score: 95/100)</span>
+  Lint:  <span class="pass">0 errors</span>, <span class="warn">2 warnings</span>
+  Coverage: <span class="pass">12/12 nodes reachable</span>
+  Cost: <span class="dim">$0.42/run (estimated)</span>
+<span class="dim">&#9472;&#9472;&#9472; Suggestions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class="warn">&#8226;</span> <span class="dim">Add timeout to tool "RunTests"</span></pre>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Install -->
+<section id="install">
+<div class="container">
+  <div class="section-label">Install</div>
+  <div class="section-title">One command</div>
+
+  <div class="install-box">
+    <h3>Go install</h3>
+    <div class="install-cmd">
+      <span class="prompt">$</span> go install github.com/2389-research/dippin-lang/cmd/dippin@latest
+    </div>
+    <div class="install-or">or</div>
+    <h3>Homebrew</h3>
+    <div class="install-cmd">
+      <span class="prompt">$</span> brew install 2389-research/tap/dippin
+    </div>
+    <div class="install-or">then</div>
+    <h3>Verify</h3>
+    <div class="install-cmd">
+      <span class="prompt">$</span> dippin version
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Latest from the Blog -->
+<section>
+<div class="container">
+  <div class="section-label">From the Blog</div>
+  <div class="section-title">Learn the toolchain</div>
+  <p class="section-desc">Hands-on guides for every part of Dippin, from first install to CI integration.</p>
+
+  <div class="features-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <a href="blog/getting-started.html" class="feature" style="text-decoration:none;color:inherit;">
+      <span class="feature-num">New</span>
+      <h3>Getting Started</h3>
+      <p>Install the toolchain, write your first workflow, validate it, and export to DOT &mdash; in under 10 minutes.</p>
+    </a>
+    <a href="blog/scenario-testing.html" class="feature" style="text-decoration:none;color:inherit;">
+      <span class="feature-num">New</span>
+      <h3>Scenario Testing</h3>
+      <p>Write deterministic tests for non-deterministic AI pipelines. Inject context, assert on paths, run in CI.</p>
+    </a>
+    <a href="blog/ci-integration.html" class="feature" style="text-decoration:none;color:inherit;">
+      <span class="feature-num">New</span>
+      <h3>CI Integration</h3>
+      <p>Set up GitHub Actions to lint, test, and format-check your workflows on every push.</p>
+    </a>
+  </div>
+
+  <p style="margin-top: 1.5rem;"><a href="blog/index.html" style="font-family:var(--mono);font-size:0.85rem;">See all 25 posts &rarr;</a></p>
+</div>
+</section>
+
+<!-- Footer -->
 <footer>
 <div class="container">
   <div class="footer-inner">
@@ -177,7 +350,7 @@
     <div class="footer-links">
       <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
       <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
-      <a href="../changelog.html">Changelog</a>
+      <a href="changelog.html">Changelog</a>
     </div>
   </div>
   <div class="footer-copy">
@@ -186,5 +359,6 @@
 </div>
 </footer>
 
+<script src="highlight.js"></script>
 </body>
 </html>
