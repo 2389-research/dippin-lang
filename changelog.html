@@ -37,12 +37,20 @@
 </div>
 
 <nav class="nav">
-<div class="nav-inner">
+<div class="nav-top">
   <a href="index.html" class="nav-brand">Dippin</a>
-  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
-  <div class="nav-links">
+  <div class="nav-primary">
+    <a href="language.html">Docs</a>
+    <a href="playground.html">Playground</a>
+    <a href="blog/index.html">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
+  </div>
+</div>
+<div class="nav-sub">
+  <div class="nav-sub-inner">
     <a href="cli.html">CLI</a>
     <a href="language.html">Language</a>
     <a href="testing.html">Testing</a>
@@ -50,10 +58,24 @@
     <a href="analysis.html">Analysis</a>
     <a href="architecture.html">Architecture</a>
     <a href="editors.html">Editors</a>
-    <a href="playground.html">Playground</a>
     <a href="changelog.html" class="active">Changelog</a>
-    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
   </div>
+</div>
+<div class="nav-mobile">
+  <a href="language.html">Docs</a>
+  <a href="playground.html">Playground</a>
+  <a href="blog/index.html">Blog</a>
+  <div class="nav-divider"></div>
+  <a href="cli.html">CLI</a>
+  <a href="language.html">Language</a>
+  <a href="testing.html">Testing</a>
+  <a href="validation.html">Validation</a>
+  <a href="analysis.html">Analysis</a>
+  <a href="architecture.html">Architecture</a>
+  <a href="editors.html">Editors</a>
+  <a href="changelog.html">Changelog</a>
+  <div class="nav-divider"></div>
+  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
 </div>
 </nav>
 
