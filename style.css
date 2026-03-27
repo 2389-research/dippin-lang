@@ -261,9 +261,10 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
 .doc-body h3 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 0.5rem; }
 .doc-body p { color: var(--text-mid); margin-bottom: 1rem; max-width: 720px; }
 .doc-body pre { background: #2A2A30; color: #bbb; padding: 1.2rem; border-radius: 10px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; overflow-x: auto; margin-bottom: 1.5rem; border: 2px solid rgba(0,0,0,0.08); }
-.doc-body table { border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; width: 100%; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.doc-body table { border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; width: 100%; }
 .doc-body th { text-align: left; font-weight: 700; padding: 0.6rem 1rem; border-bottom: 2px solid var(--border); }
 .doc-body td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-mid); }
+.doc-body td code { white-space: nowrap; }
 
 /* Cards */
 .cmd-card { background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; transition: border-color 0.2s, transform 0.2s; }
@@ -337,4 +338,23 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
   .install-cmd { font-size: 0.72rem; word-break: break-all; }
   .feature p code { white-space: normal; }
   .nav-links { font-size: 0.95rem; }
+
+  /* Tables → stacked cards on mobile */
+  .doc-body table, .doc-body thead, .doc-body tbody, .doc-body tr, .doc-body th, .doc-body td {
+    display: block; width: 100%;
+  }
+  .doc-body thead { display: none; }
+  .doc-body tr {
+    background: white; border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 0.8rem 1rem; margin-bottom: 0.6rem;
+  }
+  .doc-body td {
+    padding: 0.2rem 0; border: none; font-size: 0.85rem;
+  }
+  .doc-body td:first-child {
+    font-weight: 700; color: var(--text); margin-bottom: 0.3rem;
+  }
+  .doc-body td:first-child code { font-weight: 600; white-space: normal; word-break: break-word; }
+  .doc-body td:last-child { color: var(--text-soft); }
+  .doc-body td code { white-space: normal; word-break: break-word; }
 }
