@@ -32,6 +32,8 @@
     <a href="analysis.html">Analysis</a>
     <a href="architecture.html">Architecture</a>
     <a href="editors.html">Editors</a>
+    <a href="playground.html">Playground</a>
+    <a href="changelog.html">Changelog</a>
     <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
   </div>
 </div>
@@ -217,6 +219,14 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
       <h4>Clearing tool defaults</h4>
       <p>Tool nodes auto-seed <code>ctx.tool_stdout</code> and <code>ctx.outcome</code> to <code>"success"</code>. To test unconditional fallback edges after a tool node, set the key to an empty string: <code>"ToolNode.tool_stdout": ""</code>.</p>
     </div>
+
+    <h2>Coverage Flag</h2>
+    <p>Use <code>--coverage</code> to report node and edge coverage across all test scenarios:</p>
+    <pre>$ dippin test --coverage gate.dip
+  PASS  success path
+  PASS  failure path
+  Coverage: 4/4 nodes (100%), 4/4 edges (100%)</pre>
+    <p>This helps identify nodes or edges that no test scenario exercises.</p>
 
     <h2>CI Integration</h2>
     <p>Use <code>--format json</code> for machine-readable output. Exit code is 0 if all tests pass, 1 if any fail.</p>

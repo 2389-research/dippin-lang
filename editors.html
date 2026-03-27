@@ -32,6 +32,8 @@
     <a href="analysis.html">Analysis</a>
     <a href="architecture.html">Architecture</a>
     <a href="editors.html" class="active">Editors</a>
+    <a href="playground.html">Playground</a>
+    <a href="changelog.html">Changelog</a>
     <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
   </div>
 </div>
@@ -50,7 +52,7 @@
     <p>The built-in LSP server (<code>dippin lsp</code>) provides rich editing features for any LSP-compatible editor. It communicates over stdio using JSON-RPC 2.0.</p>
     <table>
       <tr><th>Feature</th><th>Description</th></tr>
-      <tr><td><strong>Diagnostics</strong></td><td>Parse errors and lint warnings published on every change (DIP001-DIP125)</td></tr>
+      <tr><td><strong>Diagnostics</strong></td><td>Parse errors and lint warnings published on every change (DIP001-DIP126)</td></tr>
       <tr><td><strong>Hover</strong></td><td>Tooltip showing node kind, model, provider, prompt preview, and field summary</td></tr>
       <tr><td><strong>Go-to-definition</strong></td><td>Jump from a node reference in an edge to the node's declaration</td></tr>
       <tr><td><strong>Autocomplete</strong></td><td>Node IDs in edges, field names within node blocks, keywords</td></tr>
@@ -130,6 +132,9 @@ lspconfig.dippin.setup({})</pre>
     dip = 'dippin',
   },
 })</pre>
+
+    <h3>Tree-sitter</h3>
+    <p>For full syntax highlighting with tree-sitter, install the <code>tree-sitter-dippin</code> grammar. This provides more accurate highlighting than regex-based syntax files, including proper scoping of multiline blocks and condition expressions.</p>
 
     <h3>Basic Syntax Highlighting</h3>
     <p>For keyword highlighting without tree-sitter, create <code>~/.config/nvim/syntax/dippin.vim</code>:</p>

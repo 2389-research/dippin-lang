@@ -239,7 +239,7 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
 .doc-body h3 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 0.5rem; }
 .doc-body p { color: var(--text-mid); margin-bottom: 1rem; max-width: 720px; }
 .doc-body pre { background: #2A2A30; color: #bbb; padding: 1.2rem; border-radius: 10px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; overflow-x: auto; margin-bottom: 1.5rem; border: 2px solid rgba(0,0,0,0.08); }
-.doc-body table { border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; width: 100%; }
+.doc-body table { border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; width: 100%; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .doc-body th { text-align: left; font-weight: 700; padding: 0.6rem 1rem; border-bottom: 2px solid var(--border); }
 .doc-body td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-mid); }
 
@@ -307,9 +307,12 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
   .flow-step { font-size: 0.7rem; padding: 0.4rem 0.7rem; }
   .doc-body pre { font-size: 0.7rem; padding: 0.8rem; }
   .compare-code { font-size: 0.65rem; padding: 0.8rem; }
-  code { font-size: 0.75em; padding: 0.1em 0.35em; }
+  code { font-size: 0.75em; padding: 0.1em 0.35em; white-space: normal; word-break: break-word; }
   section { padding: 4rem 0; }
   .container { padding: 0 1rem; }
   .hero h1 { font-size: 2.5rem; }
   .hero-sub { font-size: 1rem; }
+  .install-cmd { font-size: 0.72rem; word-break: break-all; }
+  .feature p code { white-space: normal; }
+  .nav-links { font-size: 0.95rem; }
 }

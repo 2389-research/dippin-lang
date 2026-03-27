@@ -32,6 +32,8 @@
     <a href="analysis.html">Analysis</a>
     <a href="architecture.html">Architecture</a>
     <a href="editors.html">Editors</a>
+    <a href="playground.html">Playground</a>
+    <a href="changelog.html">Changelog</a>
     <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
   </div>
 </div>
@@ -89,7 +91,7 @@
     <div class="cmd-card">
       <h3>lint</h3>
       <div class="cmd-usage">dippin lint &lt;file&gt;</div>
-      <p>Run both structural validation and semantic linting (DIP001-DIP009 + DIP101-DIP125). All 34 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
+      <p>Run both structural validation and semantic linting (DIP001-DIP009 + DIP101-DIP126). All 35 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
     </div>
 
     <div class="cmd-card">
@@ -160,8 +162,14 @@
 
     <div class="cmd-card">
       <h3>test</h3>
-      <div class="cmd-usage">dippin test [--verbose] &lt;file.dip&gt;</div>
-      <p>Run scenario tests defined in <code>.test.json</code> files against a workflow. Auto-discovers the test file from the workflow path. Use <code>--verbose</code> to show execution paths.</p>
+      <div class="cmd-usage">dippin test [--verbose] [--coverage] &lt;file.dip&gt;</div>
+      <p>Run scenario tests defined in <code>.test.json</code> files against a workflow. Auto-discovers the test file from the workflow path. Use <code>--verbose</code> to show execution paths. Use <code>--coverage</code> to report node and edge coverage across all test scenarios.</p>
+    </div>
+
+    <div class="cmd-card">
+      <h3>watch</h3>
+      <div class="cmd-usage">dippin watch [--lint] [--test] &lt;file.dip&gt;</div>
+      <p>Watch a workflow file for changes and re-run validation automatically. Use <code>--lint</code> to include semantic linting on each change, or <code>--test</code> to re-run scenario tests. Debounces rapid saves.</p>
     </div>
 
   </div>

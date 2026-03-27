@@ -32,6 +32,8 @@
     <a href="analysis.html">Analysis</a>
     <a href="architecture.html" class="active">Architecture</a>
     <a href="editors.html">Editors</a>
+    <a href="playground.html">Playground</a>
+    <a href="changelog.html">Changelog</a>
     <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
   </div>
 </div>
@@ -114,7 +116,7 @@
 │
 ├── validator/          # Graph validation + semantic linting
 │   ├── validate.go     # 9 structural checks (DIP001-DIP009)
-│   ├── lint.go         # Lint orchestration (DIP101-DIP125)
+│   ├── lint.go         # Lint orchestration (DIP101-DIP126)
 │   └── diagnostic.go   # Diagnostic type, Result, Severity
 │
 ├── formatter/          # Canonical .dip source formatter
@@ -147,7 +149,7 @@
       </div>
       <div class="decision-card">
         <h4>No short-circuiting validation</h4>
-        <p>All 9 structural checks and all 22 semantic checks run unconditionally. A single call reports every issue, not just the first. This enables batch fixing.</p>
+        <p>All 9 structural checks and all 26 semantic checks run unconditionally. A single call reports every issue, not just the first. This enables batch fixing.</p>
       </div>
       <div class="decision-card">
         <h4>Zero external dependencies</h4>

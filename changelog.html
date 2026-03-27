@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelog — Dippin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.version-card { background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+.version-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; }
+.version-card:nth-child(4n+1)::before { background: var(--green-deep); }
+.version-card:nth-child(4n+2)::before { background: var(--lavender-deep); }
+.version-card:nth-child(4n+3)::before { background: var(--yellow-deep); }
+.version-card:nth-child(4n+4)::before { background: var(--pink-deep); }
+.version-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.version-tag { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--text); }
+.version-date { font-family: var(--mono); font-size: 0.8rem; color: var(--text-soft); }
+.version-card h4 { font-size: 0.85rem; font-weight: 700; color: var(--text); margin: 1.2rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.version-card h4:first-of-type { margin-top: 0; }
+.version-card ul { margin: 0; padding-left: 1.3rem; }
+.version-card li { color: var(--text-mid); font-size: 0.88rem; line-height: 1.7; margin-bottom: 0.3rem; }
+.version-card li strong { color: var(--text); }
+.version-card li code { font-size: 0.78em; }
+.gh-link { font-family: var(--mono); font-size: 0.75rem; color: var(--green-deep); margin-top: 0.8rem; display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- Floating dots -->
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="cli.html">CLI</a>
+    <a href="language.html">Language</a>
+    <a href="testing.html">Testing</a>
+    <a href="validation.html">Validation</a>
+    <a href="analysis.html">Analysis</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="editors.html">Editors</a>
+    <a href="playground.html">Playground</a>
+    <a href="changelog.html" class="active">Changelog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="doc-header">
+    <div class="section-label">History</div>
+    <h1>Changelog</h1>
+    <p>All notable changes to dippin-lang. Versions follow <a href="https://semver.org/">semver</a>.</p>
+  </div>
+
+  <div class="doc-body">
+
+    <!-- v0.11.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.11.0</span>
+        <span class="version-date">2026-03-27</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong>DIP126</strong> lint rule: subgraph <code>ref:</code> file validation — warns when referenced workflow file does not exist on disk.</li>
+        <li><strong><code>dippin watch</code></strong> command: file watcher that re-runs lint on <code>.dip</code> changes with 200ms debounce.</li>
+        <li><strong><code>dippin test --coverage</code></strong> flag: edge coverage summary showing which workflow edges were/weren't traversed by test scenarios.</li>
+        <li><strong>Tree-sitter grammar</strong> in <code>editors/tree-sitter-dippin/</code> — grammar.js, external scanner for indentation, highlight queries. Enables syntax highlighting in Neovim, Helix, and Zed.</li>
+        <li><strong>WASM playground</strong> — browser-based editor with live parse, lint, and format via WebAssembly.</li>
+        <li><code>gemini-3.1-pro-preview-customtools</code> added to model catalog.</li>
+        <li>35 diagnostic codes total.</li>
+      </ul>
+      <h4>Fixed</h4>
+      <ul>
+        <li><strong>CI failures</strong>: <code>errcheck</code>, <code>funlen</code>, and <code>misspell</code> violations resolved.</li>
+        <li><strong>Migration parity</strong>: model names in <code>.dip</code> files now match DOT originals.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.11.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.10.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.10.0</span>
+        <span class="version-date">2026-03-26</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong>DIP123</strong> lint rule: tool command shell syntax errors via <code>bash -n</code>.</li>
+        <li><strong>DIP124</strong> lint rule: <code>${ctx.*}</code> references in tool commands.</li>
+        <li><strong>DIP125</strong> lint rule (hint): tool command binary not found on PATH.</li>
+        <li><strong>Brochure site</strong> with 8 pages hosted on GitHub Pages.</li>
+        <li>34 diagnostic codes total.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.10.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.9.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.9.0</span>
+        <span class="version-date">2026-03-25</span>
+      </div>
+      <h4>Fixed</h4>
+      <ul>
+        <li><strong><code>preferred_label</code></strong> now works on human gates.</li>
+        <li><strong><code>prompt:</code> blocks</strong> now parse on human nodes.</li>
+        <li><strong>Tool auto-defaults</strong> no longer mask fallback edges.</li>
+      </ul>
+      <h4>Added</h4>
+      <ul>
+        <li><strong><code>immediately_after</code></strong> test assertion for path adjacency.</li>
+        <li><strong><code>branch</code></strong> field for targeted parallel testing.</li>
+        <li>Simulator walks all parallel branches (matches runtime behavior).</li>
+        <li>Example test suites (20 tests across 4 workflows).</li>
+        <li>Test coverage at 95.7%.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.9.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.8.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.8.0</span>
+        <span class="version-date">2026-03-25</span>
+      </div>
+      <h4>Fixed</h4>
+      <ul>
+        <li>Graph truncation on pipelines with restart edges.</li>
+        <li>Simulator infinite loop on tool-gated loops.</li>
+        <li>Per-node scenario injection in <code>dippin test</code>.</li>
+      </ul>
+      <h4>Added</h4>
+      <ul>
+        <li>32 CLI integration tests (44.9% &rarr; 79.3% coverage).</li>
+        <li><code>just release tag msg</code> recipe.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.7.0...v0.8.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.7.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.7.0</span>
+        <span class="version-date">2026-03-25</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong><code>dippin test</code></strong> — scenario test runner with <code>.test.json</code> format.</li>
+        <li>New <code>testrunner/</code> package.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.6.0...v0.7.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.6.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.6.0</span>
+        <span class="version-date">2026-03-25</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong>DIP121</strong>: condition references variable not in source node writes.</li>
+        <li><strong>DIP122</strong>: condition tests value not in source tool outputs.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.5.0...v0.6.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.5.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.5.0</span>
+        <span class="version-date">2026-03-25</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong><code>dippin explain</code></strong> — rich explanations for all diagnostic codes.</li>
+        <li><strong><code>dippin unused</code></strong> — dead-branch detection and wasted cost estimation.</li>
+        <li><strong><code>dippin graph</code></strong> — ASCII DAG visualization with compact mode.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.4.3...v0.5.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.4.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.4.0</span>
+        <span class="version-date">2026-03-25</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><code>dippin cost</code>, <code>coverage</code>, <code>doctor</code>, <code>optimize</code>, <code>diff</code>, <code>feedback</code>, <code>lsp</code> commands.</li>
+        <li>4 new providers: DeepSeek, xAI/Grok, Mistral, Cohere.</li>
+        <li>DIP116&ndash;DIP120 lint rules.</li>
+        <li>LSP server with diagnostics, hover, go-to-definition, autocomplete.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.3.0...v0.4.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.3.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.3.0</span>
+        <span class="version-date">2026-03-21</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><code>dippin cost</code> and <code>dippin coverage</code> commands.</li>
+        <li>DIP119 (reasoning_effort), DIP120 (namespace prefix).</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.2.0...v0.3.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.2.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.2.0</span>
+        <span class="version-date">2026-03-20</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><code>dippin check</code>, <code>dippin new</code> with 5 scaffold templates.</li>
+        <li>DIP113&ndash;DIP115 lint rules.</li>
+        <li>Justfile, GoReleaser, GitHub Actions, Homebrew tap.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/compare/v0.1.0...v0.2.0">View on GitHub &rarr;</a>
+    </div>
+
+    <!-- v0.1.0 -->
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.1.0</span>
+        <span class="version-date">2026-03-19</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li>Initial release: parser, validator (DIP001&ndash;DIP009), linter (DIP101&ndash;DIP112), formatter, DOT exporter, migration tool, simulator.</li>
+        <li>15 example workflows including 5 stress tests.</li>
+        <li>VS Code extension with syntax highlighting.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.1.0">View on GitHub &rarr;</a>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+</body>
+</html>

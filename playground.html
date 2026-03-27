@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dippin Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=IBM+Plex+Mono:wght@400;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.playground { padding-top: 5rem; min-height: 100vh; }
+.playground-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.pane { display: flex; flex-direction: column; }
+.pane-label { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--text-soft); }
+#editor { width: 100%; min-height: 400px; font-family: var(--mono); font-size: 0.85rem; line-height: 1.6; background: #2A2A30; color: #ddd; border: 2px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 1rem; resize: vertical; tab-size: 2; }
+#output { width: 100%; min-height: 400px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1rem; overflow: auto; white-space: pre-wrap; }
+.toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.toolbar button { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; cursor: pointer; transition: all 0.2s; }
+.toolbar button:hover { border-color: var(--green); background: var(--green-light); }
+.toolbar button.active { background: var(--green-deep); color: white; border-color: var(--green-deep); }
+.status { font-family: var(--mono); font-size: 0.75rem; color: var(--text-soft); margin-top: 0.5rem; }
+.diag-error { color: #E85A5A; }
+.diag-warning { color: #b8960a; }
+.diag-hint { color: var(--text-soft); }
+@media (max-width: 768px) { .playground-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="cli.html">CLI</a>
+    <a href="language.html">Language</a>
+    <a href="testing.html">Testing</a>
+    <a href="validation.html">Validation</a>
+    <a href="analysis.html">Analysis</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="editors.html">Editors</a>
+    <a href="playground.html" class="active">Playground</a>
+    <a href="changelog.html">Changelog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="playground">
+<div class="container">
+  <div class="section-label">Interactive</div>
+  <div class="section-title">Playground</div>
+  <p class="section-desc">Write Dippin workflows in the browser. Parse, lint, and format — all running locally via WebAssembly.</p>
+
+  <div class="toolbar">
+    <button id="btn-lint" class="active" onclick="runLint()">Lint</button>
+    <button id="btn-parse" onclick="runParse()">Parse</button>
+    <button id="btn-format" onclick="runFormat()">Format</button>
+  </div>
+
+  <div class="playground-grid">
+    <div class="pane">
+      <div class="pane-label">Source (.dip)</div>
+      <textarea id="editor" spellcheck="false">workflow Hello
+  goal: "Greet the user"
+  start: Greeter
+  exit: Done
+
+  agent Greeter
+    model: claude-sonnet-4-6
+    provider: anthropic
+    prompt:
+      Say hello to the user.
+
+  agent Done
+    prompt: Wrap up.
+
+  edges
+    Greeter -> Done
+</textarea>
+    </div>
+    <div class="pane">
+      <div class="pane-label">Output</div>
+      <div id="output">Loading WASM...</div>
+    </div>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+</section>
+
+<script src="wasm_exec.js"></script>
+<script>
+const go = new Go();
+let wasmReady = false;
+
+WebAssembly.instantiateStreaming(fetch("dippin.wasm"), go.importObject)
+  .then(result => {
+    go.run(result.instance);
+    wasmReady = true;
+    document.getElementById("output").textContent = "Ready. Click Lint, Parse, or Format.";
+    document.getElementById("status").textContent = "WASM loaded successfully";
+  })
+  .catch(err => {
+    document.getElementById("output").textContent = "Failed to load WASM: " + err;
+  });
+
+function getSource() { return document.getElementById("editor").value; }
+
+function runLint() {
+  if (!wasmReady) return;
+  setActive("btn-lint");
+  const result = dippinLint(getSource());
+  const diags = JSON.parse(result);
+  if (diags.error) {
+    document.getElementById("output").innerHTML = '<span class="diag-error">Parse error: ' + escapeHtml(diags.error) + '</span>';
+    return;
+  }
+  if (!diags || diags.length === 0) {
+    document.getElementById("output").innerHTML = '<span style="color:var(--green-deep)">No issues found.</span>';
+    return;
+  }
+  document.getElementById("output").innerHTML = diags.map(d => {
+    const cls = d.severity === "error" ? "diag-error" : d.severity === "warning" ? "diag-warning" : "diag-hint";
+    return '<span class="' + cls + '">' + d.severity + '[' + d.code + ']</span>: ' + escapeHtml(d.message);
+  }).join("\n");
+}
+
+function runParse() {
+  if (!wasmReady) return;
+  setActive("btn-parse");
+  const result = dippinParse(getSource());
+  try { document.getElementById("output").textContent = JSON.stringify(JSON.parse(result), null, 2); }
+  catch(e) { document.getElementById("output").textContent = result; }
+}
+
+function runFormat() {
+  if (!wasmReady) return;
+  setActive("btn-format");
+  const result = dippinFormat(getSource());
+  document.getElementById("output").textContent = result;
+}
+
+function setActive(id) {
+  document.querySelectorAll(".toolbar button").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+</script>
+
+</body>
+</html>
