@@ -98,9 +98,17 @@ let wasmReady = false;
 WebAssembly.instantiateStreaming(fetch("dippin.wasm"), go.importObject)
   .then(result => {
     go.run(result.instance);
-    wasmReady = true;
-    document.getElementById("status").textContent = "WASM loaded";
-    runLint();
+    // Go functions register asynchronously — poll until ready.
+    function waitForWasm() {
+      if (typeof dippinLint === "function") {
+        wasmReady = true;
+        document.getElementById("status").textContent = "WASM loaded";
+        runLint();
+      } else {
+        setTimeout(waitForWasm, 10);
+      }
+    }
+    waitForWasm();
   })
   .catch(err => {
     document.getElementById("output").textContent = "Failed to load WASM: " + err;
@@ -113,7 +121,7 @@ function runLint() {
   setActive("btn-lint");
   const result = dippinLint(getSource());
   const diags = JSON.parse(result);
-  if (diags.error) {
+  if (diags && diags.error) {
     document.getElementById("output").innerHTML = '<span class="diag-error">Parse error: ' + escapeHtml(diags.error) + '</span>';
     return;
   }
