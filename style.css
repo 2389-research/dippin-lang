@@ -107,9 +107,6 @@ code {
 .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
 .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--text); margin: 5px 0; border-radius: 2px; transition: 0.3s; }
 
-/* Legacy single-tier compat */
-.nav-links { display: none; }
-.nav-inner { display: none; }
 
 /* ── Hero ── */
 .hero {
@@ -343,14 +340,6 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
   .nav-mobile a { color: var(--text-soft); font-weight: 600; text-decoration: none; padding: 0.2rem 0; }
   .nav-mobile a:hover, .nav-mobile a.active { color: var(--green-deep); }
   .nav-mobile .nav-divider { border-top: 1px solid var(--border); margin: 0.3rem 0; }
-  /* Legacy compat */
-  .nav-links {
-    display: none; position: absolute; top: 100%; left: 0; right: 0;
-    flex-direction: column; background: rgba(250,250,247,0.95);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    padding: 1rem 2rem; gap: 0.8rem; border-bottom: 1.5px solid var(--border);
-  }
-  .nav-links.open { display: flex; }
   .terminals { grid-template-columns: 1fr; }
   .features-grid { grid-template-columns: 1fr; }
   .doc .container { padding: 1.5rem; border-radius: 10px; }
