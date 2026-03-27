@@ -144,8 +144,8 @@
   document.addEventListener("DOMContentLoaded", function () {
     var pres = document.querySelectorAll("pre");
     pres.forEach(function (pre) {
+      // Skip blocks that already have manual span highlighting.
       if (pre.querySelector("span")) return;
-      if (pre.closest && pre.closest(".compare-code")) return;
       var raw = pre.textContent;
       var h = autoHighlight(raw);
       if (h) pre.innerHTML = h;
