@@ -103,9 +103,10 @@ code {
 .nav-sub-inner a { color: var(--text-soft); font-weight: 600; text-decoration: none; transition: color 0.2s; white-space: nowrap; }
 .nav-sub-inner a:hover, .nav-sub-inner a.active { color: var(--green-deep); }
 
-/* Hamburger */
+/* Hamburger + mobile menu (hidden on desktop) */
 .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
 .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--text); margin: 5px 0; border-radius: 2px; transition: 0.3s; }
+.nav-mobile { display: none; }
 
 
 /* ── Hero ── */
@@ -161,7 +162,7 @@ code {
 .btn-ghost:hover { border-color: var(--lavender-deep); background: var(--lavender-light); }
 
 /* ── Section helpers ── */
-section { padding: 6rem 0; }
+section { padding: 4.5rem 0; }
 .section-label { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--lavender-deep); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.8rem; }
 .section-title { font-family: var(--serif); font-size: clamp(1.9rem, 3.5vw, 2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
 .section-desc { color: var(--text-soft); font-size: 1.05rem; max-width: 520px; margin-bottom: 3rem; }
