@@ -99,8 +99,8 @@ WebAssembly.instantiateStreaming(fetch("dippin.wasm"), go.importObject)
   .then(result => {
     go.run(result.instance);
     wasmReady = true;
-    document.getElementById("output").textContent = "Ready. Click Lint, Parse, or Format.";
-    document.getElementById("status").textContent = "WASM loaded successfully";
+    document.getElementById("status").textContent = "WASM loaded";
+    runLint();
   })
   .catch(err => {
     document.getElementById("output").textContent = "Failed to load WASM: " + err;
