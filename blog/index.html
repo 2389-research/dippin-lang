@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — Dippin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.blog-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+.post-card {
+  background: white; border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 2rem; position: relative; overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  text-decoration: none; display: block; color: inherit;
+}
+.post-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; }
+.post-card:nth-child(5n+1)::before { background: var(--lavender-deep); }
+.post-card:nth-child(5n+2)::before { background: var(--green); }
+.post-card:nth-child(5n+3)::before { background: var(--yellow-deep); }
+.post-card:nth-child(5n+4)::before { background: var(--pink-deep); }
+.post-card:nth-child(5n+5)::before { background: #7EC8E3; }
+.post-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.06); border-color: var(--lavender-deep); }
+.post-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; gap: 1rem; align-items: center; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.post-tag.deep-dive { color: var(--lavender-deep); background: var(--lavender-light); border: 1px solid var(--lavender); }
+.post-tag.tutorial { color: #b8960a; background: var(--yellow-light); border: 1px solid var(--yellow); }
+.post-tag.reference { color: var(--pink-deep); background: rgba(242,196,212,0.3); border: 1px solid var(--pink); }
+.post-card h3 { font-family: var(--sans); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+.post-card p { color: var(--text-soft); font-size: 0.9rem; line-height: 1.65; margin: 0; }
+.post-card .read-more { font-family: var(--mono); font-size: 0.75rem; color: var(--green-deep); margin-top: 0.8rem; display: inline-block; font-weight: 600; }
+.topic-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.topic-filter button {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em;
+  padding: 0.35rem 0.9rem; border-radius: 99px; border: 1.5px solid var(--border);
+  background: white; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.topic-filter button:hover, .topic-filter button.active { background: var(--green-deep); color: white; border-color: var(--green-deep); }
+@media (max-width: 768px) { .post-card { padding: 1.2rem; } .post-card h3 { font-size: 1rem; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../playground.html">Playground</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="index.html" class="active">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="doc-header">
+    <div class="section-label">Learn</div>
+    <h1>Blog</h1>
+    <p>Tutorials, deep dives, and practical guides for every part of the Dippin toolchain.</p>
+  </div>
+
+  <div class="doc-body">
+
+    <div class="topic-filter">
+      <button class="active" onclick="filterPosts('all', this)">All</button>
+      <button onclick="filterPosts('guide', this)">Guides</button>
+      <button onclick="filterPosts('tutorial', this)">Tutorials</button>
+      <button onclick="filterPosts('deep-dive', this)">Deep Dives</button>
+      <button onclick="filterPosts('reference', this)">Reference</button>
+    </div>
+
+    <div class="blog-grid">
+
+      <!-- ── Authoring ─────────────────────────────────────── -->
+
+      <a class="post-card" data-topic="guide" href="getting-started.html">
+        <div class="post-meta">
+          <span class="post-tag guide">Guide</span>
+          Authoring
+        </div>
+        <h3>Getting Started with Dippin</h3>
+        <p>Install the toolchain, write your first workflow, validate it, and export to DOT — in under 5 minutes.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="multiline-prompts.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Authoring
+        </div>
+        <h3>Multi-line Prompts Without Escaping</h3>
+        <p>The killer feature over DOT. How indentation-based blocks let you write real prompts with markdown, code, and variables — zero quoting gymnastics.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="conditional-edges.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Authoring
+        </div>
+        <h3>Conditional Edges: Routing Pipelines with <code>when</code></h3>
+        <p>Build branching workflows with condition expressions. Covers operators, compound conditions, exhaustive detection, and the DIP101/DIP102 suppression rules.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="parallel-execution.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Authoring
+        </div>
+        <h3>Parallel Execution: Fan-Out and Fan-In</h3>
+        <p>Run multiple LLM calls concurrently with <code>parallel</code> and <code>fan_in</code>. Build multi-model consensus patterns and cross-review architectures.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="human-gates.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Authoring
+        </div>
+        <h3>Human Gates: Choice vs Freeform</h3>
+        <p>Pause pipelines for human input. Choice mode with button-style routing vs freeform text. Covers <code>preferred_label</code>, defaults, and testing human nodes.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="tool-nodes.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Authoring
+        </div>
+        <h3>Shell Scripts in Tool Nodes</h3>
+        <p>Run real shell commands as pipeline steps. Covers command blocks, timeout, outputs, here-docs, multi-line scripts, and the DIP123/DIP124/DIP125 lint trio.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="context-variables.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Authoring
+        </div>
+        <h3>Context Variables and Data Flow</h3>
+        <p>How <code>ctx.*</code>, <code>graph.*</code>, and <code>params.*</code> namespaces work. Reads/writes declarations, prompt interpolation, and the DIP106/DIP107/DIP112 data flow checks.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="goal-gates.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Authoring
+        </div>
+        <h3>Goal Gates: Pipeline-Critical Quality Checks</h3>
+        <p>Mark nodes as must-pass with <code>goal_gate: true</code>. The pipeline fails even if execution reaches exit. Pairs with <code>auto_status</code> for self-assessment.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="retry-and-fallback.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Authoring
+        </div>
+        <h3>Retry Policies and Fallback Targets</h3>
+        <p>Error recovery patterns: retry policies (standard, aggressive, patient), max_retries, restart edges, and fallback targets. How DIP104 and DIP115 keep loops bounded.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="subgraph-composition.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Authoring
+        </div>
+        <h3>Subgraph Composition</h3>
+        <p>Embed workflows inside workflows with <code>subgraph</code> nodes. Parameter passing via <code>params.*</code>, ref validation (DIP126), and when to decompose.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <!-- ── Testing & Validation ──────────────────────────── -->
+
+      <a class="post-card" data-topic="guide" href="scenario-testing.html">
+        <div class="post-meta">
+          <span class="post-tag guide">Guide</span>
+          Testing
+        </div>
+        <h3>Scenario Testing with .test.json</h3>
+        <p>Write deterministic tests for non-deterministic pipelines. Inject context values, assert visited/not-visited nodes, check path ordering, and run in CI.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="edge-coverage.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Testing
+        </div>
+        <h3>Edge Coverage: Are Your Tests Complete?</h3>
+        <p>Use <code>dippin test --coverage</code> to find which edges your test scenarios never traverse. Fill gaps before they become production surprises.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="reference" href="all-35-diagnostics.html">
+        <div class="post-meta">
+          <span class="post-tag reference">Reference</span>
+          Validation
+        </div>
+        <h3>The 35 Diagnostics: What They Catch and Why</h3>
+        <p>A walkthrough of every DIP code from DIP001 to DIP126. What triggers each one, how to fix it, and the design philosophy behind the lint rules.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <!-- ── Analysis ──────────────────────────────────────── -->
+
+      <a class="post-card" data-topic="tutorial" href="cost-estimation.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Analysis
+        </div>
+        <h3>Cost Estimation: Know Before You Run</h3>
+        <p>Use <code>dippin cost</code> to estimate per-run cost by model and provider. Understand the heuristics, compare alternatives with <code>dippin optimize</code>.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="doctor-health-reports.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Analysis
+        </div>
+        <h3>The Doctor Will See You Now: Health Reports</h3>
+        <p>Get a letter grade for your pipeline with <code>dippin doctor</code>. How scoring works, what makes an A vs a C, and actionable suggestions for improvement.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="dead-branches.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Analysis
+        </div>
+        <h3>Dead Branch Detection with <code>dippin unused</code></h3>
+        <p>Find nodes that are reachable but can never reach exit — wasted LLM calls you're paying for. Includes cost estimation for the waste.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="semantic-diff.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Analysis
+        </div>
+        <h3>Semantic Diff: Comparing Workflow Versions</h3>
+        <p>Go beyond text diffs. <code>dippin diff</code> compares IR structures — added/removed nodes, changed conditions, modified prompts — with field-level precision.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <!-- ── Tooling & Integration ─────────────────────────── -->
+
+      <a class="post-card" data-topic="guide" href="migrating-from-dot.html">
+        <div class="post-meta">
+          <span class="post-tag guide">Guide</span>
+          Migration
+        </div>
+        <h3>Migrating from DOT to Dippin</h3>
+        <p>Step-by-step guide: <code>dippin migrate</code>, <code>validate-migration</code> for parity checking, handling model name differences, and verifying nothing broke.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="guide" href="ci-integration.html">
+        <div class="post-meta">
+          <span class="post-tag guide">Guide</span>
+          Integration
+        </div>
+        <h3>CI Integration: Lint, Test, Format in Your Pipeline</h3>
+        <p>Set up GitHub Actions with <code>dippin lint</code>, <code>test</code>, and <code>fmt --check</code>. Exit codes, JSON output for machine parsing, and the dogfooding CI job.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="guide" href="editor-setup.html">
+        <div class="post-meta">
+          <span class="post-tag guide">Guide</span>
+          Tooling
+        </div>
+        <h3>Editor Setup: LSP, VS Code, and Tree-sitter</h3>
+        <p>Get diagnostics, hover docs, go-to-definition, and syntax highlighting in your editor. Covers VS Code extension, Neovim with LSP, and the tree-sitter grammar.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="watch-mode.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Tooling
+        </div>
+        <h3><code>dippin watch</code>: Live Feedback While You Author</h3>
+        <p>Run the file watcher, get instant lint results on save. How debouncing works, watching directories, and pairing with your editor for a tight feedback loop.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="wasm-playground.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Tooling
+        </div>
+        <h3>The WASM Playground: Dippin in Your Browser</h3>
+        <p>How the Go toolchain compiles to WebAssembly, the build-tag split for platform-dependent code, and what runs (and doesn't) in the browser sandbox.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="reference" href="model-catalog.html">
+        <div class="post-meta">
+          <span class="post-tag reference">Reference</span>
+          Reference
+        </div>
+        <h3>Model Catalog: Supported Providers and Pricing</h3>
+        <p>Every model across 7 providers — Anthropic, OpenAI, Google, DeepSeek, xAI, Mistral, Cohere. How pricing tables work, verification policy, and adding new models.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="deep-dive" href="formatter-internals.html">
+        <div class="post-meta">
+          <span class="post-tag deep-dive">Deep Dive</span>
+          Tooling
+        </div>
+        <h3>The Formatter: Canonical Style and Idempotency</h3>
+        <p>How <code>dippin fmt</code> produces deterministic output. Field ordering rules, multiline block handling, the idempotency guarantee, and <code>--check</code> for CI.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+      <a class="post-card" data-topic="tutorial" href="ascii-dag.html">
+        <div class="post-meta">
+          <span class="post-tag tutorial">Tutorial</span>
+          Tooling
+        </div>
+        <h3>ASCII DAGs with <code>dippin graph</code></h3>
+        <p>Visualize your workflow in the terminal. Full box-drawing mode vs compact one-liner. How topological layering works and rendering parallel branches.</p>
+        <span class="read-more">Read &rarr;</span>
+      </a>
+
+    </div>
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script>
+function filterPosts(topic, btn) {
+  document.querySelectorAll('.topic-filter button').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.post-card').forEach(function(card) {
+    if (topic === 'all' || card.dataset.topic === topic) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>
