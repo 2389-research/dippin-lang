@@ -68,6 +68,25 @@
   <div class="doc-body">
     <div class="version-card">
       <div class="version-header">
+        <span class="version-tag">v0.11.2</span>
+        <span class="version-date">2026-03-27</span>
+      </div>
+      <h4>Fixed</h4>
+      <ul>
+        <li><strong>Playground</strong>: syntax-highlighted editor with transparent textarea over colored <code>&lt;pre&gt;</code> overlay. Tab key inserts 2 spaces.</li>
+        <li><strong>Playground</strong>: parse output shows highlighted JSON (keys, strings, booleans, numbers). Format output shows highlighted Dippin. Lint errors display with severity coloring.</li>
+        <li><strong>Playground</strong>: WASM race condition — polls for function registration before auto-linting on load. Returns <code>[]</code> not <code>null</code> for zero diagnostics.</li>
+        <li><strong>Site</strong>: syntax highlighting CSS selectors changed from <code>pre .hl-*</code> to <code>.hl-*</code> so colors work in playground output div, not just <code>&lt;pre&gt;</code> blocks.</li>
+        <li><strong>Site</strong>: JSON blocks inside <code>compare-code</code> divs (like gate.test.json on Testing page) now get highlighted — skip logic checks for existing <code>&lt;span&gt;</code> tags instead of parent class.</li>
+        <li><strong>Site</strong>: highlight.js token protection via <code>\x00N\x00</code> placeholders prevents regex passes from matching inside previously generated <code>&lt;span&gt;</code> class attributes.</li>
+        <li><strong>Site</strong>: JSON inside terminal output blocks (e.g. <code>$ dippin --format json test</code>) gets JSON highlighting applied to the embedded body.</li>
+        <li><strong>Site</strong>: changelog auto-generated from CHANGELOG.md via <code>scripts/gen-changelog-html.sh</code>. Pre-commit hook runs it when CHANGELOG.md is staged.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.11.2">View on GitHub &rarr;</a>
+    </div>
+
+    <div class="version-card">
+      <div class="version-header">
         <span class="version-tag">v0.11.1</span>
         <span class="version-date">2026-03-27</span>
       </div>
