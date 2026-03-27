@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started with Dippin — Blog — Dippin</title>
+<meta name="description" content="Install Dippin, write your first AI pipeline workflow, and validate it in under 10 minutes. A step-by-step guide from zero to a working .dip file.">
+<meta property="og:title" content="Getting Started with Dippin — Dippin Blog">
+<meta property="og:description" content="Install Dippin, write your first AI pipeline workflow, and validate it in under 10 minutes. A step-by-step guide from zero to a working .dip file.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/getting-started.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Getting Started with Dippin">
+<meta name="twitter:description" content="Install Dippin, write your first AI pipeline workflow, and validate it in under 10 minutes. A step-by-step guide from zero to a working .dip file.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/getting-started.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.read-time { color: var(--text-soft); }
+.step-num { display: inline-block; font-family: var(--serif); font-size: 1.4rem; font-weight: 300; color: var(--green-deep); margin-right: 0.5rem; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+.footnotes { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.88rem; color: var(--text-mid); }
+.footnotes h3 { font-size: 1rem; margin-bottom: 0.8rem; }
+.footnotes ol { padding-left: 1.2rem; }
+.footnotes li { margin-bottom: 0.6rem; }
+@media (max-width: 768px) { .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../playground.html">Playground</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="index.html">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>Getting Started with Dippin</h1>
+    <div class="post-meta-bar">
+      <span class="post-tag guide">Guide</span>
+      <span>2026-03-27</span>
+      <span class="read-time">8 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      Dippin is a domain-specific language for authoring AI pipeline workflows. It replaces
+      <a href="https://graphviz.org/doc/info/lang.html">Graphviz DOT</a> as the format for
+      defining multi-step LLM pipelines, with first-class support for multi-line prompts,
+      conditional routing, parallel execution, and a full
+      <a href="../validation.html">validation toolchain</a>. You'll go from zero to a
+      validated, linted, and visualized workflow in under 10 minutes.
+    </p>
+
+    <h2><span class="step-num">1</span> Install the Toolchain</h2>
+
+    <p>Dippin is a single <a href="https://go.dev/">Go</a> binary. Install it with <code>go install</code>:</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">go install github.com/2389-research/dippin-lang/cmd/dippin@latest</span>
+</pre>
+
+    <p>Or via Homebrew (macOS and Linux):</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">brew install 2389-research/tap/dippin</span>
+</pre>
+
+    <p>Verify it works:</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin --version</span>
+dippin v0.10.0
+</pre>
+
+    <p>
+      One binary, everything included: parser, validator, linter, formatter, simulator,
+      cost estimator, LSP server, and DOT exporter. No plugins or runtime dependencies.
+    </p>
+
+    <h2><span class="step-num">2</span> Write Your First Workflow</h2>
+
+    <p>
+      Create a file called <code>pipeline.dip</code>. A Dippin workflow has four parts:
+      a header with metadata, optional defaults, node definitions, and edges connecting them.
+    </p>
+
+    <pre>
+<span class="hl-kw">workflow</span> <span class="hl-node">MyFirstPipeline</span>
+  <span class="hl-field">goal</span>: <span class="hl-str">"Summarize a document and then translate the summary to Spanish"</span>
+  <span class="hl-field">start</span>: Start
+  <span class="hl-field">exit</span>: Exit
+
+  <span class="hl-kw">defaults</span>
+    <span class="hl-field">provider</span>: anthropic
+    <span class="hl-field">model</span>: claude-sonnet-4-6
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Start</span>
+    <span class="hl-field">label</span>: Start
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Exit</span>
+    <span class="hl-field">label</span>: Exit
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Summarize</span>
+    <span class="hl-field">label</span>: <span class="hl-str">"Summarize Document"</span>
+    <span class="hl-field">prompt</span>:
+      Read the provided document carefully. Produce a concise summary
+      that captures the key points, main arguments, and conclusions.
+      Keep the summary under 200 words.
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Translate</span>
+    <span class="hl-field">label</span>: <span class="hl-str">"Translate to Spanish"</span>
+    <span class="hl-field">prompt</span>:
+      Translate the summary from the previous step into Spanish.
+      Preserve the meaning and tone. Use formal register.
+
+  <span class="hl-kw">edges</span>
+    Start -> Summarize
+    Summarize -> Translate
+    Translate -> Exit
+</pre>
+
+    <p>
+      A few things to notice. Prompts are multi-line blocks introduced by <code>prompt:</code>
+      with indented content below -- no quoting, no escaping, no <code>\n</code> sequences.
+      That's the main reason Dippin exists.<sup>1</sup> Node types (<code>agent</code>,
+      <code>tool</code>, <code>human</code>) declare what kind of step each node is.
+      And edges live in a dedicated <code>edges</code> block at the bottom, separate from
+      the node definitions. You can try this yourself in the
+      <a href="../playground.html">playground</a>.
+    </p>
+
+    <h2><span class="step-num">3</span> Validate the Workflow</h2>
+
+    <p>Run <code>dippin validate</code> to check structural correctness:</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin validate pipeline.dip</span>
+<span class="hl-pass">PASS</span>  pipeline.dip
+</pre>
+
+    <p>
+      Validation catches structural errors: missing start/exit nodes, references to
+      undefined nodes in edges, duplicate node names, unreachable nodes, and cycles.
+      These are the <a href="../validation.html">DIP001-DIP009 error codes</a>. If any
+      fire, the file is invalid.
+    </p>
+
+    <p>Try breaking it -- rename <code>Exit</code> to <code>Done</code> in the header
+    but not in the node list:</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin validate pipeline.dip</span>
+<span class="hl-fail">FAIL</span>  pipeline.dip
+  <span class="hl-fail">DIP002</span>: exit node "Done" is not defined
+</pre>
+
+    <h2><span class="step-num">4</span> Lint for Best Practices</h2>
+
+    <p>
+      Validation checks structure. Linting checks semantics -- missing timeouts, unknown
+      models, unreachable branches, and 22 other potential problems:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-pass">PASS</span>  pipeline.dip  <span class="hl-dim">(0 errors, 0 warnings)</span>
+</pre>
+
+    <p>
+      Clean. If you'd used a nonexistent model name, you'd see:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-warn">WARN</span>  pipeline.dip
+  <span class="hl-warn">DIP108</span>: node "Summarize": unknown model "claude-5-opus" for provider "anthropic"
+</pre>
+
+    <p>
+      34 diagnostic codes in total: 9 structural errors (DIP001-DIP009) and
+      25 semantic warnings (DIP101-DIP125). Run <code>dippin explain DIP108</code>
+      to see what any code means.
+    </p>
+
+    <h2><span class="step-num">5</span> Format for Consistency</h2>
+
+    <p>
+      The formatter produces canonical output with deterministic field ordering. It's
+      idempotent: formatting already-formatted code produces identical output.
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin fmt pipeline.dip</span>
+</pre>
+
+    <p>
+      Prints the formatted version to stdout. Use <code>--write</code> to format
+      in place, or <code>--check</code> to verify formatting without changing the file
+      (handy for <a href="ci-integration.html">CI</a>):
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin fmt --check pipeline.dip</span>
+<span class="hl-pass">OK</span>  pipeline.dip
+</pre>
+
+    <h2><span class="step-num">6</span> Visualize with DOT Export</h2>
+
+    <p>
+      Export to <a href="https://graphviz.org/">Graphviz</a> DOT format and render a diagram:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin export-dot pipeline.dip | dot -Tpng -o pipeline.png</span>
+</pre>
+
+    <p>
+      For left-to-right layout (better for wide pipelines):
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin export-dot --rankdir=LR pipeline.dip | dot -Tpng -o pipeline.png</span>
+</pre>
+
+    <p>
+      Or view the topology right in your terminal:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin graph pipeline.dip</span>
+
+  ┌───────┐   ┌───────────┐   ┌───────────┐   ┌──────┐
+  │ Start │──▶│ Summarize │──▶│ Translate  │──▶│ Exit │
+  └───────┘   └───────────┘   └───────────┘   └──────┘
+</pre>
+
+    <h2><span class="step-num">7</span> Add a Tool Node</h2>
+
+    <p>
+      Dippin supports three node kinds: <code>agent</code> (LLM call),
+      <code>tool</code> (shell command), and <code>human</code> (user input).
+      Here's a tool node that prepares the workspace:
+    </p>
+
+    <pre>
+<span class="hl-kw">tool</span> <span class="hl-node">SetupWorkspace</span>
+  <span class="hl-field">label</span>: <span class="hl-str">"Setup Workspace"</span>
+  <span class="hl-field">timeout</span>: 30s
+  <span class="hl-field">command</span>:
+    set -eu
+    mkdir -p .ai/output
+    printf 'workspace-ready'
+</pre>
+
+    <p>
+      Tool nodes run shell commands directly. The <code>timeout</code> field matters --
+      without it, <code>dippin lint</code> emits a DIP111 warning.
+      The <code>command:</code> block works like <code>prompt:</code>: indent
+      your script and write any shell syntax you need. See the
+      <a href="../language.html">language reference</a> for the full field list.
+    </p>
+
+    <h2><span class="step-num">8</span> Add Conditional Routing</h2>
+
+    <p>
+      Edges can carry conditions that control which path is taken at runtime:
+    </p>
+
+    <pre>
+<span class="hl-kw">edges</span>
+  Start -> SetupWorkspace
+  SetupWorkspace -> Summarize  <span class="hl-cond">when</span> ctx.outcome = success
+  SetupWorkspace -> Exit       <span class="hl-cond">when</span> ctx.outcome = fail
+  Summarize -> Translate
+  Translate -> Exit
+</pre>
+
+    <p>
+      The <code>when</code> keyword introduces a condition expression. Conditions
+      check context variables set at runtime. When a node's outgoing edges have
+      complementary conditions (like <code>success</code>/<code>fail</code>), Dippin
+      recognizes them as exhaustive and suppresses the DIP101 "unconditional fallback
+      missing" warning.<sup>2</sup>
+    </p>
+
+    <h2><span class="step-num">9</span> Run the Full Check Suite</h2>
+
+    <p>
+      <code>dippin check</code> runs validate + lint together and can output JSON for
+      programmatic consumption:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin check pipeline.dip</span>
+<span class="hl-pass">PASS</span>  pipeline.dip  <span class="hl-dim">valid=true errors=0 warnings=0</span>
+</pre>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin --format json check pipeline.dip</span>
+{
+  "file": "pipeline.dip",
+  "valid": true,
+  "errors": 0,
+  "warnings": 0,
+  "diagnostics": []
+}
+</pre>
+
+    <h2><span class="step-num">10</span> Explore the Examples</h2>
+
+    <p>
+      The repository ships with real-world examples in the
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/examples"><code>examples/</code></a>
+      directory. A few worth studying:
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>File</th><th>What it demonstrates</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ask_and_execute.dip</code></td>
+          <td>Human input, parallel implementation across 3 providers, cross-review</td>
+        </tr>
+        <tr>
+          <td><code>code_quality_sweep.dip</code></td>
+          <td>3-provider parallel analysis, fan-out/fan-in, goal gates, retry loops</td>
+        </tr>
+        <tr>
+          <td><code>consensus_task.dip</code></td>
+          <td>Multi-model consensus with postmortem and bounded restarts</td>
+        </tr>
+        <tr>
+          <td><code>complexity_cleanup.dip</code></td>
+          <td>Tool nodes with shell scripts, conditional routing, iterative refinement</td>
+        </tr>
+        <tr>
+          <td><code>human_gate_showcase.dip</code></td>
+          <td>Human choice and freeform gates with preferred_label for testing</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Validate them all at once:</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">for f in examples/*.dip; do dippin validate "$f"; done</span>
+<span class="hl-pass">PASS</span>  examples/ask_and_execute.dip
+<span class="hl-pass">PASS</span>  examples/code_quality_sweep.dip
+<span class="hl-pass">PASS</span>  examples/complexity_cleanup.dip
+<span class="hl-pass">PASS</span>  examples/consensus_task.dip
+<span class="hl-pass">PASS</span>  examples/human_gate_showcase.dip
+<span class="hl-dim">...</span>
+</pre>
+
+    <h2>Quick Reference: Essential Commands</h2>
+
+    <table>
+      <thead>
+        <tr><th>Command</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>dippin validate file.dip</code></td><td>Structural correctness (DIP001-DIP009)</td></tr>
+        <tr><td><code>dippin lint file.dip</code></td><td>Semantic warnings (DIP101-DIP125)</td></tr>
+        <tr><td><code>dippin check file.dip</code></td><td>Validate + lint combined</td></tr>
+        <tr><td><code>dippin fmt file.dip</code></td><td>Canonical formatting to stdout</td></tr>
+        <tr><td><code>dippin fmt --write file.dip</code></td><td>Format in place</td></tr>
+        <tr><td><code>dippin export-dot file.dip</code></td><td>Convert to Graphviz DOT</td></tr>
+        <tr><td><code>dippin graph file.dip</code></td><td>ASCII topology in terminal</td></tr>
+        <tr><td><code>dippin test file.dip</code></td><td>Run scenario tests</td></tr>
+        <tr><td><code>dippin cost file.dip</code></td><td>Estimate per-run cost</td></tr>
+        <tr><td><code>dippin doctor file.dip</code></td><td>Health report with letter grade</td></tr>
+        <tr><td><code>dippin lsp</code></td><td>Start LSP server for <a href="editor-setup.html">editor integration</a></td></tr>
+        <tr><td><code>dippin explain DIPxxx</code></td><td>Explain a diagnostic code</td></tr>
+      </tbody>
+    </table>
+
+    <h2>What's Next?</h2>
+
+    <p>
+      You've got a working toolchain and your first workflow. Pick whichever fits
+      where you're headed:
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="scenario-testing.html">
+        <h4>Scenario Testing with .test.json</h4>
+        <p>Write deterministic tests for non-deterministic pipelines. Assert on execution paths, not LLM output.</p>
+      </a>
+      <a class="next-post" href="ci-integration.html">
+        <h4>CI Integration</h4>
+        <p>Set up GitHub Actions to lint, test, and format-check your workflows on every push.</p>
+      </a>
+      <a class="next-post" href="migrating-from-dot.html">
+        <h4>Migrating from DOT</h4>
+        <p>Already have Graphviz DOT pipelines? Migrate them automatically with parity verification.</p>
+      </a>
+      <a class="next-post" href="editor-setup.html">
+        <h4>Editor Setup</h4>
+        <p>Get real-time diagnostics, hover docs, and syntax highlighting in VS Code, Neovim, or any LSP editor.</p>
+      </a>
+    </div>
+
+    <div class="footnotes">
+      <h3>Notes</h3>
+      <ol>
+        <li id="fn1">DOT requires prompts to be a single quoted string with <code>\n</code> for newlines and <code>\"</code> for inner quotes. For a 20-line system prompt, that's unreadable. Dippin's indentation-based blocks were the original motivation for building the language. See <a href="migrating-from-dot.html">Migrating from DOT</a> for a side-by-side comparison.</li>
+        <li id="fn2">Exhaustive condition detection also handles <code>contains</code>/<code>not-contains</code> complementary pairs, not just <code>success</code>/<code>fail</code>. The implementation lives in <a href="https://github.com/2389-research/dippin-lang/tree/main/validator">validator/lint.go</a>.</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>

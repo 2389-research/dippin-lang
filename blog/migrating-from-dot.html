@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrating from DOT to Dippin — Blog — Dippin</title>
+<meta name="description" content="Convert Graphviz DOT pipeline files to Dippin with automated migration and structural parity verification. Step-by-step with real examples.">
+<meta property="og:title" content="Migrating from DOT to Dippin — Dippin Blog">
+<meta property="og:description" content="Convert Graphviz DOT pipeline files to Dippin with automated migration and structural parity verification. Step-by-step with real examples.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/migrating-from-dot.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Migrating from DOT to Dippin">
+<meta name="twitter:description" content="Convert Graphviz DOT pipeline files to Dippin with automated migration and structural parity verification. Step-by-step with real examples.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/migrating-from-dot.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.read-time { color: var(--text-soft); }
+.side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.side-label { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.4rem 0.8rem; border-radius: 8px 8px 0 0; display: inline-block; margin-bottom: 0; }
+.side-label.dot { color: #b84040; background: #fde8e8; }
+.side-label.dip { color: var(--green-deep); background: var(--green-light); }
+.side-by-side pre { margin-top: 0; border-radius: 0 10px 10px 10px; }
+.callout { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+.callout h4 { font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--green-deep); }
+.callout p { font-size: 0.88rem; color: var(--text-mid); margin-bottom: 0; }
+.callout-warn { background: var(--yellow-light); border-color: var(--yellow); }
+.callout-warn h4 { color: #b8960a; }
+.migration-step { counter-increment: mstep; }
+.migration-step h3::before { content: counter(mstep) ". "; font-family: var(--serif); color: var(--green-deep); font-weight: 300; }
+.doc-body { counter-reset: mstep; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+.footnotes { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.88rem; color: var(--text-mid); }
+.footnotes h3 { font-size: 1rem; margin-bottom: 0.8rem; }
+.footnotes ol { padding-left: 1.2rem; }
+.footnotes li { margin-bottom: 0.6rem; }
+@media (max-width: 768px) { .side-by-side { grid-template-columns: 1fr; } .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../playground.html">Playground</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="index.html">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>Migrating from DOT to Dippin</h1>
+    <div class="post-meta-bar">
+      <span class="post-tag guide">Guide</span>
+      <span>2026-03-27</span>
+      <span class="read-time">12 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      If your team has existing pipelines authored in
+      <a href="https://graphviz.org/doc/info/lang.html">Graphviz DOT</a>, Dippin provides
+      an automated migration path. <code>dippin migrate</code> converts DOT files
+      to Dippin syntax, and <code>dippin validate-migration</code> verifies structural parity
+      between the original and the converted file.<sup>1</sup>
+    </p>
+
+    <h2>Why Migrate?</h2>
+
+    <p>DOT was never designed for AI pipelines. The pain points stack up:</p>
+
+    <table>
+      <thead>
+        <tr><th>Problem in DOT</th><th>How Dippin fixes it</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Prompts need <code>\n</code> escaping and <code>\"</code> quoting</td>
+          <td>Indentation-based multi-line blocks, no escaping</td>
+        </tr>
+        <tr>
+          <td>No validation beyond syntax</td>
+          <td><a href="../validation.html">34 diagnostic codes</a>: structural errors + semantic warnings</td>
+        </tr>
+        <tr>
+          <td>No testing framework</td>
+          <td><a href="scenario-testing.html">Scenario testing</a> with <code>.test.json</code> files</td>
+        </tr>
+        <tr>
+          <td>No formatting standard</td>
+          <td>Idempotent <code>dippin fmt</code> with canonical field ordering</td>
+        </tr>
+        <tr>
+          <td>No cost estimation</td>
+          <td><code>dippin cost</code> and <code>dippin optimize</code></td>
+        </tr>
+        <tr>
+          <td>Node types inferred from shape attribute</td>
+          <td>Explicit <code>agent</code>, <code>tool</code>, <code>human</code> keywords</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>The Migration Process</h2>
+
+    <p>
+      We'll migrate <code>consensus_task.dot</code>, a 17-node multi-model consensus
+      workflow with conditional edges and restart loops.
+    </p>
+
+    <h3 class="migration-step">Run the Converter</h3>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin migrate --output consensus_task.dip consensus_task.dot</span>
+<span class="hl-pass">OK</span>  Migrated consensus_task.dot -> consensus_task.dip
+  <span class="hl-dim">17 nodes, 18 edges converted</span>
+  <span class="hl-warn">2 warnings:</span>
+  <span class="hl-warn">  - condition prefix "context." converted to "ctx."</span>
+  <span class="hl-warn">  - condition prefix "context.internal." converted to "ctx.internal."</span>
+</pre>
+
+    <p>
+      The converter handles the mechanical translation: DOT shape attributes map to
+      Dippin node kinds, escaped strings become multi-line blocks,
+      edge attributes become <code>when</code> clauses, and graph-level attributes
+      become workflow header fields.
+    </p>
+
+    <h3 class="migration-step">Understand the Mapping</h3>
+
+    <p>How DOT constructs map to Dippin:</p>
+
+    <table>
+      <thead>
+        <tr><th>DOT</th><th>Dippin</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>shape=box</code></td><td><code>agent</code></td></tr>
+        <tr><td><code>shape=hexagon</code></td><td><code>human</code></td></tr>
+        <tr><td><code>shape=component</code></td><td><code>tool</code></td></tr>
+        <tr><td><code>shape=Mdiamond</code></td><td><code>agent</code> (start node)</td></tr>
+        <tr><td><code>shape=Msquare</code></td><td><code>agent</code> (exit node)</td></tr>
+        <tr><td><code>llm_provider="anthropic"</code></td><td><code>provider: anthropic</code></td></tr>
+        <tr><td><code>llm_model="claude-opus-4-6"</code></td><td><code>model: claude-opus-4-6</code></td></tr>
+        <tr><td><code>prompt="text\nmore text"</code></td><td><code>prompt:</code> + indented block</td></tr>
+        <tr><td><code>condition="outcome=success"</code></td><td><code>when ctx.outcome = success</code></td></tr>
+        <tr><td><code>loop_restart=true</code></td><td><code>restart: true</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="migration-step">Compare Side by Side</h3>
+
+    <p>A key section of the consensus workflow in both formats:</p>
+
+    <div class="side-by-side">
+      <div>
+        <span class="side-label dot">DOT</span>
+        <pre>
+ReviewConsensus [
+  shape=box,
+  label="Review Consensus",
+  llm_provider="anthropic",
+  llm_model="claude-opus-4-6",
+  reasoning_effort="high",
+  max_retries=1,
+  retry_target="Implement",
+  prompt="Produce final consensus
+verdict. Use success when ready
+to exit, retry when rework is
+required, fail when blocked."
+];
+
+ReviewConsensus -> Exit
+  [condition="outcome=success",
+   label="pass"];
+ReviewConsensus -> Postmortem
+  [condition="outcome=retry",
+   label="retry"];
+ReviewConsensus -> Exit;</pre>
+      </div>
+      <div>
+        <span class="side-label dip">Dippin</span>
+        <pre>
+<span class="hl-kw">agent</span> <span class="hl-node">ReviewConsensus</span>
+  <span class="hl-field">label</span>: <span class="hl-str">"Review Consensus"</span>
+  <span class="hl-field">model</span>: claude-opus-4-6
+  <span class="hl-field">provider</span>: anthropic
+  <span class="hl-field">reasoning_effort</span>: high
+  <span class="hl-field">max_retries</span>: <span class="hl-num">1</span>
+  <span class="hl-field">retry_target</span>: Implement
+  <span class="hl-field">prompt</span>:
+    Produce final consensus
+    verdict. Use success when
+    ready to exit, retry when
+    rework is required, fail
+    when blocked.
+
+<span class="hl-kw">edges</span>
+  ReviewConsensus -> Exit
+    <span class="hl-cond">when</span> ctx.outcome = success
+    <span class="hl-field">label</span>: pass
+  ReviewConsensus -> Postmortem
+    <span class="hl-cond">when</span> ctx.outcome = retry
+    <span class="hl-field">label</span>: retry
+  ReviewConsensus -> Exit</pre>
+      </div>
+    </div>
+
+    <p>
+      The Dippin version reads more clearly, and you can validate, lint,
+      <a href="scenario-testing.html">test</a>, and format it with the toolchain.
+    </p>
+
+    <h3 class="migration-step">Verify Structural Parity</h3>
+
+    <p>
+      <code>validate-migration</code> compares the DOT original against
+      the Dippin conversion to verify nothing was lost:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin validate-migration consensus_task.dot consensus_task.dip</span>
+<span class="hl-pass">PASS</span>  Migration parity verified
+  <span class="hl-dim">Nodes: 17/17 matched</span>
+  <span class="hl-dim">Edges: 18/18 matched</span>
+  <span class="hl-dim">Conditions: 4/4 matched</span>
+</pre>
+
+    <p>
+      Parity checking compares node count, node names, edge connections, condition
+      expressions, and key attributes (model, provider, labels). It catches
+      dropped nodes and mangled conditions.
+    </p>
+
+    <h3 class="migration-step">Validate and Lint the Result</h3>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin validate consensus_task.dip</span>
+<span class="hl-pass">PASS</span>  consensus_task.dip
+</pre>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint consensus_task.dip</span>
+<span class="hl-pass">PASS</span>  consensus_task.dip  <span class="hl-dim">(0 errors, 0 warnings)</span>
+</pre>
+
+    <h3 class="migration-step">Format for Canonical Style</h3>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin fmt --write consensus_task.dip</span>
+</pre>
+
+    <p>
+      The formatter normalizes field ordering, indentation, and spacing, so the
+      migrated file follows the same conventions as hand-written Dippin code.
+    </p>
+
+    <h2>Common Parity Issues</h2>
+
+    <h3>Condition Prefix Differences</h3>
+
+    <p>
+      DOT conditions often use <code>context.</code> as the variable prefix. Dippin uses
+      <code>ctx.</code>. The migrator handles the translation automatically:
+    </p>
+
+    <div class="side-by-side">
+      <div>
+        <span class="side-label dot">DOT</span>
+        <pre>
+[condition="context.internal.
+loop_restart_count=0",
+ loop_restart=true]</pre>
+      </div>
+      <div>
+        <span class="side-label dip">Dippin</span>
+        <pre>
+<span class="hl-cond">when</span> ctx.internal.loop_restart_count = 0
+  <span class="hl-field">restart</span>: <span class="hl-bool">true</span></pre>
+      </div>
+    </div>
+
+    <h3>Missing Fields</h3>
+
+    <p>
+      DOT files often omit fields that Dippin encourages. After migration, run
+      <code>dippin lint</code> to find the gaps:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint migrated.dip</span>
+<span class="hl-warn">WARN</span>  migrated.dip
+  <span class="hl-warn">DIP111</span>: tool node "RunScript" has no timeout
+  <span class="hl-warn">DIP103</span>: node "Process" has no prompt
+</pre>
+
+    <p>These warnings are actionable -- add the missing fields to strengthen the pipeline.</p>
+
+    <h3>Graph-Level Defaults</h3>
+
+    <p>
+      DOT graph attributes like <code>default_fidelity</code> and <code>default_max_retry</code>
+      become Dippin <a href="../language.html"><code>defaults</code> block</a> fields:
+    </p>
+
+    <pre>
+<span class="hl-cmt"># DOT: graph [ default_fidelity="truncate", default_max_retry=3 ]</span>
+<span class="hl-cmt"># Becomes:</span>
+
+<span class="hl-kw">defaults</span>
+  <span class="hl-field">fidelity</span>: truncate
+  <span class="hl-field">max_retries</span>: <span class="hl-num">3</span>
+</pre>
+
+    <h2>Batch Migration</h2>
+
+    <p>
+      Migrate an entire directory of DOT files:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">for f in pipelines/*.dot; do</span>
+  <span class="hl-shcmd">dippin migrate --output "${f%.dot}.dip" "$f"</span>
+<span class="hl-shcmd">done</span>
+</pre>
+
+    <p>Then verify parity for all of them:</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">for f in pipelines/*.dot; do</span>
+  <span class="hl-shcmd">dip="${f%.dot}.dip"</span>
+  <span class="hl-shcmd">[ -f "$dip" ] && dippin validate-migration "$f" "$dip"</span>
+<span class="hl-shcmd">done</span>
+<span class="hl-pass">PASS</span>  pipelines/consensus_task.dot <-> pipelines/consensus_task.dip
+<span class="hl-pass">PASS</span>  pipelines/code_review.dot <-> pipelines/code_review.dip
+<span class="hl-pass">PASS</span>  pipelines/deploy_check.dot <-> pipelines/deploy_check.dip
+</pre>
+
+    <h2>The CI Safety Net</h2>
+
+    <p>
+      The Dippin <a href="https://docs.github.com/en/actions">CI workflow</a> includes a
+      migration parity step on every push. It finds all <code>.dot</code> files with a
+      corresponding <code>.dip</code> file and verifies they remain structurally equivalent:
+    </p>
+
+    <pre>
+<span class="hl-cmt"># From .github/workflows/ci.yml</span>
+- name: Validate migration parity
+  run: |
+    failed=0
+    for f in examples/*.dot; do
+      base=$(basename "$f" .dot)
+      dip="examples/${base}.dip"
+      if [ -f "$dip" ]; then
+        if ! ./dippin validate-migration "$f" "$dip" 2>&amp;1; then
+          failed=1
+        fi
+      fi
+    done
+    exit $failed
+</pre>
+
+    <p>
+      As you improve the Dippin version, the CI check confirms it stays
+      structurally compatible with the DOT original. Once you're confident,
+      delete the DOT file and the check stops running for that pair.
+    </p>
+
+    <h2>Post-Migration Improvements</h2>
+
+    <p>
+      After migration, you can take advantage of features DOT doesn't support:
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>What to do</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scenario tests</td>
+          <td>Create a <a href="scenario-testing.html"><code>.test.json</code></a> file to test execution paths</td>
+        </tr>
+        <tr>
+          <td>Goal gates</td>
+          <td>Add <code>goal_gate: true</code> to critical quality check nodes</td>
+        </tr>
+        <tr>
+          <td>Data flow declarations</td>
+          <td>Add <code>reads</code>/<code>writes</code> to enable DIP106/DIP107/DIP112 checks</td>
+        </tr>
+        <tr>
+          <td>Cost estimation</td>
+          <td>Run <code>dippin cost</code> and <code>dippin optimize</code></td>
+        </tr>
+        <tr>
+          <td>Health reports</td>
+          <td>Run <code>dippin doctor</code> for a letter-grade assessment</td>
+        </tr>
+        <tr>
+          <td>Watch mode</td>
+          <td>Run <code>dippin watch pipeline.dip</code> for live feedback</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>What's Next?</h2>
+
+    <p>
+      Your DOT pipelines are now Dippin files with full toolchain support.
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="scenario-testing.html">
+        <h4>Scenario Testing</h4>
+        <p>Write deterministic tests for your newly migrated workflows.</p>
+      </a>
+      <a class="next-post" href="ci-integration.html">
+        <h4>CI Integration</h4>
+        <p>Add validation, linting, and formatting checks to your CI pipeline.</p>
+      </a>
+    </div>
+
+    <div class="footnotes">
+      <h3>Notes</h3>
+      <ol>
+        <li id="fn1">DOT was chosen as the original authoring format because Graphviz is ubiquitous and every developer already has <code>dot</code> installed. But DOT's string-quoting requirements made multi-line prompts painful to write and impossible to diff-review in PRs. The tipping point was a 40-line prompt that required 80+ characters of escape sequences -- at that point, building a purpose-built language was cheaper than the ongoing authoring tax.</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>

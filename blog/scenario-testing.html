@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scenario Testing with .test.json — Blog — Dippin</title>
+<meta name="description" content="Write deterministic tests for non-deterministic AI pipelines. Inject context values, assert on execution paths, and measure edge coverage.">
+<meta property="og:title" content="Scenario Testing with .test.json — Dippin Blog">
+<meta property="og:description" content="Write deterministic tests for non-deterministic AI pipelines. Inject context values, assert on execution paths, and measure edge coverage.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/scenario-testing.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Scenario Testing with .test.json">
+<meta name="twitter:description" content="Write deterministic tests for non-deterministic AI pipelines. Inject context values, assert on execution paths, and measure edge coverage.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/scenario-testing.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.read-time { color: var(--text-soft); }
+.callout { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+.callout h4 { font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--green-deep); }
+.callout p { font-size: 0.88rem; color: var(--text-mid); margin-bottom: 0; }
+.callout-warn { background: var(--yellow-light); border-color: var(--yellow); }
+.callout-warn h4 { color: #b8960a; }
+.field-table td:first-child { white-space: nowrap; font-weight: 600; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+.footnotes { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.88rem; color: var(--text-mid); }
+.footnotes h3 { font-size: 1rem; margin-bottom: 0.8rem; }
+.footnotes ol { padding-left: 1.2rem; }
+.footnotes li { margin-bottom: 0.6rem; }
+@media (max-width: 768px) { .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../playground.html">Playground</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="index.html">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>Scenario Testing with .test.json</h1>
+    <div class="post-meta-bar">
+      <span class="post-tag guide">Guide</span>
+      <span>2026-03-27</span>
+      <span class="read-time">10 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      AI pipelines are non-deterministic -- LLM outputs vary between runs. But the
+      <em>structure</em> of your pipeline is deterministic: given a particular outcome at each
+      node, the same path should always be followed. Dippin's scenario testing lets you inject
+      context values and assert on execution paths, giving you deterministic tests for
+      non-deterministic systems.
+    </p>
+
+    <h2>The Core Idea</h2>
+
+    <p>
+      A <code>.test.json</code> file sits next to your <code>.dip</code> file. It holds
+      an array of test scenarios, each declaring what context values to inject and what
+      execution behavior to expect (visited nodes, path ordering, status).
+    </p>
+
+    <p>
+      The <a href="https://github.com/2389-research/dippin-lang/tree/main/simulate">simulator</a>
+      walks the workflow graph, uses your injected values to evaluate edge conditions,
+      and reports which nodes were visited and in what order. Your test asserts
+      the result matches expectations.
+    </p>
+
+    <div class="callout">
+      <h4>Auto-discovery</h4>
+      <p>
+        <code>dippin test pipeline.dip</code> automatically looks for <code>pipeline.test.json</code>
+        in the same directory. No configuration needed.
+      </p>
+    </div>
+
+    <h2>A Workflow to Test</h2>
+
+    <p>
+      Take a real example from the Dippin repository:
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/examples/code_quality_sweep.dip"><code>code_quality_sweep.dip</code></a>.
+      This workflow runs three LLM providers in parallel to analyze a codebase, synthesizes
+      findings, fans out into three work streams (fix bugs, write docs, write tests),
+      then finishes with a quality gate that can restart the whole process.
+    </p>
+
+    <p>The key structural elements:</p>
+
+    <pre>
+<span class="hl-kw">workflow</span> <span class="hl-node">CodeQualitySweep</span>
+  <span class="hl-field">goal</span>: <span class="hl-str">"Analyze the dippin-lang codebase with three LLM providers in parallel..."</span>
+  <span class="hl-field">start</span>: ScanCodebase
+  <span class="hl-field">exit</span>: Done
+
+  <span class="hl-cmt"># Phase 1: Scan</span>
+  <span class="hl-kw">agent</span> <span class="hl-node">ScanCodebase</span>
+    <span class="hl-field">label</span>: <span class="hl-str">"Map the codebase"</span>
+    <span class="hl-cmt">...</span>
+
+  <span class="hl-cmt"># Phase 2: Three-provider parallel analysis</span>
+  <span class="hl-kw">parallel</span> <span class="hl-node">AnalysisFan</span> -> AnalyzeAnthropic, AnalyzeGemini, AnalyzeOpenAI
+  <span class="hl-kw">fan_in</span> <span class="hl-node">AnalysisJoin</span> <- AnalyzeAnthropic, AnalyzeGemini, AnalyzeOpenAI
+
+  <span class="hl-cmt"># Phase 3: Synthesize findings</span>
+  <span class="hl-kw">agent</span> <span class="hl-node">Synthesize</span>
+    <span class="hl-cmt">...</span>
+
+  <span class="hl-cmt"># Phase 4: Three parallel work streams</span>
+  <span class="hl-kw">parallel</span> <span class="hl-node">WorkFan</span> -> FixBugs, WriteDocs, WriteTests
+  <span class="hl-kw">fan_in</span> <span class="hl-node">WorkJoin</span> <- FixBugs, WriteDocs, WriteTests
+
+  <span class="hl-cmt"># Phase 5: Quality gate with retry</span>
+  <span class="hl-kw">agent</span> <span class="hl-node">QualityGate</span>
+    <span class="hl-field">goal_gate</span>: <span class="hl-bool">true</span>
+    <span class="hl-cmt">...</span>
+
+  <span class="hl-kw">edges</span>
+    <span class="hl-cmt">...</span>
+    QualityGate -> Done         <span class="hl-cond">when</span> ctx.outcome = success
+    QualityGate -> Synthesize   <span class="hl-cond">when</span> ctx.outcome = fail  <span class="hl-field">restart</span>: <span class="hl-bool">true</span>
+    QualityGate -> Done
+</pre>
+
+    <p>
+      The quality gate has three outgoing edges: success goes to Done, failure restarts from
+      Synthesize, and an unconditional fallback also goes to Done. Three distinct
+      execution paths, three test scenarios.
+    </p>
+
+    <h2>The Test File</h2>
+
+    <p>
+      Here's the
+      <a href="https://github.com/2389-research/dippin-lang/blob/main/examples/code_quality_sweep.test.json"><code>code_quality_sweep.test.json</code></a>
+      from the repository:
+    </p>
+
+    <pre>
+{
+  "tests": [
+    {
+      "name": "quality gate passes -- all branches traversed",
+      "scenario": {"outcome": "success"},
+      "expect": {
+        "status": "success",
+        "visited": [
+          "ScanCodebase",
+          "AnalyzeAnthropic", "AnalyzeGemini", "AnalyzeOpenAI",
+          "Synthesize",
+          "FixBugs", "WriteDocs", "WriteTests",
+          "QualityGate", "Done"
+        ],
+        "path_contains": ["ScanCodebase", "Synthesize", "QualityGate", "Done"]
+      }
+    },
+    {
+      "name": "quality gate fails -- restarts from Synthesize",
+      "scenario": {"outcome": "fail"},
+      "expect": {
+        "visited": ["QualityGate", "Synthesize"],
+        "path_contains": ["QualityGate", "Synthesize"]
+      }
+    },
+    {
+      "name": "all three analysis providers run",
+      "scenario": {"outcome": "success"},
+      "expect": {
+        "path_contains": [
+          "AnalyzeAnthropic", "AnalyzeGemini",
+          "AnalyzeOpenAI", "AnalysisJoin"
+        ]
+      }
+    },
+    {
+      "name": "no outcome -- unconditional fallback to Done",
+      "scenario": {},
+      "expect": {
+        "status": "success",
+        "visited": ["QualityGate", "Done"]
+      }
+    },
+    {
+      "name": "branch filter -- only Gemini analysis",
+      "scenario": {"outcome": "success"},
+      "branch": ["AnalyzeGemini"],
+      "expect": {
+        "status": "success",
+        "visited": ["AnalyzeGemini"],
+        "not_visited": ["AnalyzeAnthropic", "AnalyzeOpenAI"]
+      }
+    }
+  ]
+}
+</pre>
+
+    <h2>Anatomy of a Test Case</h2>
+
+    <p>Each test case has three parts:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Field</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>Human-readable description shown in test output</td></tr>
+        <tr><td><code>scenario</code></td><td>Context values to inject. <code>{"outcome": "success"}</code> sets <code>ctx.outcome</code> to "success" at every node.</td></tr>
+        <tr><td><code>expect</code></td><td>Assertions about the simulation result</td></tr>
+        <tr><td><code>branch</code></td><td>Optional. Filters parallel fan-out to only these branches.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Expectation Fields</h3>
+
+    <p>The <code>expect</code> object supports five assertion types:</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Field</th><th>What it checks</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>status</code></td><td>Overall simulation status: <code>"success"</code> or <code>"fail"</code></td></tr>
+        <tr><td><code>visited</code></td><td>Node names that must appear in the execution path</td></tr>
+        <tr><td><code>not_visited</code></td><td>Node names that must NOT appear in the execution path</td></tr>
+        <tr><td><code>path_contains</code></td><td>Node names that must appear in order (not necessarily adjacent)</td></tr>
+        <tr><td><code>immediately_after</code></td><td>Object mapping node names: <code>{"A": "B"}</code> asserts B appears right after A</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Running Tests</h2>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin test examples/code_quality_sweep.dip</span>
+<span class="hl-pass">PASS</span>  quality gate passes -- all branches traversed
+<span class="hl-pass">PASS</span>  quality gate fails -- restarts from Synthesize
+<span class="hl-pass">PASS</span>  all three analysis providers run
+<span class="hl-pass">PASS</span>  all three work streams run
+<span class="hl-pass">PASS</span>  no outcome -- unconditional fallback to Done
+<span class="hl-pass">PASS</span>  branch filter -- only Gemini analysis
+
+<span class="hl-pass">6/6 passed</span>  <span class="hl-dim">examples/code_quality_sweep.dip</span>
+</pre>
+
+    <h3>Verbose Mode</h3>
+
+    <p>
+      Add <code>--verbose</code> to see the full execution path for each scenario.
+      Invaluable when debugging a failing test:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin test --verbose examples/code_quality_sweep.dip</span>
+<span class="hl-pass">PASS</span>  quality gate passes -- all branches traversed
+  <span class="hl-dim">path: ScanCodebase -> AnalysisFan -> AnalyzeAnthropic -> AnalysisJoin
+        -> AnalyzeGemini -> AnalysisJoin -> AnalyzeOpenAI -> AnalysisJoin
+        -> Synthesize -> WorkFan -> FixBugs -> WorkJoin -> WriteDocs
+        -> WorkJoin -> WriteTests -> WorkJoin -> QualityGate -> Done</span>
+<span class="hl-dim">...</span>
+</pre>
+
+    <h2>Writing Your Own Tests</h2>
+
+    <h3>Step 1: Identify the branches</h3>
+
+    <p>
+      Look at your edge conditions. Each <code>when</code> clause creates a branch.
+      You need at least one test scenario per branch. Think about:
+    </p>
+
+    <ul>
+      <li>The success path (all conditions evaluate to "success")</li>
+      <li>The failure path (what happens when a node fails)</li>
+      <li>The fallback path (what happens when no condition matches)</li>
+      <li>Parallel branch isolation (individual fan-out branches)</li>
+    </ul>
+
+    <h3>Step 2: Write the scenario injection</h3>
+
+    <p>
+      The <code>scenario</code> object sets context values the simulator uses when
+      evaluating edge conditions. Keys correspond to variable names in
+      <code>when</code> clauses, without the <code>ctx.</code> prefix:
+    </p>
+
+    <pre>
+<span class="hl-cmt">// Edge condition in .dip file:</span>
+QualityGate -> Done  <span class="hl-cond">when</span> ctx.outcome = success
+
+<span class="hl-cmt">// Corresponding scenario injection in .test.json:</span>
+"scenario": {"outcome": "success"}
+</pre>
+
+    <h3>Step 3: Assert on structure, not content</h3>
+
+    <p>
+      The key insight: you assert on <em>which nodes were visited</em>
+      and <em>in what order</em>, never on LLM response content. The tests
+      stay deterministic because you're testing the graph's routing logic, not
+      the models' output.<sup>1</sup>
+    </p>
+
+    <div class="callout-warn callout">
+      <h4>Pitfall: not_visited fragility</h4>
+      <p>
+        Be careful with <code>not_visited</code>. If your workflow has retry loops with
+        <code>restart: true</code> edges, the simulator's loop-breaking may visit nodes
+        you don't expect. Prefer positive assertions (<code>visited</code>,
+        <code>path_contains</code>) when possible. Use <code>not_visited</code> sparingly.<sup>2</sup>
+      </p>
+    </div>
+
+    <h2>The branch Filter</h2>
+
+    <p>
+      For workflows with <code>parallel</code> fan-out, you can test individual branches
+      in isolation with the <code>branch</code> field:
+    </p>
+
+    <pre>
+{
+  "name": "branch filter -- only Gemini analysis",
+  "scenario": {"outcome": "success"},
+  "branch": ["AnalyzeGemini"],
+  "expect": {
+    "status": "success",
+    "visited": ["AnalyzeGemini"],
+    "not_visited": ["AnalyzeAnthropic", "AnalyzeOpenAI"]
+  }
+}
+</pre>
+
+    <p>
+      The <code>branch</code> array lists the parallel targets to include. All other
+      fan-out branches get skipped, letting you test branch-specific behavior without
+      noise from other parallel paths.
+    </p>
+
+    <h2>Edge Coverage</h2>
+
+    <p>
+      Add <code>--coverage</code> to see which edges your test suite covers:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin test --coverage examples/code_quality_sweep.dip</span>
+<span class="hl-pass">6/6 passed</span>  <span class="hl-dim">examples/code_quality_sweep.dip</span>
+
+<span class="hl-dim">Edge coverage:</span> <span class="hl-pass">24/25 edges covered (96.0%)</span>
+<span class="hl-dim">Uncovered edges:</span>
+  <span class="hl-warn">QualityGate -> Synthesize  when ctx.outcome = fail  restart: true</span>
+</pre>
+
+    <p>
+      The uncovered edge tells you exactly what test case to add. Write a scenario that
+      triggers that condition to reach 100%.
+    </p>
+
+    <h2>JSON Output for CI</h2>
+
+    <p>
+      For <a href="ci-integration.html">CI integration</a>, use <code>--format json</code>
+      to get machine-readable results:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin test --format json examples/code_quality_sweep.dip</span>
+{
+  "file": "examples/code_quality_sweep.dip",
+  "total": 6,
+  "passed": 6,
+  "failed": 0,
+  "results": [
+    {"name": "quality gate passes -- all branches traversed", "status": "pass"},
+    {"name": "quality gate fails -- restarts from Synthesize", "status": "pass"},
+    <span class="hl-dim">...</span>
+  ]
+}
+</pre>
+
+    <h2>What's Next?</h2>
+
+    <p>
+      You know how to write scenario tests that verify your pipeline's routing
+      logic deterministically. Related topics:
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="ci-integration.html">
+        <h4>CI Integration</h4>
+        <p>Run your scenario tests automatically in GitHub Actions alongside lint and format checks.</p>
+      </a>
+      <a class="next-post" href="getting-started.html">
+        <h4>Getting Started</h4>
+        <p>New to Dippin? Start here to install the toolchain and write your first workflow.</p>
+      </a>
+    </div>
+
+    <div class="footnotes">
+      <h3>Notes</h3>
+      <ol>
+        <li id="fn1">The simulator doesn't call any LLMs. It walks the graph using your injected context values to pick edges, which is why tests run in milliseconds and cost nothing. The simulation implementation is in <a href="https://github.com/2389-research/dippin-lang/tree/main/simulate"><code>simulate/</code></a>.</li>
+        <li id="fn2">The <code>not_visited</code> fragility was discovered during field testing with the Tracker team. Retry loops with <code>restart: true</code> create cycles, and the simulator breaks them after a bounded number of iterations -- but the nodes visited during those iterations can surprise you. See the <a href="../testing.html">testing reference</a> for details on loop-breaking behavior.</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CI Integration: Lint, Test, Format — Blog — Dippin</title>
+<meta name="description" content="Set up GitHub Actions to validate, lint, test, and format-check your Dippin workflow files on every push and pull request.">
+<meta property="og:title" content="CI Integration: Lint, Test, Format — Dippin Blog">
+<meta property="og:description" content="Set up GitHub Actions to validate, lint, test, and format-check your Dippin workflow files on every push and pull request.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/ci-integration.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CI Integration: Lint, Test, Format">
+<meta name="twitter:description" content="Set up GitHub Actions to validate, lint, test, and format-check your Dippin workflow files on every push and pull request.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/ci-integration.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.read-time { color: var(--text-soft); }
+.callout { background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+.callout h4 { font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--green-deep); }
+.callout p { font-size: 0.88rem; color: var(--text-mid); margin-bottom: 0; }
+.callout-warn { background: var(--yellow-light); border-color: var(--yellow); }
+.callout-warn h4 { color: #b8960a; }
+.pipeline-visual { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 1.5rem 0 2rem; justify-content: center; }
+.pipeline-box { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 0.6rem 1rem; font-size: 0.82rem; font-weight: 600; text-align: center; font-family: var(--mono); }
+.pipeline-box.green { border-color: var(--green); background: var(--green-light); color: var(--green-deep); }
+.pipeline-box.lavender { border-color: var(--lavender-deep); background: var(--lavender-light); color: var(--lavender-deep); }
+.pipeline-box.yellow { border-color: var(--yellow-deep); background: var(--yellow-light); color: #b8960a; }
+.pipeline-arrow { color: var(--text-soft); font-size: 1.1rem; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+.footnotes { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.88rem; color: var(--text-mid); }
+.footnotes h3 { font-size: 1rem; margin-bottom: 0.8rem; }
+.footnotes ol { padding-left: 1.2rem; }
+.footnotes li { margin-bottom: 0.6rem; }
+@media (max-width: 768px) { .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../playground.html">Playground</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="index.html">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+  </div>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>CI Integration: Lint, Test, Format</h1>
+    <div class="post-meta-bar">
+      <span class="post-tag guide">Guide</span>
+      <span>2026-03-27</span>
+      <span class="read-time">11 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      Your Dippin workflows deserve the same CI treatment as your application code.
+      Here's how to set up <a href="https://docs.github.com/en/actions">GitHub Actions</a>
+      to validate, lint, test, and format-check your <code>.dip</code> files on every push.
+      We'll build a workflow YAML from scratch, then look at how dippin-lang dogfoods
+      its own CI.
+    </p>
+
+    <h2>What to Check in CI</h2>
+
+    <p>
+      A Dippin CI pipeline has four stages. Each catches a different class
+      of problem:
+    </p>
+
+    <div class="pipeline-visual">
+      <div class="pipeline-box green">validate</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-box lavender">lint</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-box yellow">test</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-box green">fmt --check</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Stage</th><th>Command</th><th>What it catches</th><th>Exit code on failure</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Validate</td>
+          <td><code>dippin validate</code></td>
+          <td>Structural errors (<a href="../validation.html">DIP001-DIP009</a>)</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Lint</td>
+          <td><code>dippin lint</code></td>
+          <td>Semantic warnings (<a href="../validation.html">DIP101-DIP125</a>)</td>
+          <td>0 (warnings don't fail)</td>
+        </tr>
+        <tr>
+          <td>Test</td>
+          <td><code>dippin test</code></td>
+          <td><a href="scenario-testing.html">Scenario test</a> failures</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Format</td>
+          <td><code>dippin fmt --check</code></td>
+          <td>Non-canonical formatting</td>
+          <td>1</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <h4>Exit code contract</h4>
+      <p>
+        <code>dippin validate</code> and <code>dippin test</code> exit 1 on failure,
+        making them suitable as CI gates. <code>dippin lint</code> exits 0 even with
+        warnings -- warnings are advisory, not blocking. To fail CI on warnings,
+        use <code>dippin check</code>, which combines validate + lint and can
+        be configured to fail on warnings.
+      </p>
+    </div>
+
+    <h2>A Complete GitHub Actions Workflow</h2>
+
+    <p>
+      Create <code>.github/workflows/dippin.yml</code> in your repository:
+    </p>
+
+    <pre>
+name: Dippin CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['**/*.dip', '**/*.test.json']
+  pull_request:
+    branches: [main]
+    paths: ['**/*.dip', '**/*.test.json']
+
+jobs:
+  dippin:
+    name: Validate, Lint, Test, Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Install dippin
+        run: go install github.com/2389-research/dippin-lang/cmd/dippin@latest
+
+      - name: Validate all .dip files
+        run: |
+          failed=0
+          for f in $(find . -name '*.dip' -not -path './.git/*'); do
+            if ! dippin validate "$f"; then
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - name: Lint all .dip files
+        run: |
+          for f in $(find . -name '*.dip' -not -path './.git/*'); do
+            dippin lint "$f"
+          done
+
+      - name: Run scenario tests
+        run: |
+          failed=0
+          for f in $(find . -name '*.dip' -not -path './.git/*'); do
+            test_file="${f%.dip}.test.json"
+            if [ -f "$test_file" ]; then
+              if ! dippin test "$f"; then
+                failed=1
+              fi
+            fi
+          done
+          exit $failed
+
+      - name: Check formatting
+        run: |
+          failed=0
+          for f in $(find . -name '*.dip' -not -path './.git/*'); do
+            if ! dippin fmt --check "$f"; then
+              echo "::error::$f is not formatted. Run: dippin fmt --write $f"
+              failed=1
+            fi
+          done
+          exit $failed
+</pre>
+
+    <p>
+      The <code>paths</code> filter means the job only runs when <code>.dip</code> or
+      <code>.test.json</code> files change, saving CI minutes.
+    </p>
+
+    <h2>Understanding Each Step</h2>
+
+    <h3>Validate: Structural Correctness</h3>
+
+    <p>
+      Validation catches fatal errors. If a workflow fails validation, nothing else
+      matters -- the file is structurally broken. Run this first.
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin validate pipelines/deploy.dip</span>
+<span class="hl-fail">FAIL</span>  pipelines/deploy.dip
+  <span class="hl-fail">DIP001</span>: start node "Begin" is not defined
+  <span class="hl-fail">DIP004</span>: node "Cleanup" is unreachable from start
+</pre>
+
+    <p>
+      Validation errors block CI: exit code 1. Fix the structural
+      issue before proceeding.
+    </p>
+
+    <h3>Lint: Semantic Warnings</h3>
+
+    <p>
+      Linting checks for best-practice violations that aren't structurally wrong
+      but may indicate problems:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipelines/deploy.dip</span>
+<span class="hl-warn">WARN</span>  pipelines/deploy.dip
+  <span class="hl-warn">DIP108</span>: node "Analyze": unknown model "gpt-4-turbo" for provider "openai"
+  <span class="hl-warn">DIP111</span>: tool node "RunTests" has no timeout
+  <span class="hl-warn">DIP103</span>: node "Review" has no prompt
+</pre>
+
+    <p>
+      Warnings exit 0 by default. The CI step runs lint for visibility -- developers
+      see warnings in the job log. To block merges on warnings, swap in
+      <code>dippin check</code>.
+    </p>
+
+    <h3>Test: Scenario Verification</h3>
+
+    <p>
+      Scenario tests verify that given specific context values, the workflow follows
+      the expected execution path. See the
+      <a href="scenario-testing.html">Scenario Testing</a> guide for details on
+      writing test files.
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin test pipelines/deploy.dip</span>
+<span class="hl-pass">PASS</span>  happy path -- all checks pass
+<span class="hl-pass">PASS</span>  validation fails -- routes to manual review
+<span class="hl-fail">FAIL</span>  timeout -- routes to fallback
+  <span class="hl-fail">expected visited: [Fallback], got visited: [Retry]</span>
+
+<span class="hl-dim">2/3 passed</span>  pipelines/deploy.dip
+</pre>
+
+    <p>Any test failure exits 1, blocking the pipeline.</p>
+
+    <h3>Format: Canonical Style</h3>
+
+    <p>
+      The <code>--check</code> flag verifies formatting without modifying the file.
+      Non-canonical formatting exits 1:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin fmt --check pipelines/deploy.dip</span>
+<span class="hl-fail">FAIL</span>  pipelines/deploy.dip is not formatted
+</pre>
+
+    <p>
+      The fix is always the same: <code>dippin fmt --write pipelines/deploy.dip</code>.
+      The formatter is idempotent, so formatting an already-formatted file is a no-op.
+    </p>
+
+    <h2>JSON Output for Job Summaries</h2>
+
+    <p>
+      Use <code>--format json</code> with <code>dippin check</code> to produce
+      machine-readable output for GitHub job summaries:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin --format json check pipeline.dip</span>
+{
+  "file": "pipeline.dip",
+  "valid": true,
+  "errors": 0,
+  "warnings": 2,
+  "diagnostics": [
+    {"code": "DIP111", "severity": "warning", "message": "tool node \"RunTests\" has no timeout"},
+    {"code": "DIP103", "severity": "warning", "message": "node \"Review\" has no prompt"}
+  ]
+}
+</pre>
+
+    <p>
+      Parse it with <code>jq</code> to build Markdown tables for
+      <code>$GITHUB_STEP_SUMMARY</code>:
+    </p>
+
+    <pre>
+- name: Lint summary
+  run: |
+    summary="## Dippin Lint Results\n\n"
+    summary+="| File | Status | Errors | Warnings |\n"
+    summary+="|------|--------|--------|----------|\n"
+    for f in pipelines/*.dip; do
+      output=$(dippin --format json check "$f" 2>/dev/null) || true
+      valid=$(echo "$output" | jq -r '.valid // false')
+      errors=$(echo "$output" | jq -r '.errors // 0')
+      warnings=$(echo "$output" | jq -r '.warnings // 0')
+      status="pass"
+      [ "$valid" != "true" ] &amp;&amp; status="fail"
+      summary+="| \`$f\` | $status | $errors | $warnings |\n"
+    done
+    echo -e "$summary" >> "$GITHUB_STEP_SUMMARY"
+</pre>
+
+    <p>
+      This renders a table in the GitHub Actions run summary showing the status
+      of every pipeline file at a glance.
+    </p>
+
+    <h2>How Dippin Dogfoods Its Own CI</h2>
+
+    <p>
+      The <a href="https://github.com/2389-research/dippin-lang">dippin-lang repository</a>
+      runs five CI jobs on every push and pull request. The most relevant for pipeline
+      authors is <code>validate-examples</code>, which runs seven checks against
+      all example files:
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Step</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Parse all .dip examples</td><td>Verifies the parser accepts every file</td></tr>
+        <tr><td>Validate all .dip examples</td><td>Structural correctness</td></tr>
+        <tr><td>Lint all .dip examples</td><td>Semantic best practices</td></tr>
+        <tr><td>Format check (idempotency)</td><td>Formats twice, asserts output is identical</td></tr>
+        <tr><td>Full round-trip</td><td>Parse, format, re-parse, validate -- nothing lost</td></tr>
+        <tr><td>Validate migration parity</td><td>DOT/Dippin pairs remain structurally equivalent</td></tr>
+        <tr><td>Simulate all examples</td><td>Dry-run simulation for each workflow</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      The idempotency check is worth highlighting. It formats the file, formats the
+      formatted output, and asserts they're identical. This catches formatter bugs where
+      a second pass changes the output:<sup>1</sup>
+    </p>
+
+    <pre>
+- name: Format check all .dip examples (idempotency)
+  run: |
+    failed=0
+    for f in examples/*.dip; do
+      formatted=$(./dippin fmt "$f" 2>/dev/null)
+      reformatted=$(echo "$formatted" | ./dippin fmt /dev/stdin 2>/dev/null)
+      if [ "$formatted" != "$reformatted" ]; then
+        echo "::error::$f is not format-idempotent"
+        failed=1
+      fi
+    done
+    exit $failed
+</pre>
+
+    <h2>The Dogfood Lint Job</h2>
+
+    <p>
+      A separate <code>dippin-lint</code> job uses <code>dippin check</code>
+      with JSON output to generate a summary table in the GitHub Actions UI --
+      Dippin linting its own example files:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin --format json check examples/code_quality_sweep.dip</span>
+{
+  "file": "examples/code_quality_sweep.dip",
+  "valid": true,
+  "errors": 0,
+  "warnings": 0,
+  "diagnostics": []
+}
+</pre>
+
+    <h2>Adding to an Existing CI Pipeline</h2>
+
+    <p>
+      If you already have a GitHub Actions workflow, add Dippin checks as
+      a new job or append steps to an existing one:
+    </p>
+
+    <pre>
+<span class="hl-cmt"># Add to your existing workflow</span>
+  dippin-check:
+    name: Dippin Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - run: go install github.com/2389-research/dippin-lang/cmd/dippin@latest
+      - run: |
+          for f in $(find . -name '*.dip' -not -path './.git/*'); do
+            dippin check "$f"
+          done
+</pre>
+
+    <p>
+      The minimum viable CI step is a single <code>dippin check</code> loop --
+      it combines validate + lint in one command. Add <code>dippin test</code> and
+      <code>dippin fmt --check</code> when you want stricter enforcement.
+    </p>
+
+    <h2>Pre-commit Hooks</h2>
+
+    <p>
+      For instant local feedback before pushing, add Dippin checks to a
+      <a href="https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks">pre-commit hook</a>:
+    </p>
+
+    <pre>
+<span class="hl-cmt">#!/bin/sh</span>
+<span class="hl-cmt"># .git/hooks/pre-commit</span>
+
+<span class="hl-cmt"># Check all staged .dip files</span>
+staged_dip=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dip$')
+if [ -n "$staged_dip" ]; then
+  for f in $staged_dip; do
+    if ! dippin validate "$f"; then
+      echo "Validation failed for $f"
+      exit 1
+    fi
+    if ! dippin fmt --check "$f"; then
+      echo "$f is not formatted. Run: dippin fmt --write $f"
+      exit 1
+    fi
+  done
+fi
+</pre>
+
+    <h2>What's Next?</h2>
+
+    <p>
+      Your CI pipeline now catches structural errors, semantic issues, test failures,
+      and formatting drift.
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="scenario-testing.html">
+        <h4>Scenario Testing</h4>
+        <p>Write the .test.json files that your CI pipeline will run on every push.</p>
+      </a>
+      <a class="next-post" href="editor-setup.html">
+        <h4>Editor Setup</h4>
+        <p>Get the same diagnostics in real-time in your editor, before you even push.</p>
+      </a>
+    </div>
+
+    <div class="footnotes">
+      <h3>Notes</h3>
+      <ol>
+        <li id="fn1">Non-idempotent formatters are a classic source of CI frustration: format, commit, CI formats again and gets a different result, CI fails. Dippin's formatter was designed to be idempotent from day one, and this CI check is the proof. The implementation lives in <a href="https://github.com/2389-research/dippin-lang/tree/main/formatter"><code>formatter/</code></a>.</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>
