@@ -167,6 +167,28 @@ section { padding: 6rem 0; }
 .compare-code .node { color: #F5D56A; }
 .compare-code .op { color: #ddd; }
 
+/* ── Syntax highlighting (shared) ── */
+pre .hl-kw { color: #B8A9E8; }
+pre .hl-node { color: #F5D56A; }
+pre .hl-str { color: #8FD5A6; }
+pre .hl-field { color: #7EC8E3; }
+pre .hl-op { color: #ddd; }
+pre .hl-cmt { color: #6a6a6a; font-style: italic; }
+pre .hl-bool { color: #E8A87C; }
+pre .hl-num { color: #E8A87C; }
+pre .hl-cond { color: #C9A0DC; }
+pre .hl-prompt { color: #8FD5A6; font-weight: 600; }
+pre .hl-cmd { color: #E8A87C; }
+pre .hl-flag { color: #7EC8E3; }
+pre .hl-file { color: #F5D56A; }
+pre .hl-pass { color: #8FD5A6; }
+pre .hl-warn { color: #F5D56A; }
+pre .hl-fail { color: #E88; }
+pre .hl-dim { color: #777; }
+pre .hl-shcmd { color: #ddd; }
+pre .hl-shvar { color: #F5D56A; }
+pre .hl-shkw { color: #B8A9E8; }
+
 /* ── Features ── */
 .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
 .feature {
