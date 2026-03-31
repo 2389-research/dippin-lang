@@ -52,7 +52,7 @@
     <div class="version-card">
       <div class="version-header">
         <span class="version-tag">v0.15.0</span>
-        <span class="version-date">2026-03-30</span>
+        <span class="version-date">2026-03-31</span>
       </div>
       <h4>Added</h4>
       <ul>
@@ -63,10 +63,13 @@
         <li>Integration guide updated with interview mode implementation guidance and recommended answer JSON schema.</li>
         <li><code>api_design.dip</code> example updated to use interview mode for Q&A collection.</li>
         <li><strong><code>interview_loop.dip</code></strong> example: reusable interview subgraph with iterative Q&A. Parameterized by topic and focus areas. LLM generates questions with suggested options, human answers via interview mode, assessor loops until requirements are clear. Grade A, ~$0.92/run.</li>
+        <li><strong>3 blog posts</strong>: Multi-line Prompts Without Escaping (deep dive), Conditional Edges (tutorial), Cost Estimation (tutorial). Hub-and-spokes model with cross-links.</li>
+        <li><strong>Auto-deploy</strong>: CI now deploys <code>site/</code> to GitHub Pages on successful main builds.</li>
       </ul>
       <h4>Fixed</h4>
       <ul>
         <li><code>--version</code> / <code>-version</code> flags now work (previously failed with "flag provided but not defined").</li>
+        <li><strong>Formatter idempotency</strong>: subgraph param values with quotes (e.g., <code>"API design"</code>) were double-quoted on each format pass. Parser now strips surrounding quotes from param values.</li>
       </ul>
       <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.15.0">View on GitHub &rarr;</a>
     </div>
