@@ -37,46 +37,7 @@
 </div>
 
 <nav class="nav">
-<div class="nav-top">
-  <a href="index.html" class="nav-brand">Dippin</a>
-  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-primary">
-    <a href="language.html">Docs</a>
-    <a href="playground.html">Playground</a>
-    <a href="blog/index.html">Blog</a>
-    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
-  </div>
-</div>
-<div class="nav-sub">
-  <div class="nav-sub-inner">
-    <a href="cli.html">CLI</a>
-    <a href="language.html">Language</a>
-    <a href="testing.html">Testing</a>
-    <a href="validation.html">Validation</a>
-    <a href="analysis.html">Analysis</a>
-    <a href="architecture.html">Architecture</a>
-    <a href="editors.html">Editors</a>
-    <a href="changelog.html" class="active">Changelog</a>
-  </div>
-</div>
-<div class="nav-mobile">
-  <a href="language.html">Docs</a>
-  <a href="playground.html">Playground</a>
-  <a href="blog/index.html">Blog</a>
-  <div class="nav-divider"></div>
-  <a href="cli.html">CLI</a>
-  <a href="language.html">Language</a>
-  <a href="testing.html">Testing</a>
-  <a href="validation.html">Validation</a>
-  <a href="analysis.html">Analysis</a>
-  <a href="architecture.html">Architecture</a>
-  <a href="editors.html">Editors</a>
-  <a href="changelog.html" class="active">Changelog</a>
-  <div class="nav-divider"></div>
-  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-</div>
+<!-- placeholder: sync-nav.sh replaces this block -->
 </nav>
 
 <section class="doc">
@@ -88,6 +49,54 @@
   </div>
 
   <div class="doc-body">
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.15.0</span>
+        <span class="version-date">2026-03-30</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong>Interview mode</strong> for human nodes (<code>mode: interview</code>). Runtimes extract questions from upstream agent output and present each as an individual form field with optional suggested answers. New fields: <code>questions_key</code>, <code>answers_key</code>.</li>
+        <li><strong>DIP127</strong>: lint warning for invalid human node mode values.</li>
+        <li><strong>DIP128</strong>: lint warning when interview mode has a meaningless <code>default</code> value.</li>
+        <li><strong>DIP129</strong>: lint warning when interview mode has conflicting choice-style labeled edges.</li>
+        <li>Integration guide updated with interview mode implementation guidance and recommended answer JSON schema.</li>
+        <li><code>api_design.dip</code> example updated to use interview mode for Q&A collection.</li>
+        <li><strong><code>interview_loop.dip</code></strong> example: reusable interview subgraph with iterative Q&A. Parameterized by topic and focus areas. LLM generates questions with suggested options, human answers via interview mode, assessor loops until requirements are clear. Grade A, ~$0.92/run.</li>
+      </ul>
+      <h4>Fixed</h4>
+      <ul>
+        <li><code>--version</code> / <code>-version</code> flags now work (previously failed with "flag provided but not defined").</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.15.0">View on GitHub &rarr;</a>
+    </div>
+
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.14.0</span>
+        <span class="version-date">2026-03-27</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong><code>code_health_check.dip</code></strong> example: self-contained pipeline that audits a Go repo. Gathers context with shell tools, runs vet/staticcheck/tests in parallel, three-model independent review, synthesized report with quality gate and retry loop. 5 test scenarios. Grade A, ~$1/run.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.14.0">View on GitHub &rarr;</a>
+    </div>
+
+    <div class="version-card">
+      <div class="version-header">
+        <span class="version-tag">v0.13.2</span>
+        <span class="version-date">2026-03-27</span>
+      </div>
+      <h4>Changed</h4>
+      <ul>
+        <li><strong>Single-source nav</strong>: <code>site/_layout/nav.html</code> is the one source of truth. <code>scripts/sync-nav.sh</code> propagates it to all 16 pages with correct prefixes and active states. Pre-commit hook runs it automatically. No more editing nav in 16 files.</li>
+        <li><code>scripts/gen-changelog-html.sh</code> emits a placeholder nav that <code>sync-nav.sh</code> fills.</li>
+        <li><code>just sync-nav</code> recipe added.</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.13.2">View on GitHub &rarr;</a>
+    </div>
+
     <div class="version-card">
       <div class="version-header">
         <span class="version-tag">v0.13.1</span>

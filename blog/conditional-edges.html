@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conditional Edges: Routing Pipelines with when — Blog — Dippin</title>
+<meta name="description" content="Build branching AI pipelines that route based on LLM output. Learn Dippin's condition syntax, operators, and exhaustive detection.">
+<meta property="og:title" content="Conditional Edges: Routing Pipelines with when — Dippin Blog">
+<meta property="og:description" content="Build branching AI pipelines that route based on LLM output. Learn Dippin's condition syntax, operators, and exhaustive detection.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/conditional-edges.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Conditional Edges: Routing Pipelines with when">
+<meta name="twitter:description" content="Build branching AI pipelines that route based on LLM output. Learn Dippin's condition syntax, operators, and exhaustive detection.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/conditional-edges.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.tutorial { color: #b8960a; background: var(--yellow-light); border: 1px solid var(--yellow); }
+.read-time { color: var(--text-soft); }
+.step-num { display: inline-block; font-family: var(--serif); font-size: 1.4rem; font-weight: 300; color: var(--green-deep); margin-right: 0.5rem; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+@media (max-width: 768px) { .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-top">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-primary">
+    <a href="../language.html">Docs</a>
+    <a href="../playground.html">Playground</a>
+    <a href="index.html" class="active">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
+  </div>
+</div>
+<div class="nav-sub">
+  <div class="nav-sub-inner">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../changelog.html">Changelog</a>
+  </div>
+</div>
+<div class="nav-mobile">
+  <a href="../language.html">Docs</a>
+  <a href="../playground.html">Playground</a>
+  <a href="index.html" class="active">Blog</a>
+  <div class="nav-divider"></div>
+  <a href="../cli.html">CLI</a>
+  <a href="../language.html">Language</a>
+  <a href="../testing.html">Testing</a>
+  <a href="../validation.html">Validation</a>
+  <a href="../analysis.html">Analysis</a>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../editors.html">Editors</a>
+  <a href="../changelog.html">Changelog</a>
+  <div class="nav-divider"></div>
+  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>Conditional Edges: Routing Pipelines with <code>when</code></h1>
+    <div class="post-meta-bar">
+      <span class="post-tag tutorial">Tutorial</span>
+      <span>2026-03-31</span>
+      <span class="read-time">10 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      In the <a href="multi-line-prompts.html">last post</a> we showed how Dippin handles
+      prompts. Now let's make pipelines that think. Linear workflows are fine for simple
+      tasks, but real AI pipelines need to branch: retry on failure, escalate when something
+      looks wrong, skip steps that don't apply. Dippin's <code>when</code> keyword is how
+      you express all of that.
+    </p>
+
+    <h2><span class="step-num">1</span> The Linear Baseline</h2>
+
+    <p>
+      Let's start with a document review pipeline. It drafts, reviews, and publishes -- in
+      that order, every time, with no branching. Here's the whole thing:
+    </p>
+
+    <pre>
+<span class="hl-kw">workflow</span> <span class="hl-node">ReviewPipeline</span>
+  <span class="hl-field">goal</span>: <span class="hl-str">"Draft, review, and publish a document"</span>
+  <span class="hl-field">start</span>: Start
+  <span class="hl-field">exit</span>: Exit
+
+  <span class="hl-kw">defaults</span>
+    <span class="hl-field">provider</span>: anthropic
+    <span class="hl-field">model</span>: claude-sonnet-4-6
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Start</span>
+    <span class="hl-field">label</span>: Start
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Exit</span>
+    <span class="hl-field">label</span>: Exit
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Draft</span>
+    <span class="hl-field">label</span>: <span class="hl-str">"Write Draft"</span>
+    <span class="hl-field">prompt</span>:
+      Write a clear, concise technical document based on the
+      provided requirements. Focus on accuracy and readability.
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Review</span>
+    <span class="hl-field">label</span>: <span class="hl-str">"Review Draft"</span>
+    <span class="hl-field">auto_status</span>: true
+    <span class="hl-field">prompt</span>:
+      Review the draft for technical accuracy, clarity, and
+      completeness. Return success if the draft meets standards,
+      or fail with specific feedback.
+
+  <span class="hl-kw">agent</span> <span class="hl-node">Publish</span>
+    <span class="hl-field">label</span>: Publish
+    <span class="hl-field">prompt</span>:
+      Format the approved draft for publication.
+
+  <span class="hl-kw">edges</span>
+    Start -> Draft
+    Draft -> Review
+    Review -> Publish
+    Publish -> Exit
+</pre>
+
+    <p>
+      This works, but every draft gets published regardless of the review. The
+      <code>Review</code> node dutifully critiques the draft, but we ignore its verdict
+      and publish anyway. We need branching.
+    </p>
+
+    <h2><span class="step-num">2</span> Basic Conditions</h2>
+
+    <p>
+      Add <code><span class="hl-cond">when</span></code> clauses to the edges out of
+      <code>Review</code>. The node definitions stay exactly the same -- only the
+      <code>edges</code> block changes:
+    </p>
+
+    <pre>
+  <span class="hl-kw">edges</span>
+    Start -> Draft
+    Draft -> Review
+    Review -> Publish  <span class="hl-cond">when</span> ctx.outcome = success
+    Review -> Draft    <span class="hl-cond">when</span> ctx.outcome = fail
+    Publish -> Exit
+</pre>
+
+    <p>
+      Lint it:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-pass">PASS</span>  pipeline.dip  <span class="hl-dim">(0 errors, 0 warnings)</span>
+</pre>
+
+    <p>
+      Two things are happening here. First, <code>auto_status: true</code> on the
+      <code>Review</code> node tells Dippin that the LLM will set
+      <code>ctx.outcome</code> based on the content of its response -- it parses the
+      output for <code>success</code> or <code>fail</code> and writes it into the
+      pipeline context automatically. Second, the edges now form a retry loop: a
+      failed review sends execution back to <code>Draft</code>, which writes a new
+      version, which goes back to <code>Review</code>, until the review passes and
+      the pipeline proceeds to <code>Publish</code>.
+    </p>
+
+    <h2><span class="step-num">3</span> Operators</h2>
+
+    <p>
+      <code>success</code>/<code>fail</code> is the most common pattern, but conditions
+      support a full set of string operators:
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Operator</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>=</code> / <code>==</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.outcome = success</code></td>
+        </tr>
+        <tr>
+          <td><code>!=</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.outcome != success</code></td>
+        </tr>
+        <tr>
+          <td><code>contains</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.feedback contains "security"</code></td>
+        </tr>
+        <tr>
+          <td><code>not contains</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.feedback not contains "security"</code></td>
+        </tr>
+        <tr>
+          <td><code>startswith</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.category startswith "urgent"</code></td>
+        </tr>
+        <tr>
+          <td><code>endswith</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.filename endswith ".go"</code></td>
+        </tr>
+        <tr>
+          <td><code>in</code></td>
+          <td><code><span class="hl-cond">when</span> ctx.priority in high,critical</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      All operators work on string values. The left side is always a context variable,
+      the right side is a literal. Comparisons are case-sensitive. The <code>in</code>
+      operator matches against a comma-separated list of values with no spaces around
+      the commas.
+    </p>
+
+    <h2><span class="step-num">4</span> Compound Conditions</h2>
+
+    <p>
+      Sometimes a single condition isn't enough. Suppose failed reviews that mention
+      security issues need to go to a dedicated escalation node, while ordinary failures
+      just loop back to drafting:
+    </p>
+
+    <pre>
+    Review -> Escalate  <span class="hl-cond">when</span> ctx.outcome = fail and ctx.feedback contains "security"
+    Review -> Draft     <span class="hl-cond">when</span> ctx.outcome = fail and ctx.feedback not contains "security"
+</pre>
+
+    <p>
+      <code>and</code> and <code>or</code> compose conditions in the expected way. Use
+      parentheses to control precedence when mixing them -- without parens,
+      <code>and</code> binds tighter than <code>or</code>:
+    </p>
+
+    <pre>
+    <span class="hl-cond">when</span> (ctx.outcome = fail and ctx.severity = high) or ctx.override = true
+</pre>
+
+    <p>
+      This routes to the target if the outcome is a high-severity failure, or if an
+      override flag was explicitly set -- whichever comes first.
+    </p>
+
+    <h2><span class="step-num">5</span> Exhaustive Detection</h2>
+
+    <p>
+      Dippin tracks whether a node's outgoing edges cover all possible outcomes. If they
+      don't, <code>dippin lint</code> will tell you. This is one of the most useful
+      things the linter does -- a missing branch is a silent runtime failure waiting
+      to happen.
+    </p>
+
+    <p>
+      There are three patterns to know. The first is an unconditional fallback -- one
+      edge has a condition, the other doesn't. The unconditional edge fires when no
+      condition matches:
+    </p>
+
+    <pre>
+    Review -> Publish  <span class="hl-cond">when</span> ctx.outcome = success
+    Review -> Exit
+</pre>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-pass">PASS</span>  pipeline.dip  <span class="hl-dim">(0 errors, 0 warnings)</span>
+</pre>
+
+    <p>
+      The second pattern is a single conditional edge with no fallback. If
+      <code>ctx.outcome</code> is never <code>success</code>, execution has nowhere
+      to go:
+    </p>
+
+    <pre>
+    Review -> Publish  <span class="hl-cond">when</span> ctx.outcome = success
+</pre>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-warn">WARN</span>  pipeline.dip
+  <span class="hl-warn">DIP101</span>: node "Review" has conditional edges but no unconditional fallback
+</pre>
+
+    <p>
+      The third pattern is a complementary pair. When both branches of a
+      <code>success</code>/<code>fail</code> split are present, Dippin recognizes
+      them as exhaustive and the warning is suppressed -- this is exactly the pattern
+      from Section 2:
+    </p>
+
+    <pre>
+    Review -> Publish  <span class="hl-cond">when</span> ctx.outcome = success
+    Review -> Draft    <span class="hl-cond">when</span> ctx.outcome = fail
+</pre>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-pass">PASS</span>  pipeline.dip  <span class="hl-dim">(0 errors, 0 warnings)</span>
+</pre>
+
+    <p>
+      Dippin recognizes two kinds of exhaustive pairs: <code>success</code>/<code>fail</code>
+      and <code>contains X</code>/<code>not contains X</code> for the same variable and
+      value. Any other combination still needs an unconditional fallback to satisfy the linter.
+    </p>
+
+    <h2><span class="step-num">6</span> The <code>ctx.</code> Prefix</h2>
+
+    <p>
+      Context variables must be namespace-prefixed. If you write a condition without one,
+      the linter catches it:
+    </p>
+
+    <pre>
+    Review -> Publish  <span class="hl-cond">when</span> outcome = success
+</pre>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin lint pipeline.dip</span>
+<span class="hl-warn">WARN</span>  pipeline.dip
+  <span class="hl-warn">DIP120</span>: condition references "outcome" without namespace prefix — did you mean "ctx.outcome"?
+</pre>
+
+    <p>
+      The fix is one prefix away: change <code>outcome</code> to <code>ctx.outcome</code>.
+      Dippin supports three namespaces in conditions: <code>ctx</code> for runtime context
+      set by node execution, <code>graph</code> for pipeline-level metadata, and
+      <code>params</code> for values passed in at invocation time. Most conditions you write
+      day-to-day will use <code>ctx</code>.
+    </p>
+
+    <h2>What's Next</h2>
+
+    <p>
+      You've got pipelines that branch. But what do those branches cost? Each path through
+      a conditional pipeline has a different token count and a different price tag. The next
+      post shows how to estimate it before spending real money on LLM calls.
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="cost-estimation.html">
+        <h4>Cost Estimation</h4>
+        <p>Estimate per-run pipeline costs before spending real money on LLM calls.</p>
+      </a>
+      <a class="next-post" href="multi-line-prompts.html">
+        <h4>Multi-line Prompts</h4>
+        <p>The #1 reason Dippin exists -- write prompts without escaping.</p>
+      </a>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>

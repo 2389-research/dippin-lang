@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-line Prompts Without Escaping — Blog — Dippin</title>
+<meta name="description" content="DOT's escaped strings are unreadable. Dippin's indentation-based blocks let you write prompts with markdown, JSON, and code blocks — no escaping required.">
+<meta property="og:title" content="Multi-line Prompts Without Escaping — Dippin Blog">
+<meta property="og:description" content="DOT's escaped strings are unreadable. Dippin's indentation-based blocks let you write prompts with markdown, JSON, and code blocks — no escaping required.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/multi-line-prompts.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Multi-line Prompts Without Escaping">
+<meta name="twitter:description" content="DOT's escaped strings are unreadable. Dippin's indentation-based blocks let you write prompts with markdown, JSON, and code blocks — no escaping required.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/multi-line-prompts.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.guide { color: var(--green-deep); background: var(--green-light); border: 1px solid var(--green); }
+.post-tag.deep-dive { color: var(--lavender-deep); background: var(--lavender-light); border: 1px solid var(--lavender); }
+.read-time { color: var(--text-soft); }
+.step-num { display: inline-block; font-family: var(--serif); font-size: 1.4rem; font-weight: 300; color: var(--green-deep); margin-right: 0.5rem; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+@media (max-width: 768px) { .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-top">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-primary">
+    <a href="../language.html">Docs</a>
+    <a href="../playground.html">Playground</a>
+    <a href="index.html" class="active">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
+  </div>
+</div>
+<div class="nav-sub">
+  <div class="nav-sub-inner">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../changelog.html">Changelog</a>
+  </div>
+</div>
+<div class="nav-mobile">
+  <a href="../language.html">Docs</a>
+  <a href="../playground.html">Playground</a>
+  <a href="index.html" class="active">Blog</a>
+  <div class="nav-divider"></div>
+  <a href="../cli.html">CLI</a>
+  <a href="../language.html">Language</a>
+  <a href="../testing.html">Testing</a>
+  <a href="../validation.html">Validation</a>
+  <a href="../analysis.html">Analysis</a>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../editors.html">Editors</a>
+  <a href="../changelog.html">Changelog</a>
+  <div class="nav-divider"></div>
+  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>Multi-line Prompts Without Escaping</h1>
+    <div class="post-meta-bar">
+      <span class="post-tag deep-dive">Deep Dive</span>
+      <span>2026-03-31</span>
+      <span class="read-time">6 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      If you've been authoring AI pipelines in Graphviz DOT, you know the pain.
+      Every multi-step workflow lives in a <code>.dot</code> file, and every string
+      — prompts, commands, instructions — has to fit on a single quoted line.
+      What that looks like in practice is this, a real <code>tool_command</code>
+      from a sprint management pipeline:
+    </p>
+
+    <pre>
+tool_command="set -eu\nmkdir -p .ai .ai/drafts .ai/sprints\nif [ ! -f .ai/ledger.tsv ]; then\n  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)\n  printf 'sprint_id\\ttitle\\tstatus\\tcreated_at\\tupdated_at\\n001\\tBootstrap sprint\\tplanned\\t%s\\t%s\\n' \"$now\" \"$now\" > .ai/ledger.tsv\nfi\nprintf 'ledger-ready'"
+</pre>
+
+    <p>
+      If you've authored AI pipelines in Graphviz DOT, this looks familiar. And painful.
+      Every newline is <code>\n</code>, every quote is <code>\"</code>, every tab is
+      <code>\\t</code>. Reading this is archaeology. Editing it is anxiety.
+    </p>
+
+    <p>
+      This is the problem Dippin was built to solve. Not the only problem — but the
+      original one, the one that made DOT untenable for real pipelines with real prompts.
+    </p>
+
+    <h2>The Fix: Indentation-Based Blocks</h2>
+
+    <p>
+      Here's that same shell script as a Dippin <code>command:</code> block:
+    </p>
+
+    <pre>
+<span class="hl-kw">tool</span> <span class="hl-node">EnsureLedger</span>
+  <span class="hl-field">label</span>: <span class="hl-str">"Ensure Ledger"</span>
+  <span class="hl-field">command</span>:
+    set -eu
+    mkdir -p .ai .ai/drafts .ai/sprints
+    if [ ! -f .ai/ledger.tsv ]; then
+      now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      printf 'sprint_id\ttitle\tstatus\tcreated_at\tupdated_at\n001\tBootstrap sprint\tplanned\t%s\t%s\n' "$now" "$now" > .ai/ledger.tsv
+    fi
+    printf 'ledger-ready'
+</pre>
+
+    <p>
+      Indent after the colon. Write anything. That's it. No escaping, no backslash
+      sequences, no mental translation between what you're reading and what the
+      shell will actually execute. The content is exactly what it looks like.
+    </p>
+
+    <p>
+      The same rule applies to <code>prompt:</code> blocks, <code>goal:</code> fields,
+      and anywhere else you need multi-line text. If the first line after the colon is
+      blank (or the colon is followed by a newline), Dippin reads everything at the
+      next indentation level as the block content until indentation decreases.
+    </p>
+
+    <h2>Prompts Get Even Better</h2>
+
+    <p>
+      Shell scripts are one thing. Prompts are where escaping really breaks down.
+      A useful system prompt has markdown headers, bullet lists, code examples,
+      and carefully structured instructions. In DOT, that's hundreds of
+      <code>\n</code>s and <code>\"</code>s. In Dippin:
+    </p>
+
+    <pre>
+<span class="hl-kw">agent</span> <span class="hl-node">ReviewCode</span>
+  <span class="hl-field">label</span>: <span class="hl-str">"Code Review"</span>
+  <span class="hl-field">model</span>: claude-sonnet-4-6
+  <span class="hl-field">provider</span>: anthropic
+  <span class="hl-field">prompt</span>:
+    Review the submitted code changes for:
+
+    ## Quality Checks
+    - Correctness: Does it do what it claims?
+    - Edge cases: What happens with empty input?
+    - Security: Any injection risks?
+
+    ## Style
+    Follow the project's existing patterns.
+    Don't suggest changes that are purely aesthetic.
+
+    Return "success" if the code passes all checks,
+    or "fail" with specific feedback.
+</pre>
+
+    <p>
+      Everything is preserved exactly: blank lines, markdown headers, bullet points,
+      quoted strings inside the prompt text. The <code>#</code> character is a comment
+      marker at the top level of a <code>.dip</code> file, but inside an indented block
+      it's just a literal character — so markdown headers work without any special treatment.
+    </p>
+
+    <p>
+      The same applies to JSON snippets, YAML fragments, SQL, or any other structured
+      content you need to embed in a prompt. The formatter round-trips this exactly —
+      <code>dippin fmt</code> preserves your block content character-for-character.
+      What you write is what gets sent to the model.
+    </p>
+
+    <h2>But It's Not Just Prompts</h2>
+
+    <p>
+      The block syntax solves the immediate escaping problem, but Dippin goes further
+      with two features that matter for real pipelines.
+    </p>
+
+    <p>
+      <strong>Subgraph composition.</strong> Instead of copy-pasting patterns across
+      workflows, you can define a reusable subgraph and reference it by file. Here's
+      how <code>api_design.dip</code> embeds an entire requirements-gathering interview
+      as a single node:
+    </p>
+
+    <pre>
+<span class="hl-kw">subgraph</span> <span class="hl-node">Interview</span>
+  <span class="hl-field">label</span>: <span class="hl-str">"Requirements interview"</span>
+  <span class="hl-field">ref</span>: interview_loop.dip
+  <span class="hl-field">writes</span>: requirements_summary
+  <span class="hl-field">params</span>:
+    topic: <span class="hl-str">"API design"</span>
+    focus: <span class="hl-str">"resources, auth, consumers, scale, integrations, real-time needs"</span>
+</pre>
+
+    <p>
+      The <code>interview_loop.dip</code> file is a self-contained Q&amp;A subgraph —
+      it asks clarifying questions, collects answers, and writes a summary to the
+      context variable named in <code>writes</code>. <code>api_design.dip</code>
+      just references it and passes parameters. Swap in a different interview loop,
+      change the topic, reuse it in ten other workflows. No copy-paste, no drift.
+    </p>
+
+    <p>
+      <strong>The playground.</strong> Paste any example from this post and try it yourself
+      without installing anything — <a href="../playground.html">open the playground</a>.
+      It runs the full parser and validator in your browser, so you get real diagnostics
+      and can experiment with the syntax immediately.
+    </p>
+
+    <h2>What's Next: Install and Keep Going</h2>
+
+    <p>
+      Ready to use Dippin on your own pipelines? Install the binary:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">go install github.com/2389-research/dippin-lang/cmd/dippin@latest</span>
+</pre>
+
+    <p>Or via Homebrew (macOS and Linux):</p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">brew install 2389-research/tap/dippin</span>
+</pre>
+
+    <p>
+      If you're new to Dippin, <a href="getting-started.html">Getting Started</a> walks
+      through writing your first workflow, validating it, linting it, and visualizing the
+      topology — all in under 10 minutes.
+    </p>
+
+    <p>
+      In the next posts, we'll build branching pipelines with conditional edges and learn
+      how to estimate costs before running them. Multi-line prompts are the foundation;
+      routing and cost awareness are what make pipelines production-ready.
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="conditional-edges.html">
+        <h4>Conditional Edges</h4>
+        <p>Route pipelines based on LLM output with the when keyword.</p>
+      </a>
+      <a class="next-post" href="cost-estimation.html">
+        <h4>Cost Estimation</h4>
+        <p>Know what your pipeline will cost before you run it.</p>
+      </a>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>

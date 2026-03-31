@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost Estimation: Know Before You Run — Blog — Dippin</title>
+<meta name="description" content="Estimate per-run pipeline costs before spending real money on LLM calls. Use dippin cost and dippin optimize to find savings.">
+<meta property="og:title" content="Cost Estimation: Know Before You Run — Dippin Blog">
+<meta property="og:description" content="Estimate per-run pipeline costs before spending real money on LLM calls. Use dippin cost and dippin optimize to find savings.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://2389-research.github.io/dippin-lang/blog/cost-estimation.html">
+<meta property="og:site_name" content="Dippin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Cost Estimation: Know Before You Run">
+<meta name="twitter:description" content="Estimate per-run pipeline costs before spending real money on LLM calls. Use dippin cost and dippin optimize to find savings.">
+<link rel="canonical" href="https://2389-research.github.io/dippin-lang/blog/cost-estimation.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<style>
+.post-header { margin-bottom: 2.5rem; }
+.post-header h1 { font-family: var(--serif); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+.post-meta-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.04em; }
+.post-tag { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 99px; }
+.post-tag.tutorial { color: #b8960a; background: var(--yellow-light); border: 1px solid var(--yellow); }
+.read-time { color: var(--text-soft); }
+.step-num { display: inline-block; font-family: var(--serif); font-size: 1.4rem; font-weight: 300; color: var(--green-deep); margin-right: 0.5rem; }
+.next-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.next-post { background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 1.2rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: block; }
+.next-post:hover { border-color: var(--green); transform: translateY(-2px); }
+.next-post h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+.next-post p { font-size: 0.82rem; color: var(--text-soft); margin: 0; }
+@media (max-width: 768px) { .next-posts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="dots">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<nav class="nav">
+<div class="nav-top">
+  <a href="../index.html" class="nav-brand">Dippin</a>
+  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-primary">
+    <a href="../language.html">Docs</a>
+    <a href="../playground.html">Playground</a>
+    <a href="index.html" class="active">Blog</a>
+    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
+  </div>
+</div>
+<div class="nav-sub">
+  <div class="nav-sub-inner">
+    <a href="../cli.html">CLI</a>
+    <a href="../language.html">Language</a>
+    <a href="../testing.html">Testing</a>
+    <a href="../validation.html">Validation</a>
+    <a href="../analysis.html">Analysis</a>
+    <a href="../architecture.html">Architecture</a>
+    <a href="../editors.html">Editors</a>
+    <a href="../changelog.html">Changelog</a>
+  </div>
+</div>
+<div class="nav-mobile">
+  <a href="../language.html">Docs</a>
+  <a href="../playground.html">Playground</a>
+  <a href="index.html" class="active">Blog</a>
+  <div class="nav-divider"></div>
+  <a href="../cli.html">CLI</a>
+  <a href="../language.html">Language</a>
+  <a href="../testing.html">Testing</a>
+  <a href="../validation.html">Validation</a>
+  <a href="../analysis.html">Analysis</a>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../editors.html">Editors</a>
+  <a href="../changelog.html">Changelog</a>
+  <div class="nav-divider"></div>
+  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+</div>
+</nav>
+
+<section class="doc">
+<div class="container">
+  <div class="post-header">
+    <div class="section-label">Blog</div>
+    <h1>Cost Estimation: Know Before You Run</h1>
+    <div class="post-meta-bar">
+      <span class="post-tag tutorial">Tutorial</span>
+      <span>2026-03-31</span>
+      <span class="read-time">6 min read</span>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <p>
+      You've got a branching pipeline with conditional edges. Before you run it against
+      real APIs, let's find out what it'll cost. Dippin's <code>cost</code> command
+      gives you a per-run estimate from the <code>.dip</code> file alone — no API calls
+      required.
+    </p>
+
+    <h2><span class="step-num">1</span> dippin cost</h2>
+
+    <p>
+      Let's use <code>complexity_cleanup.dip</code> from the examples directory — a
+      real pipeline with tool nodes, retry loops, and a mix of models. Run
+      <code>dippin cost</code> on it:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin cost complexity_cleanup.dip</span>
+&#x2550;&#x2550;&#x2550; Cost Estimate &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;
+                              Min Expected      Max
+  &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500; &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
+  TOTAL                       $0.65    $0.65    $2.66
+
+&#x2500;&#x2500;&#x2500; By Provider &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
+  anthropic                   $0.65    $0.65    $2.66
+
+&#x2500;&#x2500;&#x2500; Top Cost Drivers &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
+  Refactor                    $1.46 (max)  anthropic/claude-opus-4-6
+  Triage                      $0.50 (max)  anthropic/claude-opus-4-6
+  QualityGate                 $0.49 (max)  anthropic/claude-opus-4-6
+  Done                        $0.21 (max)  anthropic/claude-sonnet-4-6
+  RemeasureCognitive          $0.00 (max)  /
+</pre>
+
+    <p>
+      The output has three sections worth understanding. The top section shows three
+      columns: <strong>min</strong>, <strong>expected</strong>, and <strong>max</strong>.
+      Min is the cost if every conditional branch takes the cheapest path. Max is the
+      worst case if every node runs every retry. Expected sits in the middle — the
+      most likely path through the pipeline.
+    </p>
+
+    <p>
+      The <strong>By Provider</strong> section breaks down cost by API provider. This
+      pipeline is all Anthropic, so it's a single line — but in a multi-provider
+      pipeline you'd see OpenAI, Google, and others listed separately. Useful for
+      knowing which vendor bill is going to grow.
+    </p>
+
+    <p>
+      The <strong>Top Cost Drivers</strong> section ranks each node by its maximum
+      cost. <code>Refactor</code> leads at $1.46 max, followed by <code>Triage</code>
+      and <code>QualityGate</code>. Notice <code>RemeasureCognitive</code> at the
+      bottom: $0.00, with no provider listed. That's a tool node — more on that
+      in a moment.
+    </p>
+
+    <h2><span class="step-num">2</span> How Estimation Works</h2>
+
+    <p>
+      The cost estimator counts your prompt tokens (the text in your <code>prompt:</code>
+      block maps to input tokens), applies a heuristic multiplier for expected output
+      tokens, and multiplies by the model's per-token pricing. It's an estimate, not a
+      bill — but it's in the right ballpark. The model catalog and pricing live in
+      <code>validator/lint_model.go</code> and <code>cost/pricing.go</code>, verified
+      against official provider documentation. Stale pricing is a lint error.
+    </p>
+
+    <p>
+      One practical consequence: longer prompts cost more, and the estimator sees
+      that directly from your <code>.dip</code> file. If a node's prompt block is
+      500 words, the estimator counts those tokens before you spend a cent.
+    </p>
+
+    <h2><span class="step-num">3</span> The max_turns Multiplier</h2>
+
+    <p>
+      Nodes inside retry loops get their cost multiplied by the retry count. Look at
+      the <code>Refactor</code> node: it shows $1.46 max because it's inside a retry
+      loop — each attempt costs roughly the same, and the max reflects all of them
+      running. The expected cost assumes the node succeeds on the first try.
+    </p>
+
+    <p>
+      This is why max and expected can diverge significantly. A pipeline with a
+      well-behaved happy path might cost $0.65 expected, but if every retry fires
+      on every node, you're looking at $2.66. The cost report makes that spread
+      explicit so you can decide whether the retry budget is acceptable before
+      committing to a model choice.
+    </p>
+
+    <h2><span class="step-num">4</span> Free Nodes</h2>
+
+    <p>
+      Tool nodes and human nodes cost $0 — they don't make LLM calls. You'll see
+      them in the cost breakdown with <code>$0.00</code> and no provider listed.
+      Don't worry about them. <code>RemeasureCognitive</code> runs a shell command
+      to re-check cyclomatic complexity; it shows up in the report for completeness,
+      but it contributes nothing to your API bill.
+    </p>
+
+    <h2><span class="step-num">5</span> dippin optimize</h2>
+
+    <p>
+      Once you know what a pipeline costs, <code>dippin optimize</code> tells you
+      where you could spend less:
+    </p>
+
+    <pre>
+<span class="hl-dim">$</span> <span class="hl-shcmd">dippin optimize complexity_cleanup.dip</span>
+&#x2550;&#x2550;&#x2550; Optimization Report &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;
+&#x2500;&#x2500;&#x2500; Cost Summary &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
+  Current:   $0.65 (expected)
+  Optimized: $0.02 (expected)
+  Savings:   $0.63 (expected)
+
+&#x2500;&#x2500;&#x2500; Suggestions &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
+  [Refactor] node in retry loop &#x2014; consider a cheaper model for mechanical iterations
+    claude-opus-4-6 &#x2192; claude-haiku-4-5  (saves ~$0.23)
+  [Refactor] bookkeeping task (summary/cleanup/commit) can use a cheaper model
+    claude-opus-4-6 &#x2192; claude-haiku-4-5  (saves ~$0.23)
+  [QualityGate] bookkeeping task (summary/cleanup/commit) can use a cheaper model
+    claude-opus-4-6 &#x2192; claude-haiku-4-5  (saves ~$0.12)
+  [Done] bookkeeping task (summary/cleanup/commit) can use a cheaper model
+    claude-sonnet-4-6 &#x2192; claude-haiku-4-5  (saves ~$0.04)
+</pre>
+
+    <p>
+      The Cost Summary at the top shows where you'd land if you followed every
+      suggestion: $0.65 expected down to $0.02 — a 97% reduction. That's an
+      aggressive projection, but it shows the ceiling on savings.
+    </p>
+
+    <p>
+      The Suggestions section lists each node with a specific swap. The optimizer
+      looks at each node's role in the pipeline — whether it's in a retry loop,
+      whether it's doing bookkeeping work like summarization or cleanup — and
+      suggests where a cheaper model would do the same job. For
+      <code>Refactor</code>, it flags two reasons to downgrade: it's in a retry
+      loop (mechanical repetition rarely needs the smartest model) and its task
+      is categorized as bookkeeping.
+    </p>
+
+    <p>
+      These are suggestions, not commands. A quality gate might genuinely need a
+      stronger model to make good decisions. Use your judgment — the optimizer
+      doesn't know your quality bar, only your cost structure.
+    </p>
+
+    <h2>What's Next</h2>
+
+    <p>
+      Between conditional edges and cost estimation, you can build pipelines that
+      route intelligently and stay within budget. Write the workflow, run
+      <code>dippin cost</code>, check <code>dippin optimize</code>, then make
+      deliberate choices about where quality justifies the price.
+    </p>
+
+    <div class="next-posts">
+      <a class="next-post" href="multi-line-prompts.html">
+        <h4>Multi-line Prompts</h4>
+        <p>The #1 reason Dippin exists — write prompts without escaping.</p>
+      </a>
+      <a class="next-post" href="conditional-edges.html">
+        <h4>Conditional Edges</h4>
+        <p>Route pipelines based on LLM output with the when keyword.</p>
+      </a>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+  <div class="footer-inner">
+    <div class="footer-brand">Dippin</div>
+    <div class="footer-links">
+      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
+      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
+      <a href="../changelog.html">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
+  </div>
+</div>
+</footer>
+
+<script src="../highlight.js"></script>
+</body>
+</html>
