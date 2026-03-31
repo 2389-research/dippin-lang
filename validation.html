@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Validation &amp; Linting — Dippin</title>
-<meta name="description" content="35 diagnostic checks for AI pipeline workflows. 9 structural errors and 26 semantic warnings catch bugs before runtime.">
+<meta name="description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime.">
 <meta property="og:title" content="Validation and Linting — Dippin">
-<meta property="og:description" content="35 diagnostic checks for AI pipeline workflows. 9 structural errors and 26 semantic warnings catch bugs before runtime.">
+<meta property="og:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://2389-research.github.io/dippin-lang/validation.html">
 <meta property="og:site_name" content="Dippin">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Validation and Linting — Dippin">
-<meta name="twitter:description" content="35 diagnostic checks for AI pipeline workflows. 9 structural errors and 26 semantic warnings catch bugs before runtime.">
+<meta name="twitter:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime.">
 <link rel="canonical" href="https://2389-research.github.io/dippin-lang/validation.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -84,14 +84,14 @@
   <div class="doc-header">
     <div class="section-label">Diagnostics</div>
     <h1>Validation &amp; Linting</h1>
-    <p>35 diagnostic checks — 9 structural errors and 26 semantic warnings — to catch problems before runtime.</p>
+    <p>39 diagnostic checks — 9 structural errors and 30 semantic warnings — to catch problems before runtime.</p>
   </div>
   <div class="doc-body">
 
     <h2>Overview</h2>
     <p>Dippin provides two levels of analysis:</p>
     <p><strong>Structural validation</strong> (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with <code>dippin validate</code>.</p>
-    <p><strong>Semantic linting</strong> (DIP101-DIP126): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p>
+    <p><strong>Semantic linting</strong> (DIP101-DIP133): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p>
 
     <h3>Diagnostic Format</h3>
     <p>Diagnostics are displayed in a rustc-inspired format:</p>
@@ -174,7 +174,7 @@
   = help: remove the duplicate edge</pre>
     </div>
 
-    <h2>Semantic Warnings (DIP101-DIP126)</h2>
+    <h2>Semantic Warnings (DIP101-DIP133)</h2>
     <p>These flag likely bugs or questionable patterns. Warnings alone exit 0.</p>
 
     <div class="diag-card warning">
@@ -247,6 +247,62 @@
     <div class="diag-card warning">
       <span class="diag-code">DIP126</span> — Subgraph ref file does not exist
       <p>A subgraph node's <code>ref:</code> path does not resolve to an existing file on disk.</p>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP127</span> — Invalid human node mode
+      <p>The <code>mode:</code> value on a human node must be <code>choice</code>, <code>freeform</code>, or <code>interview</code>.</p>
+      <pre>warning[DIP127]: invalid human node mode "dialog"
+  --&gt; pipeline.dip:22:5
+  = help: use one of: choice, freeform, interview</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP128</span> — Interview mode with meaningless default
+      <p>A human node with <code>mode: interview</code> has a <code>default:</code> value, which has no effect in interview mode — answers come from the extracted question list.</p>
+      <pre>warning[DIP128]: human node "GatherRequirements" has mode: interview with a default value
+  --&gt; pipeline.dip:28:5
+  = help: remove the default field — it is ignored in interview mode</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP129</span> — Interview mode with choice-style labeled edges
+      <p>A human node with <code>mode: interview</code> has outgoing edges with choice labels, which conflict — interview mode collects freeform answers, not discrete choices.</p>
+      <pre>warning[DIP129]: human node "GatherRequirements" uses interview mode but has choice-style edges
+  --&gt; pipeline.dip:30:5
+  = help: remove edge labels or switch to mode: choice</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP130</span> — Invalid response_format value
+      <p>The <code>response_format:</code> field on an agent node must be <code>json_object</code> or <code>json_schema</code>. Any other value is unrecognised and will be rejected at runtime.</p>
+      <pre>warning[DIP130]: invalid response_format "xml" on agent "Parse"
+  --&gt; pipeline.dip:18:5
+  = help: use "json_object" or "json_schema"</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP131</span> — response_schema / response_format mismatch
+      <p>Two related hints: (1) if <code>response_schema:</code> is set but <code>response_format:</code> is not <code>json_schema</code>, the schema will be ignored; (2) if <code>response_format: json_schema</code> is set but no <code>response_schema:</code> is provided, the model receives no schema to enforce.</p>
+      <pre>warning[DIP131]: response_schema set but response_format is not json_schema
+  --&gt; pipeline.dip:20:5
+  = help: set response_format: json_schema or remove response_schema</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP132</span> — response_schema is not valid JSON
+      <p>The value of <code>response_schema:</code> must be a valid JSON object. Malformed JSON will cause a runtime error when the model attempts to apply structured output.</p>
+      <pre>warning[DIP132]: response_schema on agent "Extract" is not valid JSON
+  --&gt; pipeline.dip:22:5
+  = help: fix the JSON syntax in response_schema</pre>
+    </div>
+
+    <div class="diag-card warning">
+      <span class="diag-code">DIP133</span> — params key shadows a first-class field
+      <p>A key inside the agent's <code>params:</code> block (e.g. <code>model</code> or <code>provider</code>) duplicates a first-class field on the same node. The first-class field takes precedence; the params entry is silently ignored.</p>
+      <pre>hint[DIP133]: params key "model" shadows the first-class model field on agent "Analyze"
+  --&gt; pipeline.dip:35:7
+  = help: remove the params key and set the field directly</pre>
     </div>
 
   </div>

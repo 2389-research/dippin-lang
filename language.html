@@ -156,6 +156,22 @@
     prompt:
       You are a senior software architect.
       Analyze the following request carefully.</pre>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>model</code></td><td>String</td><td>LLM model to use (overrides defaults)</td></tr>
+      <tr><td><code>provider</code></td><td>String</td><td>LLM provider (e.g., "anthropic", "openai")</td></tr>
+      <tr><td><code>prompt</code></td><td>Block</td><td>Multiline prompt text sent to the model</td></tr>
+      <tr><td><code>system_prompt</code></td><td>Block</td><td>System-level instructions prepended before the prompt</td></tr>
+      <tr><td><code>max_turns</code></td><td>Integer</td><td>Maximum conversation turns before the node exits</td></tr>
+      <tr><td><code>auto_status</code></td><td>Boolean</td><td>Automatically extract <code>STATUS: success/fail</code> from model output into <code>ctx.outcome</code></td></tr>
+      <tr><td><code>goal_gate</code></td><td>Boolean</td><td>Marks this node as a goal gate — requires <code>retry_target</code> or <code>fallback_target</code> for recovery</td></tr>
+      <tr><td><code>reads</code></td><td>String</td><td>Context key this node reads as input (advisory metadata)</td></tr>
+      <tr><td><code>writes</code></td><td>String</td><td>Context key this node writes as output (advisory metadata)</td></tr>
+      <tr><td><code>response_format</code></td><td>String</td><td>Structured output mode: <code>json_object</code> or <code>json_schema</code>. Instructs the model to return valid JSON.</td></tr>
+      <tr><td><code>response_schema</code></td><td>Block</td><td>JSON Schema definition enforced when <code>response_format: json_schema</code> is set. Must be valid JSON.</td></tr>
+      <tr><td><code>params</code></td><td>Block</td><td>Arbitrary key-value pairs forwarded to the provider API. Keys must not duplicate first-class fields (see DIP133).</td></tr>
+      <tr><td><code>cmd_timeout</code></td><td>Duration</td><td>Maximum wall-clock time for this agent call before the runtime cancels and errors (e.g., <code>30s</code>, <code>2m</code>).</td></tr>
+    </table>
 
     <h3>human</h3>
     <p>Human nodes pause execution and wait for human input. Two modes: <code>choice</code> (predefined options from edge labels) and <code>freeform</code> (open text input).</p>

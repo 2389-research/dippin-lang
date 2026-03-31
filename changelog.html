@@ -51,6 +51,30 @@
   <div class="doc-body">
     <div class="version-card">
       <div class="version-header">
+        <span class="version-tag">v0.16.0</span>
+        <span class="version-date">2026-03-31</span>
+      </div>
+      <h4>Added</h4>
+      <ul>
+        <li><strong>Structured output support</strong> for agent nodes. New fields:</li>
+        <li><strong>DIP130</strong>: lint warning for invalid <code>response_format</code> value.</li>
+        <li><strong>DIP131</strong>: lint warning when <code>response_schema</code> is set without <code>response_format: json_schema</code> (schema ignored); hint when <code>json_schema</code> is set without a schema.</li>
+        <li><strong>DIP132</strong>: lint warning when <code>response_schema</code> is not valid JSON.</li>
+        <li><strong>DIP133</strong>: lint hint when agent <code>params</code> key shadows a first-class field (e.g., <code>model</code>, <code>provider</code>).</li>
+        <li><code>cmd_timeout</code> field now parsed and formatted on agent nodes (previously only populated by DOT migrator).</li>
+      </ul>
+      <h4>Fixed</h4>
+      <ul>
+        <li><strong>Duplicate params keys</strong> now emit a parse diagnostic instead of silently last-write-wins.</li>
+        <li><strong>Unknown defaults fields</strong> now emit a parse diagnostic instead of being silently discarded.</li>
+        <li><strong><code>AgentConfig.Params</code></strong> initialized to empty map (matching <code>SubgraphConfig</code>), preventing nil-pointer issues in downstream consumers.</li>
+        <li><strong>Cyclomatic/cognitive complexity</strong> violations resolved across 6 files (lint_response.go, lint_human.go, parse_nodes.go, format.go, interactive.go).</li>
+      </ul>
+      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.16.0">View on GitHub &rarr;</a>
+    </div>
+
+    <div class="version-card">
+      <div class="version-header">
         <span class="version-tag">v0.15.0</span>
         <span class="version-date">2026-03-31</span>
       </div>
