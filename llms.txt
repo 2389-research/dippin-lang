@@ -25,6 +25,10 @@ Dippin files use the `.dip` extension and define directed graphs of agent steps,
 - [Migrating from DOT to Dippin](https://2389-research.github.io/dippin-lang/blog/migrating-from-dot.html): Convert Graphviz DOT pipeline files to Dippin with automated migration and structural parity verification. Step-by-step with real examples.
 - [Scenario Testing with .test.json](https://2389-research.github.io/dippin-lang/blog/scenario-testing.html): Write deterministic tests for non-deterministic AI pipelines. Inject context values, assert on execution paths, and measure edge coverage.
 
+## Claude Code Skill
+
+- [dippin-lang skill](https://2389-research.github.io/dippin-lang/skill.md): Instruction file for Claude Code to author, validate, and debug .dip workflow files. Add to CLAUDE.md: `@https://2389-research.github.io/dippin-lang/skill.md`
+
 ## Source
 
 - [GitHub Repository](https://github.com/2389-research/dippin-lang)
