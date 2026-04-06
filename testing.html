@@ -1,180 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scenario Testing — Dippin</title>
-<meta name="description" content="Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.">
-<meta property="og:title" content="Scenario Testing — Dippin">
-<meta property="og:description" content="Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://2389-research.github.io/dippin-lang/testing.html">
-<meta property="og:site_name" content="Dippin">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Scenario Testing — Dippin">
-<meta name="twitter:description" content="Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.">
-<link rel="canonical" href="https://2389-research.github.io/dippin-lang/testing.html">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- Floating dots -->
-<div class="dots">
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-</div>
-
-<nav class="nav">
-<div class="nav-top">
-  <a href="index.html" class="nav-brand">Dippin</a>
-  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-primary">
-    <a href="language.html">Docs</a>
-    <a href="playground.html">Playground</a>
-    <a href="blog/index.html">Blog</a>
-    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
-  </div>
-</div>
-<div class="nav-sub">
-  <div class="nav-sub-inner">
-    <a href="cli.html">CLI</a>
-    <a href="language.html">Language</a>
-    <a href="testing.html" class="active">Testing</a>
-    <a href="validation.html">Validation</a>
-    <a href="analysis.html">Analysis</a>
-    <a href="architecture.html">Architecture</a>
-    <a href="editors.html">Editors</a>
-    <a href="changelog.html">Changelog</a>
-  </div>
-</div>
-<div class="nav-mobile">
-  <a href="language.html">Docs</a>
-  <a href="playground.html">Playground</a>
-  <a href="blog/index.html">Blog</a>
-  <div class="nav-divider"></div>
-  <a href="cli.html">CLI</a>
-  <a href="language.html">Language</a>
-  <a href="testing.html" class="active">Testing</a>
-  <a href="validation.html">Validation</a>
-  <a href="analysis.html">Analysis</a>
-  <a href="architecture.html">Architecture</a>
-  <a href="editors.html">Editors</a>
-  <a href="changelog.html">Changelog</a>
-  <div class="nav-divider"></div>
-  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-</div>
-</nav>
-
-<div class="drip green"></div>
-  <div class="drip yellow"></div>
-  <div class="drip pink"></div>
-  <div class="drip green"></div>
-  <div class="drip yellow"></div>
-  <div class="drip pink"></div>
-</div>
-
-<section class="doc">
-<div class="container">
-  <div class="doc-header">
-    <div class="section-label">Testing</div>
-    <h1>Scenario Testing</h1>
-    <p>Inject context values, simulate execution paths, and assert outcomes — all without calling LLMs.</p>
-  </div>
-  <div class="doc-body">
-
-    <h2>How It Works</h2>
-    <p>The <code>dippin test</code> command runs scenario-based assertions against workflow files. Test cases inject context values into the simulator and verify the execution path.</p>
-
-    <div class="flow-diagram">
-      <div class="flow-step">.test.json</div>
-      <div class="flow-arrow">&rarr;</div>
-      <div class="flow-step">Load &amp; Parse</div>
-      <div class="flow-arrow">&rarr;</div>
-      <div class="flow-step">Inject Scenario</div>
-      <div class="flow-arrow">&rarr;</div>
-      <div class="flow-step">Simulate Workflow</div>
-      <div class="flow-arrow">&rarr;</div>
-      <div class="flow-step">Check Assertions</div>
-      <div class="flow-arrow">&rarr;</div>
-      <div class="flow-step">PASS / FAIL</div>
-    </div>
-
-    <h2>Test File Format</h2>
-    <p>Test files use <code>.test.json</code> extension and are auto-discovered from the workflow path:</p>
-    <pre>pipeline.dip       &rarr; pipeline.test.json
-src/flow.dip       &rarr; src/flow.test.json</pre>
-
-    <h3>Schema</h3>
-    <pre>{
-  "tests": [
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Scenario Testing — Dippin</title><meta name=description content="Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage."><meta property="og:title" content="Scenario Testing — Dippin"><meta property="og:description" content="Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage."><meta property="og:type" content="article"><meta property="og:url" content="https://2389-research.github.io/dippin-lang/testing.html"><meta property="og:site_name" content="Dippin"><meta name=twitter:card content="summary"><meta name=twitter:title content="Scenario Testing"><meta name=twitter:description content="Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage."><link rel=canonical href=https://2389-research.github.io/dippin-lang/testing.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/dippin-lang/style.css></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/dippin-lang/index.html class=nav-brand>Dippin</a>
+<button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html class=active>Testing</a>
+<a href=/dippin-lang/validation.html>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html>Editors</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a><div class=nav-divider></div><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html class=active>Testing</a>
+<a href=/dippin-lang/validation.html>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html>Editors</a>
+<a href=/dippin-lang/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Testing</div><h1>Scenario Testing</h1><p>Inject context values, simulate execution paths, and assert outcomes — all without calling LLMs.</p></div><div class=doc-body><h2 id=how-it-works>How It Works</h2><p>The <code>dippin test</code> command runs scenario-based assertions against workflow files. Test cases inject context values into the simulator and verify the execution path.</p><div class=flow-diagram><div class=flow-step>.test.json</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Load & Parse</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Inject Scenario</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Simulate Workflow</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Check Assertions</div><div class=flow-arrow>&rarr;</div><div class=flow-step>PASS / FAIL</div></div><h2 id=test-file-format>Test File Format</h2><p>Test files use <code>.test.json</code> extension and are auto-discovered from the workflow path:</p><pre><code>pipeline.dip       → pipeline.test.json
+src/flow.dip       → src/flow.test.json
+</code></pre><h3 id=schema>Schema</h3><pre><code>{
+  &quot;tests&quot;: [
     {
-      "name": "descriptive test name",
-      "scenario": {
-        "key": "value"
+      &quot;name&quot;: &quot;descriptive test name&quot;,
+      &quot;scenario&quot;: {
+        &quot;key&quot;: &quot;value&quot;
       },
-      "expect": {
-        "status": "success",
-        "visited": ["NodeA", "NodeB"],
-        "not_visited": ["NodeC"],
-        "path_contains": ["NodeA", "NodeB"],
-        "immediately_after": {"NodeA": "NodeB"}
+      &quot;expect&quot;: {
+        &quot;status&quot;: &quot;success&quot;,
+        &quot;visited&quot;: [&quot;NodeA&quot;, &quot;NodeB&quot;],
+        &quot;not_visited&quot;: [&quot;NodeC&quot;],
+        &quot;path_contains&quot;: [&quot;NodeA&quot;, &quot;NodeB&quot;],
+        &quot;immediately_after&quot;: {&quot;NodeA&quot;: &quot;NodeB&quot;}
       }
     }
   ]
-}</pre>
-
-    <h3>Expectation Fields</h3>
-    <p>All expectation fields are optional. Only specified fields are checked.</p>
-    <table>
-      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-      <tr><td><code>status</code></td><td>string</td><td>Expected simulation status: <code>"success"</code> (reached exit), <code>"fail"</code>, or <code>"dead_end"</code></td></tr>
-      <tr><td><code>visited</code></td><td>string[]</td><td>Node IDs that must appear in the execution path</td></tr>
-      <tr><td><code>not_visited</code></td><td>string[]</td><td>Node IDs that must NOT appear in the execution path</td></tr>
-      <tr><td><code>path_contains</code></td><td>string[]</td><td>Node IDs that must appear in order (non-contiguous matches allowed)</td></tr>
-      <tr><td><code>immediately_after</code></td><td>object</td><td>Map of <code>{"NodeA": "NodeB"}</code> pairs asserting NodeB is the immediate next node after NodeA</td></tr>
-    </table>
-
-    <h2>Example</h2>
-    <p>A workflow that routes based on outcome, with matching test scenarios:</p>
-
-    <div class="compare-grid">
-      <div class="compare-panel">
-        <span class="compare-label good">gate.dip</span>
-        <div class="compare-code"><pre><span class="kw">workflow</span> <span class="node">Gate</span>
-  <span class="kw">goal:</span> <span class="str">"Route based on outcome"</span>
-  <span class="kw">start:</span> Start
-  <span class="kw">exit:</span> Exit
-
-  <span class="kw">agent</span> <span class="node">Start</span>
-    <span class="kw">label:</span> Start
-
-  <span class="kw">agent</span> <span class="node">Pass</span>
-    <span class="kw">model:</span> claude-sonnet-4-6
-    <span class="kw">prompt:</span> Handle success.
-
-  <span class="kw">agent</span> <span class="node">Fix</span>
-    <span class="kw">model:</span> claude-sonnet-4-6
-    <span class="kw">prompt:</span> Handle failure.
-
-  <span class="kw">agent</span> <span class="node">Exit</span>
-    <span class="kw">label:</span> Exit
-
-  <span class="kw">edges</span>
-    Start <span class="op">-&gt;</span> Pass  <span class="kw">when</span> ctx.outcome = success
-    Start <span class="op">-&gt;</span> Fix   <span class="kw">when</span> ctx.outcome = fail
-    Pass <span class="op">-&gt;</span> Exit
-    Fix <span class="op">-&gt;</span> Exit</pre></div>
-      </div>
-
-      <div class="compare-panel">
-        <span class="compare-label good">gate.test.json</span>
-        <div class="compare-code"><pre>{
+}
+</code></pre><h3 id=expectation-fields>Expectation Fields</h3><p>All expectation fields are optional. Only specified fields are checked.</p><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>status</code></td><td>string</td><td>Expected simulation status: <code>"success"</code> (reached exit), <code>"fail"</code>, or <code>"dead_end"</code></td></tr><tr><td><code>visited</code></td><td>string[]</td><td>Node IDs that must appear in the execution path</td></tr><tr><td><code>not_visited</code></td><td>string[]</td><td>Node IDs that must NOT appear in the execution path</td></tr><tr><td><code>path_contains</code></td><td>string[]</td><td>Node IDs that must appear in order (non-contiguous matches allowed)</td></tr><tr><td><code>immediately_after</code></td><td>object</td><td>Map of <code>{"NodeA": "NodeB"}</code> pairs asserting NodeB is the immediate next node after NodeA</td></tr></tbody></table><h2 id=example>Example</h2><p>A workflow that routes based on outcome, with matching test scenarios:</p><div class=compare-grid><div class=compare-panel><span class="compare-label good">gate.dip</span><div class=compare-code><pre><span class=kw>workflow</span> <span class=node>Gate</span>
+  <span class=kw>goal:</span> <span class=str>"Route based on outcome"</span>
+  <span class=kw>start:</span> Start
+  <span class=kw>exit:</span> Exit
+<p><span class=kw>agent</span> <span class=node>Start</span>
+<span class=kw>label:</span> Start</p>
+<p><span class=kw>agent</span> <span class=node>Pass</span>
+<span class=kw>model:</span> claude-sonnet-4-6
+<span class=kw>prompt:</span> Handle success.</p>
+<p><span class=kw>agent</span> <span class=node>Fix</span>
+<span class=kw>model:</span> claude-sonnet-4-6
+<span class=kw>prompt:</span> Handle failure.</p>
+<p><span class=kw>agent</span> <span class=node>Exit</span>
+<span class=kw>label:</span> Exit</p>
+<p><span class=kw>edges</span>
+Start <span class=op>-&gt;</span> Pass  <span class=kw>when</span> ctx.outcome = success
+Start <span class=op>-&gt;</span> Fix   <span class=kw>when</span> ctx.outcome = fail
+Pass <span class=op>-&gt;</span> Exit
+Fix <span class=op>-&gt;</span> Exit</pre></div></p></div><div class=compare-panel><span class="compare-label good">gate.test.json</span><div class=compare-code><pre>{
   "tests": [
     {
       "name": "success path",
@@ -196,103 +78,36 @@ src/flow.dip       &rarr; src/flow.test.json</pre>
       }
     }
   ]
-}</pre></div>
-      </div>
-    </div>
-
-    <h2>Test Output</h2>
-
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-title">dippin test</span>
-      </div>
-      <pre><span class="prompt">$</span> dippin test gate.dip
-<span class="dim">&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
-  <span class="pass">PASS</span>  success path
-  <span class="pass">PASS</span>  failure path
-<span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-  <span class="pass">2 tests: 2 passed, 0 failed</span>
-
-<span class="prompt">$</span> dippin test --verbose gate.dip
-<span class="dim">&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
-  <span class="pass">PASS</span>  success path
-        <span class="dim">path: Start &rarr; Pass &rarr; Exit</span>
-  <span class="pass">PASS</span>  failure path
-        <span class="dim">path: Start &rarr; Fix &rarr; Exit</span>
-<span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-  <span class="pass">2 tests: 2 passed, 0 failed</span></pre>
-    </div>
-
-    <h2>Scenario Keys</h2>
-    <p>The <code>scenario</code> object maps context keys to values. The simulator resolves conditions by looking up <code>ctx.&lt;key&gt;</code> in the scenario context.</p>
-    <table>
-      <tr><th>Key</th><th>Description</th></tr>
-      <tr><td><code>outcome</code></td><td>Maps to <code>ctx.outcome</code> — the most common routing variable</td></tr>
-      <tr><td><code>status</code></td><td>Maps to <code>ctx.status</code></td></tr>
-      <tr><td><code>tool_stdout</code></td><td>Maps to <code>ctx.tool_stdout</code> — tool command output</td></tr>
-    </table>
-
-    <h2>Caveats</h2>
-
-    <div class="caveat-card">
-      <h4>not_visited and loop breaking</h4>
-      <p>The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and continues execution rather than stopping. Nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer <code>path_contains</code> over <code>not_visited</code>.</p>
-    </div>
-
-    <div class="caveat-card">
-      <h4>immediately_after for edge routing</h4>
-      <p>When testing which specific edge a node takes, <code>immediately_after</code> is more precise than <code>path_contains</code>. Use it to verify that a conditional edge routes to the expected next node.</p>
-    </div>
-
-    <div class="caveat-card">
-      <h4>Clearing tool defaults</h4>
-      <p>Tool nodes auto-seed <code>ctx.tool_stdout</code> and <code>ctx.outcome</code> to <code>"success"</code>. To test unconditional fallback edges after a tool node, set the key to an empty string: <code>"ToolNode.tool_stdout": ""</code>.</p>
-    </div>
-
-    <h2>Coverage Flag</h2>
-    <p>Use <code>--coverage</code> to report node and edge coverage across all test scenarios:</p>
-    <pre>$ dippin test --coverage gate.dip
+}</pre></div></div></div><h2 id=test-output>Test Output</h2><div class=terminal><div class=terminal-bar><span class=terminal-dot></span>
+<span class=terminal-dot></span>
+<span class=terminal-dot></span>
+<span class=terminal-title>dippin test</span></div><pre><span class=prompt>$</span> dippin test gate.dip
+<span class=dim>&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
+  <span class=pass>PASS</span>  success path
+  <span class=pass>PASS</span>  failure path
+<span class=dim>&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+  <span class=pass>2 tests: 2 passed, 0 failed</span>
+<p><span class=prompt>$</span> dippin test &ndash;verbose gate.dip
+<span class=dim>═══ Test Results ════════════════════</span>
+<span class=pass>PASS</span>  success path
+<span class=dim>path: Start → Pass → Exit</span>
+<span class=pass>PASS</span>  failure path
+<span class=dim>path: Start → Fix → Exit</span>
+<span class=dim>─── Summary ───────────────────────</span>
+<span class=pass>2 tests: 2 passed, 0 failed</span></pre></p></div><h2 id=scenario-keys>Scenario Keys</h2><p>The <code>scenario</code> object maps context keys to values. The simulator resolves conditions by looking up <code>ctx.&lt;key></code> in the scenario context.</p><table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>outcome</code></td><td>Maps to <code>ctx.outcome</code> — the most common routing variable</td></tr><tr><td><code>status</code></td><td>Maps to <code>ctx.status</code></td></tr><tr><td><code>tool_stdout</code></td><td>Maps to <code>ctx.tool_stdout</code> — tool command output</td></tr></tbody></table><h2 id=caveats>Caveats</h2><div class=caveat-card><h4>not_visited and loop breaking</h4><p>The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and continues execution rather than stopping. Nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer <code>path_contains</code> over <code>not_visited</code>.</p></div><div class=caveat-card><h4>immediately_after for edge routing</h4><p>When testing which specific edge a node takes, <code>immediately_after</code> is more precise than <code>path_contains</code>. Use it to verify that a conditional edge routes to the expected next node.</p></div><div class=caveat-card><h4>Clearing tool defaults</h4><p>Tool nodes auto-seed <code>ctx.tool_stdout</code> and <code>ctx.outcome</code> to <code>"success"</code>. To test unconditional fallback edges after a tool node, set the key to an empty string: <code>"ToolNode.tool_stdout": ""</code>.</p></div><h2 id=coverage-flag>Coverage Flag</h2><p>Use <code>--coverage</code> to report node and edge coverage across all test scenarios:</p><pre><code>$ dippin test --coverage gate.dip
   PASS  success path
   PASS  failure path
-  Coverage: 4/4 nodes (100%), 4/4 edges (100%)</pre>
-    <p>This helps identify nodes or edges that no test scenario exercises.</p>
-
-    <h2>CI Integration</h2>
-    <p>Use <code>--format json</code> for machine-readable output. Exit code is 0 if all tests pass, 1 if any fail.</p>
-    <pre>$ dippin --format json test pipeline.dip
+  Coverage: 4/4 nodes (100%), 4/4 edges (100%)
+</code></pre><p>This helps identify nodes or edges that no test scenario exercises.</p><h2 id=ci-integration>CI Integration</h2><p>Use <code>--format json</code> for machine-readable output. Exit code is 0 if all tests pass, 1 if any fail.</p><pre><code>$ dippin --format json test pipeline.dip
 {
-  "results": [
-    {"name": "happy path", "passed": true, "path": ["Start", "Gate", "Pass", "Exit"]},
-    {"name": "error path", "passed": false, "errors": ["expected status \"fail\", got \"success\""]}
+  &quot;results&quot;: [
+    {&quot;name&quot;: &quot;happy path&quot;, &quot;passed&quot;: true, &quot;path&quot;: [&quot;Start&quot;, &quot;Gate&quot;, &quot;Pass&quot;, &quot;Exit&quot;]},
+    {&quot;name&quot;: &quot;error path&quot;, &quot;passed&quot;: false, &quot;errors&quot;: [&quot;expected status \&quot;fail\&quot;, got \&quot;success\&quot;&quot;]}
   ],
-  "passed": 1,
-  "failed": 1,
-  "total": 2
-}</pre>
-
-  </div>
-</div>
-</section>
-
-<footer>
-<div class="container">
-  <div class="footer-inner">
-    <div class="footer-brand">Dippin</div>
-    <div class="footer-links">
-      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
-      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
-    </div>
-  </div>
-  <div class="footer-copy">
-    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
-  </div>
-</div>
-</footer>
-
-<script src="highlight.js"></script>
-</body>
-</html>
+  &quot;passed&quot;: 1,
+  &quot;failed&quot;: 1,
+  &quot;total&quot;: 2
+}
+</code></pre></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang>GitHub</a>
+<a href=https://github.com/2389-research/dippin-lang/tree/main/docs>Docs</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/dippin-lang/highlight.js></script></body></html>

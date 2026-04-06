@@ -1,330 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Validation &amp; Linting — Dippin</title>
-<meta name="description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime.">
-<meta property="og:title" content="Validation and Linting — Dippin">
-<meta property="og:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://2389-research.github.io/dippin-lang/validation.html">
-<meta property="og:site_name" content="Dippin">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Validation and Linting — Dippin">
-<meta name="twitter:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime.">
-<link rel="canonical" href="https://2389-research.github.io/dippin-lang/validation.html">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- Floating dots -->
-<div class="dots">
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-</div>
-
-<nav class="nav">
-<div class="nav-top">
-  <a href="index.html" class="nav-brand">Dippin</a>
-  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-primary">
-    <a href="language.html">Docs</a>
-    <a href="playground.html">Playground</a>
-    <a href="blog/index.html">Blog</a>
-    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
-  </div>
-</div>
-<div class="nav-sub">
-  <div class="nav-sub-inner">
-    <a href="cli.html">CLI</a>
-    <a href="language.html">Language</a>
-    <a href="testing.html">Testing</a>
-    <a href="validation.html" class="active">Validation</a>
-    <a href="analysis.html">Analysis</a>
-    <a href="architecture.html">Architecture</a>
-    <a href="editors.html">Editors</a>
-    <a href="changelog.html">Changelog</a>
-  </div>
-</div>
-<div class="nav-mobile">
-  <a href="language.html">Docs</a>
-  <a href="playground.html">Playground</a>
-  <a href="blog/index.html">Blog</a>
-  <div class="nav-divider"></div>
-  <a href="cli.html">CLI</a>
-  <a href="language.html">Language</a>
-  <a href="testing.html">Testing</a>
-  <a href="validation.html" class="active">Validation</a>
-  <a href="analysis.html">Analysis</a>
-  <a href="architecture.html">Architecture</a>
-  <a href="editors.html">Editors</a>
-  <a href="changelog.html">Changelog</a>
-  <div class="nav-divider"></div>
-  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-</div>
-</nav>
-
-<div class="drip green"></div>
-  <div class="drip yellow"></div>
-  <div class="drip pink"></div>
-  <div class="drip green"></div>
-  <div class="drip yellow"></div>
-  <div class="drip pink"></div>
-</div>
-
-<section class="doc">
-<div class="container">
-  <div class="doc-header">
-    <div class="section-label">Diagnostics</div>
-    <h1>Validation &amp; Linting</h1>
-    <p>39 diagnostic checks — 9 structural errors and 30 semantic warnings — to catch problems before runtime.</p>
-  </div>
-  <div class="doc-body">
-
-    <h2>Overview</h2>
-    <p>Dippin provides two levels of analysis:</p>
-    <p><strong>Structural validation</strong> (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with <code>dippin validate</code>.</p>
-    <p><strong>Semantic linting</strong> (DIP101-DIP133): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p>
-
-    <h3>Diagnostic Format</h3>
-    <p>Diagnostics are displayed in a rustc-inspired format:</p>
-    <pre>error[DIP003]: unknown node reference "InterpretX" in edge
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Validation & Linting — Dippin</title><meta name=description content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><meta property="og:title" content="Validation & Linting — Dippin"><meta property="og:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><meta property="og:type" content="article"><meta property="og:url" content="https://2389-research.github.io/dippin-lang/validation.html"><meta property="og:site_name" content="Dippin"><meta name=twitter:card content="summary"><meta name=twitter:title content="Validation & Linting"><meta name=twitter:description content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><link rel=canonical href=https://2389-research.github.io/dippin-lang/validation.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/dippin-lang/style.css></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/dippin-lang/index.html class=nav-brand>Dippin</a>
+<button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html>Testing</a>
+<a href=/dippin-lang/validation.html class=active>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html>Editors</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a><div class=nav-divider></div><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html>Testing</a>
+<a href=/dippin-lang/validation.html class=active>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html>Editors</a>
+<a href=/dippin-lang/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Diagnostics</div><h1>Validation & Linting</h1><p>39 diagnostic checks — 9 structural errors and 30 semantic warnings — to catch problems before runtime.</p></div><div class=doc-body><h2 id=overview>Overview</h2><p>Dippin provides two levels of analysis:</p><p><strong>Structural validation</strong> (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with <code>dippin validate</code>.</p><p><strong>Semantic linting</strong> (DIP101-DIP133): Warnings that flag likely bugs or questionable patterns. They don&rsquo;t block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p><h3 id=diagnostic-format>Diagnostic Format</h3><p>Diagnostics are displayed in a rustc-inspired format:</p><pre><code>error[DIP003]: unknown node reference &quot;InterpretX&quot; in edge
   --&gt; pipeline.dip:45:5
-  = help: did you mean "Interpret"?</pre>
-
-    <h2>Structural Errors (DIP001-DIP009)</h2>
-    <p>These must be fixed for a workflow to be valid. Each causes exit code 1.</p>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP001</span> — Start Node Missing
-      <p>The workflow must declare a <code>start:</code> field pointing to an existing node.</p>
-      <pre>error[DIP001]: start node does not exist
+  = help: did you mean &quot;Interpret&quot;?
+</code></pre><h2 id=structural-errors-dip001-dip009>Structural Errors (DIP001-DIP009)</h2><p>These must be fixed for a workflow to be valid. Each causes exit code 1.</p><div class="diag-card error"><span class=diag-code>DIP001</span> — Start Node Missing<p>The workflow must declare a <code>start:</code> field pointing to an existing node.</p><pre>error[DIP001]: start node does not exist
   --&gt; pipeline.dip:1:1
-  = help: add "start: &lt;NodeID&gt;" to the workflow header</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP002</span> — Exit Node Missing
-      <p>The workflow must declare an <code>exit:</code> field pointing to an existing node.</p>
-      <pre>error[DIP002]: exit node does not exist
+  = help: add "start: &lt;NodeID&gt;" to the workflow header</pre></div><div class="diag-card error"><span class=diag-code>DIP002</span> — Exit Node Missing<p>The workflow must declare an <code>exit:</code> field pointing to an existing node.</p><pre>error[DIP002]: exit node does not exist
   --&gt; pipeline.dip:1:1
-  = help: add "exit: &lt;NodeID&gt;" to the workflow header</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP003</span> — Unknown Node Reference in Edge
-      <p>Every edge's From and To must reference existing node IDs. The validator uses Levenshtein distance to suggest corrections for typos.</p>
-      <pre>error[DIP003]: unknown node reference "InterpretX" in edge
+  = help: add "exit: &lt;NodeID&gt;" to the workflow header</pre></div><div class="diag-card error"><span class=diag-code>DIP003</span> — Unknown Node Reference in Edge<p>Every edge's From and To must reference existing node IDs. The validator uses Levenshtein distance to suggest corrections for typos.</p><pre>error[DIP003]: unknown node reference "InterpretX" in edge
   --&gt; pipeline.dip:45:5
-  = help: did you mean "Interpret"?</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP004</span> — Unreachable Node from Start
-      <p>Every node must be reachable from the start node via some path of edges. BFS from the start node cannot reach this node.</p>
-      <pre>error[DIP004]: node unreachable from start
+  = help: did you mean "Interpret"?</pre></div><div class="diag-card error"><span class=diag-code>DIP004</span> — Unreachable Node from Start<p>Every node must be reachable from the start node via some path of edges. BFS from the start node cannot reach this node.</p><pre>error[DIP004]: node unreachable from start
   --&gt; pipeline.dip:20:3
-  = help: add an edge leading to this node, or remove it</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP005</span> — Unconditional Cycle Detected
-      <p>The workflow graph must be a DAG, with the exception of restart edges. A back-edge not marked <code>restart: true</code> would loop forever.</p>
-      <pre>error[DIP005]: unconditional cycle detected
+  = help: add an edge leading to this node, or remove it</pre></div><div class="diag-card error"><span class=diag-code>DIP005</span> — Unconditional Cycle Detected<p>The workflow graph must be a DAG, with the exception of restart edges. A back-edge not marked <code>restart: true</code> would loop forever.</p><pre>error[DIP005]: unconditional cycle detected
   --&gt; pipeline.dip:50:5
-  = help: remove an edge in this cycle or mark it "restart: true"</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP006</span> — Exit Node Has Outgoing Edges
-      <p>The exit node is the terminal — it must have zero outgoing edges.</p>
-      <pre>error[DIP006]: exit node has outgoing edges
+  = help: remove an edge in this cycle or mark it "restart: true"</pre></div><div class="diag-card error"><span class=diag-code>DIP006</span> — Exit Node Has Outgoing Edges<p>The exit node is the terminal — it must have zero outgoing edges.</p><pre>error[DIP006]: exit node has outgoing edges
   --&gt; pipeline.dip:55:5
-  = help: remove outgoing edges from the exit node</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP007</span> — Parallel/Fan-In Mismatch
-      <p>Every <code>parallel</code> node must have a matching <code>fan_in</code> node with the same set of branch nodes.</p>
-      <pre>error[DIP007]: parallel fan-out/fan-in mismatch
+  = help: remove outgoing edges from the exit node</pre></div><div class="diag-card error"><span class=diag-code>DIP007</span> — Parallel/Fan-In Mismatch<p>Every <code>parallel</code> node must have a matching <code>fan_in</code> node with the same set of branch nodes.</p><pre>error[DIP007]: parallel fan-out/fan-in mismatch
   --&gt; pipeline.dip:15:3
-  = help: add a matching fan_in node</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP008</span> — Duplicate Node ID
-      <p>Node IDs must be globally unique within a workflow.</p>
-      <pre>error[DIP008]: duplicate node ID
+  = help: add a matching fan_in node</pre></div><div class="diag-card error"><span class=diag-code>DIP008</span> — Duplicate Node ID<p>Node IDs must be globally unique within a workflow.</p><pre>error[DIP008]: duplicate node ID
   --&gt; pipeline.dip:30:3
-  = help: rename this node or remove the duplicate</pre>
-    </div>
-
-    <div class="diag-card error">
-      <span class="diag-code">DIP009</span> — Duplicate Edge
-      <p>No two edges may have the same (from, to, condition) combination. Edges with different conditions on the same pair are not duplicates.</p>
-      <pre>error[DIP009]: duplicate edge
+  = help: rename this node or remove the duplicate</pre></div><div class="diag-card error"><span class=diag-code>DIP009</span> — Duplicate Edge<p>No two edges may have the same (from, to, condition) combination. Edges with different conditions on the same pair are not duplicates.</p><pre>error[DIP009]: duplicate edge
   --&gt; pipeline.dip:60:5
-  = help: remove the duplicate edge</pre>
-    </div>
-
-    <h2>Semantic Warnings (DIP101-DIP133)</h2>
-    <p>These flag likely bugs or questionable patterns. Warnings alone exit 0.</p>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP101</span> — Node Only Reachable via Conditional Edges
-      <p>All incoming edges have conditions — if none match, execution can never reach this node. Automatically suppressed when source nodes have exhaustive conditions (e.g., success/fail pairs).</p>
-      <pre>warning[DIP101]: node "NextPhase" is only reachable through conditional edges
+  = help: remove the duplicate edge</pre></div><h2 id=semantic-warnings-dip101-dip133>Semantic Warnings (DIP101-DIP133)</h2><p>These flag likely bugs or questionable patterns. Warnings alone exit 0.</p><div class="diag-card warning"><span class=diag-code>DIP101</span> — Node Only Reachable via Conditional Edges<p>All incoming edges have conditions — if none match, execution can never reach this node. Automatically suppressed when source nodes have exhaustive conditions (e.g., success/fail pairs).</p><pre>warning[DIP101]: node "NextPhase" is only reachable through conditional edges
   --&gt; pipeline.dip:25:3
-  = help: add an unconditional edge, or verify conditions are exhaustive</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP105</span> — No Success Path to Exit
-      <p>There is no guaranteed path from start to exit through unconditional edges alone. If conditions don't match, execution may never reach the exit.</p>
-      <pre>warning[DIP105]: no success path from start to exit
-  --&gt; pipeline.dip:1:1</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP108</span> — Unknown Model/Provider
-      <p>The model or provider isn't in the recognized list. Verified against official provider documentation.</p>
-      <pre>warning[DIP108]: unknown model/provider combination
-  --&gt; pipeline.dip:15:5</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP110</span> — Empty Prompt on Agent
-      <p>An agent node has no prompt text. An agent without a prompt won't produce meaningful output.</p>
-      <pre>warning[DIP110]: empty prompt on agent node
-  --&gt; pipeline.dip:12:3</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP111</span> — Tool Without Timeout
-      <p>A tool node has no <code>timeout</code> field. Without a timeout, a hanging command blocks the pipeline indefinitely.</p>
-      <pre>warning[DIP111]: tool command has no timeout
-  --&gt; pipeline.dip:35:3</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP115</span> — Goal Gate Without Recovery Path
-      <p>A node has <code>goal_gate: true</code> but no <code>retry_target</code> or <code>fallback_target</code>, meaning the pipeline has no recovery path if the gate fails.</p>
-      <pre>warning[DIP115]: node "validate_tests" has goal_gate but no recovery path
+  = help: add an unconditional edge, or verify conditions are exhaustive</pre></div><div class="diag-card warning"><span class=diag-code>DIP105</span> — No Success Path to Exit<p>There is no guaranteed path from start to exit through unconditional edges alone. If conditions don't match, execution may never reach the exit.</p><pre>warning[DIP105]: no success path from start to exit
+  --&gt; pipeline.dip:1:1</pre></div><div class="diag-card warning"><span class=diag-code>DIP108</span> — Unknown Model/Provider<p>The model or provider isn't in the recognized list. Verified against official provider documentation.</p><pre>warning[DIP108]: unknown model/provider combination
+  --&gt; pipeline.dip:15:5</pre></div><div class="diag-card warning"><span class=diag-code>DIP110</span> — Empty Prompt on Agent<p>An agent node has no prompt text. An agent without a prompt won't produce meaningful output.</p><pre>warning[DIP110]: empty prompt on agent node
+  --&gt; pipeline.dip:12:3</pre></div><div class="diag-card warning"><span class=diag-code>DIP111</span> — Tool Without Timeout<p>A tool node has no <code>timeout</code> field. Without a timeout, a hanging command blocks the pipeline indefinitely.</p><pre>warning[DIP111]: tool command has no timeout
+  --&gt; pipeline.dip:35:3</pre></div><div class="diag-card warning"><span class=diag-code>DIP115</span> — Goal Gate Without Recovery Path<p>A node has <code>goal_gate: true</code> but no <code>retry_target</code> or <code>fallback_target</code>, meaning the pipeline has no recovery path if the gate fails.</p><pre>warning[DIP115]: node "validate_tests" has goal_gate but no recovery path
   --&gt; pipeline.dip:18:3
-  = help: add retry_target or fallback_target</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP123</span> — Tool Command Syntax Error
-      <p>The tool command block has a shell syntax error detectable by <code>bash -n</code> — unclosed quotes, bad redirects, missing <code>fi</code>/<code>done</code>.</p>
-      <pre>warning[DIP123]: tool command has shell syntax error:
+  = help: add retry_target or fallback_target</pre></div><div class="diag-card warning"><span class=diag-code>DIP123</span> — Tool Command Syntax Error<p>The tool command block has a shell syntax error detectable by <code>bash -n</code> — unclosed quotes, bad redirects, missing <code>fi</code>/<code>done</code>.</p><pre>warning[DIP123]: tool command has shell syntax error:
   unexpected EOF while looking for matching `"'
-  --&gt; pipeline.dip:45:5</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP124</span> — Runtime Variable in Tool Command
-      <p>A tool command contains <code>${ctx.*}</code> interpolation. These are Dippin runtime variables that expand to empty strings in the shell.</p>
-      <pre>warning[DIP124]: tool command references ${ctx.api_url}
+  --&gt; pipeline.dip:45:5</pre></div><div class="diag-card warning"><span class=diag-code>DIP124</span> — Runtime Variable in Tool Command<p>A tool command contains <code>${ctx.*}</code> interpolation. These are Dippin runtime variables that expand to empty strings in the shell.</p><pre>warning[DIP124]: tool command references ${ctx.api_url}
   which expands to empty at runtime
-  --&gt; pipeline.dip:50:5</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP125</span> — Binary Not Found
-      <p>The first command in the tool block references a binary not on the current PATH. This is a hint — the deployment environment may differ.</p>
-      <pre>hint[DIP125]: tool command binary "npx" not found on PATH
-  --&gt; pipeline.dip:55:5</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP126</span> — Subgraph ref file does not exist
-      <p>A subgraph node's <code>ref:</code> path does not resolve to an existing file on disk.</p>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP127</span> — Invalid human node mode
-      <p>The <code>mode:</code> value on a human node must be <code>choice</code>, <code>freeform</code>, or <code>interview</code>.</p>
-      <pre>warning[DIP127]: invalid human node mode "dialog"
+  --&gt; pipeline.dip:50:5</pre></div><div class="diag-card warning"><span class=diag-code>DIP125</span> — Binary Not Found<p>The first command in the tool block references a binary not on the current PATH. This is a hint — the deployment environment may differ.</p><pre>hint[DIP125]: tool command binary "npx" not found on PATH
+  --&gt; pipeline.dip:55:5</pre></div><div class="diag-card warning"><span class=diag-code>DIP126</span> — Subgraph ref file does not exist<p>A subgraph node's <code>ref:</code> path does not resolve to an existing file on disk.</p></div><div class="diag-card warning"><span class=diag-code>DIP127</span> — Invalid human node mode<p>The <code>mode:</code> value on a human node must be <code>choice</code>, <code>freeform</code>, or <code>interview</code>.</p><pre>warning[DIP127]: invalid human node mode "dialog"
   --&gt; pipeline.dip:22:5
-  = help: use one of: choice, freeform, interview</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP128</span> — Interview mode with meaningless default
-      <p>A human node with <code>mode: interview</code> has a <code>default:</code> value, which has no effect in interview mode — answers come from the extracted question list.</p>
-      <pre>warning[DIP128]: human node "GatherRequirements" has mode: interview with a default value
+  = help: use one of: choice, freeform, interview</pre></div><div class="diag-card warning"><span class=diag-code>DIP128</span> — Interview mode with meaningless default<p>A human node with <code>mode: interview</code> has a <code>default:</code> value, which has no effect in interview mode — answers come from the extracted question list.</p><pre>warning[DIP128]: human node "GatherRequirements" has mode: interview with a default value
   --&gt; pipeline.dip:28:5
-  = help: remove the default field — it is ignored in interview mode</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP129</span> — Interview mode with choice-style labeled edges
-      <p>A human node with <code>mode: interview</code> has outgoing edges with choice labels, which conflict — interview mode collects freeform answers, not discrete choices.</p>
-      <pre>warning[DIP129]: human node "GatherRequirements" uses interview mode but has choice-style edges
+  = help: remove the default field — it is ignored in interview mode</pre></div><div class="diag-card warning"><span class=diag-code>DIP129</span> — Interview mode with choice-style labeled edges<p>A human node with <code>mode: interview</code> has outgoing edges with choice labels, which conflict — interview mode collects freeform answers, not discrete choices.</p><pre>warning[DIP129]: human node "GatherRequirements" uses interview mode but has choice-style edges
   --&gt; pipeline.dip:30:5
-  = help: remove edge labels or switch to mode: choice</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP130</span> — Invalid response_format value
-      <p>The <code>response_format:</code> field on an agent node must be <code>json_object</code> or <code>json_schema</code>. Any other value is unrecognised and will be rejected at runtime.</p>
-      <pre>warning[DIP130]: invalid response_format "xml" on agent "Parse"
+  = help: remove edge labels or switch to mode: choice</pre></div><div class="diag-card warning"><span class=diag-code>DIP130</span> — Invalid response_format value<p>The <code>response_format:</code> field on an agent node must be <code>json_object</code> or <code>json_schema</code>. Any other value is unrecognised and will be rejected at runtime.</p><pre>warning[DIP130]: invalid response_format "xml" on agent "Parse"
   --&gt; pipeline.dip:18:5
-  = help: use "json_object" or "json_schema"</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP131</span> — response_schema / response_format mismatch
-      <p>Two related hints: (1) if <code>response_schema:</code> is set but <code>response_format:</code> is not <code>json_schema</code>, the schema will be ignored; (2) if <code>response_format: json_schema</code> is set but no <code>response_schema:</code> is provided, the model receives no schema to enforce.</p>
-      <pre>warning[DIP131]: response_schema set but response_format is not json_schema
+  = help: use "json_object" or "json_schema"</pre></div><div class="diag-card warning"><span class=diag-code>DIP131</span> — response_schema / response_format mismatch<p>Two related hints: (1) if <code>response_schema:</code> is set but <code>response_format:</code> is not <code>json_schema</code>, the schema will be ignored; (2) if <code>response_format: json_schema</code> is set but no <code>response_schema:</code> is provided, the model receives no schema to enforce.</p><pre>warning[DIP131]: response_schema set but response_format is not json_schema
   --&gt; pipeline.dip:20:5
-  = help: set response_format: json_schema or remove response_schema</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP132</span> — response_schema is not valid JSON
-      <p>The value of <code>response_schema:</code> must be a valid JSON object. Malformed JSON will cause a runtime error when the model attempts to apply structured output.</p>
-      <pre>warning[DIP132]: response_schema on agent "Extract" is not valid JSON
+  = help: set response_format: json_schema or remove response_schema</pre></div><div class="diag-card warning"><span class=diag-code>DIP132</span> — response_schema is not valid JSON<p>The value of <code>response_schema:</code> must be a valid JSON object. Malformed JSON will cause a runtime error when the model attempts to apply structured output.</p><pre>warning[DIP132]: response_schema on agent "Extract" is not valid JSON
   --&gt; pipeline.dip:22:5
-  = help: fix the JSON syntax in response_schema</pre>
-    </div>
-
-    <div class="diag-card warning">
-      <span class="diag-code">DIP133</span> — params key shadows a first-class field
-      <p>A key inside the agent's <code>params:</code> block (e.g. <code>model</code> or <code>provider</code>) duplicates a first-class field on the same node. The first-class field takes precedence; the params entry is silently ignored.</p>
-      <pre>hint[DIP133]: params key "model" shadows the first-class model field on agent "Analyze"
+  = help: fix the JSON syntax in response_schema</pre></div><div class="diag-card warning"><span class=diag-code>DIP133</span> — params key shadows a first-class field<p>A key inside the agent's <code>params:</code> block (e.g. <code>model</code> or <code>provider</code>) duplicates a first-class field on the same node. The first-class field takes precedence; the params entry is silently ignored.</p><pre>hint[DIP133]: params key "model" shadows the first-class model field on agent "Analyze"
   --&gt; pipeline.dip:35:7
-  = help: remove the params key and set the field directly</pre>
-    </div>
-
-  </div>
-</div>
-</section>
-
-<footer>
-<div class="container">
-  <div class="footer-inner">
-    <div class="footer-brand">Dippin</div>
-    <div class="footer-links">
-      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
-      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
-    </div>
-  </div>
-  <div class="footer-copy">
-    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
-  </div>
-</div>
-</footer>
-
-<script src="highlight.js"></script>
-</body>
-</html>
+  = help: remove the params key and set the field directly</pre></div></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang>GitHub</a>
+<a href=https://github.com/2389-research/dippin-lang/tree/main/docs>Docs</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/dippin-lang/highlight.js></script></body></html>

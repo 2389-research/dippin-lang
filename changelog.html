@@ -1,581 +1,531 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Changelog — Dippin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<style>
-.version-card { background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
-.version-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; }
-.version-card:nth-child(4n+1)::before { background: var(--green-deep); }
-.version-card:nth-child(4n+2)::before { background: var(--lavender-deep); }
-.version-card:nth-child(4n+3)::before { background: var(--yellow-deep); }
-.version-card:nth-child(4n+4)::before { background: var(--pink-deep); }
-.version-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.version-tag { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--text); }
-.version-date { font-family: var(--mono); font-size: 0.8rem; color: var(--text-soft); }
-.version-card h4 { font-size: 0.85rem; font-weight: 700; color: var(--text); margin: 1.2rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.version-card h4:first-of-type { margin-top: 0; }
-.version-card ul { margin: 0; padding-left: 1.3rem; }
-.version-card li { color: var(--text-mid); font-size: 0.88rem; line-height: 1.7; margin-bottom: 0.3rem; }
-.version-card li strong { color: var(--text); }
-.version-card li code { font-size: 0.78em; }
-.gh-link { font-family: var(--mono); font-size: 0.75rem; color: var(--green-deep); margin-top: 0.8rem; display: inline-block; }
-</style>
-</head>
-<body>
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Changelog — Dippin</title><meta name=description content="Version history and release notes for dippin-lang."><meta property="og:title" content="Changelog — Dippin"><meta property="og:description" content="Version history and release notes for dippin-lang."><meta property="og:type" content="article"><meta property="og:url" content="https://2389-research.github.io/dippin-lang/changelog.html"><meta property="og:site_name" content="Dippin"><meta name=twitter:card content="summary"><meta name=twitter:title content="Changelog"><meta name=twitter:description content="Version history and release notes for dippin-lang."><link rel=canonical href=https://2389-research.github.io/dippin-lang/changelog.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/dippin-lang/style.css></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/dippin-lang/index.html class=nav-brand>Dippin</a>
+<button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html>Testing</a>
+<a href=/dippin-lang/validation.html>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html>Editors</a>
+<a href=/dippin-lang/changelog.html class=active>Changelog</a></div></div><div class=nav-mobile><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a><div class=nav-divider></div><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html>Testing</a>
+<a href=/dippin-lang/validation.html>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html>Editors</a>
+<a href=/dippin-lang/changelog.html class=active>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>History</div><h1>Changelog</h1><p>All notable changes to dippin-lang. Versions follow <a href=https://semver.org/>semver</a>.</p></div><div class=doc-body><pre><code>&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.18.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-04-06&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;flatten&lt;/code&gt; package&lt;/strong&gt; for resolving subgraph refs into flat workflows. Recursive resolution with cycle detection and configurable depth limit (default 10). Underscore-prefixed node IDs (&lt;code&gt;Parent_Child&lt;/code&gt;).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin export-dip&lt;/code&gt;&lt;/strong&gt; command — exports a flattened workflow as canonical &lt;code&gt;.dip&lt;/code&gt; text with all subgraph refs inlined.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin export-dot&lt;/code&gt;&lt;/strong&gt; now automatically flattens subgraph refs before export, producing valid DOT without external references.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Example workflows&lt;/strong&gt; — &lt;code&gt;orchestrator.dip&lt;/code&gt; (parent with subgraph ref) and &lt;code&gt;phases/code_review.dip&lt;/code&gt; (child workflow).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;TestLintExamples&lt;/code&gt;&lt;/strong&gt; now recurses into &lt;code&gt;examples/*/&lt;/code&gt; subdirectories.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Start/Exit rewrite&lt;/strong&gt; — workflow &lt;code&gt;Start&lt;/code&gt;/&lt;code&gt;Exit&lt;/code&gt; fields are now correctly remapped when they point to inlined subgraph nodes.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Nil resolver guard&lt;/strong&gt; — &lt;code&gt;flatten.Flatten&lt;/code&gt; returns a clear error instead of panicking when the resolver is nil but subgraph refs are present.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;export-dot&lt;/code&gt; error rendering&lt;/strong&gt; — flatten errors now use &lt;code&gt;renderError&lt;/code&gt; for JSON output consistency.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.18.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-<!-- Floating dots -->
-<div class="dots">
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-</div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.17.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-04-03&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;conditional&lt;/code&gt; node kind&lt;/strong&gt; for pure branching without LLM calls. Evaluates outgoing edge conditions only — no prompt, no token cost. Maps to &lt;code&gt;diamond&lt;/code&gt; shape in DOT export. DOT migration auto-detects: bare &lt;code&gt;diamond&lt;/code&gt; → &lt;code&gt;conditional&lt;/code&gt;, &lt;code&gt;diamond&lt;/code&gt; + &lt;code&gt;prompt&lt;/code&gt; → &lt;code&gt;agent&lt;/code&gt;, &lt;code&gt;diamond&lt;/code&gt; + &lt;code&gt;tool_command&lt;/code&gt; → &lt;code&gt;tool&lt;/code&gt;.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;--extra-models&lt;/code&gt; CLI flag&lt;/strong&gt; on &lt;code&gt;lint&lt;/code&gt; and &lt;code&gt;doctor&lt;/code&gt; commands. Extends the DIP108 model catalog at runtime for private or newly-released models. Format: &lt;code&gt;--extra-models &quot;provider:model1,model2;provider2:model3&quot;&lt;/code&gt;.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Bracket edge syntax&lt;/strong&gt; (&lt;code&gt;[label: ...]&lt;/code&gt;) now emits a clear parse error with a hint to use &lt;code&gt;when&lt;/code&gt;/&lt;code&gt;label:&lt;/code&gt; keyword syntax, instead of silently discarding annotations.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Nested &lt;code&gt;retry&lt;/code&gt; blocks&lt;/strong&gt; now emit a clear parse error suggesting flat attributes (&lt;code&gt;retry_policy&lt;/code&gt;, &lt;code&gt;max_retries&lt;/code&gt;, &lt;code&gt;retry_target&lt;/code&gt;, &lt;code&gt;fallback_target&lt;/code&gt;, &lt;code&gt;base_delay&lt;/code&gt;), instead of a confusing indent mismatch error.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.17.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-<nav class="nav">
-<div class="nav-top">
-  <a href="index.html" class="nav-brand">Dippin</a>
-  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-primary">
-    <a href="language.html">Docs</a>
-    <a href="playground.html">Playground</a>
-    <a href="blog/index.html">Blog</a>
-    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
-  </div>
-</div>
-<div class="nav-sub">
-  <div class="nav-sub-inner">
-    <a href="cli.html">CLI</a>
-    <a href="language.html">Language</a>
-    <a href="testing.html">Testing</a>
-    <a href="validation.html">Validation</a>
-    <a href="analysis.html">Analysis</a>
-    <a href="architecture.html">Architecture</a>
-    <a href="editors.html">Editors</a>
-    <a href="changelog.html" class="active">Changelog</a>
-  </div>
-</div>
-<div class="nav-mobile">
-  <a href="language.html">Docs</a>
-  <a href="playground.html">Playground</a>
-  <a href="blog/index.html">Blog</a>
-  <div class="nav-divider"></div>
-  <a href="cli.html">CLI</a>
-  <a href="language.html">Language</a>
-  <a href="testing.html">Testing</a>
-  <a href="validation.html">Validation</a>
-  <a href="analysis.html">Analysis</a>
-  <a href="architecture.html">Architecture</a>
-  <a href="editors.html">Editors</a>
-  <a href="changelog.html" class="active">Changelog</a>
-  <div class="nav-divider"></div>
-  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-</div>
-</nav>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.16.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-31&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Structured output support&lt;/strong&gt; for agent nodes. New fields:&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP130&lt;/strong&gt;: lint warning for invalid &lt;code&gt;response_format&lt;/code&gt; value.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP131&lt;/strong&gt;: lint warning when &lt;code&gt;response_schema&lt;/code&gt; is set without &lt;code&gt;response_format: json_schema&lt;/code&gt; (schema ignored); hint when &lt;code&gt;json_schema&lt;/code&gt; is set without a schema.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP132&lt;/strong&gt;: lint warning when &lt;code&gt;response_schema&lt;/code&gt; is not valid JSON.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP133&lt;/strong&gt;: lint hint when agent &lt;code&gt;params&lt;/code&gt; key shadows a first-class field (e.g., &lt;code&gt;model&lt;/code&gt;, &lt;code&gt;provider&lt;/code&gt;).&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;cmd_timeout&lt;/code&gt; field now parsed and formatted on agent nodes (previously only populated by DOT migrator).&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Duplicate params keys&lt;/strong&gt; now emit a parse diagnostic instead of silently last-write-wins.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Unknown defaults fields&lt;/strong&gt; now emit a parse diagnostic instead of being silently discarded.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;AgentConfig.Params&lt;/code&gt;&lt;/strong&gt; initialized to empty map (matching &lt;code&gt;SubgraphConfig&lt;/code&gt;), preventing nil-pointer issues in downstream consumers.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Cyclomatic/cognitive complexity&lt;/strong&gt; violations resolved across 6 files (lint_response.go, lint_human.go, parse_nodes.go, format.go, interactive.go).&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.16.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-<section class="doc">
-<div class="container">
-  <div class="doc-header">
-    <div class="section-label">History</div>
-    <h1>Changelog</h1>
-    <p>All notable changes to dippin-lang. Versions follow <a href="https://semver.org/">semver</a>.</p>
-  </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.15.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-31&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Interview mode&lt;/strong&gt; for human nodes (&lt;code&gt;mode: interview&lt;/code&gt;). Runtimes extract questions from upstream agent output and present each as an individual form field with optional suggested answers. New fields: &lt;code&gt;questions_key&lt;/code&gt;, &lt;code&gt;answers_key&lt;/code&gt;.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP127&lt;/strong&gt;: lint warning for invalid human node mode values.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP128&lt;/strong&gt;: lint warning when interview mode has a meaningless &lt;code&gt;default&lt;/code&gt; value.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP129&lt;/strong&gt;: lint warning when interview mode has conflicting choice-style labeled edges.&lt;/li&gt;
+    &lt;li&gt;Integration guide updated with interview mode implementation guidance and recommended answer JSON schema.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;api_design.dip&lt;/code&gt; example updated to use interview mode for Q&amp;A collection.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;interview_loop.dip&lt;/code&gt;&lt;/strong&gt; example: reusable interview subgraph with iterative Q&amp;A. Parameterized by topic and focus areas. LLM generates questions with suggested options, human answers via interview mode, assessor loops until requirements are clear. Grade A, ~$0.92/run.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;3 blog posts&lt;/strong&gt;: Multi-line Prompts Without Escaping (deep dive), Conditional Edges (tutorial), Cost Estimation (tutorial). Hub-and-spokes model with cross-links.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Auto-deploy&lt;/strong&gt;: CI now deploys &lt;code&gt;site/&lt;/code&gt; to GitHub Pages on successful main builds.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;--version&lt;/code&gt; / &lt;code&gt;-version&lt;/code&gt; flags now work (previously failed with &quot;flag provided but not defined&quot;).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Formatter idempotency&lt;/strong&gt;: subgraph param values with quotes (e.g., &lt;code&gt;&quot;API design&quot;&lt;/code&gt;) were double-quoted on each format pass. Parser now strips surrounding quotes from param values.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.15.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-  <div class="doc-body">
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.16.0</span>
-        <span class="version-date">2026-03-31</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>Structured output support</strong> for agent nodes. New fields:</li>
-        <li><strong>DIP130</strong>: lint warning for invalid <code>response_format</code> value.</li>
-        <li><strong>DIP131</strong>: lint warning when <code>response_schema</code> is set without <code>response_format: json_schema</code> (schema ignored); hint when <code>json_schema</code> is set without a schema.</li>
-        <li><strong>DIP132</strong>: lint warning when <code>response_schema</code> is not valid JSON.</li>
-        <li><strong>DIP133</strong>: lint hint when agent <code>params</code> key shadows a first-class field (e.g., <code>model</code>, <code>provider</code>).</li>
-        <li><code>cmd_timeout</code> field now parsed and formatted on agent nodes (previously only populated by DOT migrator).</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>Duplicate params keys</strong> now emit a parse diagnostic instead of silently last-write-wins.</li>
-        <li><strong>Unknown defaults fields</strong> now emit a parse diagnostic instead of being silently discarded.</li>
-        <li><strong><code>AgentConfig.Params</code></strong> initialized to empty map (matching <code>SubgraphConfig</code>), preventing nil-pointer issues in downstream consumers.</li>
-        <li><strong>Cyclomatic/cognitive complexity</strong> violations resolved across 6 files (lint_response.go, lint_human.go, parse_nodes.go, format.go, interactive.go).</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.16.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.14.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;code_health_check.dip&lt;/code&gt;&lt;/strong&gt; example: self-contained pipeline that audits a Go repo. Gathers context with shell tools, runs vet/staticcheck/tests in parallel, three-model independent review, synthesized report with quality gate and retry loop. 5 test scenarios. Grade A, ~$1/run.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.14.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.15.0</span>
-        <span class="version-date">2026-03-31</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>Interview mode</strong> for human nodes (<code>mode: interview</code>). Runtimes extract questions from upstream agent output and present each as an individual form field with optional suggested answers. New fields: <code>questions_key</code>, <code>answers_key</code>.</li>
-        <li><strong>DIP127</strong>: lint warning for invalid human node mode values.</li>
-        <li><strong>DIP128</strong>: lint warning when interview mode has a meaningless <code>default</code> value.</li>
-        <li><strong>DIP129</strong>: lint warning when interview mode has conflicting choice-style labeled edges.</li>
-        <li>Integration guide updated with interview mode implementation guidance and recommended answer JSON schema.</li>
-        <li><code>api_design.dip</code> example updated to use interview mode for Q&A collection.</li>
-        <li><strong><code>interview_loop.dip</code></strong> example: reusable interview subgraph with iterative Q&A. Parameterized by topic and focus areas. LLM generates questions with suggested options, human answers via interview mode, assessor loops until requirements are clear. Grade A, ~$0.92/run.</li>
-        <li><strong>3 blog posts</strong>: Multi-line Prompts Without Escaping (deep dive), Conditional Edges (tutorial), Cost Estimation (tutorial). Hub-and-spokes model with cross-links.</li>
-        <li><strong>Auto-deploy</strong>: CI now deploys <code>site/</code> to GitHub Pages on successful main builds.</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li><code>--version</code> / <code>-version</code> flags now work (previously failed with "flag provided but not defined").</li>
-        <li><strong>Formatter idempotency</strong>: subgraph param values with quotes (e.g., <code>"API design"</code>) were double-quoted on each format pass. Parser now strips surrounding quotes from param values.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.15.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.13.2&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Changed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Single-source nav&lt;/strong&gt;: &lt;code&gt;site/_layout/nav.html&lt;/code&gt; is the one source of truth. &lt;code&gt;scripts/sync-nav.sh&lt;/code&gt; propagates it to all 16 pages with correct prefixes and active states. Pre-commit hook runs it automatically. No more editing nav in 16 files.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;scripts/gen-changelog-html.sh&lt;/code&gt; emits a placeholder nav that &lt;code&gt;sync-nav.sh&lt;/code&gt; fills.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;just sync-nav&lt;/code&gt; recipe added.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.13.2&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.14.0</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong><code>code_health_check.dip</code></strong> example: self-contained pipeline that audits a Go repo. Gathers context with shell tools, runs vet/staticcheck/tests in parallel, three-model independent review, synthesized report with quality gate and retry loop. 5 test scenarios. Grade A, ~$1/run.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.14.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.13.1&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;just install&lt;/code&gt; and &lt;code&gt;just build&lt;/code&gt; now inject commit hash and build timestamp via ldflags. &lt;code&gt;dippin version&lt;/code&gt; shows &lt;code&gt;dev (commit: abc1234, built: 2026-03-27T18:45:10Z)&lt;/code&gt; instead of &lt;code&gt;dev (commit: none, built: unknown)&lt;/code&gt;.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.13.1&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.13.2</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Changed</h4>
-      <ul>
-        <li><strong>Single-source nav</strong>: <code>site/_layout/nav.html</code> is the one source of truth. <code>scripts/sync-nav.sh</code> propagates it to all 16 pages with correct prefixes and active states. Pre-commit hook runs it automatically. No more editing nav in 16 files.</li>
-        <li><code>scripts/gen-changelog-html.sh</code> emits a placeholder nav that <code>sync-nav.sh</code> fills.</li>
-        <li><code>just sync-nav</code> recipe added.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.13.2">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.13.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Changed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Two-tier navigation&lt;/strong&gt; across all site pages. Top row: Docs, Playground, Blog, GitHub. Bottom row: CLI, Language, Testing, Validation, Analysis, Architecture, Editors, Changelog. Mobile collapses to hamburger with divider-separated groups.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Mobile nav menu no longer renders as unstyled text on desktop (missing &lt;code&gt;display: none&lt;/code&gt;).&lt;/li&gt;
+    &lt;li&gt;Blog index only shows the 5 published posts — removed 20 dead links to unwritten articles.&lt;/li&gt;
+    &lt;li&gt;Playground content no longer overlaps the nav bar (padding adjusted for two-tier height).&lt;/li&gt;
+    &lt;li&gt;Playground now has the floating dots background matching all other pages.&lt;/li&gt;
+    &lt;li&gt;Homepage &quot;See all 25 posts&quot; corrected to &quot;All posts&quot;.&lt;/li&gt;
+    &lt;li&gt;Section spacing tightened (6rem → 4.5rem padding).&lt;/li&gt;
+    &lt;li&gt;Tracker team field report response written (&lt;code&gt;.tracker/field-report-response-2026-03-27.md&lt;/code&gt;).&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.13.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.13.1</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><code>just install</code> and <code>just build</code> now inject commit hash and build timestamp via ldflags. <code>dippin version</code> shows <code>dev (commit: abc1234, built: 2026-03-27T18:45:10Z)</code> instead of <code>dev (commit: none, built: unknown)</code>.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.13.1">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.12.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Blog section&lt;/strong&gt; with 25 planned post cards and topic filtering (Guides, Tutorials, Deep Dives, Reference).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;5 blog posts&lt;/strong&gt; published: Getting Started, Scenario Testing, Migrating from DOT, CI Integration, Editor Setup. Edited for voice, clarity, and inline links.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Homepage &quot;From the Blog&quot;&lt;/strong&gt; section featuring 3 latest posts below the fold.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;SEO meta tags&lt;/strong&gt; on all 12 site pages: Open Graph, Twitter Cards, descriptions, canonical URLs. Pages render rich previews when shared.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Blog ideas doc&lt;/strong&gt; (&lt;code&gt;docs/blog-ideas.md&lt;/code&gt;) with 25 post synopses, coverage plans, and approach notes.&lt;/li&gt;
+    &lt;li&gt;Blog nav link added to all site pages.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.12.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.13.0</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Changed</h4>
-      <ul>
-        <li><strong>Two-tier navigation</strong> across all site pages. Top row: Docs, Playground, Blog, GitHub. Bottom row: CLI, Language, Testing, Validation, Analysis, Architecture, Editors, Changelog. Mobile collapses to hamburger with divider-separated groups.</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li>Mobile nav menu no longer renders as unstyled text on desktop (missing <code>display: none</code>).</li>
-        <li>Blog index only shows the 5 published posts — removed 20 dead links to unwritten articles.</li>
-        <li>Playground content no longer overlaps the nav bar (padding adjusted for two-tier height).</li>
-        <li>Playground now has the floating dots background matching all other pages.</li>
-        <li>Homepage "See all 25 posts" corrected to "All posts".</li>
-        <li>Section spacing tightened (6rem → 4.5rem padding).</li>
-        <li>Tracker team field report response written (<code>.tracker/field-report-response-2026-03-27.md</code>).</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.13.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.11.2&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Playground&lt;/strong&gt;: syntax-highlighted editor with transparent textarea over colored &lt;code&gt;&amp;lt;pre&amp;gt;&lt;/code&gt; overlay. Tab key inserts 2 spaces.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Playground&lt;/strong&gt;: parse output shows highlighted JSON (keys, strings, booleans, numbers). Format output shows highlighted Dippin. Lint errors display with severity coloring.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Playground&lt;/strong&gt;: WASM race condition — polls for function registration before auto-linting on load. Returns &lt;code&gt;[]&lt;/code&gt; not &lt;code&gt;null&lt;/code&gt; for zero diagnostics.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: syntax highlighting CSS selectors changed from &lt;code&gt;pre .hl-*&lt;/code&gt; to &lt;code&gt;.hl-*&lt;/code&gt; so colors work in playground output div, not just &lt;code&gt;&amp;lt;pre&amp;gt;&lt;/code&gt; blocks.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: JSON blocks inside &lt;code&gt;compare-code&lt;/code&gt; divs (like gate.test.json on Testing page) now get highlighted — skip logic checks for existing &lt;code&gt;&amp;lt;span&amp;gt;&lt;/code&gt; tags instead of parent class.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: highlight.js token protection via &lt;code&gt;\x00N\x00&lt;/code&gt; placeholders prevents regex passes from matching inside previously generated &lt;code&gt;&amp;lt;span&amp;gt;&lt;/code&gt; class attributes.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: JSON inside terminal output blocks (e.g. &lt;code&gt;$ dippin --format json test&lt;/code&gt;) gets JSON highlighting applied to the embedded body.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: changelog auto-generated from CHANGELOG.md via &lt;code&gt;scripts/gen-changelog-html.sh&lt;/code&gt;. Pre-commit hook runs it when CHANGELOG.md is staged.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.11.2&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.12.0</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>Blog section</strong> with 25 planned post cards and topic filtering (Guides, Tutorials, Deep Dives, Reference).</li>
-        <li><strong>5 blog posts</strong> published: Getting Started, Scenario Testing, Migrating from DOT, CI Integration, Editor Setup. Edited for voice, clarity, and inline links.</li>
-        <li><strong>Homepage "From the Blog"</strong> section featuring 3 latest posts below the fold.</li>
-        <li><strong>SEO meta tags</strong> on all 12 site pages: Open Graph, Twitter Cards, descriptions, canonical URLs. Pages render rich previews when shared.</li>
-        <li><strong>Blog ideas doc</strong> (<code>docs/blog-ideas.md</code>) with 25 post synopses, coverage plans, and approach notes.</li>
-        <li>Blog nav link added to all site pages.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.12.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.11.1&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Playground&lt;/strong&gt;: WASM files (&lt;code&gt;dippin.wasm&lt;/code&gt;, &lt;code&gt;wasm_exec.js&lt;/code&gt;) now deployed to gh-pages so the playground actually loads.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Playground&lt;/strong&gt;: auto-runs lint on WASM load instead of showing a confusing &quot;Ready&quot; message while the Lint button appears active.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: syntax highlighting (&lt;code&gt;highlight.js&lt;/code&gt;) for all code blocks — Dippin, shell, terminal, and diagnostic output.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Site&lt;/strong&gt;: changelog page added at &lt;code&gt;changelog.html&lt;/code&gt; with full version history.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.11.1&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.11.2</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>Playground</strong>: syntax-highlighted editor with transparent textarea over colored <code>&lt;pre&gt;</code> overlay. Tab key inserts 2 spaces.</li>
-        <li><strong>Playground</strong>: parse output shows highlighted JSON (keys, strings, booleans, numbers). Format output shows highlighted Dippin. Lint errors display with severity coloring.</li>
-        <li><strong>Playground</strong>: WASM race condition — polls for function registration before auto-linting on load. Returns <code>[]</code> not <code>null</code> for zero diagnostics.</li>
-        <li><strong>Site</strong>: syntax highlighting CSS selectors changed from <code>pre .hl-*</code> to <code>.hl-*</code> so colors work in playground output div, not just <code>&lt;pre&gt;</code> blocks.</li>
-        <li><strong>Site</strong>: JSON blocks inside <code>compare-code</code> divs (like gate.test.json on Testing page) now get highlighted — skip logic checks for existing <code>&lt;span&gt;</code> tags instead of parent class.</li>
-        <li><strong>Site</strong>: highlight.js token protection via <code>\x00N\x00</code> placeholders prevents regex passes from matching inside previously generated <code>&lt;span&gt;</code> class attributes.</li>
-        <li><strong>Site</strong>: JSON inside terminal output blocks (e.g. <code>$ dippin --format json test</code>) gets JSON highlighting applied to the embedded body.</li>
-        <li><strong>Site</strong>: changelog auto-generated from CHANGELOG.md via <code>scripts/gen-changelog-html.sh</code>. Pre-commit hook runs it when CHANGELOG.md is staged.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.11.2">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.11.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-27&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;DIP126&lt;/strong&gt; lint rule: subgraph &lt;code&gt;ref:&lt;/code&gt; file validation — warns when referenced workflow file does not exist on disk.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin watch&lt;/code&gt;&lt;/strong&gt; command: file watcher that re-runs lint on &lt;code&gt;.dip&lt;/code&gt; changes with 200ms debounce. Uses &lt;code&gt;fsnotify&lt;/code&gt;.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin test --coverage&lt;/code&gt;&lt;/strong&gt; flag: edge coverage summary showing which workflow edges were/weren't traversed by test scenarios.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Tree-sitter grammar&lt;/strong&gt; scaffolding in &lt;code&gt;editors/tree-sitter-dippin/&lt;/code&gt; — grammar.js, external scanner for indentation, highlight queries, and test corpus. Enables proper syntax highlighting in Neovim, Helix, and Zed.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;WASM playground&lt;/strong&gt; at &lt;code&gt;site/playground.html&lt;/code&gt; — browser-based editor with live parse, lint, and format via WebAssembly. Build with &lt;code&gt;just wasm&lt;/code&gt;.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;gemini-3.1-pro-preview-customtools&lt;/code&gt; added to model catalog and pricing tables.&lt;/li&gt;
+    &lt;li&gt;35 diagnostic codes total (was 34).&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;CI failures&lt;/strong&gt;: golangci-lint &lt;code&gt;errcheck&lt;/code&gt; on &lt;code&gt;f.Close()&lt;/code&gt;, &lt;code&gt;funlen&lt;/code&gt; on &lt;code&gt;buildLintExplanations&lt;/code&gt; (split into 4 functions), misspell false positive in DIP118 example.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Migration parity&lt;/strong&gt;: &lt;code&gt;consensus_task_parity.dip&lt;/code&gt; and &lt;code&gt;semport_thematic.dip&lt;/code&gt; model names now match DOT originals (&lt;code&gt;gemini-3.1-pro-preview-customtools&lt;/code&gt;).&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Changed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;validator/lint_tool_cmd.go&lt;/code&gt; split with &lt;code&gt;//go:build !wasm&lt;/code&gt; / &lt;code&gt;wasm&lt;/code&gt; tags — &lt;code&gt;bash -n&lt;/code&gt; syntax check and &lt;code&gt;exec.LookPath&lt;/code&gt; binary check are no-ops in WASM.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;validator/lint_subgraph.go&lt;/code&gt; similarly gated for WASM (no &lt;code&gt;os.Stat&lt;/code&gt;).&lt;/li&gt;
+    &lt;li&gt;Site mobile CSS improvements: table overflow handling, code word-break, install-cmd sizing.&lt;/li&gt;
+    &lt;li&gt;Site nav updated with Playground link across all pages.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Documentation&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;All references updated from 34→35 codes, DIP101–DIP125→DIP101–DIP126 across README, CLAUDE.md, docs/, and site/.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;docs/validation.md&lt;/code&gt; — full entry for DIP126.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;docs/cli.md&lt;/code&gt; — &lt;code&gt;watch&lt;/code&gt; command section, &lt;code&gt;test --coverage&lt;/code&gt; flag.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;docs/editor-setup.md&lt;/code&gt; — tree-sitter grammar availability.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;dippin explain DIP126&lt;/code&gt; — explanation with trigger and fix guidance.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;mode: labeled&lt;/code&gt; documented as not supported in &lt;code&gt;docs/nodes.md&lt;/code&gt;.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.11.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.11.1</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>Playground</strong>: WASM files (<code>dippin.wasm</code>, <code>wasm_exec.js</code>) now deployed to gh-pages so the playground actually loads.</li>
-        <li><strong>Playground</strong>: auto-runs lint on WASM load instead of showing a confusing "Ready" message while the Lint button appears active.</li>
-        <li><strong>Site</strong>: syntax highlighting (<code>highlight.js</code>) for all code blocks — Dippin, shell, terminal, and diagnostic output.</li>
-        <li><strong>Site</strong>: changelog page added at <code>changelog.html</code> with full version history.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.11.1">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.10.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-26&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;DIP123&lt;/strong&gt; lint rule: tool command shell syntax errors detected via &lt;code&gt;bash -n&lt;/code&gt;.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP124&lt;/strong&gt; lint rule: &lt;code&gt;${ctx.*}&lt;/code&gt; references in tool commands that expand to empty at runtime.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP125&lt;/strong&gt; lint rule (hint): tool command binary not found on PATH (environment-dependent).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Brochure site&lt;/strong&gt; with 8 pages: home, CLI, Language Reference, Testing, Validation, Analysis, Architecture, Editor Setup. Hosted on GitHub Pages.&lt;/li&gt;
+    &lt;li&gt;34 diagnostic codes total (was 31).&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Documentation&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;All references updated from 31→34 codes, DIP101–DIP122→DIP101–DIP125 across README, CLAUDE.md, docs/, and site/.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;docs/validation.md&lt;/code&gt; — full entries for DIP123, DIP124, DIP125.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;dippin explain DIP123/DIP124/DIP125&lt;/code&gt; — explanations with triggers and fix guidance.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.10.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.11.0</span>
-        <span class="version-date">2026-03-27</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>DIP126</strong> lint rule: subgraph <code>ref:</code> file validation — warns when referenced workflow file does not exist on disk.</li>
-        <li><strong><code>dippin watch</code></strong> command: file watcher that re-runs lint on <code>.dip</code> changes with 200ms debounce. Uses <code>fsnotify</code>.</li>
-        <li><strong><code>dippin test --coverage</code></strong> flag: edge coverage summary showing which workflow edges were/weren't traversed by test scenarios.</li>
-        <li><strong>Tree-sitter grammar</strong> scaffolding in <code>editors/tree-sitter-dippin/</code> — grammar.js, external scanner for indentation, highlight queries, and test corpus. Enables proper syntax highlighting in Neovim, Helix, and Zed.</li>
-        <li><strong>WASM playground</strong> at <code>site/playground.html</code> — browser-based editor with live parse, lint, and format via WebAssembly. Build with <code>just wasm</code>.</li>
-        <li><code>gemini-3.1-pro-preview-customtools</code> added to model catalog and pricing tables.</li>
-        <li>35 diagnostic codes total (was 34).</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>CI failures</strong>: golangci-lint <code>errcheck</code> on <code>f.Close()</code>, <code>funlen</code> on <code>buildLintExplanations</code> (split into 4 functions), misspell false positive in DIP118 example.</li>
-        <li><strong>Migration parity</strong>: <code>consensus_task_parity.dip</code> and <code>semport_thematic.dip</code> model names now match DOT originals (<code>gemini-3.1-pro-preview-customtools</code>).</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li><code>validator/lint_tool_cmd.go</code> split with <code>//go:build !wasm</code> / <code>wasm</code> tags — <code>bash -n</code> syntax check and <code>exec.LookPath</code> binary check are no-ops in WASM.</li>
-        <li><code>validator/lint_subgraph.go</code> similarly gated for WASM (no <code>os.Stat</code>).</li>
-        <li>Site mobile CSS improvements: table overflow handling, code word-break, install-cmd sizing.</li>
-        <li>Site nav updated with Playground link across all pages.</li>
-      </ul>
-      <h4>Documentation</h4>
-      <ul>
-        <li>All references updated from 34→35 codes, DIP101–DIP125→DIP101–DIP126 across README, CLAUDE.md, docs/, and site/.</li>
-        <li><code>docs/validation.md</code> — full entry for DIP126.</li>
-        <li><code>docs/cli.md</code> — <code>watch</code> command section, <code>test --coverage</code> flag.</li>
-        <li><code>docs/editor-setup.md</code> — tree-sitter grammar availability.</li>
-        <li><code>dippin explain DIP126</code> — explanation with trigger and fix guidance.</li>
-        <li><code>mode: labeled</code> documented as not supported in <code>docs/nodes.md</code>.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.11.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.9.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;preferred_label&lt;/code&gt; now works on human gates&lt;/strong&gt; — scenario key &lt;code&gt;preferred_label&lt;/code&gt; (or per-node &lt;code&gt;Gate.preferred_label&lt;/code&gt;) matches against edge labels (case-insensitive substring). Previously silently ignored on freeform gates.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;prompt:&lt;/code&gt; blocks now parse on human nodes&lt;/strong&gt; — &lt;code&gt;HumanConfig&lt;/code&gt; gained a &lt;code&gt;Prompt&lt;/code&gt; field. Multiline prompt blocks work the same as on agent nodes. Formatter round-trips correctly.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Tool auto-defaults no longer mask fallback edges&lt;/strong&gt; — empty-string scenario values (&lt;code&gt;&quot;Node.tool_stdout&quot;: &quot;&quot;&lt;/code&gt;) now suppress the auto-seeded &lt;code&gt;success&lt;/code&gt; default, allowing unconditional fallback edges to fire.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;immediately_after&lt;/code&gt; test assertion&lt;/strong&gt; — assert adjacency in the execution path: &lt;code&gt;&quot;immediately_after&quot;: {&quot;NodeX&quot;: &quot;NodeY&quot;}&lt;/code&gt; checks that NodeY is the very next node after NodeX.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;branch&lt;/code&gt; field for targeted parallel testing&lt;/strong&gt; — &lt;code&gt;&quot;branch&quot;: [&quot;WorkerA&quot;]&lt;/code&gt; limits which parallel fan-out branches are simulated. Without it, all branches are walked (new default).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Simulator walks all parallel branches&lt;/strong&gt; — parallel fan-out now visits all targets, not just the first. Matches real runtime behavior.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Example test suites&lt;/strong&gt; — &lt;code&gt;.test.json&lt;/code&gt; files for &lt;code&gt;vulnerability_analyzer&lt;/code&gt;, &lt;code&gt;consensus_task&lt;/code&gt;, &lt;code&gt;code_quality_sweep&lt;/code&gt;, and &lt;code&gt;sprint_exec&lt;/code&gt; (20 tests across 4 workflows).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Test coverage at 95.7%&lt;/strong&gt; — up from 85.6%. Six packages at 100%.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;just cover&lt;/code&gt; now excludes untestable files (&lt;code&gt;main.go&lt;/code&gt;, &lt;code&gt;cmd_lsp.go&lt;/code&gt;) from coverage reports.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Documentation&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;docs/testing.md&lt;/code&gt; — added Caveats section (&lt;code&gt;not_visited&lt;/code&gt; fragility with loop-breaking), Clearing Defaults section (empty-string technique), &lt;code&gt;immediately_after&lt;/code&gt; field documentation.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.9.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.10.0</span>
-        <span class="version-date">2026-03-26</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>DIP123</strong> lint rule: tool command shell syntax errors detected via <code>bash -n</code>.</li>
-        <li><strong>DIP124</strong> lint rule: <code>${ctx.*}</code> references in tool commands that expand to empty at runtime.</li>
-        <li><strong>DIP125</strong> lint rule (hint): tool command binary not found on PATH (environment-dependent).</li>
-        <li><strong>Brochure site</strong> with 8 pages: home, CLI, Language Reference, Testing, Validation, Analysis, Architecture, Editor Setup. Hosted on GitHub Pages.</li>
-        <li>34 diagnostic codes total (was 31).</li>
-      </ul>
-      <h4>Documentation</h4>
-      <ul>
-        <li>All references updated from 31→34 codes, DIP101–DIP122→DIP101–DIP125 across README, CLAUDE.md, docs/, and site/.</li>
-        <li><code>docs/validation.md</code> — full entries for DIP123, DIP124, DIP125.</li>
-        <li><code>dippin explain DIP123/DIP124/DIP125</code> — explanations with triggers and fix guidance.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.10.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.8.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Graph truncation on pipelines with restart edges&lt;/strong&gt; — &lt;code&gt;buildAdjacency()&lt;/code&gt; included restart (back) edges, creating cycles that prevented Kahn's algorithm from assigning layers to downstream nodes. All nodes are now rendered. Affects both full and compact modes.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Simulator infinite loop on tool-gated loops&lt;/strong&gt; — pipelines with &lt;code&gt;when ctx.tool_stdout not contains all-done&lt;/code&gt; loops would spin to the 500-step limit. New &lt;code&gt;MaxNodeVisits&lt;/code&gt; option forces the loop-exit edge after N visits. The test runner sets this to 3 by default.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Per-node scenario injection in &lt;code&gt;dippin test&lt;/code&gt;&lt;/strong&gt; — &lt;code&gt;NodeName.key=value&lt;/code&gt; scenarios now work reliably because the loop-breaking fix allows the simulation to reach the target node.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Testrunner accepts empty/invalid schemas silently&lt;/strong&gt; — &lt;code&gt;LoadTestFile&lt;/code&gt; now rejects &lt;code&gt;.test.json&lt;/code&gt; files with zero tests.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;CLI integration tests&lt;/strong&gt; — 32 new tests covering 10 previously untested commands (cost, coverage, doctor, optimize, unused, graph, diff, feedback, explain, test). &lt;code&gt;cmd/dippin&lt;/code&gt; coverage: 44.9% → 79.3%.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Graph tests for parallel and restart-loop fixtures&lt;/strong&gt;.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP121 compound condition test&lt;/strong&gt; — verifies &lt;code&gt;and&lt;/code&gt;/&lt;code&gt;or&lt;/code&gt; conditions correctly fire per-variable.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Unused clean-workflow test&lt;/strong&gt; — verifies no false positives on linear workflows.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;just release tag msg&lt;/code&gt; recipe for tagging releases.&lt;/li&gt;
+    &lt;li&gt;DIP121/DIP122 added to README warnings table; &lt;code&gt;explain&lt;/code&gt;, &lt;code&gt;unused&lt;/code&gt;, &lt;code&gt;graph&lt;/code&gt;, &lt;code&gt;test&lt;/code&gt; added to commands table.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed (cosmetic)&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;README stale numbers&lt;/strong&gt; — diagnostic codes 30→34, DIP120→DIP125, examples 15→17, lint rules 21→25.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;appendConnector&lt;/code&gt; dead branch&lt;/strong&gt; — identical if/else branches collapsed.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.8.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.9.0</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong><code>preferred_label</code> now works on human gates</strong> — scenario key <code>preferred_label</code> (or per-node <code>Gate.preferred_label</code>) matches against edge labels (case-insensitive substring). Previously silently ignored on freeform gates.</li>
-        <li><strong><code>prompt:</code> blocks now parse on human nodes</strong> — <code>HumanConfig</code> gained a <code>Prompt</code> field. Multiline prompt blocks work the same as on agent nodes. Formatter round-trips correctly.</li>
-        <li><strong>Tool auto-defaults no longer mask fallback edges</strong> — empty-string scenario values (<code>"Node.tool_stdout": ""</code>) now suppress the auto-seeded <code>success</code> default, allowing unconditional fallback edges to fire.</li>
-      </ul>
-      <h4>Added</h4>
-      <ul>
-        <li><strong><code>immediately_after</code> test assertion</strong> — assert adjacency in the execution path: <code>"immediately_after": {"NodeX": "NodeY"}</code> checks that NodeY is the very next node after NodeX.</li>
-        <li><strong><code>branch</code> field for targeted parallel testing</strong> — <code>"branch": ["WorkerA"]</code> limits which parallel fan-out branches are simulated. Without it, all branches are walked (new default).</li>
-        <li><strong>Simulator walks all parallel branches</strong> — parallel fan-out now visits all targets, not just the first. Matches real runtime behavior.</li>
-        <li><strong>Example test suites</strong> — <code>.test.json</code> files for <code>vulnerability_analyzer</code>, <code>consensus_task</code>, <code>code_quality_sweep</code>, and <code>sprint_exec</code> (20 tests across 4 workflows).</li>
-        <li><strong>Test coverage at 95.7%</strong> — up from 85.6%. Six packages at 100%.</li>
-        <li><code>just cover</code> now excludes untestable files (<code>main.go</code>, <code>cmd_lsp.go</code>) from coverage reports.</li>
-      </ul>
-      <h4>Documentation</h4>
-      <ul>
-        <li><code>docs/testing.md</code> — added Caveats section (<code>not_visited</code> fragility with loop-breaking), Clearing Defaults section (empty-string technique), <code>immediately_after</code> field documentation.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.9.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.7.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin test&lt;/code&gt;&lt;/strong&gt; — scenario test runner for workflow assertions. Define &lt;code&gt;.test.json&lt;/code&gt; files alongside &lt;code&gt;.dip&lt;/code&gt; workflows with expected status, visited/not-visited nodes, and path ordering. Supports &lt;code&gt;--verbose&lt;/code&gt; flag for path tracing and JSON output for CI integration.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;New package:&lt;/strong&gt; &lt;code&gt;testrunner/&lt;/code&gt; — loads &lt;code&gt;.test.json&lt;/code&gt; suites, runs each case through the simulator with injected scenario values, checks assertions against results.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;New doc:&lt;/strong&gt; &lt;code&gt;docs/testing.md&lt;/code&gt; — documents the &lt;code&gt;.test.json&lt;/code&gt; format and test runner usage.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.7.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.8.0</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>Graph truncation on pipelines with restart edges</strong> — <code>buildAdjacency()</code> included restart (back) edges, creating cycles that prevented Kahn's algorithm from assigning layers to downstream nodes. All nodes are now rendered. Affects both full and compact modes.</li>
-        <li><strong>Simulator infinite loop on tool-gated loops</strong> — pipelines with <code>when ctx.tool_stdout not contains all-done</code> loops would spin to the 500-step limit. New <code>MaxNodeVisits</code> option forces the loop-exit edge after N visits. The test runner sets this to 3 by default.</li>
-        <li><strong>Per-node scenario injection in <code>dippin test</code></strong> — <code>NodeName.key=value</code> scenarios now work reliably because the loop-breaking fix allows the simulation to reach the target node.</li>
-        <li><strong>Testrunner accepts empty/invalid schemas silently</strong> — <code>LoadTestFile</code> now rejects <code>.test.json</code> files with zero tests.</li>
-      </ul>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>CLI integration tests</strong> — 32 new tests covering 10 previously untested commands (cost, coverage, doctor, optimize, unused, graph, diff, feedback, explain, test). <code>cmd/dippin</code> coverage: 44.9% → 79.3%.</li>
-        <li><strong>Graph tests for parallel and restart-loop fixtures</strong>.</li>
-        <li><strong>DIP121 compound condition test</strong> — verifies <code>and</code>/<code>or</code> conditions correctly fire per-variable.</li>
-        <li><strong>Unused clean-workflow test</strong> — verifies no false positives on linear workflows.</li>
-        <li><code>just release tag msg</code> recipe for tagging releases.</li>
-        <li>DIP121/DIP122 added to README warnings table; <code>explain</code>, <code>unused</code>, <code>graph</code>, <code>test</code> added to commands table.</li>
-      </ul>
-      <h4>Fixed (cosmetic)</h4>
-      <ul>
-        <li><strong>README stale numbers</strong> — diagnostic codes 30→34, DIP120→DIP125, examples 15→17, lint rules 21→25.</li>
-        <li><strong><code>appendConnector</code> dead branch</strong> — identical if/else branches collapsed.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.8.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.6.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;DIP121&lt;/strong&gt; lint rule: condition references variable not produced by source node's &lt;code&gt;IO.Writes&lt;/code&gt;. Skips when writes are empty (advisory) or variable is a reserved runtime key (&lt;code&gt;ctx.outcome&lt;/code&gt;, &lt;code&gt;ctx.status&lt;/code&gt;, &lt;code&gt;ctx.internal.*&lt;/code&gt;, &lt;code&gt;graph.*&lt;/code&gt;, &lt;code&gt;params.*&lt;/code&gt;).&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP122&lt;/strong&gt; lint rule: condition tests value not declared in source tool's &lt;code&gt;ToolConfig.Outputs&lt;/code&gt;. Only fires for tool nodes with explicitly declared outputs.&lt;/li&gt;
+    &lt;li&gt;Explanations for DIP121/DIP122 in &lt;code&gt;dippin explain&lt;/code&gt;.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.6.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.7.0</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong><code>dippin test</code></strong> — scenario test runner for workflow assertions. Define <code>.test.json</code> files alongside <code>.dip</code> workflows with expected status, visited/not-visited nodes, and path ordering. Supports <code>--verbose</code> flag for path tracing and JSON output for CI integration.</li>
-        <li><strong>New package:</strong> <code>testrunner/</code> — loads <code>.test.json</code> suites, runs each case through the simulator with injected scenario values, checks assertions against results.</li>
-        <li><strong>New doc:</strong> <code>docs/testing.md</code> — documents the <code>.test.json</code> format and test runner usage.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.7.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.5.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin explain &amp;lt;DIPxxx&amp;gt;&lt;/code&gt;&lt;/strong&gt; — rich explanations for all 34 diagnostic codes. Shows trigger conditions, fix guidance, and example snippets. Supports text and JSON output.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin unused &amp;lt;file&amp;gt;&lt;/code&gt;&lt;/strong&gt; — detects dead-branch nodes (reachable from start but no path to exit) and estimates wasted cost per run. Reuses &lt;code&gt;coverage.Analyze()&lt;/code&gt; sink detection + &lt;code&gt;cost.Analyze()&lt;/code&gt; for cost enrichment.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;dippin graph [--compact] &amp;lt;file&amp;gt;&lt;/code&gt;&lt;/strong&gt; — terminal-rendered ASCII DAG visualization. Full mode renders box-drawing nodes with connectors; compact mode outputs single-line &lt;code&gt;[A] → [B] → [C]&lt;/code&gt; format. JSON mode outputs layer structure.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;New packages:&lt;/strong&gt; &lt;code&gt;unused/&lt;/code&gt;, &lt;code&gt;graph/&lt;/code&gt;, &lt;code&gt;testrunner/&lt;/code&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;New files:&lt;/strong&gt; &lt;code&gt;validator/explanations.go&lt;/code&gt; with &lt;code&gt;Explanation&lt;/code&gt; struct for all DIP codes.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.5.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.6.0</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>DIP121</strong> lint rule: condition references variable not produced by source node's <code>IO.Writes</code>. Skips when writes are empty (advisory) or variable is a reserved runtime key (<code>ctx.outcome</code>, <code>ctx.status</code>, <code>ctx.internal.*</code>, <code>graph.*</code>, <code>params.*</code>).</li>
-        <li><strong>DIP122</strong> lint rule: condition tests value not declared in source tool's <code>ToolConfig.Outputs</code>. Only fires for tool nodes with explicitly declared outputs.</li>
-        <li>Explanations for DIP121/DIP122 in <code>dippin explain</code>.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.6.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.4.3&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;DIP101 suppressed for mixed routing&lt;/strong&gt; — when a source node has both unconditional and conditional outgoing edges, the conditional branches are intentional routing. DIP101 no longer fires on their destinations. Covers all four reported patterns: compound inequality conditions, exhaustive set + fallback, mixed unconditional/conditional, and labeled fallback edges.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.4.3&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.5.0</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong><code>dippin explain &lt;DIPxxx&gt;</code></strong> — rich explanations for all 34 diagnostic codes. Shows trigger conditions, fix guidance, and example snippets. Supports text and JSON output.</li>
-        <li><strong><code>dippin unused &lt;file&gt;</code></strong> — detects dead-branch nodes (reachable from start but no path to exit) and estimates wasted cost per run. Reuses <code>coverage.Analyze()</code> sink detection + <code>cost.Analyze()</code> for cost enrichment.</li>
-        <li><strong><code>dippin graph [--compact] &lt;file&gt;</code></strong> — terminal-rendered ASCII DAG visualization. Full mode renders box-drawing nodes with connectors; compact mode outputs single-line <code>[A] → [B] → [C]</code> format. JSON mode outputs layer structure.</li>
-        <li><strong>New packages:</strong> <code>unused/</code>, <code>graph/</code>, <code>testrunner/</code></li>
-        <li><strong>New files:</strong> <code>validator/explanations.go</code> with <code>Explanation</code> struct for all DIP codes.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.5.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.4.2&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;DIP101/DIP102 exhaustive detection&lt;/strong&gt; now recognizes any complete partition — if all conditional edges from a node test the same variable with equality (2+ values), the conditions are treated as exhaustive. No longer limited to hardcoded &lt;code&gt;{success, fail}&lt;/code&gt; pairs. Handles &lt;code&gt;done/more_questions&lt;/code&gt;, &lt;code&gt;tasks_remain/all_done&lt;/code&gt;, and any custom value set.&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.4.2&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.4.3</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>DIP101 suppressed for mixed routing</strong> — when a source node has both unconditional and conditional outgoing edges, the conditional branches are intentional routing. DIP101 no longer fires on their destinations. Covers all four reported patterns: compound inequality conditions, exhaustive set + fallback, mixed unconditional/conditional, and labeled fallback edges.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.4.3">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.4.1&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;EBNF grammar&lt;/strong&gt; audited against parser — added infix negation, tool &lt;code&gt;outputs&lt;/code&gt; field, removed undocumented numeric operators (&lt;code&gt;&amp;lt;&lt;/code&gt;, &lt;code&gt;&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;=&lt;/code&gt;, &lt;code&gt;&amp;gt;=&lt;/code&gt; parsed but silently returned false)&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Docs accuracy&lt;/strong&gt; — removed &lt;code&gt;state.*&lt;/code&gt; namespace (not implemented), removed &lt;code&gt;ctx.preferred_label&lt;/code&gt; (not in codebase), added &lt;code&gt;==&lt;/code&gt; as &lt;code&gt;=&lt;/code&gt; alias, added &lt;code&gt;not contains&lt;/code&gt; infix syntax&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Condition parser&lt;/strong&gt; — removed &lt;code&gt;&amp;lt;&lt;/code&gt;, &lt;code&gt;&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;=&lt;/code&gt;, &lt;code&gt;&amp;gt;=&lt;/code&gt; from valid operators (never evaluated, silent false was a trap)&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;CHANGELOG.md&lt;/code&gt; with retroactive history for all versions&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;docs/CONTRIBUTING.md&lt;/code&gt; — documentation accuracy protocol with persona matrix&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;CLAUDE.md&lt;/code&gt; — project conventions, gotchas, versioning policy&lt;/li&gt;
+    &lt;li&gt;Integration test (&lt;code&gt;TestLintExamples&lt;/code&gt;) — lints all examples through real parser&lt;/li&gt;
+    &lt;li&gt;&quot;Last verified&quot; dates on model catalog and pricing table&lt;/li&gt;
+    &lt;li&gt;Tool &lt;code&gt;outputs&lt;/code&gt; field documented in nodes.md and README.md&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.4.1&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.4.2</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>DIP101/DIP102 exhaustive detection</strong> now recognizes any complete partition — if all conditional edges from a node test the same variable with equality (2+ values), the conditions are treated as exhaustive. No longer limited to hardcoded <code>{success, fail}</code> pairs. Handles <code>done/more_questions</code>, <code>tasks_remain/all_done</code>, and any custom value set.</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.4.2">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.4.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-25&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;New commands:&lt;/strong&gt; &lt;code&gt;dippin cost&lt;/code&gt;, &lt;code&gt;dippin coverage&lt;/code&gt;, &lt;code&gt;dippin doctor&lt;/code&gt;, &lt;code&gt;dippin optimize&lt;/code&gt;, &lt;code&gt;dippin diff&lt;/code&gt;, &lt;code&gt;dippin feedback&lt;/code&gt;, &lt;code&gt;dippin lsp&lt;/code&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;New providers:&lt;/strong&gt; DeepSeek, xAI (Grok), Mistral, Cohere — model validation and cost estimation&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP116–DIP120&lt;/strong&gt; lint rules: compaction threshold, on_resume, stylesheet refs, reasoning_effort, namespace prefix&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;LSP server&lt;/strong&gt; with diagnostics, hover, go-to-definition, autocomplete, document symbols&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Condition parser:&lt;/strong&gt; infix negation syntax (&lt;code&gt;var not contains val&lt;/code&gt;)&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Complementary pair detection:&lt;/strong&gt; &lt;code&gt;contains X&lt;/code&gt; + &lt;code&gt;not contains X&lt;/code&gt; recognized as exhaustive&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;New docs:&lt;/strong&gt; &lt;code&gt;docs/analysis.md&lt;/code&gt;, &lt;code&gt;docs/editor-setup.md&lt;/code&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;DIP101 false positives&lt;/strong&gt; — conditions were never parsed into ASTs; &lt;code&gt;Lint()&lt;/code&gt; now calls &lt;code&gt;EnsureConditionsParsed()&lt;/code&gt; before running checks&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP101 exhaustive suppression&lt;/strong&gt; works for all three real-world patterns: exhaustive + fallback, exhaustive + extra variables, complementary pairs&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP103&lt;/strong&gt; no longer flags &lt;code&gt;contains X&lt;/code&gt; / &lt;code&gt;not contains X&lt;/code&gt; as overlapping&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;DIP110&lt;/strong&gt; exempts start/exit lifecycle nodes from empty prompt warnings&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Model pricing&lt;/strong&gt; corrected against official docs (claude-opus-4-6 was $15/$75, actually $5/$25; o3 was $10/$40, actually $2/$8)&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Model IDs&lt;/strong&gt; corrected: &lt;code&gt;gemini-3-pro&lt;/code&gt; → &lt;code&gt;gemini-3.1-pro-preview&lt;/code&gt;, removed nonexistent IDs&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Gemini pricing&lt;/strong&gt; added (was missing entirely from cost estimates)&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Changed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Full documentation rewrite — all docs updated for post-v0.3.0 toolchain&lt;/li&gt;
+    &lt;li&gt;Mermaid diagrams use &lt;code&gt;&amp;lt;br&amp;gt;&lt;/code&gt; instead of &lt;code&gt;&amp;lt;br/&amp;gt;&lt;/code&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.4.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.4.1</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>EBNF grammar</strong> audited against parser — added infix negation, tool <code>outputs</code> field, removed undocumented numeric operators (<code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code> parsed but silently returned false)</li>
-        <li><strong>Docs accuracy</strong> — removed <code>state.*</code> namespace (not implemented), removed <code>ctx.preferred_label</code> (not in codebase), added <code>==</code> as <code>=</code> alias, added <code>not contains</code> infix syntax</li>
-        <li><strong>Condition parser</strong> — removed <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code> from valid operators (never evaluated, silent false was a trap)</li>
-      </ul>
-      <h4>Added</h4>
-      <ul>
-        <li><code>CHANGELOG.md</code> with retroactive history for all versions</li>
-        <li><code>docs/CONTRIBUTING.md</code> — documentation accuracy protocol with persona matrix</li>
-        <li><code>CLAUDE.md</code> — project conventions, gotchas, versioning policy</li>
-        <li>Integration test (<code>TestLintExamples</code>) — lints all examples through real parser</li>
-        <li>"Last verified" dates on model catalog and pricing table</li>
-        <li>Tool <code>outputs</code> field documented in nodes.md and README.md</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.4.1">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.3.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-21&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;dippin cost&lt;/code&gt; and &lt;code&gt;dippin coverage&lt;/code&gt; commands&lt;/li&gt;
+    &lt;li&gt;DIP119 (reasoning_effort validation), DIP120 (namespace prefix)&lt;/li&gt;
+    &lt;li&gt;DIP114 extended to parallel branch fidelity&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Fixed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Scenario-injected values protected from node default overwrite&lt;/li&gt;
+    &lt;li&gt;errcheck and staticcheck lint errors in coverage package&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Changed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Four largest files decomposed into focused modules&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.3.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.4.0</span>
-        <span class="version-date">2026-03-25</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><strong>New commands:</strong> <code>dippin cost</code>, <code>dippin coverage</code>, <code>dippin doctor</code>, <code>dippin optimize</code>, <code>dippin diff</code>, <code>dippin feedback</code>, <code>dippin lsp</code></li>
-        <li><strong>New providers:</strong> DeepSeek, xAI (Grok), Mistral, Cohere — model validation and cost estimation</li>
-        <li><strong>DIP116–DIP120</strong> lint rules: compaction threshold, on_resume, stylesheet refs, reasoning_effort, namespace prefix</li>
-        <li><strong>LSP server</strong> with diagnostics, hover, go-to-definition, autocomplete, document symbols</li>
-        <li><strong>Condition parser:</strong> infix negation syntax (<code>var not contains val</code>)</li>
-        <li><strong>Complementary pair detection:</strong> <code>contains X</code> + <code>not contains X</code> recognized as exhaustive</li>
-        <li><strong>New docs:</strong> <code>docs/analysis.md</code>, <code>docs/editor-setup.md</code></li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li><strong>DIP101 false positives</strong> — conditions were never parsed into ASTs; <code>Lint()</code> now calls <code>EnsureConditionsParsed()</code> before running checks</li>
-        <li><strong>DIP101 exhaustive suppression</strong> works for all three real-world patterns: exhaustive + fallback, exhaustive + extra variables, complementary pairs</li>
-        <li><strong>DIP103</strong> no longer flags <code>contains X</code> / <code>not contains X</code> as overlapping</li>
-        <li><strong>DIP110</strong> exempts start/exit lifecycle nodes from empty prompt warnings</li>
-        <li><strong>Model pricing</strong> corrected against official docs (claude-opus-4-6 was $15/$75, actually $5/$25; o3 was $10/$40, actually $2/$8)</li>
-        <li><strong>Model IDs</strong> corrected: <code>gemini-3-pro</code> → <code>gemini-3.1-pro-preview</code>, removed nonexistent IDs</li>
-        <li><strong>Gemini pricing</strong> added (was missing entirely from cost estimates)</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li>Full documentation rewrite — all docs updated for post-v0.3.0 toolchain</li>
-        <li>Mermaid diagrams use <code>&lt;br&gt;</code> instead of <code>&lt;br/&gt;</code></li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.4.0">View on GitHub &rarr;</a>
-    </div>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.2.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-20&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;dippin check&lt;/code&gt;, &lt;code&gt;dippin new&lt;/code&gt; commands with 5 scaffold templates&lt;/li&gt;
+    &lt;li&gt;DIP113–DIP115 lint rules (retry policy, fidelity, goal gate)&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;base_delay&lt;/code&gt; field for retry override&lt;/li&gt;
+    &lt;li&gt;Subgraph params, compaction, fidelity degradation, parallel branches, stylesheets&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;dippin version&lt;/code&gt; command&lt;/li&gt;
+    &lt;li&gt;Justfile for dev workflows&lt;/li&gt;
+    &lt;li&gt;GoReleaser + GitHub Actions release pipeline&lt;/li&gt;
+    &lt;li&gt;Homebrew tap&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;h4&gt;Changed&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;All functions reduced to cyclomatic ≤ 5, cognitive ≤ 7&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.2.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
 
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.3.0</span>
-        <span class="version-date">2026-03-21</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><code>dippin cost</code> and <code>dippin coverage</code> commands</li>
-        <li>DIP119 (reasoning_effort validation), DIP120 (namespace prefix)</li>
-        <li>DIP114 extended to parallel branch fidelity</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li>Scenario-injected values protected from node default overwrite</li>
-        <li>errcheck and staticcheck lint errors in coverage package</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li>Four largest files decomposed into focused modules</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.3.0">View on GitHub &rarr;</a>
-    </div>
-
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.2.0</span>
-        <span class="version-date">2026-03-20</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li><code>dippin check</code>, <code>dippin new</code> commands with 5 scaffold templates</li>
-        <li>DIP113–DIP115 lint rules (retry policy, fidelity, goal gate)</li>
-        <li><code>base_delay</code> field for retry override</li>
-        <li>Subgraph params, compaction, fidelity degradation, parallel branches, stylesheets</li>
-        <li><code>dippin version</code> command</li>
-        <li>Justfile for dev workflows</li>
-        <li>GoReleaser + GitHub Actions release pipeline</li>
-        <li>Homebrew tap</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li>All functions reduced to cyclomatic ≤ 5, cognitive ≤ 7</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.2.0">View on GitHub &rarr;</a>
-    </div>
-
-    <div class="version-card">
-      <div class="version-header">
-        <span class="version-tag">v0.1.0</span>
-        <span class="version-date">2026-03-19</span>
-      </div>
-      <h4>Added</h4>
-      <ul>
-        <li>Initial release</li>
-        <li>Parser (indentation-aware lexer + recursive descent)</li>
-        <li>Validator (DIP001–DIP009 structural checks)</li>
-        <li>Linter (DIP101–DIP112 semantic warnings)</li>
-        <li>Formatter (canonical idempotent output)</li>
-        <li>DOT exporter with shape mapping</li>
-        <li>DOT → Dippin migration with parity checker</li>
-        <li>Simulator with JSONL event streaming</li>
-        <li>15 example workflows including 5 stress tests</li>
-        <li>VS Code extension (syntax highlighting)</li>
-      </ul>
-      <a class="gh-link" href="https://github.com/2389-research/dippin-lang/releases/tag/v0.1.0">View on GitHub &rarr;</a>
-    </div>
-
-  </div>
-</div>
-</section>
-
-<footer>
-<div class="container">
-  <div class="footer-inner">
-    <div class="footer-brand">Dippin</div>
-    <div class="footer-links">
-      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
-      <a href="changelog.html">Changelog</a>
-    </div>
-  </div>
-  <div class="footer-copy">
-    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
-  </div>
-</div>
-</footer>
-
-<script src="highlight.js"></script>
-</body>
-</html>
+&lt;div class=&quot;version-card&quot;&gt;
+  &lt;div class=&quot;version-header&quot;&gt;
+    &lt;span class=&quot;version-tag&quot;&gt;v0.1.0&lt;/span&gt;
+    &lt;span class=&quot;version-date&quot;&gt;26-03-19&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;h4&gt;Added&lt;/h4&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Initial release&lt;/li&gt;
+    &lt;li&gt;Parser (indentation-aware lexer + recursive descent)&lt;/li&gt;
+    &lt;li&gt;Validator (DIP001–DIP009 structural checks)&lt;/li&gt;
+    &lt;li&gt;Linter (DIP101–DIP112 semantic warnings)&lt;/li&gt;
+    &lt;li&gt;Formatter (canonical idempotent output)&lt;/li&gt;
+    &lt;li&gt;DOT exporter with shape mapping&lt;/li&gt;
+    &lt;li&gt;DOT → Dippin migration with parity checker&lt;/li&gt;
+    &lt;li&gt;Simulator with JSONL event streaming&lt;/li&gt;
+    &lt;li&gt;15 example workflows including 5 stress tests&lt;/li&gt;
+    &lt;li&gt;VS Code extension (syntax highlighting)&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;a class=&quot;gh-link&quot; href=&quot;https://github.com/2389-research/dippin-lang/releases/tag/v0.1.0&quot;&gt;View on GitHub &amp;rarr;&lt;/a&gt;
+&lt;/div&gt;
+</code></pre></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang>GitHub</a>
+<a href=https://github.com/2389-research/dippin-lang/tree/main/docs>Docs</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/dippin-lang/highlight.js></script></body></html>

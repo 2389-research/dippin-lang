@@ -1,147 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Editor Setup — Dippin</title>
-<meta name="description" content="Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more.">
-<meta property="og:title" content="Editor Setup — Dippin">
-<meta property="og:description" content="Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://2389-research.github.io/dippin-lang/editors.html">
-<meta property="og:site_name" content="Dippin">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Editor Setup — Dippin">
-<meta name="twitter:description" content="Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more.">
-<link rel="canonical" href="https://2389-research.github.io/dippin-lang/editors.html">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- Floating dots -->
-<div class="dots">
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-</div>
-
-<nav class="nav">
-<div class="nav-top">
-  <a href="index.html" class="nav-brand">Dippin</a>
-  <button class="nav-toggle" onclick="document.querySelector('.nav-mobile').classList.toggle('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-primary">
-    <a href="language.html">Docs</a>
-    <a href="playground.html">Playground</a>
-    <a href="blog/index.html">Blog</a>
-    <a href="https://github.com/2389-research/dippin-lang" class="nav-gh">GitHub</a>
-  </div>
-</div>
-<div class="nav-sub">
-  <div class="nav-sub-inner">
-    <a href="cli.html">CLI</a>
-    <a href="language.html">Language</a>
-    <a href="testing.html">Testing</a>
-    <a href="validation.html">Validation</a>
-    <a href="analysis.html">Analysis</a>
-    <a href="architecture.html">Architecture</a>
-    <a href="editors.html" class="active">Editors</a>
-    <a href="changelog.html">Changelog</a>
-  </div>
-</div>
-<div class="nav-mobile">
-  <a href="language.html">Docs</a>
-  <a href="playground.html">Playground</a>
-  <a href="blog/index.html">Blog</a>
-  <div class="nav-divider"></div>
-  <a href="cli.html">CLI</a>
-  <a href="language.html">Language</a>
-  <a href="testing.html">Testing</a>
-  <a href="validation.html">Validation</a>
-  <a href="analysis.html">Analysis</a>
-  <a href="architecture.html">Architecture</a>
-  <a href="editors.html" class="active">Editors</a>
-  <a href="changelog.html">Changelog</a>
-  <div class="nav-divider"></div>
-  <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-</div>
-</nav>
-
-<section class="doc">
-<div class="container">
-  <div class="doc-header">
-    <div class="section-label">Editor Integration</div>
-    <h1>Editor Setup</h1>
-    <p>LSP server, VS Code syntax, Neovim, and more.</p>
-  </div>
-  <div class="doc-body">
-
-    <h2>LSP Features</h2>
-    <p>The built-in LSP server (<code>dippin lsp</code>) provides rich editing features for any LSP-compatible editor. It communicates over stdio using JSON-RPC 2.0.</p>
-    <table>
-      <tr><th>Feature</th><th>Description</th></tr>
-      <tr><td><strong>Diagnostics</strong></td><td>Parse errors and lint warnings published on every change (DIP001-DIP126)</td></tr>
-      <tr><td><strong>Hover</strong></td><td>Tooltip showing node kind, model, provider, prompt preview, and field summary</td></tr>
-      <tr><td><strong>Go-to-definition</strong></td><td>Jump from a node reference in an edge to the node's declaration</td></tr>
-      <tr><td><strong>Autocomplete</strong></td><td>Node IDs in edges, field names within node blocks, keywords</td></tr>
-      <tr><td><strong>Document symbols</strong></td><td>Outline view showing all nodes and the edges section</td></tr>
-    </table>
-    <p>Diagnostics are the most valuable feature — you get real-time feedback as you type, identical to running <code>dippin lint</code> on every save.</p>
-
-    <h2>VS Code</h2>
-    <h3>Extension Install</h3>
-    <p>The VS Code extension provides syntax highlighting independently of the LSP server. For the best experience, install both.</p>
-    <pre># Symlink into VS Code extensions directory
-ln -s "$(pwd)/editors/vscode" ~/.vscode/extensions/dippin-lang
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Editor Setup — Dippin</title><meta name=description content="Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more."><meta property="og:title" content="Editor Setup — Dippin"><meta property="og:description" content="Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more."><meta property="og:type" content="article"><meta property="og:url" content="https://2389-research.github.io/dippin-lang/editors.html"><meta property="og:site_name" content="Dippin"><meta name=twitter:card content="summary"><meta name=twitter:title content="Editor Setup"><meta name=twitter:description content="Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more."><link rel=canonical href=https://2389-research.github.io/dippin-lang/editors.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/dippin-lang/style.css></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/dippin-lang/index.html class=nav-brand>Dippin</a>
+<button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html>Testing</a>
+<a href=/dippin-lang/validation.html>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html class=active>Editors</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/dippin-lang/language.html>Docs</a>
+<a href=/dippin-lang/playground.html>Playground</a>
+<a href=/dippin-lang/blog/index.html>Blog</a><div class=nav-divider></div><a href=/dippin-lang/cli.html>CLI</a>
+<a href=/dippin-lang/language.html>Language</a>
+<a href=/dippin-lang/testing.html>Testing</a>
+<a href=/dippin-lang/validation.html>Validation</a>
+<a href=/dippin-lang/analysis.html>Analysis</a>
+<a href=/dippin-lang/architecture.html>Architecture</a>
+<a href=/dippin-lang/editors.html class=active>Editors</a>
+<a href=/dippin-lang/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Editor Integration</div><h1>Editor Setup</h1><p>LSP server, VS Code syntax, Neovim, and more.</p></div><div class=doc-body><h2 id=lsp-features>LSP Features</h2><p>The built-in LSP server (<code>dippin lsp</code>) provides rich editing features for any LSP-compatible editor. It communicates over stdio using JSON-RPC 2.0.</p><table><thead><tr><th>Feature</th><th>Description</th></tr></thead><tbody><tr><td><strong>Diagnostics</strong></td><td>Parse errors and lint warnings published on every change (DIP001-DIP126)</td></tr><tr><td><strong>Hover</strong></td><td>Tooltip showing node kind, model, provider, prompt preview, and field summary</td></tr><tr><td><strong>Go-to-definition</strong></td><td>Jump from a node reference in an edge to the node&rsquo;s declaration</td></tr><tr><td><strong>Autocomplete</strong></td><td>Node IDs in edges, field names within node blocks, keywords</td></tr><tr><td><strong>Document symbols</strong></td><td>Outline view showing all nodes and the edges section</td></tr></tbody></table><p>Diagnostics are the most valuable feature — you get real-time feedback as you type, identical to running <code>dippin lint</code> on every save.</p><h2 id=vs-code>VS Code</h2><h3 id=extension-install>Extension Install</h3><p>The VS Code extension provides syntax highlighting independently of the LSP server. For the best experience, install both.</p><pre><code># Symlink into VS Code extensions directory
+ln -s &quot;$(pwd)/editors/vscode&quot; ~/.vscode/extensions/dippin-lang
 
 # Or copy
 cp -r editors/vscode ~/.vscode/extensions/dippin-lang
 
-# Restart VS Code — .dip files should show "Dippin" as the language mode</pre>
-
-    <h3>LSP Configuration</h3>
-    <p>Add to your <code>settings.json</code> to connect the LSP server:</p>
-    <pre>{
-  "dippin.lsp.enabled": true,
-  "dippin.lsp.path": "dippin"
-}</pre>
-    <p>Or use a generic LSP client extension with this configuration:</p>
-    <pre>{
-  "languageServerExample.trace.server": "verbose",
-  "languageserver": {
-    "dippin": {
-      "command": "dippin",
-      "args": ["lsp"],
-      "filetypes": ["dippin"],
-      "rootPatterns": [".git"]
+# Restart VS Code — .dip files should show &quot;Dippin&quot; as the language mode
+</code></pre><h3 id=lsp-configuration>LSP Configuration</h3><p>Add to your <code>settings.json</code> to connect the LSP server:</p><pre><code>{
+  &quot;dippin.lsp.enabled&quot;: true,
+  &quot;dippin.lsp.path&quot;: &quot;dippin&quot;
+}
+</code></pre><p>Or use a generic LSP client extension with this configuration:</p><pre><code>{
+  &quot;languageServerExample.trace.server&quot;: &quot;verbose&quot;,
+  &quot;languageserver&quot;: {
+    &quot;dippin&quot;: {
+      &quot;command&quot;: &quot;dippin&quot;,
+      &quot;args&quot;: [&quot;lsp&quot;],
+      &quot;filetypes&quot;: [&quot;dippin&quot;],
+      &quot;rootPatterns&quot;: [&quot;.git&quot;]
     }
   }
-}</pre>
-
-    <h3>Highlighted Elements</h3>
-    <table>
-      <tr><th>Element</th><th>Example</th><th>Color Category</th></tr>
-      <tr><td>Keywords</td><td><code>workflow</code>, <code>agent</code>, <code>tool</code>, <code>human</code>, <code>edges</code></td><td>keyword</td></tr>
-      <tr><td>Node names</td><td><code>agent MyNode</code></td><td>function</td></tr>
-      <tr><td>Field keys</td><td><code>model:</code>, <code>prompt:</code>, <code>timeout:</code></td><td>tag</td></tr>
-      <tr><td>Strings</td><td><code>"quoted value"</code></td><td>string</td></tr>
-      <tr><td>Comments</td><td><code># comment</code></td><td>comment</td></tr>
-      <tr><td>Arrows</td><td><code>-&gt;</code>, <code>&lt;-</code></td><td>operator</td></tr>
-      <tr><td>Conditions</td><td><code>when</code>, <code>and</code>, <code>or</code>, <code>not</code></td><td>keyword</td></tr>
-      <tr><td>Variables</td><td><code>ctx.outcome</code>, <code>graph.goal</code></td><td>variable</td></tr>
-      <tr><td>Interpolation</td><td><code>${ctx.var}</code></td><td>variable</td></tr>
-      <tr><td>Booleans</td><td><code>true</code>, <code>false</code></td><td>constant</td></tr>
-      <tr><td>Numbers</td><td><code>3</code>, <code>60s</code>, <code>5m</code></td><td>number</td></tr>
-    </table>
-
-    <h2>Neovim</h2>
-    <h3>With nvim-lspconfig</h3>
-    <p>Add to your Neovim config:</p>
-    <pre>local lspconfig = require('lspconfig')
+}
+</code></pre><h3 id=highlighted-elements>Highlighted Elements</h3><table><thead><tr><th>Element</th><th>Example</th><th>Color Category</th></tr></thead><tbody><tr><td>Keywords</td><td><code>workflow</code>, <code>agent</code>, <code>tool</code>, <code>human</code>, <code>edges</code></td><td>keyword</td></tr><tr><td>Node names</td><td><code>agent MyNode</code></td><td>function</td></tr><tr><td>Field keys</td><td><code>model:</code>, <code>prompt:</code>, <code>timeout:</code></td><td>tag</td></tr><tr><td>Strings</td><td><code>"quoted value"</code></td><td>string</td></tr><tr><td>Comments</td><td><code># comment</code></td><td>comment</td></tr><tr><td>Arrows</td><td><code>-></code>, <code>&lt;-</code></td><td>operator</td></tr><tr><td>Conditions</td><td><code>when</code>, <code>and</code>, <code>or</code>, <code>not</code></td><td>keyword</td></tr><tr><td>Variables</td><td><code>ctx.outcome</code>, <code>graph.goal</code></td><td>variable</td></tr><tr><td>Interpolation</td><td><code>${ctx.var}</code></td><td>variable</td></tr><tr><td>Booleans</td><td><code>true</code>, <code>false</code></td><td>constant</td></tr><tr><td>Numbers</td><td><code>3</code>, <code>60s</code>, <code>5m</code></td><td>number</td></tr></tbody></table><h2 id=neovim>Neovim</h2><h3 id=with-nvim-lspconfig>With nvim-lspconfig</h3><p>Add to your Neovim config:</p><pre><code>local lspconfig = require('lspconfig')
 local configs = require('lspconfig.configs')
 
 if not configs.dippin then
@@ -155,22 +55,13 @@ if not configs.dippin then
   }
 end
 
-lspconfig.dippin.setup({})</pre>
-
-    <h3>Filetype Registration</h3>
-    <p>Register the <code>.dip</code> extension:</p>
-    <pre>vim.filetype.add({
+lspconfig.dippin.setup({})
+</code></pre><h3 id=filetype-registration>Filetype Registration</h3><p>Register the <code>.dip</code> extension:</p><pre><code>vim.filetype.add({
   extension = {
     dip = 'dippin',
   },
-})</pre>
-
-    <h3>Tree-sitter</h3>
-    <p>For full syntax highlighting with tree-sitter, install the <code>tree-sitter-dippin</code> grammar. This provides more accurate highlighting than regex-based syntax files, including proper scoping of multiline blocks and condition expressions.</p>
-
-    <h3>Basic Syntax Highlighting</h3>
-    <p>For keyword highlighting without tree-sitter, create <code>~/.config/nvim/syntax/dippin.vim</code>:</p>
-    <pre>syn keyword dippinKeyword workflow agent human tool parallel fan_in subgraph edges defaults
+})
+</code></pre><h3 id=tree-sitter>Tree-sitter</h3><p>For full syntax highlighting with tree-sitter, install the <code>tree-sitter-dippin</code> grammar. This provides more accurate highlighting than regex-based syntax files, including proper scoping of multiline blocks and condition expressions.</p><h3 id=basic-syntax-highlighting>Basic Syntax Highlighting</h3><p>For keyword highlighting without tree-sitter, create <code>~/.config/nvim/syntax/dippin.vim</code>:</p><pre><code>syn keyword dippinKeyword workflow agent human tool parallel fan_in subgraph edges defaults
 syn keyword dippinCondKeyword when and or not
 syn keyword dippinBoolean true false
 syn match dippinField /^\s*\w\+:/
@@ -178,7 +69,7 @@ syn match dippinArrow /-&gt;/
 syn match dippinArrow /&lt;-/
 syn match dippinComment /#.*/
 syn match dippinVariable /\${[^}]*}/
-syn region dippinString start=/"/ end=/"/
+syn region dippinString start=/&quot;/ end=/&quot;/
 
 hi link dippinKeyword Keyword
 hi link dippinCondKeyword Conditional
@@ -187,27 +78,8 @@ hi link dippinField Tag
 hi link dippinArrow Operator
 hi link dippinComment Comment
 hi link dippinVariable Identifier
-hi link dippinString String</pre>
-
-    <h2>Other Editors</h2>
-    <p>Any editor with LSP support can use <code>dippin lsp</code>. The common configuration pattern:</p>
-    <table>
-      <tr><th>Setting</th><th>Value</th></tr>
-      <tr><td>Command</td><td><code>dippin lsp</code></td></tr>
-      <tr><td>Transport</td><td>stdio</td></tr>
-      <tr><td>File types</td><td><code>.dip</code></td></tr>
-    </table>
-    <p>Editors known to work with generic LSP clients:</p>
-    <ul>
-      <li><strong>Sublime Text</strong> — via LSP package</li>
-      <li><strong>Emacs</strong> — via lsp-mode or eglot</li>
-      <li><strong>Helix</strong> — native LSP support</li>
-      <li><strong>Zed</strong> — native LSP support</li>
-    </ul>
-
-    <h2>Graphviz Integration</h2>
-    <p>For visual workflow diagrams, pipe <code>export-dot</code> output to Graphviz:</p>
-    <pre># PNG output
+hi link dippinString String
+</code></pre><h2 id=other-editors>Other Editors</h2><p>Any editor with LSP support can use <code>dippin lsp</code>. The common configuration pattern:</p><table><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody><tr><td>Command</td><td><code>dippin lsp</code></td></tr><tr><td>Transport</td><td>stdio</td></tr><tr><td>File types</td><td><code>.dip</code></td></tr></tbody></table><p>Editors known to work with generic LSP clients:</p><ul><li><strong>Sublime Text</strong> — via LSP package</li><li><strong>Emacs</strong> — via lsp-mode or eglot</li><li><strong>Helix</strong> — native LSP support</li><li><strong>Zed</strong> — native LSP support</li></ul><h2 id=graphviz-integration>Graphviz Integration</h2><p>For visual workflow diagrams, pipe <code>export-dot</code> output to Graphviz:</p><pre><code># PNG output
 dippin export-dot pipeline.dip | dot -Tpng -o pipeline.png
 
 # SVG for web
@@ -217,29 +89,7 @@ dippin export-dot pipeline.dip | dot -Tsvg -o pipeline.svg
 dippin export-dot --rankdir=LR pipeline.dip | dot -Tpng -o pipeline.png
 
 # Include prompt text in nodes
-dippin export-dot --prompts pipeline.dip | dot -Tpng -o pipeline.png</pre>
-    <p>Install Graphviz: <code>brew install graphviz</code> (macOS), <code>apt install graphviz</code> (Debian/Ubuntu), or <a href="https://graphviz.org/download/">graphviz.org</a>.</p>
-
-  </div>
-</div>
-</section>
-
-<footer>
-<div class="container">
-  <div class="footer-inner">
-    <div class="footer-brand">Dippin</div>
-    <div class="footer-links">
-      <a href="https://github.com/2389-research/dippin-lang">GitHub</a>
-      <a href="https://github.com/2389-research/dippin-lang/tree/main/docs">Docs</a>
-      <a href="https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md">Changelog</a>
-    </div>
-  </div>
-  <div class="footer-copy">
-    MIT License &middot; Built by <a href="https://github.com/2389-research">2389 Research</a>
-  </div>
-</div>
-</footer>
-
-<script src="highlight.js"></script>
-</body>
-</html>
+dippin export-dot --prompts pipeline.dip | dot -Tpng -o pipeline.png
+</code></pre><p>Install Graphviz: <code>brew install graphviz</code> (macOS), <code>apt install graphviz</code> (Debian/Ubuntu), or <a href=https://graphviz.org/download/>graphviz.org</a>.</p></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang>GitHub</a>
+<a href=https://github.com/2389-research/dippin-lang/tree/main/docs>Docs</a>
+<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/dippin-lang/highlight.js></script></body></html>
