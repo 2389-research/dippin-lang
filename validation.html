@@ -1,25 +1,25 @@
-<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Validation & Linting — Dippin</title><meta name=description content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><meta property="og:title" content="Validation & Linting — Dippin"><meta property="og:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><meta property="og:type" content="article"><meta property="og:url" content="https://2389-research.github.io/dippin-lang/validation.html"><meta property="og:site_name" content="Dippin"><meta name=twitter:card content="summary"><meta name=twitter:title content="Validation & Linting"><meta name=twitter:description content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><link rel=canonical href=https://2389-research.github.io/dippin-lang/validation.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/dippin-lang/style.css></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Validation & Linting — Dippin</title><meta name=description content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><meta property="og:title" content="Validation & Linting — Dippin"><meta property="og:description" content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/validation.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/validation.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/validation.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Validation & Linting"><meta name=twitter:description content="39 diagnostic checks for AI pipeline workflows. 9 structural errors and 30 semantic warnings catch bugs before runtime."><link rel=canonical href=https://dippin.org/validation.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Validation \u0026 Linting"}]}</script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
 <button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
-<span></span><span></span><span></span></button><div class=nav-primary><a href=/dippin-lang/language.html class=active>Docs</a>
-<a href=/dippin-lang/playground.html>Playground</a>
-<a href=/dippin-lang/blog/index.html>Blog</a>
-<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/dippin-lang/cli.html>CLI</a>
-<a href=/dippin-lang/language.html>Language</a>
-<a href=/dippin-lang/testing.html>Testing</a>
-<a href=/dippin-lang/validation.html class=active>Validation</a>
-<a href=/dippin-lang/analysis.html>Analysis</a>
-<a href=/dippin-lang/architecture.html>Architecture</a>
-<a href=/dippin-lang/editors.html>Editors</a>
-<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/dippin-lang/language.html class=active>Docs</a>
-<a href=/dippin-lang/playground.html>Playground</a>
-<a href=/dippin-lang/blog/index.html>Blog</a><div class=nav-divider></div><a href=/dippin-lang/cli.html>CLI</a>
-<a href=/dippin-lang/language.html>Language</a>
-<a href=/dippin-lang/testing.html>Testing</a>
-<a href=/dippin-lang/validation.html class=active>Validation</a>
-<a href=/dippin-lang/analysis.html>Analysis</a>
-<a href=/dippin-lang/architecture.html>Architecture</a>
-<a href=/dippin-lang/editors.html>Editors</a>
-<a href=/dippin-lang/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Diagnostics</div><h1>Validation & Linting</h1><p>39 diagnostic checks — 9 structural errors and 30 semantic warnings — to catch problems before runtime.</p></div><div class=doc-body><h2 id=overview>Overview</h2><p>Dippin provides two levels of analysis:</p><p><strong>Structural validation</strong> (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with <code>dippin validate</code>.</p><p><strong>Semantic linting</strong> (DIP101-DIP133): Warnings that flag likely bugs or questionable patterns. They don&rsquo;t block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p><h3 id=diagnostic-format>Diagnostic Format</h3><p>Diagnostics are displayed in a rustc-inspired format:</p><pre><code>error[DIP003]: unknown node reference &quot;InterpretX&quot; in edge
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/language.html class=active>Docs</a>
+<a href=/playground.html>Playground</a>
+<a href=/blog/index.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/cli.html>CLI</a>
+<a href=/language.html>Language</a>
+<a href=/testing.html>Testing</a>
+<a href=/validation.html class=active>Validation</a>
+<a href=/analysis.html>Analysis</a>
+<a href=/architecture.html>Architecture</a>
+<a href=/editors.html>Editors</a>
+<a href=/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/language.html class=active>Docs</a>
+<a href=/playground.html>Playground</a>
+<a href=/blog/index.html>Blog</a><div class=nav-divider></div><a href=/cli.html>CLI</a>
+<a href=/language.html>Language</a>
+<a href=/testing.html>Testing</a>
+<a href=/validation.html class=active>Validation</a>
+<a href=/analysis.html>Analysis</a>
+<a href=/architecture.html>Architecture</a>
+<a href=/editors.html>Editors</a>
+<a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Diagnostics</div><h1>Validation & Linting</h1><p>39 diagnostic checks — 9 structural errors and 30 semantic warnings — to catch problems before runtime.</p></div><div class=doc-body><h2 id=overview>Overview</h2><p>Dippin provides two levels of analysis:</p><p><strong>Structural validation</strong> (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with <code>dippin validate</code>.</p><p><strong>Semantic linting</strong> (DIP101-DIP133): Warnings that flag likely bugs or questionable patterns. They don&rsquo;t block execution but should be reviewed. Run with <code>dippin lint</code> for both levels.</p><h3 id=diagnostic-format>Diagnostic Format</h3><p>Diagnostics are displayed in a rustc-inspired format:</p><pre><code>error[DIP003]: unknown node reference &quot;InterpretX&quot; in edge
   --&gt; pipeline.dip:45:5
   = help: did you mean &quot;Interpret&quot;?
 </code></pre><h2 id=structural-errors-dip001-dip009>Structural Errors (DIP001-DIP009)</h2><p>These must be fixed for a workflow to be valid. Each causes exit code 1.</p><div class="diag-card error"><span class=diag-code>DIP001</span> — Start Node Missing<p>The workflow must declare a <code>start:</code> field pointing to an existing node.</p><pre>error[DIP001]: start node does not exist
@@ -69,4 +69,4 @@
   --&gt; pipeline.dip:35:7
   = help: remove the params key and set the field directly</pre></div></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang>GitHub</a>
 <a href=https://github.com/2389-research/dippin-lang/tree/main/docs>Docs</a>
-<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/dippin-lang/highlight.js></script></body></html>
+<a href=/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/highlight.js></script></body></html>

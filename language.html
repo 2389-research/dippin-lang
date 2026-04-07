@@ -1,25 +1,25 @@
-<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Language Reference — Dippin</title><meta name=description content="Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets."><meta property="og:title" content="Language Reference — Dippin"><meta property="og:description" content="Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets."><meta property="og:type" content="article"><meta property="og:url" content="https://2389-research.github.io/dippin-lang/language.html"><meta property="og:site_name" content="Dippin"><meta name=twitter:card content="summary"><meta name=twitter:title content="Language Reference"><meta name=twitter:description content="Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets."><link rel=canonical href=https://2389-research.github.io/dippin-lang/language.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/dippin-lang/style.css></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Language Reference — Dippin</title><meta name=description content="Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets."><meta property="og:title" content="Language Reference — Dippin"><meta property="og:description" content="Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/language.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/language.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/language.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Language Reference"><meta name=twitter:description content="Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets."><link rel=canonical href=https://dippin.org/language.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Language Reference"}]}</script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
 <button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
-<span></span><span></span><span></span></button><div class=nav-primary><a href=/dippin-lang/language.html class=active>Docs</a>
-<a href=/dippin-lang/playground.html>Playground</a>
-<a href=/dippin-lang/blog/index.html>Blog</a>
-<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/dippin-lang/cli.html>CLI</a>
-<a href=/dippin-lang/language.html class=active>Language</a>
-<a href=/dippin-lang/testing.html>Testing</a>
-<a href=/dippin-lang/validation.html>Validation</a>
-<a href=/dippin-lang/analysis.html>Analysis</a>
-<a href=/dippin-lang/architecture.html>Architecture</a>
-<a href=/dippin-lang/editors.html>Editors</a>
-<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/dippin-lang/language.html class=active>Docs</a>
-<a href=/dippin-lang/playground.html>Playground</a>
-<a href=/dippin-lang/blog/index.html>Blog</a><div class=nav-divider></div><a href=/dippin-lang/cli.html>CLI</a>
-<a href=/dippin-lang/language.html class=active>Language</a>
-<a href=/dippin-lang/testing.html>Testing</a>
-<a href=/dippin-lang/validation.html>Validation</a>
-<a href=/dippin-lang/analysis.html>Analysis</a>
-<a href=/dippin-lang/architecture.html>Architecture</a>
-<a href=/dippin-lang/editors.html>Editors</a>
-<a href=/dippin-lang/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Syntax</div><h1>Language Reference</h1><p>Complete syntax for .dip workflow files.</p></div><div class=doc-body><h2 id=file-structure>File Structure</h2><p>Every <code>.dip</code> file contains exactly one workflow. The top-level structure has four sections that must appear in order:</p><div class=flow-diagram><div class=flow-step>workflow &lt;name></div><div class=flow-arrow>&rarr;</div><div class=flow-step>Header<br>goal, start, exit</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Defaults (optional)<br>model, provider, ...</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Node Definitions<br>agent, human, tool, ...</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Edges (optional)<br>A -> B when ...</div></div><p>Dippin uses indentation-sensitive syntax (like Python). Use 2 spaces or tabs consistently. The canonical formatter always outputs 2-space indentation.</p><h2 id=workflow-header>Workflow Header</h2><p>The workflow declaration is the first line, followed by required and optional header fields:</p><pre><code>workflow my_pipeline
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/language.html class=active>Docs</a>
+<a href=/playground.html>Playground</a>
+<a href=/blog/index.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/cli.html>CLI</a>
+<a href=/language.html class=active>Language</a>
+<a href=/testing.html>Testing</a>
+<a href=/validation.html>Validation</a>
+<a href=/analysis.html>Analysis</a>
+<a href=/architecture.html>Architecture</a>
+<a href=/editors.html>Editors</a>
+<a href=/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/language.html class=active>Docs</a>
+<a href=/playground.html>Playground</a>
+<a href=/blog/index.html>Blog</a><div class=nav-divider></div><a href=/cli.html>CLI</a>
+<a href=/language.html class=active>Language</a>
+<a href=/testing.html>Testing</a>
+<a href=/validation.html>Validation</a>
+<a href=/analysis.html>Analysis</a>
+<a href=/architecture.html>Architecture</a>
+<a href=/editors.html>Editors</a>
+<a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Syntax</div><h1>Language Reference</h1><p>Complete syntax for .dip workflow files.</p></div><div class=doc-body><h2 id=file-structure>File Structure</h2><p>Every <code>.dip</code> file contains exactly one workflow. The top-level structure has four sections that must appear in order:</p><div class=flow-diagram><div class=flow-step>workflow &lt;name></div><div class=flow-arrow>&rarr;</div><div class=flow-step>Header<br>goal, start, exit</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Defaults (optional)<br>model, provider, ...</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Node Definitions<br>agent, human, tool, ...</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Edges (optional)<br>A -> B when ...</div></div><p>Dippin uses indentation-sensitive syntax (like Python). Use 2 spaces or tabs consistently. The canonical formatter always outputs 2-space indentation.</p><h2 id=workflow-header>Workflow Header</h2><p>The workflow declaration is the first line, followed by required and optional header fields:</p><pre><code>workflow my_pipeline
   goal: &quot;Ask user for a task, implement it, review, ship&quot;
   start: AskUser
   exit: Done
@@ -94,4 +94,4 @@
       fi
 </code></pre></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang>GitHub</a>
 <a href=https://github.com/2389-research/dippin-lang/tree/main/docs>Docs</a>
-<a href=/dippin-lang/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/dippin-lang/highlight.js></script></body></html>
+<a href=/changelog.html>Changelog</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research>2389 Research</a></div></div></footer><script src=/highlight.js></script></body></html>

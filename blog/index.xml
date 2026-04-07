@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blog — Dippin on Dippin</title><link>https://2389-research.github.io/dippin-lang/blog/index.html</link><description>Recent content in Blog — Dippin on Dippin</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 31 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://2389-research.github.io/dippin-lang/blog/index.xml" rel="self" type="application/rss+xml"/><item><title>Conditional Edges: Routing Pipelines with when</title><link>https://2389-research.github.io/dippin-lang/blog/conditional-edges.html</link><pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/conditional-edges.html</guid><description>&lt;p&gt;In the &lt;a href="multi-line-prompts.html"&gt;last post&lt;/a&gt; we showed how Dippin handles
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blog on Dippin</title><link>https://dippin.org/blog/index.html</link><description>Recent content in Blog on Dippin</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 31 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://dippin.org/blog/index.xml" rel="self" type="application/rss+xml"/><item><title>Conditional Edges: Routing Pipelines with when</title><link>https://dippin.org/blog/conditional-edges.html</link><pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/conditional-edges.html</guid><description>&lt;p&gt;In the &lt;a href="multi-line-prompts.html"&gt;last post&lt;/a&gt; we showed how Dippin handles
 prompts. Now let&amp;rsquo;s make pipelines that think. Linear workflows are fine for simple
 tasks, but real AI pipelines need to branch: retry on failure, escalate when something
 looks wrong, skip steps that don&amp;rsquo;t apply. Dippin&amp;rsquo;s &lt;code&gt;when&lt;/code&gt; keyword is how
 you express all of that.&lt;/p&gt;
 &lt;h2 id="1-the-linear-baseline"&gt;&lt;span class="step-num"&gt;1&lt;/span&gt; The Linear Baseline&lt;/h2&gt;
 &lt;p&gt;Let&amp;rsquo;s start with a document review pipeline. It drafts, reviews, and publishes &amp;ndash; in
-that order, every time, with no branching. Here&amp;rsquo;s the whole thing:&lt;/p&gt;</description></item><item><title>Cost Estimation: Know Before You Run</title><link>https://2389-research.github.io/dippin-lang/blog/cost-estimation.html</link><pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/cost-estimation.html</guid><description>&lt;p&gt;You&amp;rsquo;ve got a branching pipeline with conditional edges. Before you run it against
+that order, every time, with no branching. Here&amp;rsquo;s the whole thing:&lt;/p&gt;</description></item><item><title>Cost Estimation: Know Before You Run</title><link>https://dippin.org/blog/cost-estimation.html</link><pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/cost-estimation.html</guid><description>&lt;p&gt;You&amp;rsquo;ve got a branching pipeline with conditional edges. Before you run it against
 real APIs, let&amp;rsquo;s find out what it&amp;rsquo;ll cost. Dippin&amp;rsquo;s &lt;code&gt;cost&lt;/code&gt; command
 gives you a per-run estimate from the &lt;code&gt;.dip&lt;/code&gt; file alone &amp;ndash; no API calls
 required.&lt;/p&gt;
@@ -34,7 +34,7 @@ real pipeline with tool nodes, retry loops, and a mix of models. Run
 columns: &lt;strong&gt;min&lt;/strong&gt;, &lt;strong&gt;expected&lt;/strong&gt;, and &lt;strong&gt;max&lt;/strong&gt;.
 Min is the cost if every conditional branch takes the cheapest path. Max is the
 worst case if every node runs every retry. Expected sits in the middle &amp;ndash; the
-most likely path through the pipeline.&lt;/p&gt;</description></item><item><title>Multi-line Prompts Without Escaping</title><link>https://2389-research.github.io/dippin-lang/blog/multi-line-prompts.html</link><pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/multi-line-prompts.html</guid><description>&lt;p&gt;If you&amp;rsquo;ve been authoring AI pipelines in Graphviz DOT, you know the pain.
+most likely path through the pipeline.&lt;/p&gt;</description></item><item><title>Multi-line Prompts Without Escaping</title><link>https://dippin.org/blog/multi-line-prompts.html</link><pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/multi-line-prompts.html</guid><description>&lt;p&gt;If you&amp;rsquo;ve been authoring AI pipelines in Graphviz DOT, you know the pain.
 Every multi-step workflow lives in a &lt;code&gt;.dot&lt;/code&gt; file, and every string
 &amp;ndash; prompts, commands, instructions &amp;ndash; has to fit on a single quoted line.
 What that looks like in practice is this, a real &lt;code&gt;tool_command&lt;/code&gt;
@@ -44,7 +44,7 @@ tool_command="set -eu\nmkdir -p .ai .ai/drafts .ai/sprints\nif [ ! -f .ai/ledger
 &lt;/pre&gt;
 &lt;p&gt;If you&amp;rsquo;ve authored AI pipelines in Graphviz DOT, this looks familiar. And painful.
 Every newline is &lt;code&gt;\n&lt;/code&gt;, every quote is &lt;code&gt;\&amp;quot;&lt;/code&gt;, every tab is
-&lt;code&gt;\\t&lt;/code&gt;. Reading this is archaeology. Editing it is anxiety.&lt;/p&gt;</description></item><item><title>CI Integration: Lint, Test, Format</title><link>https://2389-research.github.io/dippin-lang/blog/ci-integration.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/ci-integration.html</guid><description>&lt;p&gt;Your Dippin workflows deserve the same CI treatment as your application code.
+&lt;code&gt;\\t&lt;/code&gt;. Reading this is archaeology. Editing it is anxiety.&lt;/p&gt;</description></item><item><title>CI Integration: Lint, Test, Format</title><link>https://dippin.org/blog/ci-integration.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/ci-integration.html</guid><description>&lt;p&gt;Your Dippin workflows deserve the same CI treatment as your application code.
 Here&amp;rsquo;s how to set up &lt;a href="https://docs.github.com/en/actions"&gt;GitHub Actions&lt;/a&gt;
 to validate, lint, test, and format-check your &lt;code&gt;.dip&lt;/code&gt; files on every push.
 We&amp;rsquo;ll build a workflow YAML from scratch, then look at how dippin-lang dogfoods
@@ -105,7 +105,7 @@ of problem:&lt;/p&gt;
  warnings -- warnings are advisory, not blocking. To fail CI on warnings,
  use &lt;code&gt;dippin check&lt;/code&gt;, which combines validate + lint and can
  be configured to fail on warnings.
- &lt;/p&gt;</description></item><item><title>Editor Setup: LSP, VS Code, and Tree-sitter</title><link>https://2389-research.github.io/dippin-lang/blog/editor-setup.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/editor-setup.html</guid><description>&lt;p&gt;Dippin ships with a built-in
+ &lt;/p&gt;</description></item><item><title>Editor Setup: LSP, VS Code, and Tree-sitter</title><link>https://dippin.org/blog/editor-setup.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/editor-setup.html</guid><description>&lt;p&gt;Dippin ships with a built-in
 &lt;a href="https://microsoft.github.io/language-server-protocol/"&gt;Language Server Protocol&lt;/a&gt;
 (LSP) server and a VS Code extension. Together they give you real-time diagnostics,
 hover documentation, go-to-definition, autocomplete, and syntax highlighting &amp;ndash; the
@@ -118,7 +118,7 @@ install needed:&lt;/p&gt;
 &lt;/pre&gt;
 &lt;p&gt;Starts the server on stdio (stdin/stdout), speaking JSON-RPC 2.0 per the
 &lt;a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/"&gt;LSP spec&lt;/a&gt;.
-Any editor with LSP support can connect.&lt;sup&gt;1&lt;/sup&gt;&lt;/p&gt;</description></item><item><title>Getting Started with Dippin</title><link>https://2389-research.github.io/dippin-lang/blog/getting-started.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/getting-started.html</guid><description>&lt;p&gt;Dippin is a domain-specific language for authoring AI pipeline workflows. It replaces
+Any editor with LSP support can connect.&lt;sup&gt;1&lt;/sup&gt;&lt;/p&gt;</description></item><item><title>Getting Started with Dippin</title><link>https://dippin.org/blog/getting-started.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/getting-started.html</guid><description>&lt;p&gt;Dippin is a domain-specific language for authoring AI pipeline workflows. It replaces
 &lt;a href="https://graphviz.org/doc/info/lang.html"&gt;Graphviz DOT&lt;/a&gt; as the format for
 defining multi-step LLM pipelines, with first-class support for multi-line prompts,
 conditional routing, parallel execution, and a full
@@ -129,7 +129,7 @@ validated, linted, and visualized workflow in under 10 minutes.&lt;/p&gt;
 &lt;pre&gt;
 &lt;span class="hl-dim"&gt;$&lt;/span&gt; &lt;span class="hl-shcmd"&gt;go install github.com/2389-research/dippin-lang/cmd/dippin@latest&lt;/span&gt;
 &lt;/pre&gt;
-&lt;p&gt;Or via Homebrew (macOS and Linux):&lt;/p&gt;</description></item><item><title>Migrating from DOT to Dippin</title><link>https://2389-research.github.io/dippin-lang/blog/migrating-from-dot.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/migrating-from-dot.html</guid><description>&lt;p&gt;If your team has existing pipelines authored in
+&lt;p&gt;Or via Homebrew (macOS and Linux):&lt;/p&gt;</description></item><item><title>Migrating from DOT to Dippin</title><link>https://dippin.org/blog/migrating-from-dot.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/migrating-from-dot.html</guid><description>&lt;p&gt;If your team has existing pipelines authored in
 &lt;a href="https://graphviz.org/doc/info/lang.html"&gt;Graphviz DOT&lt;/a&gt;, Dippin provides
 an automated migration path. &lt;code&gt;dippin migrate&lt;/code&gt; converts DOT files
 to Dippin syntax, and &lt;code&gt;dippin validate-migration&lt;/code&gt; verifies structural parity
@@ -172,7 +172,7 @@ between the original and the converted file.&lt;sup&gt;1&lt;/sup&gt;&lt;/p&gt;
 &lt;/table&gt;
 &lt;h2 id="the-migration-process"&gt;The Migration Process&lt;/h2&gt;
 &lt;p&gt;We&amp;rsquo;ll migrate &lt;code&gt;consensus_task.dot&lt;/code&gt;, a 17-node multi-model consensus
-workflow with conditional edges and restart loops.&lt;/p&gt;</description></item><item><title>Scenario Testing with .test.json</title><link>https://2389-research.github.io/dippin-lang/blog/scenario-testing.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://2389-research.github.io/dippin-lang/blog/scenario-testing.html</guid><description>&lt;p&gt;AI pipelines are non-deterministic &amp;ndash; LLM outputs vary between runs. But the
+workflow with conditional edges and restart loops.&lt;/p&gt;</description></item><item><title>Scenario Testing with .test.json</title><link>https://dippin.org/blog/scenario-testing.html</link><pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate><guid>https://dippin.org/blog/scenario-testing.html</guid><description>&lt;p&gt;AI pipelines are non-deterministic &amp;ndash; LLM outputs vary between runs. But the
 &lt;em&gt;structure&lt;/em&gt; of your pipeline is deterministic: given a particular outcome at each
 node, the same path should always be followed. Dippin&amp;rsquo;s scenario testing lets you inject
 context values and assert on execution paths, giving you deterministic tests for

@@ -1,0 +1,23 @@
+# ABOUTME: Robots.txt for dippin.org — permits all crawlers including AI bots.
+# ABOUTME: Declares sitemap location for search engine discovery.
+
+User-agent: *
+Allow: /
+
+# AI search crawlers — explicitly permitted
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+Sitemap: https://dippin.org/sitemap.xml
