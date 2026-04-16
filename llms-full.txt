@@ -37,7 +37,7 @@ workflow <Name>
 
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| `agent` | `prompt` | `model`, `provider`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
+| `agent` | `prompt` | `model`, `provider`, `backend`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
 | `human` | `mode` (freeform\|choice) | `default` |
 | `tool` | `command` | `timeout` (e.g. 30s, 5m) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
@@ -211,6 +211,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `system_prompt` | multiline | System message |
 | `model` | string | Must be valid model ID (DIP108) |
 | `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
+| `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
