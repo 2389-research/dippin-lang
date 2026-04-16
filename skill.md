@@ -63,6 +63,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `model` | string | Must be valid model ID (DIP108) |
 | `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
+| `working_dir` | string | Per-node working directory override for isolated execution. |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
