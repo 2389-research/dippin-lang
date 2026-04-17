@@ -250,7 +250,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `questions_key` | string | Context key for interview questions |
 | `answers_key` | string | Context key for interview answers |
 | `timeout` | duration | e.g. `5m`, `1h`. How long to wait for human response. |
-| `timeout_action` | string | `fail` or `default`. Action on timeout (default: `fail`). |
+| `timeout_action` | string | `fail` or `default`. On timeout: explicit value wins, else uses `default` choice if set, else fails. |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 

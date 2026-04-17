@@ -794,6 +794,44 @@ func TestMigrateHumanTimeoutActionInvalid(t *testing.T) {
 	}
 }
 
+func TestMigrateHumanTimeoutActionDefault(t *testing.T) {
+	dot := `digraph G {
+		Start [shape=Mdiamond];
+		H [shape=hexagon, mode=choice, timeout="10s", timeout_action="default"];
+		Exit [shape=Msquare];
+		Start -> H;
+		H -> Exit;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	n := w.Node("H")
+	cfg := n.Config.(ir.HumanConfig)
+	if cfg.TimeoutAction != "default" {
+		t.Errorf("timeout_action = %q, want %q", cfg.TimeoutAction, "default")
+	}
+}
+
+func TestMigrateHumanTimeoutActionOmitted(t *testing.T) {
+	dot := `digraph G {
+		Start [shape=Mdiamond];
+		H [shape=hexagon, mode=choice, timeout="5s"];
+		Exit [shape=Msquare];
+		Start -> H;
+		H -> Exit;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	n := w.Node("H")
+	cfg := n.Config.(ir.HumanConfig)
+	if cfg.TimeoutAction != "" {
+		t.Errorf("timeout_action = %q, want empty", cfg.TimeoutAction)
+	}
+}
+
 func TestMigrateBudgetDefaults(t *testing.T) {
 	dot := `digraph G {
 		graph [max_total_tokens="2000000", max_cost_cents="500", max_wall_time="30m"];
