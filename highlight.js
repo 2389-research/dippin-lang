@@ -33,7 +33,7 @@
     // ${ctx.*} variables.
     h = h.replace(/(\$\{[^}]+\})/g, function (_, v) { return s("shvar", v); });
     // Node declarations.
-    h = h.replace(/\b(workflow|agent|human|tool|subgraph)\s+([A-Z]\w*)/g,
+    h = h.replace(/\b(workflow|agent|human|tool|subgraph|conditional)\s+([A-Z]\w*)/g,
       function (_, kw, n) { return s("kw", kw) + " " + s("node", n); });
     // Parallel/fan_in.
     h = h.replace(/\b(parallel)\s+(\w+)\s*(-&gt;)/g,
@@ -41,7 +41,7 @@
     h = h.replace(/\b(fan_in)\s+(\w+)\s*(&lt;-)/g,
       function (_, kw, n, a) { return s("kw", kw) + " " + s("node", n) + " " + s("op", a); });
     // Section keywords.
-    h = h.replace(/\b(edges|defaults|stylesheet)\b/g, function (_, k) { return s("kw", k); });
+    h = h.replace(/\b(edges|defaults|vars|stylesheet)\b/g, function (_, k) { return s("kw", k); });
     // Condition keywords.
     h = h.replace(/\b(when|and|or|not|contains|startswith|endswith)\b/g, function (_, k) { return s("cond", k); });
     // Booleans.
@@ -118,7 +118,7 @@
   }
 
   // ── Detection ───────────────────────────────────────────
-  function isDippin(t) { return /\b(workflow|agent |human |tool |edges\b|defaults\b)/.test(t); }
+  function isDippin(t) { return /\b(workflow|agent |human |tool |conditional |edges\b|defaults\b|vars\b)/.test(t); }
   function isShell(t) { return /^(\s*#!\/bin\/|set -e)/.test(t.trim()); }
   function isTerminal(t) { return /^\$\s/.test(t.trim()); }
   function isDiagnostic(t) { return /\b(error|warning|hint)\[DIP\d+\]/.test(t); }

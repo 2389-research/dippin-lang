@@ -20,7 +20,7 @@
   --serif: 'Fraunces', Georgia, serif;
   --sans: 'Nunito', system-ui, sans-serif;
   --mono: 'IBM Plex Mono', 'Menlo', monospace;
-  --max-w: 1080px;
+  --max-w: 1400px;
   --gingham:
     repeating-linear-gradient(0deg, rgba(220,170,200,0.18) 0px, rgba(220,170,200,0.18) 20px, transparent 20px, transparent 40px),
     repeating-linear-gradient(90deg, rgba(120,180,120,0.15) 0px, rgba(120,180,120,0.15) 20px, transparent 20px, transparent 40px);
@@ -321,6 +321,10 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ── Responsive ── */
+@media (min-width: 1800px) {
+  :root { --max-w: 1600px; }
+}
+
 @media (max-width: 1100px) {
   .compare-grid { grid-template-columns: 1fr; }
   .compare-code { font-size: 0.78rem; }
