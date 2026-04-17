@@ -70,7 +70,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `goal_gate` | bool | Pipeline fails if gate fails. Add `retry_target` or `fallback_target` (DIP115) |
 | `response_format` | string | `json_object` or `json_schema` (DIP130) |
 | `response_schema` | multiline JSON | Must be valid JSON (DIP132). Requires `response_format: json_schema` (DIP131) |
-| `reasoning_effort` | string | `low`, `medium`, `high` (DIP119) |
+| `reasoning_effort` | string | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` (DIP119) |
 | `fidelity` | string | `full`, `summary:high`, `summary:medium`, `summary:low`, `compact`, `truncate` (DIP114) |
 | `cache_tools` | bool | Cache tool results |
 | `compaction` | string | Context compaction strategy |
@@ -336,7 +336,7 @@ The primary loop for authoring .dip files:
 | DIP116 | Invalid compaction threshold | Use float 0.0-1.0 |
 | DIP117 | Stylesheet class references undefined class | Fix class name in stylesheet block |
 | DIP118 | Stylesheet ID references unknown node | Fix node ID in stylesheet block |
-| DIP119 | Invalid reasoning_effort | Use: `low`, `medium`, `high` |
+| DIP119 | Invalid reasoning_effort | Use: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` |
 | DIP120 | Condition var missing namespace | Prefix with `ctx.`, `params.`, or `graph.` |
 | DIP123 | Shell syntax error in command | Fix the shell command (checked via `bash -n`) |
 | DIP124 | `${ctx.*}` in tool command | Remove — runtime variables expand to empty at parse time |
