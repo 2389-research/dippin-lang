@@ -17,6 +17,9 @@ workflow <Name>
   [defaults
     model: <string>
     provider: <string>
+    max_total_tokens: <int>
+    max_cost_cents: <int>
+    max_wall_time: <duration>
     ...]
 
   [vars
@@ -42,7 +45,7 @@ workflow <Name>
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
 | `agent` | `prompt` | `model`, `provider`, `backend`, `working_dir`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
-| `human` | `mode` (freeform\|choice) | `default` |
+| `human` | `mode` (freeform\|choice\|interview) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
 | `tool` | `command` | `timeout` (e.g. 30s, 5m) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
@@ -246,6 +249,8 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `prompt` | multiline | Prompt text |
 | `questions_key` | string | Context key for interview questions |
 | `answers_key` | string | Context key for interview answers |
+| `timeout` | duration | e.g. `5m`, `1h`. How long to wait for human response. |
+| `timeout_action` | string | `fail` or `default`. Action on timeout (default: `fail`). |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
@@ -380,9 +385,18 @@ Fields `prompt:`, `system_prompt:`, `command:`, `response_schema:` support inden
     max_restarts: 3
     cache_tools: true
     compaction: auto
+    max_total_tokens: 500000
+    max_cost_cents: 1000
+    max_wall_time: 30m
 ```
 
 All defaults are inherited by nodes unless overridden at the node level.
+
+| Default Field | Type | Notes |
+|---------------|------|-------|
+| `max_total_tokens` | int | Budget cap on total tokens consumed. |
+| `max_cost_cents` | int | Budget cap in cents (e.g. 1000 = $10.00). |
+| `max_wall_time` | duration | Maximum wall-clock time for the workflow (e.g. `30m`, `2h`). |
 
 ## CLI Reference
 
