@@ -2,8 +2,8 @@
 //
 // These tests verify that cmd/dippin/generated-spec.md is checked in,
 // current with scripts/gen-spec.sh, and that the binary builds from a
-// source tree without .git. They shell out to external tools (cp, bash,
-// go build) and should not be run in untrusted environments.
+// source tree without .git. They shell out to external tools (cp, sh,
+// git, go build) and should not be run in untrusted environments.
 package releasecheck
 
 import (
@@ -90,7 +90,10 @@ func copyTree(t *testing.T, root string) string {
 	}
 	requireBinary(t, "cp")
 	dst := t.TempDir()
-	runCmd(t, root, "sh", "-c", "cp -a . '"+dst+"/' && rm -rf '"+dst+"/.git'")
+	runCmd(t, root, "cp", "-a", ".", dst)
+	if err := os.RemoveAll(filepath.Join(dst, ".git")); err != nil {
+		t.Fatalf("remove copied .git directory: %v", err)
+	}
 	return dst
 }
 

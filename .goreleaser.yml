@@ -6,6 +6,7 @@ before:
   hooks:
     - go mod tidy
     - go test ./... -short -count=1
+    - go test ./releasecheck -count=1
 
 builds:
   - id: dippin
