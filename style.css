@@ -26,7 +26,7 @@
     repeating-linear-gradient(90deg, rgba(120,180,120,0.15) 0px, rgba(120,180,120,0.15) 20px, transparent 20px, transparent 40px);
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; font-size: 200%; }
 body {
   font-family: var(--sans); color: var(--text); background: var(--bg);
   background-image: var(--gingham); line-height: 1.65; font-weight: 400;
