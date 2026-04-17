@@ -19,6 +19,10 @@ workflow <Name>
     provider: <string>
     ...]
 
+  [vars
+    <key>: <value>
+    ...]
+
   <kind> <NodeID>
     <field>: <value>
     <multiline_field>:
