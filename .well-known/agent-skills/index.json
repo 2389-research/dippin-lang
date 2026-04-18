@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agentskills.io/schema/v0.2.0/index.json",
+  "skills": [
+    {
+      "name": "dippin-lang",
+      "type": "claude-code",
+      "description": "Author, validate, lint, and debug .dip AI pipeline workflow files using the dippin CLI and DSL",
+      "url": "https://dippin.org/skill.md",
+      "sha256": "fadaad34aff3d06ede8112d71459e9e6980d090fc73276d14531954d99cfd872"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "serverInfo": {
+    "name": "dippin-lang",
+    "version": "0.12.0",
+    "description": "DSL and toolchain for AI pipeline workflows — parse, validate, lint, format, export, simulate, and analyze .dip files"
+  },
+  "homepageUrl": "https://dippin.org/",
+  "sourceUrl": "https://github.com/2389-research/dippin-lang",
+  "documentationUrl": "https://dippin.org/language.html",
+  "capabilities": {
+    "skills": true
+  },
+  "links": {
+    "skill": "https://dippin.org/skill.md",
+    "llms-txt": "https://dippin.org/llms.txt",
+    "llms-full-txt": "https://dippin.org/llms-full.txt",
+    "agent-skills": "https://dippin.org/.well-known/agent-skills/index.json"
+  }
+}

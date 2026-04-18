@@ -1,0 +1,27 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://dippin.org/",
+      "service-doc": [
+        {
+          "href": "https://dippin.org/language.html",
+          "type": "text/html"
+        }
+      ],
+      "describedby": [
+        {
+          "href": "https://dippin.org/llms.txt",
+          "type": "text/plain"
+        },
+        {
+          "href": "https://dippin.org/llms-full.txt",
+          "type": "text/plain"
+        },
+        {
+          "href": "https://dippin.org/skill.md",
+          "type": "text/plain"
+        }
+      ]
+    }
+  ]
+}
