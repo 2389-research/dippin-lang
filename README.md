@@ -543,3 +543,7 @@ If Dippin saves you from one missing-backslash debugging session, give us a star
 ## License
 
 MIT
+
+## Links
+
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/dippin-lang)
