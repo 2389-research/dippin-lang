@@ -17,6 +17,7 @@ Dippin files use the `.dip` extension and define directed graphs of agent steps,
 - [Validation & Linting](https://dippin.org/validation.html): 40 diagnostic checks for AI pipeline workflows. 9 structural errors and 31 semantic warnings catch bugs before runtime.
 
 - [What's New in Dippin v0.21–v0.22](https://dippin.org/blog/whats-new-v021-v022.html): Human timeouts, budget caps, and a new manager_loop node for supervising child pipelines. Two releases, five days apart.
+- [What's New in Dippin v0.23](https://dippin.org/blog/whats-new-v023.html): First-class tool_commands_allow and tool_denylist_add defaults for constraining what tool nodes can shell out. Plus a cleaner DOT header format.
 - [What's New in Dippin v0.17–v0.20](https://dippin.org/blog/whats-new-v020.html): Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements.
 - [Conditional Edges: Routing Pipelines with when](https://dippin.org/blog/conditional-edges.html): Build branching AI pipelines that route based on LLM output. Learn Dippin's condition syntax, operators, and exhaustive detection.
 - [Cost Estimation: Know Before You Run](https://dippin.org/blog/cost-estimation.html): Estimate per-run pipeline costs before spending real money on LLM calls. Use dippin cost and dippin optimize to find savings.
