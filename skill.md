@@ -260,6 +260,8 @@ Fields `prompt:`, `system_prompt:`, `command:`, `response_schema:` support inden
     max_total_tokens: 500000
     max_cost_cents: 1000
     max_wall_time: 30m
+    tool_commands_allow: "git *,make *"
+    tool_denylist_add: "rm -rf /,dd *"
 ```
 
 All defaults are inherited by nodes unless overridden at the node level.
@@ -269,6 +271,8 @@ All defaults are inherited by nodes unless overridden at the node level.
 | `max_total_tokens` | int | Budget cap on total tokens consumed. |
 | `max_cost_cents` | int | Budget cap in cents (e.g. 1000 = $10.00). |
 | `max_wall_time` | duration | Maximum wall-clock time for the workflow (e.g. `30m`, `2h`). |
+| `tool_commands_allow` | string | Glob allowlist for tool-node shell commands (comma-separated; optional). |
+| `tool_denylist_add` | string | Glob patterns appended to tracker's default denylist (comma-separated; optional). |
 
 ## CLI Reference
 

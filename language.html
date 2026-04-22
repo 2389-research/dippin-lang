@@ -32,7 +32,17 @@
     max_restarts: 5
     cache_tools: true
     compaction: summary
-</code></pre><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>model</code></td><td>String</td><td>Default LLM model for all agent nodes</td></tr><tr><td><code>provider</code></td><td>String</td><td>Default LLM provider (e.g., &ldquo;openai&rdquo;, &ldquo;anthropic&rdquo;)</td></tr><tr><td><code>retry_policy</code></td><td>String</td><td>Default retry strategy name</td></tr><tr><td><code>max_retries</code></td><td>Integer</td><td>Default max retry attempts per node</td></tr><tr><td><code>fidelity</code></td><td>String</td><td>Default checkpoint fidelity level</td></tr><tr><td><code>max_restarts</code></td><td>Integer</td><td>Max loop restarts before pipeline failure (default: 5)</td></tr><tr><td><code>cache_tools</code></td><td>Boolean</td><td>Whether to cache tool call results</td></tr><tr><td><code>compaction</code></td><td>String</td><td>Context compaction mode for long pipelines</td></tr></tbody></table><h2 id=vars-block>Vars Block</h2><p>The optional <code>vars</code> block declares user-defined variables that are substituted wherever <code>$key</code> placeholders appear in prompts and commands.</p><pre><code>  vars
+</code></pre><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>model</code></td><td>String</td><td>Default LLM model for all agent nodes</td></tr><tr><td><code>provider</code></td><td>String</td><td>Default LLM provider (e.g., &ldquo;openai&rdquo;, &ldquo;anthropic&rdquo;)</td></tr><tr><td><code>retry_policy</code></td><td>String</td><td>Default retry strategy name</td></tr><tr><td><code>max_retries</code></td><td>Integer</td><td>Default max retry attempts per node</td></tr><tr><td><code>fidelity</code></td><td>String</td><td>Default checkpoint fidelity level</td></tr><tr><td><code>max_restarts</code></td><td>Integer</td><td>Max loop restarts before pipeline failure (default: 5)</td></tr><tr><td><code>cache_tools</code></td><td>Boolean</td><td>Whether to cache tool call results</td></tr><tr><td><code>compaction</code></td><td>String</td><td>Context compaction mode for long pipelines</td></tr></tbody></table><h3 id=tool-safety>Tool safety</h3><p>Tool nodes that shell out can be constrained by two defaults consumed by the tracker runtime:</p><ul><li><code>tool_commands_allow</code> — comma-separated glob allowlist. When set, tracker rejects tool-node commands that do not match any pattern.</li><li><code>tool_denylist_add</code> — comma-separated globs appended to tracker&rsquo;s default denylist (on top of tracker&rsquo;s built-in blocks).</li></ul><pre><code class=language-dippin>workflow Safe
+  goal: &quot;Constrained tool execution&quot;
+  start: A
+  exit: A
+
+  defaults
+    tool_commands_allow: &quot;git *,make *&quot;
+    tool_denylist_add: &quot;rm -rf /,dd *&quot;
+
+  # ...
+</code></pre><p>Values pass through to tracker verbatim; dippin-lang does not validate glob syntax.</p><h2 id=vars-block>Vars Block</h2><p>The optional <code>vars</code> block declares user-defined variables that are substituted wherever <code>$key</code> placeholders appear in prompts and commands.</p><pre><code>  vars
     source_ref: &quot;references/claude-agent-sdk-python/src&quot;
     target_name: claude-agents-rs
     target_module: &quot;claude-agents-rs/src/&quot;
