@@ -203,7 +203,7 @@ section { padding: 4.5rem 0; }
 .hl-pass { color: #8FD5A6; }
 .hl-warn { color: #F5D56A; }
 .hl-fail { color: #E88; }
-.hl-dim { color: #777; }
+.hl-dim { color: #9a9a9a; }
 .hl-shcmd { color: #ddd; }
 .hl-shvar { color: #F5D56A; }
 .hl-shkw { color: #B8A9E8; }
@@ -252,7 +252,7 @@ section { padding: 4.5rem 0; }
 .terminal .pass { color: #8FD5A6; }
 .terminal .warn { color: #F5D56A; }
 .terminal .fail { color: #E88; }
-.terminal .dim { color: #777; }
+.terminal .dim { color: #9a9a9a; }
 
 /* ── Install ── */
 .install-box { background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 2.5rem; max-width: 800px; }

@@ -32,14 +32,12 @@
     h = h.replace(/("(?:[^"\\]|\\.)*")/g, function (_, v) { return s("str", v); });
     // ${ctx.*} variables.
     h = h.replace(/(\$\{[^}]+\})/g, function (_, v) { return s("shvar", v); });
-    // Node declarations.
-    h = h.replace(/\b(workflow|agent|human|tool|subgraph|conditional)\s+([A-Z]\w*)/g,
+    // Node declarations — all kinds. Identifier pattern matches dippin's lexer
+    // (alphanumeric start, then alphanumeric + underscore/dash/dot/slash) so
+    // IDs like `code-review` or `phases/code_review` color correctly.
+    h = h.replace(/\b(workflow|agent|human|tool|subgraph|conditional|manager_loop|parallel|fan_in)\s+([A-Za-z0-9][A-Za-z0-9_./-]*)/g,
       function (_, kw, n) { return s("kw", kw) + " " + s("node", n); });
-    // Parallel/fan_in.
-    h = h.replace(/\b(parallel)\s+(\w+)\s*(-&gt;)/g,
-      function (_, kw, n, a) { return s("kw", kw) + " " + s("node", n) + " " + s("op", a); });
-    h = h.replace(/\b(fan_in)\s+(\w+)\s*(&lt;-)/g,
-      function (_, kw, n, a) { return s("kw", kw) + " " + s("node", n) + " " + s("op", a); });
+    // Inline edge forms follow via the arrow regex below; no special case needed.
     // Section keywords.
     h = h.replace(/\b(edges|defaults|vars|stylesheet)\b/g, function (_, k) { return s("kw", k); });
     // Condition keywords.
@@ -118,7 +116,9 @@
   }
 
   // ── Detection ───────────────────────────────────────────
-  function isDippin(t) { return /\b(workflow|agent |human |tool |conditional |edges\b|defaults\b|vars\b)/.test(t); }
+  function isDippin(t) {
+    return /\b(workflow|agent|human|tool|subgraph|conditional|manager_loop|parallel|fan_in|edges|defaults|vars|stylesheet)\b/.test(t);
+  }
   function isShell(t) { return /^(\s*#!\/bin\/|set -e)/.test(t.trim()); }
   function isTerminal(t) { return /^\$\s/.test(t.trim()); }
   function isDiagnostic(t) { return /\b(error|warning|hint)\[DIP\d+\]/.test(t); }
