@@ -179,7 +179,7 @@ section { padding: 4.5rem 0; }
 .compare-label { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; display: inline-block; }
 .compare-label.bad { color: #b84040; background: #fde8e8; }
 .compare-label.good { color: var(--green-deep); background: var(--green-light); }
-.compare-code { background: #2A2A30; border-radius: 0 10px 10px 10px; padding: 1.25rem; font-family: var(--mono); font-size: 0.72rem; line-height: 1.75; overflow-x: auto; border: 2px solid rgba(0,0,0,0.1); color: #bbb; }
+.compare-code { background: #2A2A30; border-radius: 0 10px 10px 10px; padding: 1.25rem; font-family: var(--mono); font-size: 0.72rem; line-height: 1.75; overflow-x: auto; border: 2px solid rgba(0,0,0,0.1); color: #cccccc; }
 .compare-code pre { min-width: 0; }
 .compare-code .kw { color: #B8A9E8; }
 .compare-code .str { color: #8FD5A6; }
@@ -247,7 +247,7 @@ section { padding: 4.5rem 0; }
 .terminal-dot:nth-child(2) { background: #febc2e; }
 .terminal-dot:nth-child(3) { background: #28c840; }
 .terminal-title { font-family: var(--mono); font-size: 0.68rem; color: #888; margin-left: auto; }
-.terminal pre { padding: 1.1rem; font-family: var(--mono); font-size: 0.76rem; line-height: 1.8; color: #bbb; overflow-x: auto; }
+.terminal pre { padding: 1.1rem; font-family: var(--mono); font-size: 0.76rem; line-height: 1.8; color: #cccccc; overflow-x: auto; }
 .terminal .prompt { color: var(--green); }
 .terminal .pass { color: #8FD5A6; }
 .terminal .warn { color: #F5D56A; }
@@ -279,7 +279,7 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
 .doc-body h2 { font-family: var(--serif); font-size: 1.6rem; font-weight: 700; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1.5px solid var(--border); }
 .doc-body h3 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 0.5rem; }
 .doc-body p { color: var(--text-mid); margin-bottom: 1rem; max-width: 720px; }
-.doc-body pre { background: #2A2A30; color: #bbb; padding: 1.2rem; border-radius: 10px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; overflow-x: auto; margin-bottom: 1.5rem; border: 2px solid rgba(0,0,0,0.08); }
+.doc-body pre { background: #2A2A30; color: #cccccc; padding: 1.2rem; border-radius: 10px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; overflow-x: auto; margin-bottom: 1.5rem; border: 2px solid rgba(0,0,0,0.08); }
 .doc-body table { border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; width: 100%; }
 .doc-body th { text-align: left; font-weight: 700; padding: 0.6rem 1rem; border-bottom: 2px solid var(--border); }
 .doc-body td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-mid); }
