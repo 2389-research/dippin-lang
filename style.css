@@ -279,6 +279,10 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
 .doc-body h2 { font-family: var(--serif); font-size: 1.6rem; font-weight: 700; margin: 3rem 0 1rem; padding-top: 1.5rem; border-top: 1.5px solid var(--border); }
 .doc-body h3 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 0.5rem; }
 .doc-body p { color: var(--text-mid); margin-bottom: 1rem; max-width: 720px; }
+.doc-body ul, .doc-body ol { color: var(--text-mid); margin: 0 0 1rem; padding-left: 1.5rem; max-width: 720px; }
+.doc-body li { margin-bottom: 0.4rem; line-height: 1.7; }
+.doc-body li > p { margin-bottom: 0.4rem; max-width: none; }
+.doc-body li > ul, .doc-body li > ol { margin-top: 0.4rem; margin-bottom: 0.4rem; }
 .doc-body pre { background: #2A2A30; color: #cccccc; padding: 1.2rem; border-radius: 10px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; overflow-x: auto; margin-bottom: 1.5rem; border: 2px solid rgba(0,0,0,0.08); }
 .doc-body table { border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; width: 100%; }
 .doc-body th { text-align: left; font-weight: 700; padding: 0.6rem 1rem; border-bottom: 2px solid var(--border); }
