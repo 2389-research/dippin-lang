@@ -166,6 +166,18 @@ Use `valid` to decide whether to retry generation. Use `diagnostics` to feed err
 
 ---
 
+## Bundles (`.dipx`)
+
+A `.dipx` is a deterministic ZIP that packages a `.dip` entry plus every transitively-reachable subgraph as one integrity-verified artifact. Every analysis command (`validate`, `lint`, `doctor`, `check`, `parse`, `cost`, `coverage`, `simulate`, `optimize`, `unused`, `graph`, `diff`, `explain`, `export-dot`) accepts either `.dip` or `.dipx` as input.
+
+- **Build a bundle**: `dippin pack pipeline.dip` → `pipeline.dipx`
+- **Inspect**: `dippin inspect pipeline.dipx` (prints manifest, sha256 identity, file list)
+- **Extract**: `dippin unpack pipeline.dipx -o ./out` (atomic via staging dir + rename)
+
+Workflow: author and lint as `.dip`; package with `dippin pack` for distribution to runtimes (e.g., Tracker). `dippin check pipeline.dipx` validates the bundled entry workflow exactly as if it were on disk. Bundle commands return distinct exit codes (`0` ok, `1` user error, `2` integrity error, `3` I/O error, `4` cancelled) so tooling can disambiguate failures that the analysis-command `0/1/2` ladder collapses.
+
+---
+
 ## Diagnostic Code Summary
 
 39 diagnostic codes across two categories:
@@ -477,6 +489,22 @@ Use `dippin help` (not `--help`) to see all commands.
 | `dippin test <file>` | Run `.test.json` scenario tests. `--verbose --coverage` for details |
 | `dippin watch <file>` | Watch for changes, re-validate on save |
 | `dippin lsp` | Start LSP server on stdio (for editor integration) |
+
+### Bundles
+
+| Command | Purpose |
+|---------|---------|
+| `dippin pack <entry.dip>` | Build a deterministic `.dipx` bundle from a `.dip` entry. `-o <out>` (default: `<entry>.dipx`; `-` for stdout). `--dry-run` validates without writing. |
+| `dippin unpack <bundle.dipx>` | Atomic extract. `-o <destdir>` (default: bundle name without `.dipx`). `--force` overwrites with rollback-safe backup-aside swap. |
+| `dippin inspect <bundle.dipx>` | Print manifest, identity (sha256 over manifest bytes), and per-file checksums. `--format text\|json`. |
+
+## Bundle Workflow (`.dipx`)
+
+A `.dipx` is a deterministic, content-addressed ZIP packaging a `.dip` entry plus every transitively-reachable subgraph ref. **Every analysis command (validate, lint, doctor, check, parse, cost, coverage, simulate, optimize, unused, graph, diff, explain, export-dot) accepts a `.dipx` argument** — the bundle is opened via `dipx.Load`, hash-verified, and the entry workflow is fed to the analyzer just like a `.dip` would be.
+
+**Recommended workflow:** author and lint as `.dip`, package with `dippin pack` for distribution to runtimes (e.g. Tracker).
+
+**Exit codes for bundle commands** (`pack` / `unpack` / `inspect`) are `0` ok, `1` user error, `2` integrity error, `3` I/O error, `4` cancelled — distinct from the analysis-command standard `0` / `1` / `2` set.
 
 ## Validation Workflow
 
