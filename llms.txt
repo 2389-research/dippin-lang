@@ -16,7 +16,7 @@ Dippin files use the `.dip` extension and define directed graphs of agent steps,
 - [Scenario Testing](https://dippin.org/testing.html): Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.
 - [Validation & Linting](https://dippin.org/validation.html): 40 diagnostic checks for AI pipeline workflows. 9 structural errors and 31 semantic warnings catch bugs before runtime.
 
-- [What's New in Dippin v0.24](https://dippin.org/blog/whats-new-v024.html): The .dipx bundle format — a deterministic, content-addressed ZIP that ships a workflow plus every transitive subgraph as a single integrity-verified artifact. Three new CLI commands, every analysis command extended.
+- [What's New in Dippin v0.24](https://dippin.org/blog/whats-new-v024.html): The .dipx bundle format — pack a workflow tree into one verifiable file you can ship anywhere. Three new commands, every analysis command extended.
 - [What's New in Dippin v0.21–v0.22](https://dippin.org/blog/whats-new-v021-v022.html): Human timeouts, budget caps, and a new manager_loop node for supervising child pipelines. Two releases, five days apart.
 - [What's New in Dippin v0.23](https://dippin.org/blog/whats-new-v023.html): First-class tool_commands_allow and tool_denylist_add defaults for constraining what tool nodes can shell out. Plus a cleaner DOT header format.
 - [What's New in Dippin v0.17–v0.20](https://dippin.org/blog/whats-new-v020.html): Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements.
