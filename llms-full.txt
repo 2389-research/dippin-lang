@@ -83,6 +83,7 @@ when not <expr>
 | 5 | Agent node with empty prompt | Every `agent` node should have a `prompt:` field with content (except start/exit lifecycle nodes). |
 | 6 | Missing tool timeout | Add `timeout: 60s` (or appropriate duration) to every `tool` node. |
 | 7 | Exhaustive conditions flagged | `ctx.outcome = success` + `ctx.outcome = fail` is exhaustive — DIP101/DIP102 are auto-suppressed. No need to add a fallback edge. |
+| 8 | Verbose output sharing stdout with routing marker | When a tool's stdout drives routing, redirect verbose output to a sibling file and `printf` only the marker. Otherwise large output (test logs, stack traces) can crowd out the marker under runtime stdout caps. See `nodes.md` → Tool Nodes → Markers and Verbose Output. |
 
 ---
 
