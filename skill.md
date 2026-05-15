@@ -22,6 +22,7 @@ Write with `--name` and `--write`: `dippin new --name MyPipeline --write pipelin
 ```
 workflow <Name>
   goal: "<description>"
+  requires: <dep1>, <dep2>   # optional; environmental deps surfaced to runtimes
   start: <NodeID>
   exit: <NodeID>
 
@@ -35,7 +36,7 @@ workflow <Name>
     <edge declarations>
 ```
 
-Four sections in order: **header** (workflow name, goal, start, exit) → **defaults** (optional) → **nodes** (any order) → **edges** (optional). `defaults` and `edges` are bare keywords — no colon after them.
+Four sections in order: **header** (workflow name, goal, optional `requires`, start, exit) → **defaults** (optional) → **nodes** (any order) → **edges** (optional). `defaults` and `edges` are bare keywords — no colon after them. `requires:` is a comma-separated list of environmental dependencies (e.g. `git, docker, jq`); semantics live in downstream consumers and unknown entries are accepted without a parser diagnostic.
 
 Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blocks).
 
