@@ -49,7 +49,7 @@ workflow <Name>
 |------|----------------|-----------------|
 | `agent` | `prompt` | `model`, `provider`, `backend`, `working_dir`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
 | `human` | `mode` (freeform\|choice\|interview) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
-| `tool` | `command` | `timeout` (e.g. 30s, 5m) |
+| `tool` | `command` | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
@@ -85,6 +85,7 @@ when not <expr>
 | 6 | Missing tool timeout | Add `timeout: 60s` (or appropriate duration) to every `tool` node. |
 | 7 | Exhaustive conditions flagged | `ctx.outcome = success` + `ctx.outcome = fail` is exhaustive — DIP101/DIP102 are auto-suppressed. No need to add a fallback edge. |
 | 8 | Verbose output sharing stdout with routing marker | When a tool's stdout drives routing, redirect verbose output to a sibling file and `printf` only the marker. Otherwise large output (test logs, stack traces) can crowd out the marker under runtime stdout caps. See `nodes.md` → Tool Nodes → Markers and Verbose Output. |
+| 9 | Hand-parsing tool stdout for routing | Use `marker_grep: "<regex>"` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Mirrors tracker's TRK101 recommendation; populates `ctx.tool_marker` directly. |
 
 ---
 
@@ -291,6 +292,9 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `command` | multiline | Shell command. Supports pipes, here-docs, case/esac. |
 | `timeout` | duration | **Required** (DIP111). e.g. `30s`, `5m` |
 | `outputs` | CSV | Possible stdout values for condition checks |
+| `marker_grep` | string | Regex matched against stdout; sets `ctx.tool_marker`. Tracker validates at runtime. |
+| `route_required` | bool | When true, fails the node if no `_TRACKER_ROUTE=<value>` sentinel line is emitted. |
+| `output_limit` | int | Per-node stdout byte cap (non-negative integer); 0 (or omitted) uses the engine default. |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
@@ -583,6 +587,7 @@ The primary loop for authoring .dip files:
 ## Best Practices
 
 - **Always set `timeout`** on tool nodes — no timeout means infinite hang
+- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
 - **Mark back-edges `restart: true`** — loops without it trigger DIP005
@@ -636,6 +641,8 @@ The primary loop for authoring .dip files:
 | `ctx.outcome` | `auto_status: true` on agent, or tool exit status |
 | `ctx.human_response` | Freeform human input |
 | `ctx.tool_stdout` | Tool command stdout |
+| `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
+| `ctx.tool_route` | `_TRACKER_ROUTE=<value>` sentinel (when `route_required: true`) |
 | `ctx.preferred_label` | Human choice selection (maps to edge label) |
 | `ctx.interview_answers` | Interview mode answers (via `answers_key`) |
 | `params.<key>` | Parent subgraph params |

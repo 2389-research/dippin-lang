@@ -61,14 +61,14 @@
     label: &quot;Ship it?&quot;
     mode: choice
     default: &quot;yes&quot;
-</code></pre><h3 id=tool>tool</h3><p>Tool nodes execute shell commands. The command&rsquo;s stdout is captured as <code>ctx.tool_stdout</code> and stderr as <code>ctx.tool_stderr</code>. Always include a <code>timeout</code>.</p><pre><code>  tool RunTests
+</code></pre><h3 id=tool>tool</h3><p>Tool nodes execute shell commands. The command&rsquo;s stdout is captured as <code>ctx.tool_stdout</code> and stderr as <code>ctx.tool_stderr</code>. Always include a <code>timeout</code>.</p><pre><code class=language-dippin>  tool RunTests
     label: &quot;Run test suite&quot;
+    outputs: tests_pass, tests_fail
+    marker_grep: &quot;^(tests_pass|tests_fail)$&quot;
     timeout: 60s
     command:
-      #!/bin/sh
-      set -eu
-      pytest --tb=short 2&gt;&amp;1
-</code></pre><h3 id=parallel>parallel</h3><p>Parallel nodes fan execution out to multiple branches that run concurrently. Every <code>parallel</code> must have a matching <code>fan_in</code>.</p><pre><code>  parallel FanOut -&gt; TaskA, TaskB, TaskC
+      pytest --tb=short
+</code></pre><p>Declare <code>marker_grep</code> for typed routing (populates <code>ctx.tool_marker</code>); <code>route_required: true</code> makes a missing <code>_TRACKER_ROUTE=</code> sentinel fail the node; <code>output_limit</code> overrides the captured-stdout byte cap.</p><h3 id=parallel>parallel</h3><p>Parallel nodes fan execution out to multiple branches that run concurrently. Every <code>parallel</code> must have a matching <code>fan_in</code>.</p><pre><code>  parallel FanOut -&gt; TaskA, TaskB, TaskC
 </code></pre><h3 id=fan_in>fan_in</h3><p>Fan-in nodes join concurrent branches back together. Sources must match the targets of a corresponding <code>parallel</code> node.</p><pre><code>  fan_in Join &lt;- TaskA, TaskB, TaskC
 </code></pre><h3 id=subgraph>subgraph</h3><p>Subgraph nodes embed another workflow as a single step. Parameters are passed via the <code>params.*</code> namespace.</p><pre><code>  subgraph ReviewProcess
     ref: review_pipeline

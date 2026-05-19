@@ -119,6 +119,9 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `command` | multiline | Shell command. Supports pipes, here-docs, case/esac. |
 | `timeout` | duration | **Required** (DIP111). e.g. `30s`, `5m` |
 | `outputs` | CSV | Possible stdout values for condition checks |
+| `marker_grep` | string | Regex matched against stdout; sets `ctx.tool_marker`. Tracker validates at runtime. |
+| `route_required` | bool | When true, fails the node if no `_TRACKER_ROUTE=<value>` sentinel line is emitted. |
+| `output_limit` | int | Per-node stdout byte cap (non-negative integer); 0 (or omitted) uses the engine default. |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
@@ -411,6 +414,7 @@ The primary loop for authoring .dip files:
 ## Best Practices
 
 - **Always set `timeout`** on tool nodes — no timeout means infinite hang
+- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
 - **Mark back-edges `restart: true`** — loops without it trigger DIP005
@@ -464,6 +468,8 @@ The primary loop for authoring .dip files:
 | `ctx.outcome` | `auto_status: true` on agent, or tool exit status |
 | `ctx.human_response` | Freeform human input |
 | `ctx.tool_stdout` | Tool command stdout |
+| `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
+| `ctx.tool_route` | `_TRACKER_ROUTE=<value>` sentinel (when `route_required: true`) |
 | `ctx.preferred_label` | Human choice selection (maps to edge label) |
 | `ctx.interview_answers` | Interview mode answers (via `answers_key`) |
 | `params.<key>` | Parent subgraph params |
