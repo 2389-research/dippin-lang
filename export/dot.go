@@ -312,8 +312,17 @@ func applyToolSemanticAttrs(attrs map[string]string, cfg ir.ToolConfig) {
 	if cfg.RouteRequired {
 		attrs["route_required"] = "true"
 	}
+	applyToolOutputsAttrs(attrs, cfg)
+}
+
+// applyToolOutputsAttrs writes the output_limit and outputs DOT attrs.
+// Extracted from applyToolSemanticAttrs to keep cyclomatic complexity ≤ 5.
+func applyToolOutputsAttrs(attrs map[string]string, cfg ir.ToolConfig) {
 	if cfg.OutputLimit > 0 {
 		attrs["output_limit"] = strconv.Itoa(cfg.OutputLimit)
+	}
+	if len(cfg.Outputs) > 0 {
+		attrs["outputs"] = strings.Join(cfg.Outputs, ",")
 	}
 }
 

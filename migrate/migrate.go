@@ -515,6 +515,9 @@ func applyToolStringAttrs(cfg *ir.ToolConfig, attrs map[string]string) {
 	if v, ok := attrs["route_required"]; ok {
 		cfg.RouteRequired = (v == "true")
 	}
+	if v, ok := attrs["outputs"]; ok {
+		cfg.Outputs = splitComma(v)
+	}
 }
 
 func applyToolTimeoutAttr(cfg *ir.ToolConfig, attrs map[string]string) error {
