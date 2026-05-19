@@ -84,6 +84,8 @@ when not <expr>
 | 7 | Exhaustive conditions flagged | `ctx.outcome = success` + `ctx.outcome = fail` is exhaustive — DIP101/DIP102 are auto-suppressed. No need to add a fallback edge. |
 | 8 | Verbose output sharing stdout with routing marker | When a tool's stdout drives routing, redirect verbose output to a sibling file and `printf` only the marker. Otherwise large output (test logs, stack traces) can crowd out the marker under runtime stdout caps. See `nodes.md` → Tool Nodes → Markers and Verbose Output. |
 | 9 | Hand-parsing tool stdout for routing | Use `marker_grep: "<regex>"` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Mirrors tracker's TRK101 recommendation; populates `ctx.tool_marker` directly. |
+| 10 | DIP101/DIP102 flagged on marker-routed tool node | If the tool already declares `marker_grep:`, the validator treats it as a safe routing source and suppresses both warnings. If you're still seeing them, the source node isn't a `tool`, or `marker_grep` is empty. |
+| 11 | Boolean field rejected as invalid | Boolean fields (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off`, case-insensitive. Anything else is a parse error — pre-v0.29 silently coerced unknown values to `false`. |
 
 ---
 
@@ -93,6 +95,8 @@ When outgoing edges from a node cover all possible values, DIP101 and DIP102 war
 
 - `ctx.outcome`: `{success, fail}` or `{success, failure}`
 - `outcome`: `{success, fail}` or `{success, failure}`
+
+Tool nodes that declare `marker_grep:` are also treated as exhaustive (typed routing via `ctx.tool_marker`).
 
 This means the common pattern below is valid with zero warnings:
 

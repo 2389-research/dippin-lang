@@ -2,6 +2,30 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.29.0] — 2026-05-19
+
+Three follow-ups to v0.28.0's tool-routing surface. Closes [#42](https://github.com/2389-research/dippin-lang/issues/42), [#43](https://github.com/2389-research/dippin-lang/issues/43), [#44](https://github.com/2389-research/dippin-lang/issues/44).
+
+### Added
+
+- `DIP138` reserved for a future advisory: "tool node routes on stdout but declares no `marker_grep` / `outputs`". Code + description + explanation entry only; no firing logic in this release.
+- `outputs:` now survives a `.dip → DOT → .dip` round-trip. DOT export emits `outputs="a,b,c"` on tool nodes that declare outputs, and `dippin migrate dot→.dip` reads it back.
+
+### Changed
+
+- `DIP101` / `DIP102` no longer fire on tool nodes that declare `marker_grep:`. Those nodes route via the typed `ctx.tool_marker` channel — outgoing conditional edges on them are intentional routing, not unsafe reachability. Removes the false-positive coverage hit that tracker's `TRK101` option (d) guidance triggered.
+- Parser bool fields (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) now accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively via a new shared `parseBoolAttr` helper. Anything else now produces a parse diagnostic instead of silently coercing to `false`. The migrate (DOT-input) path keeps strict equality since DOT attrs are machine-emitted.
+
+### Runtime requirement
+
+None. All changes are dippin-internal; tracker is unaffected.
+
+### Docs
+
+- `docs/nodes.md` "Markers and Verbose Output" notes the DIP101/DIP102 suppression and the accepted boolean forms.
+- `docs/llm-reference.md` common-mistakes table cross-references the suppression behavior.
+- Hosted skill (`site/static/skill.md`) updated to match.
+
 ## [v0.28.0] — 2026-05-19
 
 Tool-node routing fields land in the parser and IR. Authors following tracker's `TRK101` recommendation can now declare `marker_grep`, `route_required`, and `output_limit` directly in `.dip` source. Closes [#39](https://github.com/2389-research/dippin-lang/issues/39).

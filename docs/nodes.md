@@ -325,6 +325,14 @@ The same pattern applies to any tool whose output drives routing — build comma
 
 When `marker_grep` is declared, the runtime populates `ctx.tool_marker` and routing edges can reference it instead of `ctx.tool_stdout`. `route_required: true` makes the absence of any match a hard failure. `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
 
+**Lint:** A tool node that declares `marker_grep:` is treated as a "safe routing source" — outgoing conditional edges that test `ctx.tool_marker` no longer trip `DIP101` (unreachable target) or `DIP102` (no default edge), even with a single conditional edge. The declaration is an explicit author signal that routing is typed.
+
+---
+
+## Boolean fields
+
+`goal_gate`, `auto_status`, `cache_tools`, and `route_required` all accept `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off`, case-insensitively. Any other value emits a parse diagnostic — invalid bools no longer silently coerce to `false`.
+
 ---
 
 ## Parallel Nodes
