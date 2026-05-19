@@ -65,3 +65,23 @@ func (p *Parser) parseDuration(val string, key string, loc ir.SourceLocation) ti
 	}
 	return d
 }
+
+// parseBoolAttr normalizes boolean field parsing across node configs.
+// Accepts (case-insensitive, surrounding whitespace tolerated):
+//   - truthy: true, 1, yes, on
+//   - falsy:  false, 0, no, off
+//
+// Any other value produces a parse diagnostic and returns false.
+func (p *Parser) parseBoolAttr(val string, key string, loc ir.SourceLocation) bool {
+	s := strings.ToLower(strings.TrimSpace(val))
+	switch s {
+	case "true", "1", "yes", "on":
+		return true
+	case "false", "0", "no", "off":
+		return false
+	}
+	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+		"invalid boolean %q for %s at %d:%d (use true/false, 1/0, yes/no, on/off)",
+		val, key, loc.Line, loc.Column))
+	return false
+}

@@ -296,7 +296,7 @@ func applyAgentRuntimeField(cfg *ir.AgentConfig, key, val string) bool {
 
 // applyAgentComplexField handles fields needing parsing for agent config.
 func (p *Parser) applyAgentComplexField(cfg *ir.AgentConfig, key, val string, loc ir.SourceLocation) {
-	if applyAgentBoolField(cfg, key, val) {
+	if p.applyAgentBoolField(cfg, key, val, loc) {
 		return
 	}
 	if key == "params" {
@@ -310,14 +310,14 @@ func (p *Parser) applyAgentComplexField(cfg *ir.AgentConfig, key, val string, lo
 }
 
 // applyAgentBoolField handles boolean and string agent fields.
-func applyAgentBoolField(cfg *ir.AgentConfig, key, val string) bool {
+func (p *Parser) applyAgentBoolField(cfg *ir.AgentConfig, key, val string, loc ir.SourceLocation) bool {
 	switch key {
 	case "goal_gate":
-		cfg.GoalGate = (val == "true")
+		cfg.GoalGate = p.parseBoolAttr(val, key, loc)
 	case "auto_status":
-		cfg.AutoStatus = (val == "true")
+		cfg.AutoStatus = p.parseBoolAttr(val, key, loc)
 	case "cache_tools":
-		cfg.CacheTools = (val == "true")
+		cfg.CacheTools = p.parseBoolAttr(val, key, loc)
 	case "compaction":
 		cfg.Compaction = val
 	default:
@@ -407,7 +407,7 @@ func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.Sour
 	if applyToolStringField(cfg, key, val) {
 		return
 	}
-	if applyToolBoolField(cfg, key, val) {
+	if p.applyToolBoolField(cfg, key, val, loc) {
 		return
 	}
 	if p.applyToolParsedField(cfg, key, val, loc) {
@@ -432,10 +432,10 @@ func applyToolStringField(cfg *ir.ToolConfig, key, val string) bool {
 }
 
 // applyToolBoolField handles boolean tool fields. Returns true if handled.
-func applyToolBoolField(cfg *ir.ToolConfig, key, val string) bool {
+func (p *Parser) applyToolBoolField(cfg *ir.ToolConfig, key, val string, loc ir.SourceLocation) bool {
 	switch key {
 	case "route_required":
-		cfg.RouteRequired = (val == "true")
+		cfg.RouteRequired = p.parseBoolAttr(val, key, loc)
 	default:
 		return false
 	}
