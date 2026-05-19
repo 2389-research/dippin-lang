@@ -20,7 +20,7 @@ func lintConditionalReachability(w *ir.Workflow) []Diagnostic {
 	exhaustiveSources := findExhaustiveSources(w)
 
 	for _, n := range w.Nodes {
-		if d, ok := checkConditionalReachability(n, w.Start, incoming, outgoing, exhaustiveSources); ok {
+		if d, ok := checkConditionalReachability(w, n, w.Start, incoming, outgoing, exhaustiveSources); ok {
 			diags = append(diags, d)
 		}
 	}
@@ -28,7 +28,7 @@ func lintConditionalReachability(w *ir.Workflow) []Diagnostic {
 }
 
 // checkConditionalReachability checks a single node for DIP101.
-func checkConditionalReachability(n *ir.Node, start string, incoming, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) (Diagnostic, bool) {
+func checkConditionalReachability(w *ir.Workflow, n *ir.Node, start string, incoming, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) (Diagnostic, bool) {
 	if n.ID == start {
 		return Diagnostic{}, false
 	}
@@ -36,7 +36,7 @@ func checkConditionalReachability(n *ir.Node, start string, incoming, outgoing m
 	if len(edges) == 0 {
 		return Diagnostic{}, false
 	}
-	if allEdgesConditional(edges) && !allSourcesSafe(edges, outgoing, exhaustive) {
+	if allEdgesConditional(edges) && !allSourcesSafe(w, edges, outgoing, exhaustive) {
 		return Diagnostic{
 			Code:     DIP101,
 			Severity: SeverityWarning,
@@ -49,13 +49,10 @@ func checkConditionalReachability(n *ir.Node, start string, incoming, outgoing m
 }
 
 // allSourcesSafe returns true if every source node feeding these edges
-// either has exhaustive outgoing conditions OR has at least one
-// unconditional outgoing edge. A source with an unconditional edge
-// has normal execution flow — the conditional branch to our target
-// is intentional routing that fires when the condition matches.
-func allSourcesSafe(edges []*ir.Edge, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
+// is a "safe source" — see sourceIsSafe.
+func allSourcesSafe(w *ir.Workflow, edges []*ir.Edge, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
 	for _, e := range edges {
-		if !sourceIsSafe(e.From, outgoing, exhaustive) {
+		if !sourceIsSafe(w, e.From, outgoing, exhaustive) {
 			return false
 		}
 	}
@@ -63,13 +60,32 @@ func allSourcesSafe(edges []*ir.Edge, outgoing map[string][]*ir.Edge, exhaustive
 }
 
 // sourceIsSafe returns true if a source node guarantees its conditional
-// destinations are intentional: either via exhaustive conditions or by
-// having an unconditional outgoing edge (mixed routing).
-func sourceIsSafe(nodeID string, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
+// destinations are intentional: via exhaustive conditions, an unconditional
+// outgoing edge (mixed routing), or marker_grep-driven typed routing.
+func sourceIsSafe(w *ir.Workflow, nodeID string, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
 	if exhaustive[nodeID] {
 		return true
 	}
-	return hasUnconditionalEdge(outgoing[nodeID])
+	if hasUnconditionalEdge(outgoing[nodeID]) {
+		return true
+	}
+	return toolHasMarkerRouting(w, nodeID)
+}
+
+// toolHasMarkerRouting returns true if the node is a tool with a non-empty
+// marker_grep declaration. Such nodes route via ctx.tool_marker, a typed
+// channel that the engine populates; outgoing conditional edges are
+// intentional routing and DIP101/DIP102 should not fire on them.
+func toolHasMarkerRouting(w *ir.Workflow, nodeID string) bool {
+	n := w.Node(nodeID)
+	if n == nil {
+		return false
+	}
+	cfg, ok := n.Config.(ir.ToolConfig)
+	if !ok {
+		return false
+	}
+	return cfg.MarkerGrep != ""
 }
 
 // hasUnconditionalEdge returns true if any edge in the set has no condition.
@@ -105,7 +121,8 @@ func allEdgesConditional(edges []*ir.Edge) bool {
 // but no unconditional (default/fallback) edge. Without a default edge,
 // execution may get stuck at this node if no condition matches.
 //
-// Nodes whose outgoing conditions are exhaustive are not flagged.
+// Nodes whose outgoing conditions are exhaustive, or tool nodes with
+// marker_grep-driven typed routing, are not flagged.
 func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	exhaustiveSources := findExhaustiveSources(w)
@@ -115,7 +132,7 @@ func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 		if len(outgoing) == 0 {
 			continue
 		}
-		if hasMissingDefault(outgoing) && !exhaustiveSources[n.ID] {
+		if hasMissingDefault(outgoing) && !nodeIsSafeRouter(w, exhaustiveSources, n.ID) {
 			diags = append(diags, Diagnostic{
 				Code:     DIP102,
 				Severity: SeverityWarning,
@@ -126,6 +143,13 @@ func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 		}
 	}
 	return diags
+}
+
+// nodeIsSafeRouter returns true if the node's outgoing conditional edges
+// are intentional routing — either because the conditions are exhaustive
+// or because the node is a tool with marker_grep-driven typed routing.
+func nodeIsSafeRouter(w *ir.Workflow, exhaustive map[string]bool, nodeID string) bool {
+	return exhaustive[nodeID] || toolHasMarkerRouting(w, nodeID)
 }
 
 // hasMissingDefault returns true if edges contain conditional edges but no unconditional one.

@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP137).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP138).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -39,6 +39,7 @@ const (
 	DIP135 = "DIP135" // manager_loop subgraph_ref missing or file does not exist
 	DIP136 = "DIP136" // manager_loop control field has invalid value (poll_interval or max_cycles)
 	DIP137 = "DIP137" // unbounded manager_loop: no stop_condition and no max_cycles
+	DIP138 = "DIP138" // tool node routes on stdout but declares no marker_grep / outputs (reserved)
 )
 
 func init() {
@@ -80,4 +81,5 @@ func init() {
 	CodeDescription[DIP135] = "manager_loop subgraph_ref missing or file does not exist"
 	CodeDescription[DIP136] = "manager_loop control field has invalid value (poll_interval or max_cycles)"
 	CodeDescription[DIP137] = "unbounded manager_loop: no stop_condition and no max_cycles"
+	CodeDescription[DIP138] = "tool node routes on stdout but declares no marker_grep / outputs"
 }

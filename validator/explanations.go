@@ -390,5 +390,12 @@ func nodeValidationExplanations() map[string]Explanation {
 			Fix:     "Set stop_condition (e.g., stack.child.outcome = success) or max_cycles to bound supervision.",
 			Example: "manager_loop Supervise\n  subgraph_ref: inner\n  stop_condition: stack.child.outcome = success  // or: max_cycles: 20",
 		},
+		DIP138: {
+			Code:    DIP138,
+			Summary: "tool node routes on stdout but declares no marker_grep / outputs",
+			Trigger: "A tool node has outgoing conditional edges that test ctx.tool_stdout but the tool itself declares neither marker_grep nor outputs. The workflow is using untyped stdout-text routing where the typed marker_grep channel (ctx.tool_marker) is clearer. (Reserved: no firing logic in v0.29.0.)",
+			Fix:     "Add marker_grep: \"<regex>\" to the tool node and switch edges to test ctx.tool_marker, or declare outputs: <values> so coverage analysis can see the routing set.",
+			Example: "tool Check\n  command: echo done\n  marker_grep: \"^(done|more)$\"\nedges\n  Check -> Next when ctx.tool_marker = done",
+		},
 	}
 }
