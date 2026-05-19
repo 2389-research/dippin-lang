@@ -10,6 +10,7 @@
     ./scripts/gen-changelog.sh && \
     ./scripts/gen-spec.sh && \
     cp docs/generated-spec.md site/static/llms-full.txt && \
+    cp AGENTS.md site/static/AGENTS.md && \
     cd site && hugo --minify
   """
   publish = "site/public"
@@ -26,6 +27,7 @@
     ./scripts/gen-changelog.sh && \
     ./scripts/gen-spec.sh && \
     cp docs/generated-spec.md site/static/llms-full.txt && \
+    cp AGENTS.md site/static/AGENTS.md && \
     cd site && hugo --minify --baseURL $URL
   """
 
@@ -37,6 +39,7 @@
     ./scripts/gen-changelog.sh && \
     ./scripts/gen-spec.sh && \
     cp docs/generated-spec.md site/static/llms-full.txt && \
+    cp AGENTS.md site/static/AGENTS.md && \
     cd site && hugo --minify --baseURL $DEPLOY_PRIME_URL
   """
 
@@ -51,7 +54,12 @@
 [[headers]]
   for = "/"
   [headers.values]
-    Link = '</.well-known/api-catalog>; rel="api-catalog", </.well-known/agent-skills/index.json>; rel="describedby", </llms.txt>; rel="describedby"; type="text/plain", </skill.md>; rel="describedby"; type="text/plain"'
+    Link = '</.well-known/api-catalog>; rel="api-catalog", </.well-known/agent-skills/index.json>; rel="describedby", </llms.txt>; rel="describedby"; type="text/plain", </skill.md>; rel="describedby"; type="text/plain", </AGENTS.md>; rel="describedby"; type="text/markdown"'
+
+[[headers]]
+  for = "/AGENTS.md"
+  [headers.values]
+    Content-Type = "text/markdown; charset=utf-8"
 
 [[headers]]
   for = "/dippin.wasm"

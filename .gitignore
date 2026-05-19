@@ -17,6 +17,10 @@ site/*.tmp
 # cmd/dippin/ copy is checked in (required for go install @latest).
 docs/generated-spec.md
 
+# AGENTS.md is authored at repo root; netlify.toml copies it into site/static/
+# during the build so the canonical source stays one file.
+site/static/AGENTS.md
+
 # Hugo build output
 site/public/
 site/resources/

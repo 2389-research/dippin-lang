@@ -2,6 +2,7 @@ baseURL = "https://dippin.org/"
 languageCode = "en-us"
 title = "Dippin"
 uglyURLs = true
+enableGitInfo = true
 disableHugoGeneratorInject = true
 disableKinds = ["taxonomy", "term"]
 
@@ -10,7 +11,12 @@ disableKinds = ["taxonomy", "term"]
     [markup.goldmark.renderer]
       unsafe = true
   [markup.highlight]
-    codeFences = false
+    # codeFences must be true for the render-codeblock hook to fire.
+    # Hugo's own Chroma highlighter is bypassed by the custom hook in
+    # layouts/_default/_markup/render-codeblock.html — runtime highlighting
+    # is still handled client-side by static/highlight.js.
+    codeFences = true
+    noClasses = false
 
 [mediaTypes."text/plain"]
   suffixes = ["txt"]
@@ -21,8 +27,17 @@ disableKinds = ["taxonomy", "term"]
   isPlainText = true
   notAlternative = true
 
+[mediaTypes."text/markdown"]
+  suffixes = ["md"]
+
+[outputFormats.sitemapmd]
+  mediaType = "text/markdown"
+  baseName = "sitemap"
+  isPlainText = true
+  notAlternative = true
+
 [outputs]
-  home = ["HTML", "llmstxt"]
+  home = ["HTML", "llmstxt", "sitemapmd"]
 
 [params]
   description = "A language for AI pipeline workflows"
@@ -42,7 +57,9 @@ disableKinds = ["taxonomy", "term"]
 
 [[menus.main]]
   name = "Blog"
-  pageRef = "/blog"
+  # Hardcoded URL (not pageRef) because Hugo resolves section pageRefs to
+  # /blog/index.html under uglyURLs, but the rendered file is /blog.html.
+  url = "/blog.html"
   weight = 3
 
 [[menus.main]]

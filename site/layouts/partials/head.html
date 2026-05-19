@@ -21,6 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ "style.css" | relURL }}">
 {{- if .IsHome }}
+{{- $siteLastmod := .Site.Lastmod.Format "2006-01-02" -}}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -31,6 +32,7 @@
       "name": "Dippin",
       "url": "{{ .Site.BaseURL }}",
       "description": "{{ .Site.Params.description }}",
+      "dateModified": "{{ $siteLastmod }}",
       "publisher": { "@id": "{{ .Site.BaseURL }}#organization" }
     },
     {
@@ -45,11 +47,18 @@
       "description": "A domain-specific language and toolchain for authoring AI pipeline workflows. Replaces Graphviz DOT with first-class syntax for prompts, tools, conditions, and parallel execution.",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "macOS, Linux, Windows",
+      "dateModified": "{{ $siteLastmod }}",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "license": "https://opensource.org/licenses/MIT",
       "codeRepository": "https://github.com/2389-research/dippin-lang",
       "programmingLanguage": "Go",
       "author": { "@id": "{{ .Site.BaseURL }}#organization" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ .Site.BaseURL }}" }
+      ]
     }
   ]
 }
@@ -66,6 +75,18 @@
   "author": { "@id": "{{ .Site.BaseURL }}#organization" },
   "publisher": { "@id": "{{ .Site.BaseURL }}#organization" },
   "mainEntityOfPage": "{{ .Permalink }}"
+}
+</script>
+{{- else }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "{{ .Title }}",
+  "description": "{{ $desc }}",
+  "url": "{{ .Permalink }}",
+  "dateModified": "{{ .Lastmod.Format "2006-01-02" }}",
+  "publisher": { "@id": "{{ .Site.BaseURL }}#organization" }
 }
 </script>
 {{- end }}

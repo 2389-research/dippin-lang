@@ -1,6 +1,7 @@
 {{ define "main" }}
 <style>
 .playground { padding-top: 8.5rem; min-height: 100vh; }
+.playground h1.section-title, .playground h2.pane-label { margin-top: 0; }
 .playground-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
 .pane { display: flex; flex-direction: column; }
 .pane-label { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--text-soft); }
@@ -26,9 +27,10 @@
 <section class="playground">
 <div class="container">
   <div class="section-label">Interactive</div>
-  <div class="section-title">Playground</div>
+  <h1 class="section-title">Playground</h1>
   <p class="section-desc">Write Dippin workflows in the browser. Parse, lint, and format — all running locally via WebAssembly.</p>
 
+  <h2 class="pane-label" style="margin-top:1.5rem;">Tools</h2>
   <div class="toolbar">
     <button id="btn-lint" class="active" onclick="runLint()">Lint</button>
     <button id="btn-parse" onclick="runParse()">Parse</button>
@@ -37,7 +39,7 @@
 
   <div class="playground-grid">
     <div class="pane">
-      <div class="pane-label">Source (.dip)</div>
+      <h2 class="pane-label">Source (.dip)</h2>
       <div class="editor-wrap">
         <pre id="editor-highlight" aria-hidden="true"></pre>
         <textarea id="editor" spellcheck="false" oninput="syncHighlight()" onscroll="syncScroll()">workflow Hello
@@ -60,7 +62,7 @@
       </div>
     </div>
     <div class="pane">
-      <div class="pane-label">Output</div>
+      <h2 class="pane-label">Output</h2>
       <div id="output">Loading WASM...</div>
     </div>
   </div>
