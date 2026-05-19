@@ -11,6 +11,7 @@ Dippin files use the `.dip` extension and define directed graphs of agent steps,
 - [Changelog](https://dippin.org/changelog.html): Version history and release notes for dippin-lang.
 - [CLI Reference](https://dippin.org/cli.html): Complete command reference for the Dippin toolchain: parse, validate, lint, format, simulate, cost, test, pack, unpack, inspect, and 19 more commands.
 - [Editor Setup](https://dippin.org/editors.html): Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more.
+- [Glossary](https://dippin.org/glossary.html): Definitions for Dippin terms: workflow, node, edge, condition, defaults, subgraph, fan_in, parallel, .dipx, DIP codes, and more.
 - [Language Reference](https://dippin.org/language.html): Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets.
 - [Playground](https://dippin.org/playground.html): Try Dippin in your browser. Write, lint, parse, and format workflows live.
 - [Scenario Testing](https://dippin.org/testing.html): Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.
