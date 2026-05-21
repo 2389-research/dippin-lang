@@ -316,15 +316,34 @@ func hasManagerLoopAttrs(attrs map[string]string) bool {
 	return false
 }
 
+// hasToolConfigAttrs reports whether attrs contain any tool-config-specific
+// key. Used to detect tool nodes when their kind-based shape was overridden
+// to Mdiamond/Msquare by start/exit marker export. The five keys below are
+// unique to ir.ToolConfig and cannot collide with any other node kind; the
+// shared timeout attr is intentionally excluded.
+func hasToolConfigAttrs(attrs map[string]string) bool {
+	toolKeys := []string{"tool_command", "marker_grep", "outputs", "route_required", "output_limit"}
+	for _, key := range toolKeys {
+		if _, ok := attrs[key]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // resolveStartExitKind disambiguates start/exit-marker shapes (Mdiamond, Msquare)
-// by checking for any manager_loop-specific attribute. Start/exit override the
-// kind-based shape in export, so migrate has to recover the original kind from
-// attrs. Checking any manager_loop key (not just subgraph_ref) ensures partial
-// configurations (e.g., poll_interval set but subgraph_ref missing) are not
-// silently downgraded to NodeAgent, losing all configured fields.
+// by checking for kind-specific attributes. Start/exit override the kind-based
+// shape in export, so migrate has to recover the original kind from attrs.
+// Manager-loop attrs are checked first, then tool-config attrs; partial
+// configurations of either kind are detected so nothing is silently downgraded
+// to NodeAgent. Tool detection is bounded to tool-specific keys (the shared
+// timeout attr is excluded to avoid collision with HumanConfig).
 func resolveStartExitKind(attrs map[string]string) ir.NodeKind {
 	if hasManagerLoopAttrs(attrs) {
 		return ir.NodeManagerLoop
+	}
+	if hasToolConfigAttrs(attrs) {
+		return ir.NodeTool
 	}
 	return ir.NodeAgent
 }
