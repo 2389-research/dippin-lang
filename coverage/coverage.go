@@ -6,12 +6,12 @@
 package coverage
 
 import (
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/simulate"
+	"mvdan.cc/sh/v3/syntax"
 )
 
 // Report is the top-level result of a coverage analysis.
@@ -43,14 +43,6 @@ type ReachabilityReport struct {
 type TerminationReport struct {
 	AllPathsTerminate bool     `json:"all_paths_terminate"`
 	SinkNodes         []string `json:"sink_nodes,omitempty"`
-}
-
-// outputPatterns matches printf/echo string literals in shell commands.
-var outputPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`printf\s+'([^']+)'`),
-	regexp.MustCompile(`printf\s+"([^"]+)"`),
-	regexp.MustCompile(`printf\s+'%s'\s+'([^']+)'`),
-	regexp.MustCompile(`echo\s+'([^']+)'`),
 }
 
 // Analyze runs coverage analysis on a workflow and returns a report.
@@ -142,20 +134,153 @@ func toSet(items []string) map[string]bool {
 	return s
 }
 
-// extractToolOutputs finds printf/echo string literals in a shell command.
+// echoFlags are echo invocations that should be skipped when extracting
+// literal output values from an echo call's arguments.
+var echoFlags = map[string]bool{
+	"-n": true, "-e": true, "-E": true, "--": true,
+}
+
+// extractToolOutputs finds printf/echo string literals in a shell command
+// whose stdout reaches the engine. Statements that redirect to files or
+// feed into pipes are skipped, as are echo/printf calls nested inside
+// command substitution. Returns nil on shell parse errors — DIP123 catches
+// syntax problems upstream.
 func extractToolOutputs(command string) []string {
-	seen := make(map[string]bool)
-	var outputs []string
-	for _, pat := range outputPatterns {
-		for _, m := range pat.FindAllStringSubmatch(command, -1) {
-			val := m[1]
-			if !seen[val] && !isFormatSpecifier(val) {
-				seen[val] = true
-				outputs = append(outputs, val)
-			}
-		}
+	parser := syntax.NewParser(syntax.KeepComments(false))
+	prog, err := parser.Parse(strings.NewReader(command), "")
+	if err != nil {
+		return nil
 	}
+	var outputs []string
+	seen := make(map[string]bool)
+	syntax.Walk(prog, walkForOutputs(&outputs, seen))
 	return outputs
+}
+
+// walkForOutputs returns a syntax.Walk callback that collects literal
+// echo/printf args from statements whose stdout reaches the engine.
+func walkForOutputs(outputs *[]string, seen map[string]bool) func(syntax.Node) bool {
+	return func(node syntax.Node) bool {
+		switch n := node.(type) {
+		case *syntax.Stmt:
+			return !stmtIsRedirected(n)
+		case *syntax.CmdSubst:
+			return false
+		case *syntax.CallExpr:
+			collectFromCall(n, outputs, seen)
+		}
+		return true
+	}
+}
+
+// stmtIsRedirected returns true if a statement's stdout does not reach
+// the engine — either via a file/fd redirect or a pipe.
+func stmtIsRedirected(s *syntax.Stmt) bool {
+	if len(s.Redirs) > 0 {
+		return true
+	}
+	if bin, ok := s.Cmd.(*syntax.BinaryCmd); ok {
+		return bin.Op == syntax.Pipe || bin.Op == syntax.PipeAll
+	}
+	return false
+}
+
+// collectFromCall extracts literal output args from an echo or printf call.
+func collectFromCall(call *syntax.CallExpr, outputs *[]string, seen map[string]bool) {
+	if len(call.Args) == 0 {
+		return
+	}
+	name := extractWordLiteralLocal(call.Args[0])
+	switch name {
+	case "echo":
+		collectEchoArgs(call.Args[1:], outputs, seen)
+	case "printf":
+		collectPrintfArgs(call.Args[1:], outputs, seen)
+	}
+}
+
+// collectEchoArgs extracts literal args from `echo`, skipping flag args.
+func collectEchoArgs(args []*syntax.Word, outputs *[]string, seen map[string]bool) {
+	for _, w := range args {
+		lit := extractWordLiteralLocal(w)
+		if lit == "" || echoFlags[lit] {
+			continue
+		}
+		addOutput(lit, outputs, seen)
+	}
+}
+
+// collectPrintfArgs extracts literal args from `printf`. The two-arg
+// `printf '%s' 'value'` and `printf '%s\n' 'value'` patterns extract the
+// value; otherwise the format-string itself is the output literal.
+func collectPrintfArgs(args []*syntax.Word, outputs *[]string, seen map[string]bool) {
+	if len(args) == 0 {
+		return
+	}
+	first := extractWordLiteralLocal(args[0])
+	if first == "" {
+		return
+	}
+	if isFormatTwoArg(first, args) {
+		if val := extractWordLiteralLocal(args[1]); val != "" {
+			addOutput(val, outputs, seen)
+		}
+		return
+	}
+	addOutput(first, outputs, seen)
+}
+
+// isFormatTwoArg returns true if printf was invoked with a bare `%s` or
+// `%s\n` format string and exactly one value arg.
+func isFormatTwoArg(first string, args []*syntax.Word) bool {
+	return (first == "%s" || first == "%s\\n") && len(args) == 2
+}
+
+// addOutput appends a literal output value if it hasn't been seen and
+// isn't itself a format specifier.
+func addOutput(val string, outputs *[]string, seen map[string]bool) {
+	if seen[val] || isFormatSpecifier(val) {
+		return
+	}
+	seen[val] = true
+	*outputs = append(*outputs, val)
+}
+
+// extractWordLiteralLocal returns the literal string content of a simple
+// Word arg, handling bare, single-quoted, and double-quoted forms.
+// Returns "" if the word contains expansions or substitutions.
+func extractWordLiteralLocal(w *syntax.Word) string {
+	if w == nil || len(w.Parts) != 1 {
+		return ""
+	}
+	return extractPartLiteral(w.Parts[0])
+}
+
+// extractPartLiteral returns the literal content of a single WordPart,
+// or "" if the part is not a simple literal.
+func extractPartLiteral(part syntax.WordPart) string {
+	switch p := part.(type) {
+	case *syntax.Lit:
+		return p.Value
+	case *syntax.SglQuoted:
+		return p.Value
+	case *syntax.DblQuoted:
+		return extractDblQuotedLit(p)
+	}
+	return ""
+}
+
+// extractDblQuotedLit returns the literal content of a double-quoted
+// word part, or "" if it contains expansions.
+func extractDblQuotedLit(d *syntax.DblQuoted) string {
+	if len(d.Parts) != 1 {
+		return ""
+	}
+	lit, ok := d.Parts[0].(*syntax.Lit)
+	if !ok {
+		return ""
+	}
+	return lit.Value
 }
 
 // isFormatSpecifier returns true if the string looks like a printf format string.

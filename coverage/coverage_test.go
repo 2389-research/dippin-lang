@@ -205,6 +205,7 @@ func TestExtractToolOutputs(t *testing.T) {
 		command string
 		want    []string
 	}{
+		// Existing cases (regression coverage)
 		{"single_printf", "printf 'pass'", []string{"pass"}},
 		{"double_quote_printf", `printf "fail"`, []string{"fail"}},
 		{"echo", "echo 'done'", []string{"done"}},
@@ -212,6 +213,26 @@ func TestExtractToolOutputs(t *testing.T) {
 		{"multiple", "printf 'a'\nprintf 'b'", []string{"a", "b"}},
 		{"no_match", "run-binary", nil},
 		{"dedup", "printf 'x'\nprintf 'x'", []string{"x"}},
+
+		// Issue #40 — file-redirected statements must not extract
+		{"redirect_overwrite", "echo 'foo' > log.txt\nprintf 'green'", []string{"green"}},
+		{"redirect_append_and_pipe", "echo 'foo' >> log\necho 'bar' | tee /tmp/x\nprintf 'green'", []string{"green"}},
+		{"stderr_redirect", "echo 'oops' >&2\nprintf 'real'", []string{"real"}},
+
+		// Issue #40 — preserve format-two-arg pattern with newline format
+		{"printf_format_newline", "printf '%s\\n' 'inline'\nprintf 'tail'", []string{"inline", "tail"}},
+
+		// Issue #40 — echo with flags now extracts (regex missed it)
+		{"echo_with_flags", "echo -n 'foo'", []string{"foo"}},
+
+		// Issue #40 — command substitution: inner skipped, outer's only arg is non-literal
+		{"echo_command_sub", "echo $(printf 'inner')\nprintf 'outer'", []string{"outer"}},
+
+		// Issue #40 — subshell without redirect still writes to stdout
+		{"subshell_unredirected", "( echo 'inside' )\nprintf 'outside'", []string{"inside", "outside"}},
+
+		// Issue #40 — parse errors return nil (no regex fallback)
+		{"malformed_shell", "echo 'unclosed", nil},
 	}
 
 	for _, tt := range tests {
