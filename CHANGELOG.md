@@ -4,13 +4,12 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [v0.30.0] — 2026-05-21
 
+Coverage extractor now respects shell redirection. Closes [#40](https://github.com/2389-research/dippin-lang/issues/40).
+
 ### Fixed
 
-- `dippin coverage` no longer flags file-redirected `echo`/`printf` statements as uncovered tool outputs. The extractor now uses an AST walker (`mvdan.cc/sh/v3/syntax`) and skips statements that redirect to files (`>`, `>>`, `&>`, `>&`), feed into pipes, or are nested inside command substitution. Pipelines using the "log to file, printf marker on stdout" pattern correctly report `covered` instead of `partial`. (#40)
-
-### Closed
-
-- #40 — coverage flags file-redirected echo/printf as uncovered outputs
+- `dippin coverage` no longer flags file-redirected `echo`/`printf` statements as uncovered tool outputs. The extractor switched from regex matching to an AST walker built on `mvdan.cc/sh/v3/syntax`.
+- Statements that redirect to files (`>`, `>>`, `&>`, `>&`), feed into pipes, or are nested inside command substitution are now correctly skipped. Pipelines using the "log to file, printf marker on stdout" pattern flip from `partial` to `covered`.
 
 ## [v0.29.0] — 2026-05-19
 
