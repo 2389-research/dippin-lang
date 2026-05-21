@@ -319,8 +319,12 @@ func hasManagerLoopAttrs(attrs map[string]string) bool {
 // hasToolConfigAttrs reports whether attrs contain any tool-config-specific
 // key. Used to detect tool nodes when their kind-based shape was overridden
 // to Mdiamond/Msquare by start/exit marker export. The five keys below are
-// unique to ir.ToolConfig and cannot collide with any other node kind; the
-// shared timeout attr is intentionally excluded.
+// unique to ir.ToolConfig and cannot collide with any other node kind. Four
+// (marker_grep, outputs, route_required, output_limit) are always emitted;
+// tool_command only appears when IncludePrompts=true, so a bare tool node
+// with only command: exported without IncludePrompts is not recoverable
+// here — that case is out of scope (see issue #49 plan). The shared timeout
+// attr is intentionally excluded to avoid collision with HumanConfig.
 func hasToolConfigAttrs(attrs map[string]string) bool {
 	toolKeys := []string{"tool_command", "marker_grep", "outputs", "route_required", "output_limit"}
 	for _, key := range toolKeys {
