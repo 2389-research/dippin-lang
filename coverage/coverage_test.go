@@ -233,6 +233,9 @@ func TestExtractToolOutputs(t *testing.T) {
 
 		// Issue #40 — parse errors return nil (no regex fallback)
 		{"malformed_shell", "echo 'unclosed", nil},
+
+		// Issue #40 — && / || (non-pipe BinaryCmd) descends into both sides
+		{"echo_and", "echo 'a' && echo 'b'", []string{"a", "b"}},
 	}
 
 	for _, tt := range tests {
