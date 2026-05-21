@@ -174,15 +174,39 @@ func walkForOutputs(outputs *[]string, seen map[string]bool) func(syntax.Node) b
 }
 
 // stmtIsRedirected returns true if a statement's stdout does not reach
-// the engine — either via a file/fd redirect or a pipe.
+// the engine — either via a stdout-affecting redirect or a pipe. Stdin
+// redirects (`<`) and stderr-only redirects (`2>err.log`, `2>&1`) leave
+// stdout intact and do NOT cause the statement to be skipped.
 func stmtIsRedirected(s *syntax.Stmt) bool {
-	if len(s.Redirs) > 0 {
-		return true
+	for _, r := range s.Redirs {
+		if redirAffectsStdout(r) {
+			return true
+		}
 	}
 	if bin, ok := s.Cmd.(*syntax.BinaryCmd); ok {
 		return bin.Op == syntax.Pipe || bin.Op == syntax.PipeAll
 	}
 	return false
+}
+
+// redirAffectsStdout reports whether a single redirect diverts fd 1 away
+// from the engine's stdout. The `&>` / `&>>` operators always do; the
+// per-fd operators (`>`, `>>`, `>&`, `>|`, `<>`) only do when the source
+// fd is unset (defaults to 1) or explicitly "1".
+func redirAffectsStdout(r *syntax.Redirect) bool {
+	switch r.Op {
+	case syntax.RdrAll, syntax.AppAll:
+		return true
+	case syntax.RdrOut, syntax.AppOut, syntax.DplOut, syntax.RdrClob, syntax.RdrInOut:
+		return redirTargetsStdout(r.N)
+	}
+	return false
+}
+
+// redirTargetsStdout returns true if a redirect's fd number is unset
+// (defaults to stdout) or explicitly the literal "1".
+func redirTargetsStdout(n *syntax.Lit) bool {
+	return n == nil || n.Value == "1"
 }
 
 // collectFromCall extracts literal output args from an echo or printf call.

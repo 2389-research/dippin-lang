@@ -236,6 +236,12 @@ func TestExtractToolOutputs(t *testing.T) {
 
 		// Issue #40 — && / || (non-pipe BinaryCmd) descends into both sides
 		{"echo_and", "echo 'a' && echo 'b'", []string{"a", "b"}},
+
+		// PR review — only stdout-affecting redirects should skip the statement
+		{"stdin_redirect_keeps_stdout", "printf 'ok' < input.txt", []string{"ok"}},
+		{"stderr_only_redirect", "printf 'ok' 2>err.log", []string{"ok"}},
+		{"stderr_dup_to_stdout", "printf 'ok' 2>&1", []string{"ok"}},
+		{"fd1_explicit_redirect", "printf 'gone' 1>out.log\nprintf 'kept'", []string{"kept"}},
 	}
 
 	for _, tt := range tests {
