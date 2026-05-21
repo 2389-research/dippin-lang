@@ -1,3 +1,5 @@
+# Regression for issue #40: echoes redirected to a file must not count
+# as stdout coverage; only the final printf should reach the engine.
 workflow CoverageRedirection
   goal: "Demonstrate that file-redirected echoes no longer trip coverage"
   start: RunTests
