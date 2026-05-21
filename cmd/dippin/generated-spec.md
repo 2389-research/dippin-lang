@@ -280,6 +280,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 - `choice`: Outgoing edge labels become buttons. Human selects one.
 - `freeform`: Open text input → `ctx.human_response`
 - `interview`: Structured Q&A from upstream agent output. Don't combine with choice-style edges (DIP129).
+- `yes_no`: Binary Y/N prompt — two outgoing edges labeled `[Y]` and `[N]`.
 
 ### tool — shell command
 
