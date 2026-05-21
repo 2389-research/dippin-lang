@@ -1,0 +1,27 @@
+workflow CoverageRedirection
+  goal: "Demonstrate that file-redirected echoes no longer trip coverage"
+  start: RunTests
+  exit: Done
+
+  tool RunTests
+    timeout: 2m
+    command:
+      set -eu
+      echo 'capturing test baseline' > /tmp/coverage_redirection.log
+      echo 'build_system=python' >> /tmp/coverage_redirection.log
+      if true; then printf 'validation_pass'; else printf 'validation_fail'; fi
+
+  agent Pass
+    prompt: Summarize the successful run.
+
+  agent Fail
+    prompt: Summarize the failed run.
+
+  agent Done
+    prompt: Final report.
+
+  edges
+    RunTests -> Pass  when ctx.tool_stdout = validation_pass
+    RunTests -> Fail  when ctx.tool_stdout = validation_fail
+    Pass -> Done
+    Fail -> Done
