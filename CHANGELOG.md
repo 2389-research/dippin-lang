@@ -2,6 +2,16 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.30.0] — 2026-05-21
+
+### Fixed
+
+- `dippin coverage` no longer flags file-redirected `echo`/`printf` statements as uncovered tool outputs. The extractor now uses an AST walker (`mvdan.cc/sh/v3/syntax`) and skips statements that redirect to files (`>`, `>>`, `&>`, `>&`), feed into pipes, or are nested inside command substitution. Pipelines using the "log to file, printf marker on stdout" pattern correctly report `covered` instead of `partial`. (#40)
+
+### Closed
+
+- #40 — coverage flags file-redirected echo/printf as uncovered outputs
+
 ## [v0.29.0] — 2026-05-19
 
 Three follow-ups to v0.28.0's tool-routing surface. Closes [#42](https://github.com/2389-research/dippin-lang/issues/42), [#43](https://github.com/2389-research/dippin-lang/issues/43), [#44](https://github.com/2389-research/dippin-lang/issues/44).
