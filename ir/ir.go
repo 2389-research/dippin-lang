@@ -113,7 +113,7 @@ func (AgentConfig) nodeConfig() {}
 
 // HumanConfig holds configuration for human gate nodes.
 type HumanConfig struct {
-	Mode          string        // "choice" | "freeform" | "interview"
+	Mode          string        // "choice" | "freeform" | "interview" | "yes_no"
 	Default       string        // Default choice
 	Prompt        string        // Instructions shown to the human
 	QuestionsKey  string        // Context key to read questions from (interview mode)

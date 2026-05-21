@@ -185,10 +185,10 @@ These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
 <div class="diag-card warning">
   <span class="diag-code">DIP127</span> — Invalid human node mode
-  <p>The <code>mode:</code> value on a human node must be <code>choice</code>, <code>freeform</code>, or <code>interview</code>.</p>
+  <p>The <code>mode:</code> value on a human node must be <code>choice</code>, <code>freeform</code>, <code>interview</code>, or <code>yes_no</code>.</p>
   <pre>warning[DIP127]: invalid human node mode "dialog"
   --&gt; pipeline.dip:22:5
-  = help: use one of: choice, freeform, interview</pre>
+  = help: use one of: choice, freeform, interview, yes_no</pre>
 </div>
 
 <div class="diag-card warning">

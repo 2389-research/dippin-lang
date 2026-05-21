@@ -48,7 +48,7 @@ workflow <Name>
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
 | `agent` | `prompt` | `model`, `provider`, `backend`, `working_dir`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
-| `human` | `mode` (freeform\|choice\|interview) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
+| `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
 | `tool` | `command` | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
@@ -266,7 +266,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `mode` | string | **Required.** `choice`, `freeform`, or `interview` (DIP127) |
+| `mode` | string | **Required.** `choice`, `freeform`, `interview`, or `yes_no` (DIP127) |
 | `default` | string | Default choice (meaningless in interview mode — DIP128) |
 | `prompt` | multiline | Prompt text |
 | `questions_key` | string | Context key for interview questions |
@@ -582,7 +582,7 @@ The primary loop for authoring .dip files:
 | DIP124 | `${ctx.*}` in tool command | Remove — runtime variables expand to empty at parse time |
 | DIP125 | Command binary not on PATH | Install the binary or fix the command |
 | DIP126 | Subgraph ref file missing | Check `ref:` path |
-| DIP127 | Invalid human mode | Use: `choice`, `freeform`, `interview` |
+| DIP127 | Invalid human mode | Use: `choice`, `freeform`, `interview`, `yes_no` |
 | DIP130 | Invalid response_format | Use: `json_object`, `json_schema` |
 | DIP131 | Schema/format mismatch | `response_schema` requires `response_format: json_schema`, and vice versa — both must be present together |
 | DIP132 | Invalid JSON in response_schema | Fix the JSON syntax |

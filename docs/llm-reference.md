@@ -46,7 +46,7 @@ workflow <Name>
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
 | `agent` | `prompt` | `model`, `provider`, `backend`, `working_dir`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
-| `human` | `mode` (freeform\|choice\|interview) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
+| `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
 | `tool` | `command` | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
