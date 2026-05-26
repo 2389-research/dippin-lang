@@ -2067,3 +2067,91 @@ func TestParseRequiresFromFixture(t *testing.T) {
 		}
 	}
 }
+
+func TestParseAgent_ToolAccess(t *testing.T) {
+	cases := []struct {
+		name string
+		src  string
+		want string
+	}{
+		{
+			name: "explicit none",
+			src: `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    tool_access: none
+`,
+			want: "none",
+		},
+		{
+			name: "case variant",
+			src: `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    tool_access: None
+`,
+			want: "None",
+		},
+		{
+			name: "invalid value stored verbatim",
+			src: `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    tool_access: foo
+`,
+			want: "foo",
+		},
+		{
+			name: "quoted",
+			src: `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    tool_access: "none"
+`,
+			want: "none",
+		},
+		{
+			name: "omitted (default)",
+			src: `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+`,
+			want: "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewParser(tc.src, "test.dip")
+			w, err := p.Parse()
+			if err != nil {
+				t.Fatalf("parse error: %v", err)
+			}
+			node := w.Node("A")
+			if node == nil {
+				t.Fatalf("node A not found")
+			}
+			cfg, ok := node.Config.(ir.AgentConfig)
+			if !ok {
+				t.Fatalf("expected AgentConfig, got %T", node.Config)
+			}
+			if cfg.ToolAccess != tc.want {
+				t.Errorf("ToolAccess = %q, want %q", cfg.ToolAccess, tc.want)
+			}
+		})
+	}
+}
