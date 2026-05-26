@@ -12,6 +12,10 @@ New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalo
 - DIP139 lint warns on invalid `tool_access` values.
 - `examples/agent_tool_access.dip` demonstrates the field on a summarizer node.
 
+### Runtime requirement
+
+- Requires tracker `<tracker-tag>`. Without tracker enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the joint release prevents this).
+
 ### Tracker-side (linked to tracker tag `<tracker-tag>`)
 
 - Tool registry returns empty when `tool_access: none` is set.

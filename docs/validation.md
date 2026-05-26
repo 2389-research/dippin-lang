@@ -1,6 +1,6 @@
 # Validation and Linting Reference
 
-Dippin provides 41 diagnostic checks split into two categories:
+Dippin provides 44 diagnostic checks split into two categories:
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP139): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
@@ -224,7 +224,7 @@ error[DIP009]: duplicate edge
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP134)
+## Semantic Lint Warnings (DIP101–DIP139)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
