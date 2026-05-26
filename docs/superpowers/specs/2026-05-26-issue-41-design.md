@@ -63,18 +63,29 @@ Omitted — inherits from `defaults:` if set, else full.
 
 **Why `full` ships as an explicit value (departure from brainstorming preference).** Round-2 language critic (C2): in the recommended `defaults: tool_access: none` cascade pattern, the only spelling for "this agent is intentionally trusted with tools" was to delete the field — invisible in source diffs. Reviewers see `defaults: tool_access: none` and assume every agent is sandboxed; in fact some are not, but the safety-bearing absence is unobservable. `tool_access: full` makes the opt-out PR-reviewable. Cost: one extra enum value. Benefit: visible source-diff signal that an author has consciously taken on the v0.28.2 risk surface for a specific node.
 
+**`tool_access: full` semantic locked: "live catalog at runtime."** When tracker v0.X.Y ships a new tool (e.g., `WebFetch` in some future minor), every workflow with `tool_access: full` automatically gets access to it. Authors who write `tool_access: full` are opting in to "whatever tools this agent's tracker session provides, including future additions." This semantic is documented in skill.md so authors aren't surprised. (Round-3 future-maintainer finding: without this lock, the round-1 closing prediction reborn at the value level — every `tool_access: full` workflow silently inherits future tools and re-opens the v0.28.2 vector. Locking the live-catalog semantic makes the inheritance explicit and intentional, not silent.)
+
+**Author guidance (normative, surfaced in skill.md):** If `defaults: tool_access:` is set in the workflow, every agent that needs tools MUST write `tool_access: full` explicitly. If `defaults:` does not set `tool_access:`, omit the field on individual nodes. Don't mix the two patterns within a single workflow. PR reviewers can then read "every agent has a `tool_access:` line" as a workflow-level invariant.
+
 No middle tier (`read_only`, `read_filesystem`) in v1 — see non-goal #1.
 
-### D4. Fail-closed coercion lives in ONE place: `ir.AgentConfig.EffectiveToolAccess()`
+### D4. Fail-closed coercion lives in ONE place: `ir.AgentConfig.EffectiveToolAccess()` — enforced via lint, not convention
 
 Round-2 security (C1), parser (P4), IR (C2), future-maintainer (F1) converged: "coerce at the IR-consumption layer" scatters fail-closed logic across 18+ direct consumers of `ir.AgentConfig`, drift inevitable.
 
-Single canonical accessor:
+Single canonical accessor (`ir/tool_access.go`, new file):
 
 ```go
-// ir/ir.go
-func (c AgentConfig) EffectiveToolAccess() ToolAccessPolicy {
-    switch normalizeToolAccess(string(c.ToolAccess)) {
+package ir
+
+import "strings"
+
+// normalizeToolAccessPolicy is the canonical normalization for tool_access values.
+// Called by the validator (DIP139 lookup), the runtime accessor (EffectiveToolAccess),
+// and the DOT exporter (to canonicalize before writing graph.Attrs). All three sites
+// MUST use this function — never normalize inline.
+func normalizeToolAccessPolicy(v string) ToolAccessPolicy {
+    switch strings.ToLower(strings.TrimSpace(v)) {
     case "":
         return ToolAccessDefault
     case "none":
@@ -86,28 +97,37 @@ func (c AgentConfig) EffectiveToolAccess() ToolAccessPolicy {
     }
 }
 
-func normalizeToolAccess(v string) string {
-    return strings.ToLower(strings.TrimSpace(v))
+func (c AgentConfig) EffectiveToolAccess() ToolAccessPolicy {
+    return normalizeToolAccessPolicy(string(c.ToolAccess))
 }
-```
 
-**All runtime consumers go through `EffectiveToolAccess()`.** The raw `c.ToolAccess` field stays writable for the parser and readable for the validator (which lints authoring mistakes against the raw form via DIP139). No consumer except the validator reads `c.ToolAccess` directly.
-
-Workflow-level resolution helper, also in `ir/`:
-
-```go
 func (w *Workflow) EffectiveToolAccess(n *Node) ToolAccessPolicy {
-    if cfg, ok := n.Config.(AgentConfig); ok {
-        if eff := cfg.EffectiveToolAccess(); eff != ToolAccessDefault {
-            return eff
-        }
-        return w.Defaults.ToolAccess.normalize() // workflow default; same coercion rules
+    cfg, ok := n.Config.(AgentConfig)
+    if !ok {
+        return ToolAccessDefault
     }
-    return ToolAccessDefault
+    if eff := cfg.EffectiveToolAccess(); eff != ToolAccessDefault {
+        return eff
+    }
+    return normalizeToolAccessPolicy(string(w.Defaults.ToolAccess))
 }
 ```
 
-The existing `Model`/`Provider` resolution duplication (5 separate sites — `cost/cost.go:159`, `optimize/optimize.go:62`, `validator/lint_model.go:231`, `simulate/events.go:81-88`, `lsp/hover.go:111-115`) is pre-existing tech debt; a follow-up issue tracks consolidating those into the same pattern. The safety field gets the right pattern from day one.
+**Doc-comment on `AgentConfig.ToolAccess`:** *"DO NOT READ DIRECTLY outside `ir/` and `validator/`. Use `EffectiveToolAccess()` to get the runtime-effective policy. The raw field exists only for parser → validator round-tripping. Reading the raw field bypasses fail-closed coercion of invalid values."*
+
+**Compile-time enforcement.** Doc comments are not enough — round-3 security (C3-R1) and IR (I1) flagged this as a `Condition.Parsed`-style discipline-only gotcha. Spec requires:
+
+- `golangci-lint` config gains a `forbidigo` rule: `cfg\.ToolAccess` reads forbidden outside `ir/` and `validator/` packages. Build fails on violation.
+- The rule allowlists `ToolAccess.EffectiveToolAccess()` and `(w *Workflow).EffectiveToolAccess(n)`.
+- The pre-commit hook + CI both run this lint.
+
+This is the mechanism the spec ships, not just the API. `Condition.Parsed`'s gotcha exists because no analogous mechanism was put in place; this spec sets the new pattern.
+
+**Workflow.EffectiveToolAccess contract on out-of-graph nodes:** The function consults only `n.Config` and `w.Defaults` — node identity is irrelevant. Documented in the helper's doc comment as: *"Returns the effective policy for the agent based on the workflow's defaults cascade. Safe to call on any node; does not verify node-in-workflow membership."*
+
+**`Workflow.EffectiveToolAccess` is the same name as `AgentConfig.EffectiveToolAccess`.** Both are "the canonical accessor" — `AgentConfig.EffectiveToolAccess()` for per-config check (no defaults), `Workflow.EffectiveToolAccess(n)` for the cascade. Naming is intentional — Go's method receiver disambiguates.
+
+The existing `Model`/`Provider` resolution duplication (5 separate sites — `cost/cost.go:159`, `optimize/optimize.go:62`, `validator/lint_model.go:231`, `simulate/events.go:81-88`, `lsp/hover.go:111-115`) is pre-existing tech debt; **follow-up #4** tracks consolidating those into the same pattern. The safety field gets the right pattern from day one.
 
 ### D5. Parser stores verbatim; validator owns enum check
 
@@ -125,10 +145,12 @@ Four new diagnostic codes. **DIP133 is NOT extended** for `tool_access` (round-2
 
 | Code | Catches | Severity | File |
 |---|---|---|---|
-| DIP139 | `tool_access:` value not in `{"", "none", "full"}` (case-normalized) | error | `validator/lint_tool_access.go` |
-| DIP140 | `params:` contains `{allowed_tools, disallowed_tools, tool_choice, permission_mode, backend, tool_access}` (case-normalized keys). Fires unconditionally — does NOT gate on `tool_access:` state. | warning | `validator/lint_tool_access.go` |
+| DIP139 | `tool_access:` value not in `{"", "none", "full"}` (case-normalized) OR field set with empty/whitespace-only value | error | `validator/lint_tool_access.go` |
+| DIP140 | `params:` contains `{allowed_tools, disallowed_tools, tool_choice, permission_mode, tool_access}` (case-normalized keys). Fires unconditionally — does NOT gate on `tool_access:` state. | warning | `validator/lint_tool_access.go` |
 | DIP141 | Agent with effective `tool_access: none` has outgoing edge to one or more agent nodes whose effective `tool_access` is `full` or default | warning (advisory) | `validator/lint_tool_access.go` |
-| DIP142 | `tool_access: none` combined with a backend whose deny-equivalent spelling is unverified (set fixed by implementation plan; see D9) | error | `validator/lint_tool_access.go` |
+| DIP142 | `tool_access: none` combined with a backend whose deny-equivalent spelling is unverified (set lives in `validator/known_backend_tool_access.go` with SHA pinning per D9) | error | `validator/lint_tool_access.go` |
+
+**DIP140 danger-list change from round 2:** `backend` is REMOVED from the list (round-3 LC-C3). `backend` is a typed agent field; `params: { backend: X }` is a *same-name typed-field shadow* (DIP133 territory), not a *cross-name safety bypass* (DIP140's actual intent). Conflating them produced an incoherent diagnostic message for the `backend` case. v1 leaves the typed-Backend vs params-Backend shadow to existing DIP133 (hint severity); upgrading that to warning for safety-bearing fields is **follow-up #10** (new).
 
 **DIP140 fires unconditionally** (round-2 LC C3, sec C2, future F11). The dangerous case — author writes `params: { permission_mode: bypassPermissions }` with no `tool_access:` set — must trip the lint. Gating only on `tool_access: none` would silence the dangerous case and warn the safe case (already-claimed-safety + redundant params).
 
@@ -138,7 +160,11 @@ DIP141 stays advisory (warning) per brainstorming decision. The diagnostic Help 
 
 ### D8. `BranchConfig` and `ManagerLoopConfig`
 
-`BranchConfig` gains a `ToolAccess ir.ToolAccessPolicy` field (round-2 IR C4). Matches the existing pattern of `BranchConfig` overriding `Model`/`Provider`/`Fidelity` per branch. Per-branch override fully replaces per-target effective tool_access (same semantic as defaults cascade per node). Cost: one IR field + one parse case + one round-trip case. Benefit: no breaking change when v2 adds richer surface; PR-reviewable per-branch safety override.
+**`BranchConfig` does NOT gain a `ToolAccess` field in v1.** Round-2 IR-C4 argued for shipping it for forward-compat; round-3 IR-C1 demonstrated that block-form parallel nodes' per-branch fields (`Model`/`Provider`/`Fidelity`) **already lose their values through DOT round-trip today** — there is no per-branch DOT emission infrastructure. Shipping `BranchConfig.ToolAccess` without that infrastructure means the field silently no-ops on the tracker wire format (which reads from DOT graph attrs). For a safety-bearing field, "silently no-ops" is the exact failure mode the parking decision rejected.
+
+Bundling per-branch DOT emission infrastructure for all four fields (Model/Provider/Fidelity + ToolAccess) is real scope creep and surfaces a pre-existing round-trip parity bug. Track as **follow-up #9** (new): "per-branch DOT round-trip for BranchConfig fields." Once that infrastructure ships, `BranchConfig.ToolAccess` returns in a future minor.
+
+v1 authoring pattern for per-branch safety: use `defaults: tool_access: none` + per-node `tool_access: full` on the branch target agent. Less granular than per-invocation override (one branch target = one tool_access for all invocations), but: (a) the per-node value DOES round-trip through DOT, (b) DIP141 (cross-node lint) catches the dangerous shape, (c) skill.md documents the limitation.
 
 `ManagerLoopConfig` does NOT gain a `ToolAccess` field in v1 — the supervised child is a separate workflow with its own `defaults:` block. Cross-workflow propagation is non-goal #4.
 
@@ -152,15 +178,35 @@ DIP141 stays advisory (warning) per brainstorming decision. The diagnostic Help 
 
 **v1 ships DIP142** as the backend-compatibility lint. **Error** severity. Fires when `tool_access: none` is combined with a backend whose deny-equivalent spelling has not been verified.
 
-The set of unverified backends is fixed by the implementation plan based on documentation evidence (URL + retrieval date, mirroring `CLAUDE.md`'s model-catalog pricing-verification pattern). At spec authorship time, both `backend: claude-code` and `backend: acp` are unverified. The implementation plan documents:
+**Versioned-contract treatment (round-3 sec C3-R2).** Mirrors `knownDangerousTrackerParams` shape. Set lives in `validator/known_backend_tool_access.go`:
 
-- For each backend, the documented spelling for "no LLM tools" (e.g., `--allowedTools '' '' '' ''` for Claude Code CLI, or whatever the verified spelling is).
-- The corresponding tracker translation code path.
-- The verification date and source URL.
+```go
+// knownVerifiedBackendsForNone — backends whose runtime has been verified to honor
+// tool_access: none. Adding entries requires (1) a citation comment with URL and
+// retrieval date, AND (2) a tracker-side integration test demonstrating actual
+// runtime deny behavior, NOT just documentation.
+//
+// Last verified set: <date>, tracker commit: <SHA>
+var knownVerifiedBackendsForNone = map[string]bool{
+    "native": true, // Anthropic translator: tool_choice: none + empty tools[] (verified <date>)
+    // "claude-code": <pending — needs runtime verification, not just docs>
+    // "acp":         <pending — needs runtime verification>
+}
+```
 
-If both backends are verified by merge time, DIP142 ships with an empty unverified set (effectively disabled but reserved for future backends). If one is verified and one is not, DIP142 fires only on the unverified one. If neither is verified, DIP142 blocks both combinations.
+DIP142 fires when `cfg.Backend != "" && !knownVerifiedBackendsForNone[cfg.Backend] && effectiveToolAccess == "none"`.
 
-Authors who need `claude-code` and hit DIP142 use `backend: claude-code`'s own `allowed_tools` attribute (silently dropped by native backend, but supported on claude-code) until verification lands.
+**Backend-addition runbook (in spec, round-3 future review):** to add a new backend to the verified set, the contributor MUST:
+1. Add a tracker integration test that constructs a session with the new backend + `tool_access: none` + a mocked LLM emitting tool calls. Assert zero tool executions.
+2. Cite the upstream documentation (URL + retrieval date) for the backend's deny-equivalent spelling.
+3. Add the entry to `knownVerifiedBackendsForNone` with the citation comment.
+4. Update the `Last verified set` date at the top of the file.
+
+The dippin-side SHA-drift gate (described above for `known_tracker_params.go`) also enforces this file: if tracker go.mod version is newer than the pinned SHA, build fails until the verified set is re-confirmed.
+
+**Backend-switch destabilization (round-3 sec C3-R8).** DIP142's Help text must explain: "Backend `<X>` has not been verified to honor `tool_access: none`. The validator blocks this combination until tracker-side verification lands. Pin tracker >= vX.Y or switch to `backend: native` (verified)." Without this Help text, an author who hits DIP142 after switching backends may remove `tool_access: none` to silence the error — defeating the safety claim.
+
+Authors who need `claude-code` before verification lands use `backend: claude-code`'s own `allowed_tools` attribute (already supported on claude-code) until DIP142 unblocks the typed surface.
 
 ### D10. Chain-attack vector: explicit non-goal
 
@@ -207,29 +253,16 @@ type WorkflowDefaults struct {
     ToolDenylistAdd   string
 }
 
-// BranchConfig: per-branch override matching the existing Model/Provider/Fidelity pattern.
+// BranchConfig: unchanged in v1. Per-branch ToolAccess deferred per D8 (follow-up #9).
 type BranchConfig struct {
-    Target     string
-    Model      string
-    Provider   string
-    Fidelity   string
-    ToolAccess ToolAccessPolicy
-}
-
-// Workflow-level resolver.
-func (w *Workflow) EffectiveToolAccess(n *Node) ToolAccessPolicy {
-    cfg, ok := n.Config.(AgentConfig)
-    if !ok {
-        return ToolAccessDefault
-    }
-    if eff := cfg.EffectiveToolAccess(); eff != ToolAccessDefault {
-        return eff
-    }
-    return normalizeToolAccessPolicy(string(w.Defaults.ToolAccess))
+    Target   string
+    Model    string
+    Provider string
+    Fidelity string
 }
 ```
 
-`normalizeToolAccessPolicy(string) ToolAccessPolicy` is the shared helper used by `EffectiveToolAccess()`, the validator, and the formatter. It lowercases + trims + maps to a constant; unknown values map to `ToolAccessNone`.
+`normalizeToolAccessPolicy(string) ToolAccessPolicy` (defined in D4) is the shared helper used by `EffectiveToolAccess()`, the validator, the formatter, AND the DOT exporter (which canonicalizes the value before writing to `graph.Attrs` — see DOT export section). Four call sites, ONE normalization implementation.
 
 ### Parser (`parser/parse_nodes.go` and `parser/parse_defaults.go`)
 
@@ -249,23 +282,32 @@ case "tool_access":
 
 Both call sites store verbatim — no parser-side normalization. Per round-2 parser P2, both sites are co-located with comments cross-referencing the other to prevent drift when one is edited.
 
-Branch-block case in `applyBranchField` (`parser/parse_nodes.go:733-742`):
-
-```go
-case "tool_access":
-    branch.ToolAccess = ir.ToolAccessPolicy(val)
-```
+`applyBranchField` (`parser/parse_nodes.go:733-742`) — unchanged in v1. Per D8, `BranchConfig.ToolAccess` deferred to follow-up #9.
 
 ### Validator (`validator/lint_tool_access.go`, new file)
 
 `validToolAccess = map[string]bool{"": true, "none": true, "full": true}`. Lookup uses `normalizeToolAccessPolicy` so `None`, `NONE`, `Full`, ` none ` all hit the right case.
 
-**`lintToolAccessValues`** — DIP139, error. For every agent node + defaults block + branch config: if raw `ToolAccess` non-empty and `normalizeToolAccessPolicy(raw)` is not a recognized constant, emit:
+**`lintToolAccessValues`** — DIP139, error. For every agent node + defaults block (BranchConfig N/A per D8): emit when the raw `ToolAccess` value is set but does NOT resolve to a recognized constant via `normalizeToolAccessPolicy`. Two firing cases:
 
+1. **Invalid spelling.** `tool_access: foo` (or any value that lowercases/trims to something other than `""`, `"none"`, `"full"`).
+2. **Empty after trim.** `tool_access:` (no value), `tool_access: ""`, `tool_access: "  "` — author set the field but cleared the value. Round-3 parser C3: silent inherit-from-defaults is a worse failure mode than fail-closed-with-typo because it's invisible to both lint and source review.
+
+Note: a field that is ABSENT entirely (no `tool_access:` line) does NOT fire DIP139 — that's the documented "inherit" case. The distinction is "field set with bad/empty value" vs "field not set."
+
+Diagnostic message (invalid case):
 ```
 node "X" has tool_access "Nono" which is not recognized
-Help: Valid values: none, full. Omit the field to inherit from defaults (or full if no default set).
-      Invalid values fall back to 'none' at runtime — fix the typo or remove the field.
+Help: Valid values: none, full. Delete the field entirely to inherit from defaults (or get
+      the full catalog if no default set). Invalid values fall back to 'none' at runtime —
+      fix the typo or remove the field.
+```
+
+Diagnostic message (empty case):
+```
+node "X" has tool_access: with no value
+Help: Field is set but empty. Delete the field to inherit from defaults, or set to `none`
+      (no tools) or `full` (current catalog including future additions).
 ```
 
 The "falls back to none at runtime" sentence is load-bearing (round-2 parser P11). DIP139's diagnostic must surface this so authors who hit the lint don't treat it as informational.
@@ -285,13 +327,15 @@ var knownDangerousTrackerParams = map[string]bool{
     "disallowed_tools":  true,
     "tool_choice":       true,
     "permission_mode":   true,
-    "backend":           true, // typed field exists; params override is bypass
-    "tool_access":       true, // typed field exists; params override is bypass
-    // NOTE: extend with verification against tracker's Params consumers when adding.
+    "tool_access":       true, // typed field exists; params override re-enables tools
+    // NOTE: `backend` is intentionally NOT here — same-name shadow of typed field is
+    // DIP133 territory, not DIP140. See spec D7 round-3 LC-C3 resolution.
 }
 ```
 
-The tracker-side CI test (see § Tests) enumerates the keys tracker reads from `cfg.Params` and asserts they're a subset of `knownDangerousTrackerParams` ∪ a known-safe set. New tracker reads fail the build until dippin's list is updated.
+**Tracker-side enumerator: runtime-instrumented, not grep-based** (round-3 sec C3-R3). Tracker-side CI test wraps `cfg.Params` reads with instrumentation that records every key actually consulted during a session run. After running a battery of representative sessions, the test asserts every recorded key is in dippin's `knownDangerousTrackerParams` ∪ a known-safe set (`temperature`, `max_tokens`, etc.). Grep-based audits miss indirect iteration and dynamic key construction.
+
+**Dippin-side SHA-drift gate.** dippin CI compares the SHA in `known_tracker_params.go`'s "Last verified" comment against the tracker version in go.mod. If go.mod tracker version is newer than the pinned SHA, build fails until the comment is updated (and the contract is re-verified). Mirrors the model-catalog "Last verified" pattern in `CLAUDE.md` with build-time enforcement instead of pure convention.
 
 **`lintCrossNodeToolAccess`** — DIP141, warning. For every agent node with `w.EffectiveToolAccess(n) == ToolAccessNone`: walk outgoing edges (and `BranchConfig.Target` references for parallel-fan-out nodes whose `Branches:` reference agents). For each target that resolves to an agent node with `w.EffectiveToolAccess(target) == ToolAccessFull` (or unset → full), emit:
 
@@ -306,9 +350,17 @@ Help: The downstream agent has access to the full tool catalog. If "Summary"'s r
 Function structure to fit ≤5 cyclomatic / ≤7 cognitive per CLAUDE.md (round-2 parser P6):
 
 - `lintCrossNodeToolAccess(res *Result, w *ir.Workflow)` — outer; iterates nodes
-- `agentTargets(n *ir.Node, edges []*ir.Edge, w *ir.Workflow) []*ir.Node` — collect direct + branch-target agent nodes
+- `agentTargets(n *ir.Node, edgesByFrom map[string][]*ir.Edge, w *ir.Workflow) []*ir.Node` — collect direct + branch-target agent nodes, **deduplicated**
 - `checkRestrictiveLeak(res *Result, w *ir.Workflow, src, dst *ir.Node)` — emit one diag per leak
 - `effectiveToolAccess` lives on `ir.Workflow` (D4), not in the validator
+
+**`agentTargets` contract (round-3 IR I4, parser I5):**
+- Skip target IDs that don't resolve via `w.Node(id)` (silently — DIP002 / unreachable lints catch bad refs separately).
+- Skip targets whose `Config` is not `AgentConfig` (tool/human/etc. nodes don't have `tool_access`).
+- Resolution is single-level; no recursive cascade.
+- Return value is a **deduplicated** set so a node referenced both via direct edge AND via `BranchConfig.Target` doesn't fire two diagnostics for the same (src, dst) pair.
+
+**Index outgoing edges via `edgesByFrom`** built once per workflow (matches `validator/lint.go:80-84` precedent). Without indexing, the lint is O(N²) on workflows with many edges; with it, O(N+E).
 
 **`lintParamsSameNameShadow`** — folded into DIP140 (round-2 IR I2). When `params:` contains a key whose name matches a typed first-class agent field (specifically `tool_access`, but the danger set already covers it), DIP140 fires at warning severity. **DIP133 is NOT extended for `tool_access`** — its hint severity would silently degrade the safety claim.
 
@@ -318,17 +370,19 @@ DIP139, DIP140, DIP141, DIP142 entries with `Code`, `Summary`, `Trigger`, `Fix`,
 
 ### Formatter (`formatter/format.go`)
 
-Per-node `tool_access:` emitted by `writeAgentRuntimeFields` (`format.go:366-373`), conditional on `cfg.ToolAccess != ""`. Position: in the runtime/backend cluster (NOT the model cluster — round-2 IR I1 + I4):
+Per-node `tool_access:` emitted by `writeAgentRuntimeFields` (`format.go:366-373`), conditional on `cfg.ToolAccess != ir.ToolAccessDefault`. Position: in the runtime/backend cluster (NOT the model cluster — round-2 IR I1 + I4):
 
 ```go
-if cfg.ToolAccess != "" {
+if cfg.ToolAccess != ir.ToolAccessDefault {
     wr.line("tool_access: %s", quoteValue(string(cfg.ToolAccess)))
 }
 ```
 
+Formatter emits the **raw** stored value verbatim — invalid values (e.g., `tool_access: foo`) survive formatting so re-parsing still trips DIP139. The DOT exporter is the layer that canonicalizes (since DOT is the dippin/tracker wire format); the source-text formatter preserves authoring fidelity.
+
 Defaults-block `tool_access:` emitted by `writeDefaultsToolSafetyFields` (extend the existing `format.go:204-211` block to include `tool_access` first, then the existing `tool_commands_allow` and `tool_denylist_add`).
 
-`BranchConfig.ToolAccess` emitted by the branch-block formatter analogously to `Model`/`Provider`/`Fidelity`.
+Branch-block formatter unchanged in v1 (no per-branch `tool_access` per D8).
 
 Formatter emits **verbatim** invalid values too — so round-tripping `tool_access: nono` through `format` preserves the value and the validator still emits DIP139 after migrate (round-2 parser P7).
 
@@ -336,9 +390,18 @@ Formatter emits **verbatim** invalid values too — so round-tripping `tool_acce
 
 Per-node `tool_access` attribute on agent nodes via `applyAgentRuntimeAttrs` (`export/dot.go:280-302`). Defaults-block `tool_access` emitted in the defaults cluster.
 
+**Canonicalization at DOT export (round-3 parser C2).** The DOT exporter MUST call `normalizeToolAccessPolicy` and emit the canonical lowercase form, NOT the raw value. This closes the four-site normalization contract:
+
+1. Parser stores raw verbatim (D5)
+2. Validator normalizes for lookup (D7, DIP139)
+3. Runtime normalizes via `EffectiveToolAccess()` (D4)
+4. **DOT exporter canonicalizes before writing `graph.Attrs`** (this section)
+
+Tracker reads `graph.Attrs["tool_access"]` and compares against literal `"none"` / `"full"`. By the time tracker sees the value, it has been canonicalized. A workflow with `tool_access: None` (capitalized typo) round-trips through `parser → DIP139 warning → formatter (verbatim, preserves DIP139 trigger) → DOT exporter (canonicalizes to lowercase via `normalizeToolAccessPolicy`) → tracker (sees `"none"`, applies safety)`. The validator's diagnostic surfaces the typo to the author; the runtime behavior is safe regardless.
+
 `reservedGraphAttrs` (`export/dot.go:60`) gains `tool_access` so it can't collide with author `vars:`.
 
-`BranchConfig.ToolAccess` emitted as a per-branch DOT attribute on the branch label/edge (matching the existing per-branch `model`/`provider`/`fidelity` pattern).
+Branch-block DOT emission unchanged in v1 (no per-branch `tool_access` per D8; per-branch DOT round-trip is broken for all BranchConfig fields and tracked as follow-up #9).
 
 ### Migrate (`migrate/migrate.go`)
 
@@ -346,11 +409,13 @@ Per-node `tool_access` attribute on agent nodes via `applyAgentRuntimeAttrs` (`e
 
 Defaults extraction reads `tool_access` analogously.
 
-`BranchConfig` migration adds `ToolAccess` extraction.
+BranchConfig migration unchanged in v1 (no per-branch `tool_access` per D8).
 
 **No new heuristic in `resolveStartExitKind`** — `tool_access` lives on agent shape's normal path (round-2 IR I5). The v0.31.0-shipped `hasToolConfigAttrs` is unaffected.
 
-`compareAgentConfigs` (`migrate/parity.go:219-228`) — extend to compare `ToolAccess`. The existing comparator is incomplete (omits `Backend`, `WorkingDir`, `Params`); follow-up issue tracks the broader cleanup. For this spec, we extend with `ToolAccess` and add a separate `TestRoundtripPreservesToolAccess` that uses `reflect.DeepEqual` on the full config (round-2 IR I4) to catch any other quietly-broken parity.
+`compareAgentConfigs` (`migrate/parity.go:219-228`) — extend to compare `ToolAccess` only. **Do NOT bundle the broader `reflect.DeepEqual` upgrade** (round-3 IR-C2): the existing comparator deliberately ignores ~11 fields (`Backend`, `WorkingDir`, `Params`, `MaxTurns`, `CmdTimeout`, `CacheTools`, `Compaction`, `CompactionThreshold`, `ReasoningEffort`, `Fidelity`, `ResponseFormat`, `ResponseSchema`, `SystemPrompt`) that are currently broken or untested on the round-trip path. Switching to `DeepEqual` would surface every one of those as a new test failure, blowing up the v0.32 scope.
+
+For this spec: extend `compareAgentConfigs` to add `ToolAccess` to the existing field-list. Add a `TestRoundtripPreservesToolAccess` that asserts specifically on `ToolAccess` field equality through DOT export → re-parse. **Follow-up #4** broadens to a comprehensive parity audit across all AgentConfig fields.
 
 ### Pack-time validation (`cmd/dippin/cmd_pack.go`)
 
@@ -414,13 +479,15 @@ Parse real `.dip` text via `parser.NewParser(src, "test").Parse()`. No hand-buil
 |---|---|---|---|
 | valid none | `tool_access: none` | `"none"` | none |
 | valid full | `tool_access: full` | `"full"` | none |
-| case variant | `tool_access: None` | `"None"` (verbatim) | none from parser; DIP139 from validator after normalization → recognized |
-| invalid | `tool_access: foo` | `"foo"` | none from parser; DIP139 from validator |
+| case variant | `tool_access: None` | `"None"` (verbatim) | none from parser; validator normalizes via `normalizeToolAccessPolicy` → recognized → no DIP139 |
+| case variant defaults | `defaults\n  tool_access: NONE` | `w.Defaults.ToolAccess = "NONE"` (verbatim) | none from parser; validator recognizes via normalization → no DIP139 |
+| invalid | `tool_access: foo` | `"foo"` | DIP139 from validator |
+| empty value | `tool_access:` (nothing after colon) | `""` | **DIP139 "field set but empty"** (round-3 parser C3) |
+| empty quoted | `tool_access: ""` | `""` | **DIP139 "field set but empty"** |
 | quoted | `tool_access: "none"` | `"none"` | none |
-| quoted + comment | `tool_access: "none" # secured` | `"none"` | none |
-| comment-no-space | `tool_access: none# rationale` | `"none# rationale"` | DIP139 (this is a pre-existing parser edge case per round-2 P3; spec acknowledges) |
+| **quoted + comment** | `tool_access: "none" # secured` | `"none" # secured` **(verbatim; lexer's `maybeStripComment` skips quoted-value-with-trailing-comment per existing `parser/lexer.go:493`)** | **DIP139** (round-3 parser C1: spec acknowledges pre-existing lexer behavior; documented in skill.md as authoring caveat alongside `comment-no-space`) |
+| comment-no-space | `tool_access: none# rationale` | `"none# rationale"` | DIP139 (pre-existing lexer behavior) |
 | defaults-block | `defaults\n  tool_access: none` | `w.Defaults.ToolAccess = "none"` | none |
-| branch-config | parallel block with `branch: X\n  tool_access: none` | `branch.ToolAccess = "none"` | none |
 
 ### Validator (`validator/lint_tool_access_test.go`, new file)
 
@@ -430,22 +497,29 @@ Each lint code: positive case (lint fires with expected message and position) + 
 - DIP140 positive: each danger key in `params:` (case variants); negative: safe keys (`temperature`, `max_tokens`, etc.).
 - DIP141 positive: `tool_access: none` source agent with edge to `tool_access: full` (or default) agent; negative: chain of `tool_access: none` agents; negative: `tool_access: full` source agent.
 - DIP141 with cascade: `defaults: tool_access: none` + per-node `tool_access: full` correctly inherits opposite from default and lint fires.
-- DIP141 across `BranchConfig.Target`: parent has `tool_access: none`, parallel block branches to mixed `tool_access` agents.
-- DIP142 positive: `tool_access: none` + unverified backend (set per implementation plan); negative: `tool_access: none` + verified backend; negative: `tool_access: full` + unverified backend.
+- DIP141 with deduplication: a node referenced both via direct edge AND via `BranchConfig.Target` fires only one diagnostic per (src, dst) pair.
+- DIP141 unresolved target: branch's `Target` points to nonexistent node → lint skips, no panic.
+- DIP142 positive: `tool_access: none` + unverified backend (set per `known_backend_tool_access.go`); negative: `tool_access: none` + verified backend (native); negative: `tool_access: full` + unverified backend.
 
 ### Integration (`validator/lint_examples_test.go::TestLintExamples`)
 
-Runs all `examples/*.dip` through real parse → lint. The new `examples/agent_tool_access.dip` must produce zero DIP139/140/141 (lint-clean — round 1 finding "examples must lint-clean"). Existing examples must not regress.
+Runs all `examples/*.dip` through real parse → lint.
+
+- `examples/agent_tool_access.dip`: zero DIP139/140/141/142 (lint-clean).
+- `examples/agent_tool_access_chain.dip`: zero DIP139/140/142; **exactly one DIP141** on the `Summarize -> Writer` edge. Test extends `TestLintExamples` with an expected-codes-per-file map for cases where a non-zero lint count is intentional (round-3 LC-C2 resolution).
+
+Existing examples must not regress.
 
 ### Round-trip (`migrate/roundtrip_test.go`)
 
-Extend `compareAgentConfigs` to assert `ToolAccess`. Add new `TestRoundtripPreservesToolAccess`:
+Extend `compareAgentConfigs` to assert `ToolAccess` (only this field; broader audit per follow-up #4). Add new `TestRoundtripPreservesToolAccess`:
 
-- Parses `.dip` with `defaults: tool_access: none`, per-node `tool_access: full`, branch with `tool_access: none`.
+- Parses `.dip` with `defaults: tool_access: none`, per-node `tool_access: full`, per-node inheriting default.
 - Round-trips through DOT export → `Migrate`.
-- Asserts: every `ToolAccess` survives exactly (including case-preserved invalid values — DIP139 still fires after round-trip).
+- Asserts: every `ToolAccess` survives — **as the canonical lowercase form** (since DOT export canonicalizes per the DOT export section). A workflow with author-spelled `tool_access: None` round-trips to `tool_access: none` after one DOT pass; the DIP139 warning was emitted on the first parse but the canonicalized form is stable across subsequent round-trips.
+- Asserts invalid values also round-trip via canonicalization → fail-closed (`tool_access: foo` → canonicalized + emitted by formatter, re-parsed by migrate, runtime `EffectiveToolAccess()` returns `ToolAccessNone`).
 
-Use `reflect.DeepEqual` on the full `AgentConfig` to catch any other quietly-broken parity.
+No per-branch ToolAccess test (per D8, not in v1).
 
 ### Tracker side (cross-repo)
 
@@ -476,34 +550,72 @@ Specified in tracker PR; spec calls out the required shape so the dippin-side re
 
 ## Examples (`examples/agent_tool_access.dip`)
 
-Lint-clean. Mirrors the issue body's `ReportFinalStatus` framing:
+Lint-clean. Mirrors `examples/tool_safety.dip` syntactic style (bare keywords, `->` edges). Demonstrates defaults cascade + explicit `full` opt-out + DIP141-firing-and-suppressing patterns:
 
 ```
-workflow ReportFinalStatusDemo:
+workflow AgentToolAccess
+  goal: "Demonstrate tool_access defaults cascade and per-node opt-out (issue #41)"
   start: Plan
+  exit: ReportFinalStatus
 
-  defaults:
-    tool_access: none      # workflow-wide safe-by-default
+  defaults
+    model: claude-sonnet-4-6
+    # Workflow-wide safe-by-default. Every agent inherits unless it explicitly
+    # writes tool_access: full to opt out.
+    tool_access: none
 
-  agent Plan:
-    prompt: "Plan the work; output a numbered task list."
+  agent Plan
+    prompt: "Plan the work. Output a numbered task list. Use Read/Glob to inspect repo state."
     tool_access: full      # explicit opt-out — Plan needs tools to investigate
-    edges:
-      - on: success → Implement
 
-  agent Implement:
-    prompt: "Execute the plan."
-    tool_access: full
-    edges:
-      - on: success → ReportFinalStatus
+  agent Implement
+    prompt: "Execute the plan step-by-step. Use Write/Edit as needed."
+    tool_access: full      # explicit opt-out — implementation requires writes
 
-  agent ReportFinalStatus:
-    prompt: "Summarize what was implemented. Emit STATUS: line."
-    # tool_access inherited from defaults → none. Bounded summarizer.
+  agent ReportFinalStatus
+    prompt: "Summarize what was implemented. Emit STATUS: success or STATUS: failure."
     auto_status: true
+    # tool_access inherited from defaults → none. Pure text-in / text-out summarizer.
+    # DIP141 does NOT fire here because ReportFinalStatus has no outgoing edges.
+
+  edges
+    Plan -> Implement
+    Implement -> ReportFinalStatus
 ```
 
-The example demonstrates: defaults cascade, explicit per-node `full` opt-out, default-inherited `none` for the summarizer. It does NOT demonstrate the cross-node chain attack (which is the non-goal); the comment in the example file calls that out and links to the follow-up issue.
+**Companion file `examples/agent_tool_access_chain.dip`** demonstrates the DIP141-firing case explicitly (round-3 LC-C2):
+
+```
+workflow AgentToolAccessChain
+  goal: "Demonstrate DIP141 cross-node leak detection (issue #41)"
+  start: Summarize
+  exit: Done
+
+  defaults
+    model: claude-sonnet-4-6
+
+  agent Summarize
+    prompt: "Summarize the input context."
+    tool_access: none      # restricted summarizer
+
+  agent Writer
+    prompt: "Write the output to disk based on the summary."
+    tool_access: full      # downstream agent has full tools
+    # DIP141 fires on the Summarize -> Writer edge: a tool_access: none source
+    # feeds into a tool_access: full sink. If Summarize's response is laundered
+    # into Writer's prompt via ${ctx.last_response}, the chain-attack vector is
+    # active. See follow-up #1 for chain-attack mitigation.
+
+  agent Done
+    prompt: "Acknowledge completion."
+    tool_access: none
+
+  edges
+    Summarize -> Writer
+    Writer -> Done
+```
+
+Both files must lint-clean for DIP139 (no invalid values) and DIP140 (no bypass params). `agent_tool_access_chain.dip` MUST produce exactly one DIP141 warning (on `Summarize -> Writer`); `TestLintExamples` is extended to assert this exact-count expectation rather than the existing "zero warnings" pattern.
 
 ## Release coordination
 
@@ -528,8 +640,12 @@ The example demonstrates: defaults cascade, explicit per-node `full` opt-out, de
 - **`docs/validation.md`** — DIP139, DIP140, DIP141 documented with examples. DIP133 documentation amended to note `tool_access` is intentionally excluded from `agentFirstClassFields` (DIP140 covers it instead).
 - **`site/static/skill.md`** — new `tool_access:` field in agent-node section. Document:
   - The cascade pattern (`defaults: tool_access: none` + explicit per-node `tool_access: full`).
+  - **Authoring rule (normative, D3):** "If `defaults: tool_access:` is set in the workflow, every agent that needs tools MUST write `tool_access: full` explicitly. If `defaults:` does not set `tool_access:`, omit the field. Don't mix patterns within a single workflow."
+  - **`tool_access: full` is a live-catalog opt-in (D3):** "When tracker adds a new LLM tool in a future version, every workflow with `tool_access: full` automatically gets access. If you need time-pinned tool sets, wait for the v2 surface."
   - Tool-access scope ≠ tool-node safety (cross-reference DIP28's `tool_commands_allow`).
-  - The chain-attack non-goal + follow-up issue link.
+  - The chain-attack non-goal + follow-up issue link (#1).
+  - **SubgraphRef non-propagation (round-3 future F8):** "A `manager_loop` with restrictive `tool_access` does NOT propagate to its child subgraph. The child workflow has its own `defaults:` block and must restate the policy. v1 does not lint this gap (cross-workflow validation requires multi-workflow IR — see follow-up #2)."
+  - **Parser edge cases:** `tool_access: "none" # comment` and `tool_access: none# rationale` (no space before `#`) both store the comment verbatim and trip DIP139. Use plain `tool_access: none` (no quotes, space before comment).
   - Tracker version requirement (`requires tracker >= vX.Y`).
 - **`cmd/dippin/generated-spec.md`** — regenerates via existing hook; no manual edits.
 - **Terror-squad doc closing note** — update `docs/superpowers/research/2026-05-19-issue-41-terror-squad.md` Status line from "parked" to "shipped in v0.32.0 — see docs/superpowers/specs/2026-05-26-issue-41-design.md."
@@ -549,13 +665,13 @@ The example demonstrates: defaults cascade, explicit per-node `full` opt-out, de
 | 7 | Fail-open on parse error | D4 fail-closed via `EffectiveToolAccess()` |
 | 8 | DIP139-in-parser violates pattern | D5 validator owns enum check |
 | 9 | `DisallowedTools []string` vs DIP28 string | N/A — no list field in v1 (D1) |
-| 10 | Cross-node coverage holes | D7 DIP141 + D8 `BranchConfig.ToolAccess` (intra-workflow); cross-workflow non-goal #4 |
+| 10 | Cross-node coverage holes | D7 DIP141 (intra-workflow edges); cross-workflow + BranchConfig deferred per non-goal #4 + follow-up #9 |
 
 ### Round 2 critical findings — resolutions in spec
 
 | Ref | Finding | Resolution |
 |---|---|---|
-| LC-C1 | Cross-node lint misses `BranchConfig`/`SubgraphRef` | DIP141 walks `BranchConfig.Target`; `SubgraphRef` deferred (non-goal #4) with explicit doc |
+| LC-C1 | Cross-node lint misses `BranchConfig`/`SubgraphRef` | DIP141 walks `BranchConfig.Target` (lookup); BranchConfig.ToolAccess override deferred per D8+follow-up #9; `SubgraphRef` deferred per non-goal #4 + skill.md explicit signal |
 | LC-C2 | Opt-out invisible in source diffs | D3 ships `tool_access: full` as explicit opt-out |
 | LC-C3 | DIP140 gating inverted | D7 DIP140 unconditional |
 | Sec-C1 | Fail-closed has no canonical home | D4 single `EffectiveToolAccess()` accessor on `ir.AgentConfig` |
@@ -567,11 +683,31 @@ The example demonstrates: defaults cascade, explicit per-node `full` opt-out, de
 | IR-C1 | Resolution helper duplicated | D4 placed on `ir.Workflow` (the right layer for safety primitives) |
 | IR-C2 | "IR-consumption layer" undefined | D4 collapses to one accessor; all consumers go through it |
 | IR-C3 | `string` field type concedes correctness | D2 named type `ir.ToolAccessPolicy` |
-| IR-C4 | BranchConfig override asymmetry | D8 ship `BranchConfig.ToolAccess` now |
+| IR-C4 | BranchConfig override asymmetry | ~~D8 ship `BranchConfig.ToolAccess` now~~ → **superseded by round-3 IR-C1**: per-branch DOT round-trip infrastructure doesn't exist. Deferred via D8 + follow-up #9. |
 | Future-F1 | L4 invents new infrastructure | D4 — yes, intentionally. Safety field gets canonical accessor that DIP28 lacks. Follow-up issue tracks retroactive DIP28 cleanup. |
 | Future-F2 | Name lock-in unchanged | Accepted — `tool_access` is a policy name; v2 growth to middle tier is expected and documented |
 | Future-F4 | Backend uniformity asserted not enforced | D9 + cross-repo contract test |
-| Future-F8 | DIP141 false-negatives | D8 `BranchConfig` traversal; `SubgraphRef` non-goal #4 |
+| Future-F8 | DIP141 false-negatives | DIP141 traverses BranchConfig.Target (lookup); per-branch override deferred per IR-C1 supersession; `SubgraphRef` per non-goal #4 + skill.md signal |
+
+### Round 3 critical findings — resolutions in spec
+
+| Ref | Finding | Resolution |
+|---|---|---|
+| LC-C1 (R3) | Example uses fake YAML-shaped syntax that won't parse | Example rewritten using real `.dip` syntax (bare keywords, `->` edges, matching `examples/tool_safety.dip`) |
+| LC-C2 (R3) | Example doesn't actually trigger DIP141 | Added `examples/agent_tool_access_chain.dip` companion file with explicit `none → full` edge; `TestLintExamples` extended with expected-codes-per-file map |
+| LC-C3 (R3) | DIP140 with `backend` key incoherently overloads same-name shadow with safety bypass | `backend` REMOVED from DIP140 danger list. DIP140 covers true-bypass set only. Backend same-name shadow deferred to follow-up #10 |
+| Sec-C3-R1 | `EffectiveToolAccess()` discipline-only, no compile-time enforcement | D4 + golangci-lint `forbidigo` rule banning `cfg.ToolAccess` reads outside `ir/`/`validator/`. Pre-commit + CI both enforce. |
+| Sec-C3-R2 | DIP142 unverified-set has no versioned-contract treatment | Set moved to `validator/known_backend_tool_access.go` with SHA pinning. Backend-addition runbook in spec. Dippin CI SHA-drift gate enforces. |
+| Sec-C3-R3 | DIP140 contract unidirectional, tracker drift wins silently | Tracker enumerator changed to runtime-instrumented (not grep). Dippin-side SHA-drift gate compares against go.mod. |
+| Sec-C3-R4 | BranchConfig precedence chain underspecified | N/A — BranchConfig.ToolAccess removed per IR-C1 supersession. |
+| IR-C1 (R3) | DOT per-branch emission infrastructure doesn't exist | BranchConfig.ToolAccess removed from v1 per D8. Follow-up #9 bundles per-branch DOT round-trip for all four fields. |
+| IR-C2 (R3) | `reflect.DeepEqual` upgrade would expose 11 other broken cases | Test asserts ToolAccess-specific only; broader parity audit stays follow-up #4. |
+| IR-I1 (R3) | Same `Condition.Parsed` discipline-only gotcha | D4 `forbidigo` rule + doc-comment + named-type. Three layers of defense. |
+| Parser-C1 (R3) | Test matrix predicts wrong value for `tool_access: "none" # comment` | Test matrix corrected — lexer stores verbatim incl. comment, DIP139 fires. Skill.md documents as authoring caveat. |
+| Parser-C2 (R3) | Tracker reads cfg.ToolAccess raw — case variants silently invert safety | DOT exporter canonicalizes before writing graph.Attrs (four-site normalization contract). Tracker sees normalized form. |
+| Parser-C3 (R3) | Empty `tool_access:` value silently fails closed | DIP139 fires on empty-after-trim with distinct help text. |
+| Future (R3) | `tool_access: full` semantics across versions undefined | D3 locks "live catalog at runtime" semantic. Documented in skill.md as opt-in to future tool additions. |
+| Future (R3) | Follow-up survival rate from DIP28 precedent | "Filed before merge" — implementation plan task #0 numbers all 10 follow-ups in GitHub issues before opening dippin PR. |
 
 ### Important findings absorbed without separate resolution
 
@@ -595,7 +731,11 @@ The example demonstrates: defaults cascade, explicit per-node `full` opt-out, de
 - Future-F9 — skill.md gains `requires tracker >= vX.Y` directive
 - Future-F10 — `examples/agent_tool_access.dip` evolves in place when middle tier lands; no `_v2` suffix sprawl
 
-## Follow-up issues to file at merge time
+## Follow-up issues to file BEFORE merge
+
+Round-3 future-maintainer observation: DIP28's spec made the same "file follow-up if needed" promise and no follow-up was ever filed. To break the pattern, the implementation plan's task #0 is **"file all follow-up issues below as numbered GitHub issues; record the numbers in the spec text before opening the dippin PR."** Without numbered issues, follow-up commitments rot.
+
+
 
 1. **Chain-attack mitigation.** `${ctx.last_response}` auto-injection allows A→B→C laundering even with `tool_access: none` on B. Candidate fix: `last_response_truncate:` field or structural context-threading change. (References non-goal #3.)
 2. **Cross-workflow safety propagation.** `ManagerLoopConfig.SubgraphRef` does not inherit parent's `tool_access`. Requires dipx-aware validator pass to traverse child workflows. (References non-goal #4.)
@@ -605,6 +745,8 @@ The example demonstrates: defaults cascade, explicit per-node `full` opt-out, de
 6. **DIP28 retroactive `EffectiveToolCommandsAllow` accessor.** DIP28's `ToolCommandsAllow` lacks the canonical-accessor treatment this spec gives `ToolAccess`. Round-2 future F1 noted no precedent exists; this spec creates the precedent — retroactive cleanup of DIP28 is the natural follow-up.
 7. **Middle-tier surface (`read_filesystem`).** v2 surface that supports a read-only catalog with explicit threat-model framing (terror finding #5).
 8. **Companion list fields (`disallowed_tools`, `allowed_tools`).** v2 surface that ships after `KnownAgentTools` registry and case-normalization are locked.
+9. **Per-branch DOT round-trip for BranchConfig fields.** Block-form parallel nodes' `Model`/`Provider`/`Fidelity` overrides currently lose their values through DOT round-trip — no per-branch DOT emission infrastructure exists. Fix this first; THEN `BranchConfig.ToolAccess` returns in a future minor (round-3 IR-C1, supersedes the round-2 IR-C4 fix).
+10. **DIP133 promotion for safety-bearing typed-field shadows.** v0.32 leaves `params: { backend: X }` shadowing typed `Backend` field at DIP133 hint severity (not extended into DIP140 per round-3 LC-C3). Promote DIP133 to warning when the shadowed field is safety-bearing (`backend` due to D9; `tool_access` directly; future safety fields).
 
 ## Complexity budgets
 
@@ -612,14 +754,16 @@ All new functions ≤ 5 cyclomatic, ≤ 7 cognitive per CLAUDE.md.
 
 | Function | Estimated cyclomatic | Notes |
 |---|---|---|
-| `normalizeToolAccessPolicy` | 2 | one switch |
-| `AgentConfig.EffectiveToolAccess` | 1 | delegates |
+| `normalizeToolAccessPolicy` | 4 | switch with 4 cases (empty/none/full/default) |
+| `AgentConfig.EffectiveToolAccess` | 1 | delegates to `normalizeToolAccessPolicy` |
 | `Workflow.EffectiveToolAccess` | 3 | type assert + cfg-eff + defaults |
-| `lintToolAccessValues` | 4 | iterate nodes + defaults + branches; per-iteration check |
-| `lintParamsBypass` | 4 | iterate nodes + per-node iterate params + danger-set check |
+| `lintToolAccessValues` | 5 | iterate nodes + defaults; check invalid AND empty-value cases per site |
+| `lintParamsBypass` | 4 | iterate nodes + per-node iterate params + danger-set check (with key normalization) |
 | `lintCrossNodeToolAccess` | 3 | outer iterate; delegates to helpers |
-| `agentTargets` | 4 | direct edges + branch targets |
+| `agentTargets` | 5 | direct edges (via edgesByFrom index) + branch targets + dedup + nil-skip + agent-kind-filter |
 | `checkRestrictiveLeak` | 3 | predicate + emit |
-| `lintBackendToolAccessCompat` | 3 | iterate nodes + per-node check backend against unverified set |
+| `lintBackendToolAccessCompat` | 3 | iterate nodes + check backend against `knownVerifiedBackendsForNone` set |
+
+If `agentTargets` actually pushes past 5, extract `branchTargetIDs(n)` and `resolveAgentTargets(ids, w)` as helpers per CLAUDE.md.
 
 If any function trips `just complexity`, extract helpers per CLAUDE.md (no `//nolint`).
