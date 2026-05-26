@@ -1928,3 +1928,68 @@ func TestFormatRequiresRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestFormat_AgentToolAccess(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    tool_access: none
+`
+	p := parser.NewParser(src, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "tool_access: none") {
+		t.Errorf("formatted output missing tool_access line:\n%s", out)
+	}
+}
+
+func TestFormat_AgentToolAccessOmitted(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+`
+	p := parser.NewParser(src, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	out := Format(w)
+	if strings.Contains(out, "tool_access") {
+		t.Errorf("omitted tool_access should not appear in formatted output:\n%s", out)
+	}
+}
+
+// TestFormat_AgentToolAccessWhitespaceOnly verifies that a whitespace-only
+// tool_access value is treated as omitted on round-trip. The validator
+// canonicalizes via TrimSpace + ToLower so whitespace passes lint as "empty",
+// but pre-fix the formatter preserved the literal whitespace, producing a
+// non-empty tool_access line that contradicted lint semantics. The fix gates
+// emission on TrimSpace-non-empty.
+func TestFormat_AgentToolAccessWhitespaceOnly(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    tool_access: "   "
+`
+	p := parser.NewParser(src, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	out := Format(w)
+	if strings.Contains(out, "tool_access") {
+		t.Errorf("whitespace-only tool_access should not appear in formatted output:\n%s", out)
+	}
+}

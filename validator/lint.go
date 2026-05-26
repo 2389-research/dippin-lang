@@ -5,7 +5,7 @@ import (
 	"github.com/2389-research/dippin-lang/simulate"
 )
 
-// Lint runs all semantic quality checks (DIP101–DIP134) on the workflow
+// Lint runs all semantic quality checks (DIP101–DIP139) on the workflow
 // and returns all diagnostics found. These are warnings, not errors —
 // the workflow can still execute, but the findings indicate likely bugs
 // or quality issues.
@@ -56,6 +56,7 @@ func Lint(w *ir.Workflow) Result {
 	diags = append(diags, lintResponseSchemaMismatch(w)...)
 	diags = append(diags, lintResponseSchemaJSON(w)...)
 	diags = append(diags, lintAgentParamsShadow(w)...)
+	diags = append(diags, lintToolAccessValues(w)...)
 
 	return Result{Diagnostics: diags}
 }

@@ -284,3 +284,56 @@ func TestRoundtripPreservesToolAsStart(t *testing.T) {
 		t.Errorf("Command = %q, want %q", cfg.Command, "echo hi")
 	}
 }
+
+// TestRoundtripPreservesToolAccess verifies that AgentConfig.ToolAccess
+// survives the .dip → DOT → migrate cycle.
+//
+// Bug shape: an author writes tool_access: none on a summarizer node, ships
+// it to tracker via dipx bundle; the value must arrive intact at tracker
+// for the safety primitive to bind. This test exercises the dippin half of
+// that chain (parser → DOT export → migrate); the tracker half is covered
+// in the tracker-side red-team test.
+func TestRoundtripPreservesToolAccess(t *testing.T) {
+	src := `workflow ToolAccessRT
+  start: A
+  exit: B
+
+  agent A
+    prompt: "x"
+    tool_access: none
+
+  agent B
+    prompt: "done"
+
+  edges
+    A -> B
+`
+	w1, err := dipparser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	dot := export.ExportDOT(w1, export.ExportOptions{IncludePrompts: true})
+
+	w2, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v\nDOT:\n%s", err, dot)
+	}
+
+	diffs := CheckParity(w1, w2)
+	for _, d := range diffs {
+		t.Errorf("round-trip diff: %+v", d)
+	}
+
+	node := w2.Node("A")
+	if node == nil {
+		t.Fatalf("node A missing after round-trip; DOT:\n%s", dot)
+	}
+	cfg, ok := node.Config.(ir.AgentConfig)
+	if !ok {
+		t.Fatalf("expected AgentConfig, got %T", node.Config)
+	}
+	if cfg.ToolAccess != "none" {
+		t.Errorf("ToolAccess after round-trip = %q, want %q; DOT:\n%s", cfg.ToolAccess, "none", dot)
+	}
+}

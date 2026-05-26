@@ -65,6 +65,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
 | `working_dir` | string | Per-node working directory override for isolated execution. |
+| `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. Requires tracker `>= TRACKER_TAG`. See "Agent Tool Access" below. |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
@@ -79,6 +80,21 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `params` | key: value | Custom parameters. Keys must not shadow field names (DIP133) |
 | `reads` | CSV | Context keys read (advisory) |
 | `writes` | CSV | Context keys written (advisory) |
+
+**Agent Tool Access (`tool_access:`)** — *added v0.32.0; requires tracker `>= TRACKER_TAG`.*
+
+A node-level gate on the LLM tool catalog. One explicit value:
+
+- `tool_access: none` — Tracker returns an empty tool registry to the model, strips the `tools` array from the request (e.g., Anthropic `tool_choice: none`), and scrubs tool-naming text from the system prompt. `Params` keys (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`) are ignored when the gate is set — Params cannot reopen it.
+- *omitted* — Full catalog (current behavior, unchanged).
+
+Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by [DIP139](https://2389-research.github.io/dippin-lang/validation.html#dip139). Bad spelling reduces capability, never expands it.
+
+**Threat model bounded:** the v0.28.2 single-agent, multi-tool-call vector — an LLM emitting multiple tool calls in a single response to bypass per-call gating. Set `tool_access: none` on summarizer / reporter / status-only agents that should never execute tools.
+
+**Non-goals (deferred):** cross-node propagation / cascade ([#53](https://github.com/2389-research/dippin-lang/issues/53)), chain attacks between agents ([#56](https://github.com/2389-research/dippin-lang/issues/56)), cross-node static lint for graph-level tool-flow analysis ([#57](https://github.com/2389-research/dippin-lang/issues/57)). The v1 field bounds a single-agent vector; defense-in-depth for graph-level flows is future work.
+
+**Scope vs. tool-node safety:** `tool_access` gates *LLM-driven* tool calls on agent nodes. It is unrelated to `tool` nodes (shell commands authored directly in `.dip`), whose allowlist/denylist is controlled by the v0.28.x defaults `tool_commands_allow` and `tool_denylist_add`.
 
 ### human — user decision gate
 
@@ -291,7 +307,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP009) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001-DIP137) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001-DIP139) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -411,6 +427,7 @@ The primary loop for authoring .dip files:
 | DIP131 | Schema/format mismatch | `response_schema` requires `response_format: json_schema`, and vice versa — both must be present together |
 | DIP132 | Invalid JSON in response_schema | Fix the JSON syntax |
 | DIP133 | Params key shadows field | Rename the params key |
+| DIP139 | Invalid `tool_access` value | Use `tool_access: none` or omit the field; runtime fail-closes on unknown values |
 
 ## Best Practices
 

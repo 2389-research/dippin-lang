@@ -231,10 +231,15 @@ func applyGoalGateHighlight(attrs map[string]string, n *ir.Node) {
 }
 
 // applySemanticConfigAttrs adds non-prompt runtime attributes unconditionally.
-// These carry runtime semantics (timeout, mode, etc.) and must always be exported.
+// These carry runtime semantics (timeout, mode, tool_access, etc.) and must
+// always be exported — tracker reads them from each node's DOT attrs
+// regardless of whether prompts are included.
 func applySemanticConfigAttrs(attrs map[string]string, cfg interface{}) {
 	if !applySemanticNodeAttrs(attrs, cfg) {
 		applySemanticStructuralAttrs(attrs, cfg)
+	}
+	if c, ok := cfg.(ir.AgentConfig); ok {
+		applyAgentRuntimeAttrs(attrs, c)
 	}
 }
 
@@ -277,7 +282,9 @@ func applyPromptConfigAttrs(attrs map[string]string, cfg interface{}) {
 	}
 }
 
-// applyAgentAttrs adds agent-specific attributes (prompt + runtime).
+// applyAgentAttrs adds agent prompt/model/provider attributes. Runtime
+// attributes (backend, working_dir, tool_access) are emitted by
+// applySemanticConfigAttrs unconditionally so they survive minimal exports.
 func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Prompt != "" {
 		attrs["prompt"] = escapeNewlines(cfg.Prompt)
@@ -288,16 +295,18 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Provider != "" {
 		attrs["provider"] = cfg.Provider
 	}
-	applyAgentRuntimeAttrs(attrs, cfg)
 }
 
-// applyAgentRuntimeAttrs adds backend and working_dir attributes.
+// applyAgentRuntimeAttrs adds backend, working_dir, and tool_access attributes.
 func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Backend != "" {
 		attrs["backend"] = cfg.Backend
 	}
 	if cfg.WorkingDir != "" {
 		attrs["working_dir"] = cfg.WorkingDir
+	}
+	if strings.TrimSpace(cfg.ToolAccess) != "" {
+		attrs["tool_access"] = cfg.ToolAccess
 	}
 }
 

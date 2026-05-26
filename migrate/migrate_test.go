@@ -2571,3 +2571,25 @@ func TestBuildToolConfigOutputLimitZero(t *testing.T) {
 		t.Errorf("OutputLimit = %d, want 0 (engine default)", cfg.OutputLimit)
 	}
 }
+
+func TestMigrate_ToolAccessAttr(t *testing.T) {
+	dot := `digraph X {
+  graph [rankdir=TB];
+  A [shape=box, label=A, prompt="x", tool_access="none"];
+}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate error: %v", err)
+	}
+	node := w.Node("A")
+	if node == nil {
+		t.Fatalf("node A not found")
+	}
+	cfg, ok := node.Config.(ir.AgentConfig)
+	if !ok {
+		t.Fatalf("expected AgentConfig, got %T", node.Config)
+	}
+	if cfg.ToolAccess != "none" {
+		t.Errorf("ToolAccess = %q, want %q", cfg.ToolAccess, "none")
+	}
+}

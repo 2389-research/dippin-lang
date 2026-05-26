@@ -1,7 +1,7 @@
-# Issue #41 — Terror Squad Findings (parked)
+# Issue #41 — Terror Squad Findings (shipped in v0.32.0)
 
 **Date:** 2026-05-19
-**Status:** Issue #41 parked at end of brainstorming. Returns in v0.31.0 as a **joint dippin + tracker** release.
+**Status:** Shipped in v0.32.0 — see [`docs/superpowers/specs/2026-05-26-issue-41-design.md`](../specs/2026-05-26-issue-41-design.md). The simplification process is documented in the spec's "Design journey" section.
 **Raw reports:** five reviewer JSONL transcripts under `/tmp/claude-1000/-home-clint-code-2389-dippin-lang/.../tasks/` (ephemeral; consolidate any nuance from there before they age out).
 
 ## Why this document exists

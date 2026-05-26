@@ -79,6 +79,7 @@ agent_field     = "prompt"            ":" field_value
                 | "provider"          ":" field_value
                 | "backend"           ":" field_value
                 | "working_dir"       ":" field_value
+                | "tool_access"       ":" field_value
                 | "max_turns"         ":" INTEGER
                 | "cmd_timeout"       ":" DURATION
                 | "goal_gate"         ":" BOOLEAN

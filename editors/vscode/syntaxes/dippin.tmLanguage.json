@@ -145,7 +145,7 @@
           }
         },
         {
-          "match": "^\\s*(label|model|provider|mode|default|ref|subgraph_ref|timeout|poll_interval|max_cycles|fidelity|reasoning_effort|goal_gate|auto_status|max_turns|max_retries|marker_grep|route_required|output_limit|base_delay|retry_policy|retry_target|fallback_target|max_restarts|restart_target|cache_tools|compaction|stop_condition|steer_condition|steer_context|class|reads|writes)\\s*(:)",
+          "match": "^\\s*(label|model|provider|mode|default|ref|subgraph_ref|timeout|poll_interval|max_cycles|fidelity|reasoning_effort|goal_gate|auto_status|max_turns|max_retries|marker_grep|route_required|output_limit|base_delay|retry_policy|retry_target|fallback_target|max_restarts|restart_target|cache_tools|compaction|stop_condition|steer_condition|steer_context|tool_access|class|reads|writes)\\s*(:)",
           "captures": {
             "1": { "name": "entity.name.tag.field.dippin" },
             "2": { "name": "punctuation.separator.key-value.dippin" }
