@@ -185,7 +185,7 @@ case ir.AgentConfig:
     fmt.Println(cfg.Model)
     fmt.Println(cfg.GoalGate)
 case ir.HumanConfig:
-    fmt.Println(cfg.Mode)         // "choice", "freeform", or "interview"
+    fmt.Println(cfg.Mode)         // "choice", "freeform", "interview", or "yes_no"
     fmt.Println(cfg.Default)
     fmt.Println(cfg.QuestionsKey) // interview mode: context key for questions
     fmt.Println(cfg.AnswersKey)   // interview mode: context key for answers

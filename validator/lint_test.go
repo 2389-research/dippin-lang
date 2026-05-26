@@ -1675,7 +1675,7 @@ func TestLint_DIP127_InvalidHumanMode(t *testing.T) {
 }
 
 func TestLint_DIP127_ValidModes(t *testing.T) {
-	for _, mode := range []string{"choice", "freeform", "interview", ""} {
+	for _, mode := range []string{"choice", "freeform", "interview", "yes_no", ""} {
 		w := cleanMinimalWorkflow()
 		w.Nodes[0].Kind = ir.NodeHuman
 		w.Nodes[0].Config = ir.HumanConfig{Mode: mode}

@@ -316,8 +316,8 @@ func nodeValidationExplanations() map[string]Explanation {
 		DIP127: {
 			Code:    DIP127,
 			Summary: "invalid human node mode",
-			Trigger: "A human node has a mode value other than choice, freeform, or interview.",
-			Fix:     "Change mode to one of: choice, freeform, interview.",
+			Trigger: "A human node has a mode value other than choice, freeform, interview, or yes_no.",
+			Fix:     "Change mode to one of: choice, freeform, interview, yes_no.",
 			Example: "human Gate\n  mode: interactive  // invalid — did you mean interview?",
 		},
 		DIP128: {

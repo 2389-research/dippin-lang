@@ -10,6 +10,7 @@ var validHumanModes = map[string]bool{
 	"choice":    true,
 	"freeform":  true,
 	"interview": true,
+	"yes_no":    true,
 }
 
 func lintHumanMode(w *ir.Workflow) []Diagnostic {
@@ -25,7 +26,7 @@ func lintHumanMode(w *ir.Workflow) []Diagnostic {
 				Severity: SeverityWarning,
 				Message:  fmt.Sprintf("node %q has mode %q which is not a recognized human mode", n.ID, cfg.Mode),
 				Location: n.Source,
-				Help:     "valid modes: choice, freeform, interview",
+				Help:     "valid modes: choice, freeform, interview, yes_no",
 			})
 		}
 	}

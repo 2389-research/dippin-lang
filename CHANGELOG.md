@@ -2,6 +2,19 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.31.0] — 2026-05-22
+
+Two small dippin-internal fixes. Closes [#45](https://github.com/2389-research/dippin-lang/issues/45), [#49](https://github.com/2389-research/dippin-lang/issues/49).
+
+### Fixed
+
+- `mode: yes_no` on `human` nodes no longer trips DIP127. The tracker runtime supports `yes_no` as a documented mode; dippin's validator now accepts it alongside `choice`, `freeform`, and `interview`. The four-mode list is cascaded through the validator help text, the DIP127 explanation, `docs/validation.md`, `docs/nodes.md`, `docs/llm-reference.md`, the hosted skill (`site/static/skill.md`), the LSP completion tooltip, the integration guide, and the IR field comment.
+- Tool nodes used as the workflow's `start:` node no longer collapse to `AgentConfig` after a `.dip → DOT → .dip` round-trip. `migrate.resolveStartExitKind` now recovers `NodeTool` from the start-marker `Mdiamond` shape by sniffing tool-specific DOT attributes (`tool_command`, `marker_grep`, `outputs`, `route_required`, `output_limit`).
+
+### Runtime requirement
+
+None. Both fixes are dippin-internal; tracker is unaffected.
+
 ## [v0.30.0] — 2026-05-21
 
 Coverage extractor now respects shell redirection. Closes [#40](https://github.com/2389-research/dippin-lang/issues/40).

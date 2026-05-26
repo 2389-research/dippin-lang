@@ -133,10 +133,8 @@ func extractDOTAttr(dot, key string) string {
 // emitted the outputs DOT attr.
 func TestRoundtripPreservesToolOutputs(t *testing.T) {
 	src := `workflow MarkerRouting
-  start: S
+  start: T
   exit: D
-  agent S
-    prompt: "start"
   tool T
     command: echo hi
     outputs: tests_green, tests_red
@@ -144,7 +142,6 @@ func TestRoundtripPreservesToolOutputs(t *testing.T) {
   agent D
     prompt: "done"
   edges
-    S -> T
     T -> D when ctx.tool_marker = tests_green
     T -> D when ctx.tool_marker = tests_red
 `
@@ -220,5 +217,70 @@ func TestRoundTripToolSafetyDefaults(t *testing.T) {
 	if w2.Defaults.ToolDenylistAdd != "rm -rf /" {
 		t.Errorf("tool_denylist_add after round-trip = %q, want %q; DOT:\n%s",
 			w2.Defaults.ToolDenylistAdd, "rm -rf /", dot)
+	}
+}
+
+// TestRoundtripPreservesToolAsStart verifies that a tool node used as
+// the workflow's start: node round-trips through .dip → DOT → .dip with
+// its ToolConfig intact. Regression test for #49 — DOT export overrides
+// the diamond shape to Mdiamond for the start marker, and migrate's
+// resolveStartExitKind previously collapsed any non-manager_loop start
+// node to NodeAgent, silently dropping the ToolConfig.
+func TestRoundtripPreservesToolAsStart(t *testing.T) {
+	src := `workflow ToolAsStart
+  start: T
+  exit: D
+  tool T
+    command: echo hi
+    outputs: a, b
+    marker_grep: "^(a|b)$"
+  agent D
+    prompt: "done"
+  edges
+    T -> D when ctx.tool_marker = a
+    T -> D when ctx.tool_marker = b
+`
+	w1, err := dipparser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	dot := export.ExportDOT(w1, export.ExportOptions{IncludePrompts: true})
+
+	w2, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v\nDOT:\n%s", err, dot)
+	}
+
+	var toolNode *ir.Node
+	for _, n := range w2.Nodes {
+		if n.ID == "T" {
+			toolNode = n
+			break
+		}
+	}
+	if toolNode == nil {
+		t.Fatalf("node T not found in migrated workflow; DOT:\n%s", dot)
+	}
+	if toolNode.Kind != ir.NodeTool {
+		t.Fatalf("node T kind = %v, want ir.NodeTool; DOT:\n%s", toolNode.Kind, dot)
+	}
+	cfg, ok := toolNode.Config.(ir.ToolConfig)
+	if !ok {
+		t.Fatalf("node T config is %T, want ir.ToolConfig; DOT:\n%s", toolNode.Config, dot)
+	}
+	if cfg.MarkerGrep != "^(a|b)$" {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, "^(a|b)$")
+	}
+	want := []string{"a", "b"}
+	if len(cfg.Outputs) != len(want) {
+		t.Fatalf("Outputs = %v, want %v; DOT:\n%s", cfg.Outputs, want, dot)
+	}
+	for i := range want {
+		if cfg.Outputs[i] != want[i] {
+			t.Errorf("Outputs[%d] = %q, want %q", i, cfg.Outputs[i], want[i])
+		}
+	}
+	if cfg.Command != "echo hi" {
+		t.Errorf("Command = %q, want %q", cfg.Command, "echo hi")
 	}
 }

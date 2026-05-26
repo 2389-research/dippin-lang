@@ -46,7 +46,7 @@ func fieldCompletions() []protocol.CompletionItem {
 		{"provider:", "LLM provider name"},
 		{"max_turns:", "Maximum agentic turns"},
 		{"label:", "Display label"},
-		{"mode:", "Human node mode (choice|freeform)"},
+		{"mode:", "Human node mode (choice|freeform|interview|yes_no)"},
 		{"command:", "Tool node shell command"},
 		{"goal_gate:", "Fail pipeline if node fails"},
 		{"reasoning_effort:", "Reasoning effort (none|minimal|low|medium|high|xhigh|max)"},

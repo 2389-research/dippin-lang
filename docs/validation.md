@@ -739,10 +739,10 @@ A human node has a `mode` value that is not one of the recognized modes.
 ```
 warning[DIP127]: node "Gate" has mode "interactive" which is not a recognized human mode
   --> pipeline.dip:12:3
-  = help: valid modes: choice, freeform, interview
+  = help: valid modes: choice, freeform, interview, yes_no
 ```
 
-**What triggers it**: A human node declares a mode other than `choice`, `freeform`, or `interview`.
+**What triggers it**: A human node declares a mode other than `choice`, `freeform`, `interview`, or `yes_no`.
 
 **How to fix**: Change the mode to a valid value.
 

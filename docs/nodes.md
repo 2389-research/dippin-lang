@@ -174,7 +174,7 @@ Human nodes pause execution and wait for human input. They support three interac
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `mode` | String | — | Interaction mode: `"choice"` (select from edge labels), `"freeform"` (open text), or `"interview"` (structured Q&A from upstream agent output). |
+| `mode` | String | — | Interaction mode: `"choice"` (select from edge labels), `"freeform"` (open text), `"interview"` (structured Q&A from upstream agent output), or `"yes_no"` (binary Y/N prompt). |
 | `default` | String | — | Default selection if no input. Only meaningful for `"choice"` mode. |
 | `questions_key` | String | `interview_questions` | Context key to read questions from. Interview mode only. |
 | `answers_key` | String | `interview_answers` | Context key to write answers to. Interview mode only. |
