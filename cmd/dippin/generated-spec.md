@@ -242,7 +242,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
 | `working_dir` | string | Per-node working directory override for isolated execution. |
-| `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. Requires tracker `>= <tracker-tag>`. See "Agent Tool Access" below. |
+| `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. Requires tracker `>= TRACKER_TAG`. See "Agent Tool Access" below. |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
@@ -258,7 +258,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `reads` | CSV | Context keys read (advisory) |
 | `writes` | CSV | Context keys written (advisory) |
 
-**Agent Tool Access (`tool_access:`)** — *added v0.32.0; requires tracker `>= <tracker-tag>`.*
+**Agent Tool Access (`tool_access:`)** — *added v0.32.0; requires tracker `>= TRACKER_TAG`.*
 
 A node-level gate on the LLM tool catalog. One explicit value:
 

@@ -4,9 +4,9 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
-## [v0.32.0] — <date-at-release-time>
+## [v0.32.0] — RELEASE_DATE
 
-New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `<tracker-tag>` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
+New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `TRACKER_TAG` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
 
 ### Added
 
@@ -16,9 +16,9 @@ New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalo
 
 ### Runtime requirement
 
-- Requires tracker `<tracker-tag>`. Without tracker enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the joint release prevents this).
+- Requires tracker `TRACKER_TAG`. Without tracker enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the joint release prevents this).
 
-### Tracker-side (linked to tracker tag `<tracker-tag>`)
+### Tracker-side (linked to tracker tag `TRACKER_TAG`)
 
 - Tool registry returns empty when `tool_access: none` is set.
 - Anthropic translator strips the `tools` array via `tool_choice: none`.
