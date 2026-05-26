@@ -1958,7 +1958,10 @@ func TestFormat_AgentToolAccessOmitted(t *testing.T) {
     prompt: "x"
 `
 	p := parser.NewParser(src, "test.dip")
-	w, _ := p.Parse()
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
 	out := Format(w)
 	if strings.Contains(out, "tool_access") {
 		t.Errorf("omitted tool_access should not appear in formatted output:\n%s", out)

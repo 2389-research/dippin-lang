@@ -365,6 +365,33 @@ func TestExportDOT_AgentToolAccess(t *testing.T) {
 	}
 }
 
+// TestExportDOT_AgentToolAccess_WithoutPrompts verifies that the runtime
+// safety field survives a minimal (IncludePrompts: false) export. Tracker
+// reads tool_access from graph.Attrs regardless of prompt inclusion; if the
+// field were prompt-gated, a minimal export would silently drop it and the
+// safety primitive wouldn't bind at runtime.
+func TestExportDOT_AgentToolAccess_WithoutPrompts(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "X",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:     "x",
+				ToolAccess: "none",
+			}},
+		},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	if !strings.Contains(out, `tool_access="none"`) && !strings.Contains(out, `tool_access=none`) {
+		t.Errorf("DOT output missing tool_access attribute under IncludePrompts: false:\n%s", out)
+	}
+	// Prompts must NOT appear (negative assertion confirms IncludePrompts: false honored).
+	if strings.Contains(out, `prompt="x"`) {
+		t.Errorf("prompt unexpectedly present under IncludePrompts: false:\n%s", out)
+	}
+}
+
 func TestExportDOTSubgraphConfig(t *testing.T) {
 	// Tests the export package's handling of un-flattened subgraph nodes.
 	// In production, the CLI calls flatten.Flatten before ExportDOT,

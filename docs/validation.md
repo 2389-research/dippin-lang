@@ -1,6 +1,6 @@
 # Validation and Linting Reference
 
-Dippin provides 44 diagnostic checks split into two categories:
+Dippin documents 44 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP139): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
@@ -881,7 +881,7 @@ hint[DIP133]: node "Analyze" params key "model" shadows the first-class field mo
 
 An agent node has `tool_access:` set to a value other than `none` (case-insensitive) or empty. The field is the v0.32.0 safety primitive that strips an LLM's tool catalog; v1 recognizes only one explicit value.
 
-```
+```text
 warning[DIP139]: node "ReportFinalStatus" has tool_access "nono" which is not a recognized value
   --> pipeline.dip:12:3
   = help: use `tool_access: none` to disable LLM tools, or omit the field for the full catalog

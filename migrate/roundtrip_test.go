@@ -322,7 +322,7 @@ func TestRoundtripPreservesToolAccess(t *testing.T) {
 
 	diffs := CheckParity(w1, w2)
 	for _, d := range diffs {
-		t.Errorf("round-trip diff: %s", d)
+		t.Errorf("round-trip diff: %+v", d)
 	}
 
 	node := w2.Node("A")

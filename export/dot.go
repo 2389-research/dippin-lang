@@ -64,7 +64,6 @@ var reservedGraphAttrs = map[string]bool{
 	"max_retries": true, "default_max_retry": true, "max_restarts": true,
 	"max_total_tokens": true, "max_cost_cents": true, "max_wall_time": true,
 	"tool_commands_allow": true, "tool_denylist_add": true,
-	"tool_access": true,
 }
 
 // writeDOTHeader writes the digraph opening and global attributes.
@@ -232,10 +231,15 @@ func applyGoalGateHighlight(attrs map[string]string, n *ir.Node) {
 }
 
 // applySemanticConfigAttrs adds non-prompt runtime attributes unconditionally.
-// These carry runtime semantics (timeout, mode, etc.) and must always be exported.
+// These carry runtime semantics (timeout, mode, tool_access, etc.) and must
+// always be exported — tracker reads them from DOT graph.Attrs regardless of
+// whether prompts are included.
 func applySemanticConfigAttrs(attrs map[string]string, cfg interface{}) {
 	if !applySemanticNodeAttrs(attrs, cfg) {
 		applySemanticStructuralAttrs(attrs, cfg)
+	}
+	if c, ok := cfg.(ir.AgentConfig); ok {
+		applyAgentRuntimeAttrs(attrs, c)
 	}
 }
 
@@ -278,7 +282,9 @@ func applyPromptConfigAttrs(attrs map[string]string, cfg interface{}) {
 	}
 }
 
-// applyAgentAttrs adds agent-specific attributes (prompt + runtime).
+// applyAgentAttrs adds agent prompt/model/provider attributes. Runtime
+// attributes (backend, working_dir, tool_access) are emitted by
+// applySemanticConfigAttrs unconditionally so they survive minimal exports.
 func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Prompt != "" {
 		attrs["prompt"] = escapeNewlines(cfg.Prompt)
@@ -289,7 +295,6 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Provider != "" {
 		attrs["provider"] = cfg.Provider
 	}
-	applyAgentRuntimeAttrs(attrs, cfg)
 }
 
 // applyAgentRuntimeAttrs adds backend, working_dir, and tool_access attributes.
