@@ -347,6 +347,24 @@ func TestExportDOTHumanConfig(t *testing.T) {
 	assertContains(t, out, `mode="choice"`)
 }
 
+func TestExportDOT_AgentToolAccess(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "X",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:     "x",
+				ToolAccess: "none",
+			}},
+		},
+	}
+	out := ExportDOT(w, ExportOptions{IncludePrompts: true})
+	if !strings.Contains(out, `tool_access="none"`) && !strings.Contains(out, `tool_access=none`) {
+		t.Errorf("DOT output missing tool_access attribute:\n%s", out)
+	}
+}
+
 func TestExportDOTSubgraphConfig(t *testing.T) {
 	// Tests the export package's handling of un-flattened subgraph nodes.
 	// In production, the CLI calls flatten.Flatten before ExportDOT,

@@ -64,6 +64,7 @@ var reservedGraphAttrs = map[string]bool{
 	"max_retries": true, "default_max_retry": true, "max_restarts": true,
 	"max_total_tokens": true, "max_cost_cents": true, "max_wall_time": true,
 	"tool_commands_allow": true, "tool_denylist_add": true,
+	"tool_access": true,
 }
 
 // writeDOTHeader writes the digraph opening and global attributes.
@@ -291,13 +292,16 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	applyAgentRuntimeAttrs(attrs, cfg)
 }
 
-// applyAgentRuntimeAttrs adds backend and working_dir attributes.
+// applyAgentRuntimeAttrs adds backend, working_dir, and tool_access attributes.
 func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Backend != "" {
 		attrs["backend"] = cfg.Backend
 	}
 	if cfg.WorkingDir != "" {
 		attrs["working_dir"] = cfg.WorkingDir
+	}
+	if cfg.ToolAccess != "" {
+		attrs["tool_access"] = cfg.ToolAccess
 	}
 }
 
