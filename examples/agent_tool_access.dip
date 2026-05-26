@@ -1,0 +1,22 @@
+workflow AgentToolAccess
+  goal: "Demonstrate the tool_access agent-node safety primitive (issue #41)"
+  start: Plan
+  exit: ReportFinalStatus
+
+  agent Plan
+    model: claude-sonnet-4-6
+    prompt: "Plan the work. Output a numbered task list."
+
+  agent Implement
+    model: claude-sonnet-4-6
+    prompt: "Execute the plan."
+
+  agent ReportFinalStatus
+    model: claude-sonnet-4-6
+    prompt: "Summarize what was implemented. Emit STATUS: success or STATUS: failure."
+    tool_access: none
+    auto_status: true
+
+  edges
+    Plan -> Implement
+    Implement -> ReportFinalStatus
