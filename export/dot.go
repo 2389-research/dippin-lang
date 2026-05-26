@@ -232,8 +232,8 @@ func applyGoalGateHighlight(attrs map[string]string, n *ir.Node) {
 
 // applySemanticConfigAttrs adds non-prompt runtime attributes unconditionally.
 // These carry runtime semantics (timeout, mode, tool_access, etc.) and must
-// always be exported — tracker reads them from DOT graph.Attrs regardless of
-// whether prompts are included.
+// always be exported — tracker reads them from each node's DOT attrs
+// regardless of whether prompts are included.
 func applySemanticConfigAttrs(attrs map[string]string, cfg interface{}) {
 	if !applySemanticNodeAttrs(attrs, cfg) {
 		applySemanticStructuralAttrs(attrs, cfg)
