@@ -305,7 +305,7 @@ func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.WorkingDir != "" {
 		attrs["working_dir"] = cfg.WorkingDir
 	}
-	if cfg.ToolAccess != "" {
+	if strings.TrimSpace(cfg.ToolAccess) != "" {
 		attrs["tool_access"] = cfg.ToolAccess
 	}
 }

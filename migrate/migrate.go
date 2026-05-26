@@ -407,7 +407,7 @@ func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["working_dir"]; ok {
 		cfg.WorkingDir = v
 	}
-	if v, ok := attrs["tool_access"]; ok {
+	if v, ok := attrs["tool_access"]; ok && strings.TrimSpace(v) != "" {
 		cfg.ToolAccess = v
 	}
 }

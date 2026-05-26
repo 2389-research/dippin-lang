@@ -370,7 +370,7 @@ func writeAgentRuntimeFields(wr *writer, cfg ir.AgentConfig) {
 	if cfg.WorkingDir != "" {
 		wr.line("working_dir: %s", quoteValue(cfg.WorkingDir))
 	}
-	if cfg.ToolAccess != "" {
+	if strings.TrimSpace(cfg.ToolAccess) != "" {
 		wr.line("tool_access: %s", quoteValue(cfg.ToolAccess))
 	}
 }
