@@ -415,6 +415,16 @@ func TestFieldCompletionsIncludesRoutingFields(t *testing.T) {
 	}
 }
 
+func TestFieldCompletionsIncludesToolAccess(t *testing.T) {
+	items := fieldCompletions()
+	for _, it := range items {
+		if it.Label == "tool_access:" {
+			return
+		}
+	}
+	t.Error("missing completion for 'tool_access:' (v0.32.0 safety primitive)")
+}
+
 func TestConvertDiagnostic(t *testing.T) {
 	d := validator.Diagnostic{
 		Code:     "DIP001",
