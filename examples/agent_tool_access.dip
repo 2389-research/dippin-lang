@@ -13,7 +13,7 @@ workflow AgentToolAccess
 
   agent ReportFinalStatus
     model: claude-sonnet-4-6
-    prompt: "Summarize what was implemented. Emit STATUS: success or STATUS: failure."
+    prompt: "Summarize what was implemented. Emit STATUS: success or STATUS: fail."
     tool_access: none
     auto_status: true
 
