@@ -2,6 +2,25 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.32.0] — <date-at-release-time>
+
+New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `<tracker-tag>` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
+
+### Added
+
+- `tool_access:` field on agent nodes. One explicit value: `none` (no LLM tools). Omitted = full catalog (current behavior).
+- DIP139 lint warns on invalid `tool_access` values.
+- `examples/agent_tool_access.dip` demonstrates the field on a summarizer node.
+
+### Tracker-side (linked to tracker tag `<tracker-tag>`)
+
+- Tool registry returns empty when `tool_access: none` is set.
+- Anthropic translator strips the `tools` array via `tool_choice: none`.
+- System prompt scrubbed of tool-naming text when tools are disabled.
+- `Params` keys (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`) are not honored when `tool_access: none` is set — Params bypass defense.
+- Backend-compat tests: every supported backend honors `tool_access: none` or refuses session creation with a clear error.
+- Red-team test: multi-tool-call LLM response under `tool_access: none` produces zero executions (the actual v0.28.2 shape).
+
 ## [v0.31.0] — 2026-05-22
 
 Two small dippin-internal fixes. Closes [#45](https://github.com/2389-research/dippin-lang/issues/45), [#49](https://github.com/2389-research/dippin-lang/issues/49).
