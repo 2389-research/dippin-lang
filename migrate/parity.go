@@ -242,7 +242,7 @@ func compareAgentPromptAndModel(id string, ac, bc ir.AgentConfig) []Difference {
 	return diffs
 }
 
-// compareAgentBehavior compares goal_gate and auto_status fields.
+// compareAgentBehavior compares goal_gate, auto_status, and tool_access fields.
 func compareAgentBehavior(id string, ac, bc ir.AgentConfig) []Difference {
 	var diffs []Difference
 	if ac.GoalGate != bc.GoalGate {
@@ -250,6 +250,9 @@ func compareAgentBehavior(id string, ac, bc ir.AgentConfig) []Difference {
 	}
 	if ac.AutoStatus != bc.AutoStatus {
 		diffs = append(diffs, fieldDiff(id, "auto_status", fmt.Sprintf("node %q auto_status: %v vs %v", id, ac.AutoStatus, bc.AutoStatus)))
+	}
+	if ac.ToolAccess != bc.ToolAccess {
+		diffs = append(diffs, fieldDiff(id, "tool_access", fmt.Sprintf("node %q tool_access: %q vs %q", id, ac.ToolAccess, bc.ToolAccess)))
 	}
 	return diffs
 }

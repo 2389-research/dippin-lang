@@ -396,11 +396,19 @@ func applyModelAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["fidelity"]; ok {
 		cfg.Fidelity = v
 	}
+	applyRuntimeAttrs(cfg, attrs)
+}
+
+// applyRuntimeAttrs applies runtime-cluster attributes (backend, working_dir, tool_access).
+func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["backend"]; ok {
 		cfg.Backend = v
 	}
 	if v, ok := attrs["working_dir"]; ok {
 		cfg.WorkingDir = v
+	}
+	if v, ok := attrs["tool_access"]; ok {
+		cfg.ToolAccess = v
 	}
 }
 
