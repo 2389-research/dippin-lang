@@ -36,6 +36,7 @@ func TestLint_DIP139_ValidValues(t *testing.T) {
 		{"none uppercase", "NONE"},
 		{"none mixed", "None"},
 		{"none with surrounding whitespace", "  none  "},
+		{"whitespace only", "   "}, // TrimSpace canonicalizes to "" — recognized as omitted/default
 		{"empty omitted", ""},
 	}
 	for _, tc := range cases {
