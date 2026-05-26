@@ -397,5 +397,12 @@ func nodeValidationExplanations() map[string]Explanation {
 			Fix:     "Add marker_grep: \"<regex>\" to the tool node and switch edges to test ctx.tool_marker, or declare outputs: <values> so coverage analysis can see the routing set.",
 			Example: "tool Check\n  command: echo done\n  marker_grep: \"^(done|more)$\"\nedges\n  Check -> Next when ctx.tool_marker = done",
 		},
+		DIP139: {
+			Code:    DIP139,
+			Summary: "invalid tool_access value on agent node",
+			Trigger: "An agent node has tool_access set to a value other than 'none' (case-insensitive) or empty. The field is the v0.32.0 safety primitive that strips an LLM's tool catalog; v1 recognizes only one explicit value.",
+			Fix:     "Use `tool_access: none` to disable LLM tools, or omit the field for the full catalog. Invalid values fall back to no-tools at runtime (fail-closed) — the diagnostic surfaces the typo so author intent matches runtime behavior.",
+			Example: "agent ReportFinalStatus\n  prompt: \"Summarize\"\n  tool_access: nono   // DIP139: typo — runtime treats as 'none'",
+		},
 	}
 }

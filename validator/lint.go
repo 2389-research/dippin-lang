@@ -56,6 +56,7 @@ func Lint(w *ir.Workflow) Result {
 	diags = append(diags, lintResponseSchemaMismatch(w)...)
 	diags = append(diags, lintResponseSchemaJSON(w)...)
 	diags = append(diags, lintAgentParamsShadow(w)...)
+	diags = append(diags, lintToolAccessValues(w)...)
 
 	return Result{Diagnostics: diags}
 }
