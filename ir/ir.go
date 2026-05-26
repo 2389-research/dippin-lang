@@ -106,7 +106,7 @@ type AgentConfig struct {
 	ResponseSchema      string            // JSON schema (when ResponseFormat is "json_schema")
 	Backend             string            // Per-node backend override: "native", "claude-code", "acp"
 	WorkingDir          string            // Per-node working directory override
-	ToolAccess          string            // "" (default = full catalog) or "none" (no LLM tools)
+	ToolAccess          string            // Raw value: "" or "none" recognized; other values lint as DIP139 and fail-closed to no-tools at runtime
 	Params              map[string]string // Generic key-value pairs passed through to runtime
 }
 
