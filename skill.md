@@ -89,7 +89,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `mode` | string | **Required.** `choice`, `freeform`, or `interview` (DIP127) |
+| `mode` | string | **Required.** `choice`, `freeform`, `interview`, or `yes_no` (DIP127) |
 | `default` | string | Default choice (meaningless in interview mode — DIP128) |
 | `prompt` | multiline | Prompt text |
 | `questions_key` | string | Context key for interview questions |
@@ -103,6 +103,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 - `choice`: Outgoing edge labels become buttons. Human selects one.
 - `freeform`: Open text input → `ctx.human_response`
 - `interview`: Structured Q&A from upstream agent output. Don't combine with choice-style edges (DIP129).
+- `yes_no`: Binary Y/N prompt — two outgoing edges labeled `[Y]` and `[N]`.
 
 ### tool — shell command
 
@@ -405,7 +406,7 @@ The primary loop for authoring .dip files:
 | DIP124 | `${ctx.*}` in tool command | Remove — runtime variables expand to empty at parse time |
 | DIP125 | Command binary not on PATH | Install the binary or fix the command |
 | DIP126 | Subgraph ref file missing | Check `ref:` path |
-| DIP127 | Invalid human mode | Use: `choice`, `freeform`, `interview` |
+| DIP127 | Invalid human mode | Use: `choice`, `freeform`, `interview`, `yes_no` |
 | DIP130 | Invalid response_format | Use: `json_object`, `json_schema` |
 | DIP131 | Schema/format mismatch | `response_schema` requires `response_format: json_schema`, and vice versa — both must be present together |
 | DIP132 | Invalid JSON in response_schema | Fix the JSON syntax |
