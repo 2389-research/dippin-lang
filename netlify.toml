@@ -83,6 +83,11 @@
     Content-Type = "text/plain; charset=utf-8"
 
 [[headers]]
+  for = "/blog.xml"
+  [headers.values]
+    Content-Type = "application/rss+xml; charset=utf-8"
+
+[[headers]]
   for = "/.well-known/api-catalog"
   [headers.values]
     Content-Type = "application/linkset+json"
