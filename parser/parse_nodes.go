@@ -407,6 +407,7 @@ func applyHumanInterviewField(cfg *ir.HumanConfig, key, val string) bool {
 // applyToolField applies tool-specific configuration fields.
 func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.SourceLocation) {
 	if applyToolStringField(cfg, key, val) {
+		p.checkCommandFileConflict(cfg, loc)
 		return
 	}
 	if p.applyToolBoolField(cfg, key, val, loc) {
@@ -418,11 +419,24 @@ func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.Sour
 	p.emitUnknownFieldHint("tool", key, loc)
 }
 
+// checkCommandFileConflict emits a diagnostic if both command: and command_file:
+// are set on the same tool node. Per spec, this is a parser-time error (not a
+// DIP code) because the conflict is syntactic.
+func (p *Parser) checkCommandFileConflict(cfg *ir.ToolConfig, loc ir.SourceLocation) {
+	if cfg.Command != "" && cfg.CommandFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"tool node has both `command` and `command_file` set; choose one at %d:%d",
+			loc.Line, loc.Column))
+	}
+}
+
 // applyToolStringField handles string-valued tool fields. Returns true if handled.
 func applyToolStringField(cfg *ir.ToolConfig, key, val string) bool {
 	switch key {
 	case "command":
 		cfg.Command = val
+	case "command_file":
+		cfg.CommandFile = val
 	case "outputs":
 		cfg.Outputs = splitComma(val)
 	case "marker_grep":

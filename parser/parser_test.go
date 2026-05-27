@@ -2155,3 +2155,98 @@ func TestParseAgent_ToolAccess(t *testing.T) {
 		})
 	}
 }
+
+func TestParseTool_CommandFile(t *testing.T) {
+	cases := []struct {
+		name             string
+		src              string
+		wantFile         string
+		wantCommand      string
+		wantDiagContains string // substring expected in any parser diagnostic; "" = no diagnostic expected
+	}{
+		{
+			name: "command_file only",
+			src: `workflow X
+  start: A
+  exit: A
+
+  tool A
+    command_file: scripts/setup.sh
+`,
+			wantFile:    "scripts/setup.sh",
+			wantCommand: "",
+		},
+		{
+			name: "command only (unchanged behavior)",
+			src: `workflow X
+  start: A
+  exit: A
+
+  tool A
+    command: echo hi
+`,
+			wantFile:    "",
+			wantCommand: "echo hi",
+		},
+		{
+			name: "both set (command first)",
+			src: `workflow X
+  start: A
+  exit: A
+
+  tool A
+    command: echo hi
+    command_file: scripts/setup.sh
+`,
+			wantDiagContains: "both `command` and `command_file`",
+		},
+		{
+			name: "both set (command_file first)",
+			src: `workflow X
+  start: A
+  exit: A
+
+  tool A
+    command_file: scripts/setup.sh
+    command: echo hi
+`,
+			wantDiagContains: "both `command` and `command_file`",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewParser(tc.src, "test.dip")
+			w, _ := p.Parse() // some cases expect diagnostics; don't fail on parse error
+			if tc.wantDiagContains != "" {
+				found := false
+				for _, d := range p.diagnostics {
+					if strings.Contains(d, tc.wantDiagContains) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("expected diagnostic containing %q; got %v", tc.wantDiagContains, p.diagnostics)
+				}
+				return
+			}
+			if w == nil {
+				t.Fatalf("unexpected nil workflow")
+			}
+			node := w.Node("A")
+			if node == nil {
+				t.Fatalf("node A not found")
+			}
+			cfg, ok := node.Config.(ir.ToolConfig)
+			if !ok {
+				t.Fatalf("expected ToolConfig, got %T", node.Config)
+			}
+			if cfg.CommandFile != tc.wantFile {
+				t.Errorf("CommandFile = %q, want %q", cfg.CommandFile, tc.wantFile)
+			}
+			if cfg.Command != tc.wantCommand {
+				t.Errorf("Command = %q, want %q", cfg.Command, tc.wantCommand)
+			}
+		})
+	}
+}
