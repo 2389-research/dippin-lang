@@ -281,6 +281,9 @@ func compareToolCommandAndTimeout(id string, ac, bc ir.ToolConfig) []Difference 
 	if !promptsEqual(ac.Command, bc.Command) {
 		diffs = append(diffs, fieldDiff(id, "command", fmt.Sprintf("node %q command differs", id)))
 	}
+	if ac.CommandFile != bc.CommandFile {
+		diffs = append(diffs, fieldDiff(id, "command_file", fmt.Sprintf("node %q command_file: %q vs %q", id, ac.CommandFile, bc.CommandFile)))
+	}
 	if ac.Timeout != bc.Timeout {
 		diffs = append(diffs, fieldDiff(id, "timeout", fmt.Sprintf("node %q timeout: %s vs %s", id, ac.Timeout, bc.Timeout)))
 	}
