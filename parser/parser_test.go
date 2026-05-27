@@ -2250,3 +2250,119 @@ func TestParseTool_CommandFile(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_AgentPromptFile(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt_file: prompts/task.md
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if len(w.Nodes) != 1 {
+		t.Fatalf("got %d nodes, want 1", len(w.Nodes))
+	}
+	cfg, ok := w.Nodes[0].Config.(ir.AgentConfig)
+	if !ok {
+		t.Fatalf("node 0 config is not AgentConfig: %T", w.Nodes[0].Config)
+	}
+	if cfg.PromptFile != "prompts/task.md" {
+		t.Errorf("PromptFile = %q, want %q", cfg.PromptFile, "prompts/task.md")
+	}
+	if cfg.Prompt != "" {
+		t.Errorf("Prompt = %q, want empty (parser must not load file)", cfg.Prompt)
+	}
+}
+
+func TestParser_AgentSystemPromptFile(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    system_prompt_file: prompts/persona.md
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if cfg.SystemPromptFile != "prompts/persona.md" {
+		t.Errorf("SystemPromptFile = %q, want %q", cfg.SystemPromptFile, "prompts/persona.md")
+	}
+	if cfg.SystemPrompt != "" {
+		t.Errorf("SystemPrompt = %q, want empty (parser must not load file)", cfg.SystemPrompt)
+	}
+}
+
+func TestParser_AgentPromptConflict(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt: "inline"
+    prompt_file: prompts/task.md
+`
+	_, err := NewParser(src, "test.dip").Parse()
+	if err == nil {
+		t.Fatal("expected diagnostic for prompt + prompt_file conflict, got nil error")
+	}
+	if !strings.Contains(err.Error(), "both `prompt` and `prompt_file`") {
+		t.Errorf("diagnostic message missing expected phrase; got %q", err.Error())
+	}
+}
+
+func TestParser_AgentSystemPromptConflict(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    system_prompt: "inline persona"
+    system_prompt_file: prompts/persona.md
+`
+	_, err := NewParser(src, "test.dip").Parse()
+	if err == nil {
+		t.Fatal("expected diagnostic for system_prompt + system_prompt_file conflict, got nil error")
+	}
+	if !strings.Contains(err.Error(), "both `system_prompt` and `system_prompt_file`") {
+		t.Errorf("diagnostic message missing expected phrase; got %q", err.Error())
+	}
+}
+
+func TestParser_AgentCrossSlotMixOK(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt_file: prompts/task.md
+    system_prompt: "you are a code reviewer"
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("mixed slots should not error: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if cfg.PromptFile != "prompts/task.md" {
+		t.Errorf("PromptFile = %q", cfg.PromptFile)
+	}
+	if cfg.SystemPrompt != "you are a code reviewer" {
+		t.Errorf("SystemPrompt = %q", cfg.SystemPrompt)
+	}
+}

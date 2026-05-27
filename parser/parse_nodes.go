@@ -231,6 +231,8 @@ func (p *Parser) applyCommonComplexField(n *ir.Node, key, val string, loc ir.Sou
 // applyAgentField applies agent-specific configuration fields.
 func (p *Parser) applyAgentField(cfg *ir.AgentConfig, key, val string, loc ir.SourceLocation) {
 	if applyAgentStringField(cfg, key, val) {
+		p.checkPromptFileConflict(cfg, key, loc)
+		p.checkSystemPromptFileConflict(cfg, key, loc)
 		return
 	}
 	p.applyAgentComplexField(cfg, key, val, loc)
@@ -249,11 +251,32 @@ func applyAgentStringField(cfg *ir.AgentConfig, key, val string) bool {
 
 // applyAgentPromptField handles prompt-related agent fields.
 func applyAgentPromptField(cfg *ir.AgentConfig, key, val string) bool {
+	if applyAgentPromptInlineField(cfg, key, val) {
+		return true
+	}
+	return applyAgentPromptSchemaField(cfg, key, val)
+}
+
+// applyAgentPromptInlineField handles prompt/system_prompt and their _file variants.
+func applyAgentPromptInlineField(cfg *ir.AgentConfig, key, val string) bool {
 	switch key {
 	case "prompt":
 		cfg.Prompt = val
+	case "prompt_file":
+		cfg.PromptFile = val
 	case "system_prompt":
 		cfg.SystemPrompt = val
+	case "system_prompt_file":
+		cfg.SystemPromptFile = val
+	default:
+		return false
+	}
+	return true
+}
+
+// applyAgentPromptSchemaField handles reasoning_effort and response_schema fields.
+func applyAgentPromptSchemaField(cfg *ir.AgentConfig, key, val string) bool {
+	switch key {
 	case "reasoning_effort":
 		cfg.ReasoningEffort = val
 	case "response_schema":
@@ -262,6 +285,33 @@ func applyAgentPromptField(cfg *ir.AgentConfig, key, val string) bool {
 		return false
 	}
 	return true
+}
+
+// checkPromptFileConflict emits a diagnostic if both prompt: and prompt_file:
+// are set on the same agent node. Parser-time error (not a DIP code) because
+// the conflict is syntactic. Gated on the assigning key being prompt or
+// prompt_file so subsequent unrelated agent string-field writes don't re-emit.
+func (p *Parser) checkPromptFileConflict(cfg *ir.AgentConfig, key string, loc ir.SourceLocation) {
+	if key != "prompt" && key != "prompt_file" {
+		return
+	}
+	if cfg.Prompt != "" && cfg.PromptFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"agent node has both `prompt` and `prompt_file` set; choose one at %d:%d",
+			loc.Line, loc.Column))
+	}
+}
+
+// checkSystemPromptFileConflict — same shape, for system_prompt vs system_prompt_file.
+func (p *Parser) checkSystemPromptFileConflict(cfg *ir.AgentConfig, key string, loc ir.SourceLocation) {
+	if key != "system_prompt" && key != "system_prompt_file" {
+		return
+	}
+	if cfg.SystemPrompt != "" && cfg.SystemPromptFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"agent node has both `system_prompt` and `system_prompt_file` set; choose one at %d:%d",
+			loc.Line, loc.Column))
+	}
 }
 
 // applyAgentModelField handles model-related agent fields.
