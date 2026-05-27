@@ -120,25 +120,55 @@ func inlineOne(srcAbs, rootDir, shadowDir string) ([]string, error) {
 	if err := parser.ResolveFileDirectives(wf, filepath.Dir(srcAbs)); err != nil {
 		return nil, fmt.Errorf("pack-inline: %w", err)
 	}
-	clearCommandFileDirectives(wf)
+	clearFileDirectives(wf)
 	if err := writeShadowFile(srcAbs, rootDir, shadowDir, wf); err != nil {
 		return nil, err
 	}
 	return collectRefPaths(wf, filepath.Dir(srcAbs), rootDir)
 }
 
-// clearCommandFileDirectives walks every tool node in wf and clears its
-// CommandFile field. The formatter emits command_file: when CommandFile is
-// set (preserving directive form on round-trip); we clear it after resolving
-// so the formatter emits the inlined command: text instead.
-func clearCommandFileDirectives(wf *ir.Workflow) {
+// clearFileDirectives walks every node in wf and clears any file-directive
+// source-path fields (ToolConfig.CommandFile, AgentConfig.PromptFile,
+// AgentConfig.SystemPromptFile). The formatter emits the *_file: directive
+// when these fields are set (preserving directive form on round-trip); we
+// clear them after resolving so the formatter emits the inlined content
+// blocks instead. Result: the shadow .dip carries inline content only,
+// and the .dipx bundle is self-contained.
+func clearFileDirectives(wf *ir.Workflow) {
 	for _, n := range wf.Nodes {
-		tc, ok := n.Config.(ir.ToolConfig)
-		if !ok || tc.CommandFile == "" {
-			continue
-		}
-		tc.CommandFile = ""
-		n.Config = tc
+		clearToolFileDirective(n)
+		clearAgentFileDirectives(n)
+	}
+}
+
+// clearToolFileDirective clears ToolConfig.CommandFile if set.
+func clearToolFileDirective(n *ir.Node) {
+	tc, ok := n.Config.(ir.ToolConfig)
+	if !ok || tc.CommandFile == "" {
+		return
+	}
+	tc.CommandFile = ""
+	n.Config = tc
+}
+
+// clearAgentFileDirectives clears AgentConfig.PromptFile and
+// AgentConfig.SystemPromptFile if either is set.
+func clearAgentFileDirectives(n *ir.Node) {
+	ac, ok := n.Config.(ir.AgentConfig)
+	if !ok {
+		return
+	}
+	changed := false
+	if ac.PromptFile != "" {
+		ac.PromptFile = ""
+		changed = true
+	}
+	if ac.SystemPromptFile != "" {
+		ac.SystemPromptFile = ""
+		changed = true
+	}
+	if changed {
+		n.Config = ac
 	}
 }
 
