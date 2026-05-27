@@ -31,21 +31,61 @@ func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
 	return nil
 }
 
-// resolveNodeDirective resolves a single node's CommandFile, if any.
-// Returns nil if the node has no tool config, no CommandFile, or already
-// has an inline Command populated (inline wins — Task 2's parser check
-// should prevent both being set, but be defensive).
+// resolveNodeDirective resolves any file-directive fields on a single node.
+// Dispatches per node-config kind so the per-kind loader functions stay
+// focused on their own field set.
 func resolveNodeDirective(n *ir.Node, baseDir string) error {
-	tc, ok := n.Config.(ir.ToolConfig)
-	if !ok || tc.CommandFile == "" || tc.Command != "" {
+	switch cfg := n.Config.(type) {
+	case ir.ToolConfig:
+		return resolveToolDirective(n, cfg, baseDir)
+	case ir.AgentConfig:
+		return resolveAgentDirective(n, cfg, baseDir)
+	}
+	return nil
+}
+
+// resolveToolDirective populates ToolConfig.Command from CommandFile, if set.
+// Skips if Command is already inline-populated (parser's mutual-exclusion
+// check should prevent both being set; defensive guard if it doesn't).
+func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
+	if cfg.CommandFile == "" || cfg.Command != "" {
 		return nil
 	}
-	contents, err := loadDirectiveFile(baseDir, tc.CommandFile)
+	contents, err := loadDirectiveFile(baseDir, cfg.CommandFile)
 	if err != nil {
 		return fmt.Errorf("node %q command_file: %w", n.ID, err)
 	}
-	tc.Command = string(contents)
-	n.Config = tc
+	cfg.Command = string(contents)
+	n.Config = cfg
+	return nil
+}
+
+// resolveAgentDirective populates Prompt and SystemPrompt from their *File
+// twins on AgentConfig. The two slots are independent — either, both, or
+// neither may be set.
+func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string) error {
+	if err := loadInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
+		return err
+	}
+	if err := loadInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
+		return err
+	}
+	n.Config = cfg
+	return nil
+}
+
+// loadInto populates *dst from path (relative to baseDir) if path != "" and
+// *dst == "". Skips if either condition fails (defensive: parser's mutual-
+// exclusion check should prevent both being set, but if it happens, inline wins).
+func loadInto(dst *string, path, baseDir, nodeID, directive string) error {
+	if path == "" || *dst != "" {
+		return nil
+	}
+	contents, err := loadDirectiveFile(baseDir, path)
+	if err != nil {
+		return fmt.Errorf("node %q %s: %w", nodeID, directive, err)
+	}
+	*dst = string(contents)
 	return nil
 }
 

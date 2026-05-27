@@ -165,3 +165,84 @@ func TestResolveFileDirectives_MissingFile(t *testing.T) {
 		t.Errorf("error leaked resolved absolute path %q in message: %v", absBase, err)
 	}
 }
+
+func TestResolveFileDirectives_LoadsAgentPrompt(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				PromptFile: "task.md",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, "testdata/prompt_file"); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if !strings.Contains(cfg.Prompt, "fixture: ResolveFileDirectives prompt test") {
+		t.Errorf("Prompt not populated from file; got %q", cfg.Prompt)
+	}
+	if cfg.PromptFile != "task.md" {
+		t.Errorf("PromptFile = %q, want %q (must be preserved post-resolve)", cfg.PromptFile, "task.md")
+	}
+}
+
+func TestResolveFileDirectives_LoadsAgentSystemPrompt(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				SystemPromptFile: "persona.md",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, "testdata/prompt_file"); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if !strings.Contains(cfg.SystemPrompt, "fixture: ResolveFileDirectives system_prompt test") {
+		t.Errorf("SystemPrompt not populated from file; got %q", cfg.SystemPrompt)
+	}
+	if cfg.SystemPromptFile != "persona.md" {
+		t.Errorf("SystemPromptFile = %q, want %q", cfg.SystemPromptFile, "persona.md")
+	}
+}
+
+func TestResolveFileDirectives_LoadsBothAgentSlots(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				PromptFile:       "task.md",
+				SystemPromptFile: "persona.md",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, "testdata/prompt_file"); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if !strings.Contains(cfg.Prompt, "ResolveFileDirectives prompt test") {
+		t.Errorf("Prompt not populated; got %q", cfg.Prompt)
+	}
+	if !strings.Contains(cfg.SystemPrompt, "ResolveFileDirectives system_prompt test") {
+		t.Errorf("SystemPrompt not populated; got %q", cfg.SystemPrompt)
+	}
+}
+
+func TestResolveFileDirectives_AgentErrorIdentifiesDirective(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				SystemPromptFile: "nonexistent.md",
+			}},
+		},
+	}
+	err := ResolveFileDirectives(w, "testdata/prompt_file")
+	if err == nil {
+		t.Fatal("expected missing-file error, got nil")
+	}
+	if !strings.Contains(err.Error(), "system_prompt_file") {
+		t.Errorf("error should identify directive `system_prompt_file`; got %v", err)
+	}
+	if strings.Contains(err.Error(), "prompt_file:") && !strings.Contains(err.Error(), "system_prompt_file") {
+		t.Errorf("error must not be ambiguous between prompt_file and system_prompt_file; got %v", err)
+	}
+}
