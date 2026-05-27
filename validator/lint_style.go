@@ -46,6 +46,11 @@ func lintEmptyPrompts(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
+// hasAuthoredPrompt returns true if the agent config has a prompt source (inline or file).
+func hasAuthoredPrompt(cfg ir.AgentConfig) bool {
+	return cfg.PromptFile != "" || strings.TrimSpace(cfg.Prompt) != ""
+}
+
 // checkEmptyPrompt checks a single node for DIP110.
 func checkEmptyPrompt(n *ir.Node, w *ir.Workflow) (Diagnostic, bool) {
 	if n.ID == w.Start || n.ID == w.Exit {
@@ -55,7 +60,7 @@ func checkEmptyPrompt(n *ir.Node, w *ir.Workflow) (Diagnostic, bool) {
 	if !ok {
 		return Diagnostic{}, false
 	}
-	if strings.TrimSpace(cfg.Prompt) == "" {
+	if !hasAuthoredPrompt(cfg) {
 		return Diagnostic{
 			Code:     DIP110,
 			Severity: SeverityWarning,

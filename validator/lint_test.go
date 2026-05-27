@@ -2180,3 +2180,28 @@ func TestLintRetryRestartConfusion(t *testing.T) {
 		assertNoCode(t, Lint(buildWorkflow(5, 0, false)), DIP134)
 	})
 }
+
+// TestLintEmptyPrompts_PromptFileSuppresses verifies that an agent with
+// prompt_file: set does not trigger DIP110, even if Prompt is empty.
+// Regression test for issue #65: parser-pure design means PromptFile
+// is set but Prompt is empty until the resolver runs.
+func TestLintEmptyPrompts_PromptFileSuppresses(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "W",
+		Start: "Start",
+		Exit:  "End",
+		Nodes: []*ir.Node{
+			{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{}},
+			{ID: "Middle", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				PromptFile: "prompts/task.md",
+			}},
+			{ID: "End", Kind: ir.NodeAgent, Config: ir.AgentConfig{}},
+		},
+	}
+	result := Lint(w)
+	for _, d := range result.Diagnostics {
+		if d.Code == DIP110 && strings.Contains(d.Message, "Middle") {
+			t.Errorf("DIP110 fired on agent with prompt_file: set; diag: %+v", d)
+		}
+	}
+}
