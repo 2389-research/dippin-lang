@@ -246,3 +246,36 @@ func TestResolveFileDirectives_AgentErrorIdentifiesDirective(t *testing.T) {
 		t.Errorf("error must not be ambiguous between prompt_file and system_prompt_file; got %v", err)
 	}
 }
+
+func TestResolveFileDirectives_ExternalPromptsExample(t *testing.T) {
+	// Pins end-to-end resolution of examples/external_prompts.dip.
+	// Mirrors the equivalent integration test for examples/external_files.dip
+	// that #52 added.
+	srcAbs, err := filepath.Abs("../examples/external_prompts.dip")
+	if err != nil {
+		t.Fatalf("Abs: %v", err)
+	}
+	data, err := os.ReadFile(srcAbs)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	wf, err := NewParser(string(data), srcAbs).Parse()
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if err := ResolveFileDirectives(wf, filepath.Dir(srcAbs)); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	var reviewer ir.AgentConfig
+	for _, n := range wf.Nodes {
+		if n.ID == "Reviewer" {
+			reviewer = n.Config.(ir.AgentConfig)
+		}
+	}
+	if !strings.Contains(reviewer.SystemPrompt, "senior code reviewer") {
+		t.Errorf("SystemPrompt not loaded from file; got %q", reviewer.SystemPrompt)
+	}
+	if !strings.Contains(reviewer.Prompt, "STATUS: success") {
+		t.Errorf("Prompt not loaded from file; got %q", reviewer.Prompt)
+	}
+}
