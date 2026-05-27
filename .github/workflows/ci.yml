@@ -186,7 +186,9 @@ jobs:
           failed=0
           for f in examples/*.dip; do
             formatted=$(./dippin fmt "$f" 2>/dev/null)
-            tmp=$(mktemp /tmp/roundtrip-XXXXXX.dip)
+            # Write tmp file in source dir so command_file: relative paths resolve.
+            # Dot-prefix hides it from any subsequent glob.
+            tmp=$(mktemp "$(dirname "$f")/.roundtrip-XXXXXX.dip")
             echo "$formatted" > "$tmp"
             if ! ./dippin validate "$tmp" > /dev/null 2>&1; then
               echo "::error::$f fails round-trip: formatted output doesn't validate"
