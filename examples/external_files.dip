@@ -1,0 +1,16 @@
+workflow ExternalFiles
+  goal: "Demonstrate command_file: directive (issue #52)"
+  start: Setup
+  exit: Verify
+
+  tool Setup
+    timeout: 30s
+    command_file: external_files/setup.sh
+
+  agent Verify
+    model: claude-sonnet-4-6
+    prompt: "Confirm setup ran successfully. STATUS: success or STATUS: fail."
+    auto_status: true
+
+  edges
+    Setup -> Verify
