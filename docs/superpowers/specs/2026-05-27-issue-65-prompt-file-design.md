@@ -180,18 +180,18 @@ Result: pack-shadow walks each `.dip`, resolves all three directive families int
 
 **Adjacent bug fix in scope:** today's `writeAgentFields` emits `cfg.Prompt` (line 334-336) but does **not** emit `cfg.SystemPrompt` at all. `dippin fmt` of a workflow with inline `system_prompt:` silently drops it on round-trip — a pre-existing data-loss bug. Since #65 adds `system_prompt_file:` emission via the conditional-pair pattern, the missing inline `system_prompt:` emission must ship at the same time (the conditional pair requires both branches). A focused regression test for inline `system_prompt:` round-trip is added alongside the directive tests.
 
-Two new conditional blocks in `writeAgentFields`, replacing the existing trailing `Prompt` block:
+Two new conditional blocks in `writeAgentFields` (extracted into `writeAgentPromptFields` for cyclomatic budget), replacing the existing trailing `Prompt` block. Emission order is `system_prompt` then `prompt` — frame before instruction, matching the canonical authoring order in `examples/external_prompts.dip`:
 
 ```go
-if cfg.PromptFile != "" {
-    wr.line("prompt_file: %s", quoteValue(cfg.PromptFile))
-} else if cfg.Prompt != "" {
-    wr.multilineBlock("prompt", cfg.Prompt)
-}
 if cfg.SystemPromptFile != "" {
     wr.line("system_prompt_file: %s", quoteValue(cfg.SystemPromptFile))
 } else if cfg.SystemPrompt != "" {
     wr.multilineBlock("system_prompt", cfg.SystemPrompt)
+}
+if cfg.PromptFile != "" {
+    wr.line("prompt_file: %s", quoteValue(cfg.PromptFile))
+} else if cfg.Prompt != "" {
+    wr.multilineBlock("prompt", cfg.Prompt)
 }
 ```
 
