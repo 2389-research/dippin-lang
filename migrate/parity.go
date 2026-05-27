@@ -230,9 +230,32 @@ func compareAgentConfigs(id, path string, ac ir.AgentConfig, bCfg interface{}) [
 // compareAgentPromptAndModel compares prompt, model, and provider fields.
 func compareAgentPromptAndModel(id string, ac, bc ir.AgentConfig) []Difference {
 	var diffs []Difference
+	diffs = append(diffs, compareAgentPromptFields(id, ac, bc)...)
+	diffs = append(diffs, compareAgentModelProvider(id, ac, bc)...)
+	return diffs
+}
+
+// compareAgentPromptFields compares prompt and system_prompt fields including their file sources.
+func compareAgentPromptFields(id string, ac, bc ir.AgentConfig) []Difference {
+	var diffs []Difference
 	if !promptsEqual(ac.Prompt, bc.Prompt) {
 		diffs = append(diffs, fieldDiff(id, "prompt", fmt.Sprintf("node %q prompt differs", id)))
 	}
+	if ac.PromptFile != bc.PromptFile {
+		diffs = append(diffs, fieldDiff(id, "prompt_file", fmt.Sprintf("node %q prompt_file: %q vs %q", id, ac.PromptFile, bc.PromptFile)))
+	}
+	if !promptsEqual(ac.SystemPrompt, bc.SystemPrompt) {
+		diffs = append(diffs, fieldDiff(id, "system_prompt", fmt.Sprintf("node %q system_prompt differs", id)))
+	}
+	if ac.SystemPromptFile != bc.SystemPromptFile {
+		diffs = append(diffs, fieldDiff(id, "system_prompt_file", fmt.Sprintf("node %q system_prompt_file: %q vs %q", id, ac.SystemPromptFile, bc.SystemPromptFile)))
+	}
+	return diffs
+}
+
+// compareAgentModelProvider compares model and provider fields.
+func compareAgentModelProvider(id string, ac, bc ir.AgentConfig) []Difference {
+	var diffs []Difference
 	if ac.Model != bc.Model {
 		diffs = append(diffs, fieldDiff(id, "model", fmt.Sprintf("node %q model: %q vs %q", id, ac.Model, bc.Model)))
 	}
