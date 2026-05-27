@@ -128,6 +128,7 @@ func (HumanConfig) nodeConfig() {}
 // ToolConfig holds configuration for shell command nodes.
 type ToolConfig struct {
 	Command       string // Shell command (multiline OK)
+	CommandFile   string // Source path when Command was loaded from command_file:; empty if inline. Populated by parser.ResolveFileDirectives.
 	Timeout       time.Duration
 	Outputs       []string // Declared possible stdout values for coverage analysis
 	MarkerGrep    string   // Regex matched line-by-line against stdout; populates ctx.tool_marker
