@@ -90,7 +90,9 @@ type NodeConfig interface {
 // AgentConfig holds configuration for LLM agent nodes.
 type AgentConfig struct {
 	Prompt              string
+	PromptFile          string // Source path when Prompt was loaded from prompt_file:; empty if inline. Populated by parser.ResolveFileDirectives.
 	SystemPrompt        string
+	SystemPromptFile    string // Source path when SystemPrompt was loaded from system_prompt_file:; empty if inline. Populated by parser.ResolveFileDirectives.
 	Model               string // Per-node override
 	Provider            string
 	MaxTurns            int
