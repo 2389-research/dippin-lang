@@ -36,6 +36,15 @@ disableKinds = ["taxonomy", "term"]
   isPlainText = true
   notAlternative = true
 
+# Override built-in RSS so it honors uglyURLs.
+# Default RSS has noUgly = true, which writes /blog/index.xml; we want /blog.xml
+# alongside /blog.html so the feed URL matches the section's HTML URL.
+[outputFormats.RSS]
+  mediaType = "application/rss+xml"
+  baseName = "index"
+  noUgly = false
+  rel = "alternate"
+
 [outputs]
   home = ["HTML", "llmstxt", "sitemapmd"]
 
