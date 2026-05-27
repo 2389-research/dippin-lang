@@ -407,7 +407,7 @@ func applyHumanInterviewField(cfg *ir.HumanConfig, key, val string) bool {
 // applyToolField applies tool-specific configuration fields.
 func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.SourceLocation) {
 	if applyToolStringField(cfg, key, val) {
-		p.checkCommandFileConflict(cfg, loc)
+		p.checkCommandFileConflict(cfg, key, loc)
 		return
 	}
 	if p.applyToolBoolField(cfg, key, val, loc) {
@@ -421,8 +421,13 @@ func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.Sour
 
 // checkCommandFileConflict emits a diagnostic if both command: and command_file:
 // are set on the same tool node. Per spec, this is a parser-time error (not a
-// DIP code) because the conflict is syntactic.
-func (p *Parser) checkCommandFileConflict(cfg *ir.ToolConfig, loc ir.SourceLocation) {
+// DIP code) because the conflict is syntactic. Gated on the assigning key being
+// command or command_file so subsequent unrelated tool string-field writes
+// (outputs, marker_grep, etc.) don't re-emit the same diagnostic.
+func (p *Parser) checkCommandFileConflict(cfg *ir.ToolConfig, key string, loc ir.SourceLocation) {
+	if key != "command" && key != "command_file" {
+		return
+	}
 	if cfg.Command != "" && cfg.CommandFile != "" {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
 			"tool node has both `command` and `command_file` set; choose one at %d:%d",
