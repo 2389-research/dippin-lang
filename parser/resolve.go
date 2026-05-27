@@ -1,7 +1,9 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,20 +52,49 @@ func resolveNodeDirective(n *ir.Node, baseDir string) error {
 // loadDirectiveFile resolves p relative to baseDir, applies path security
 // checks, and reads the file. Error messages reference the user-written
 // path (p), never the resolved absolute path, to avoid leaking directory
-// structure into diagnostics.
+// structure into diagnostics. In particular, *fs.PathError values from
+// os.Lstat / os.ReadFile carry the resolved absolute path in their
+// stringification, so we never wrap them with %w — instead we branch on
+// the error kind and emit a user-path-only message.
 func loadDirectiveFile(baseDir, p string) ([]byte, error) {
 	resolved, err := safeResolve(baseDir, p)
 	if err != nil {
 		return nil, err
 	}
-	info, err := os.Lstat(resolved)
+	info, err := statDirectiveFile(p, resolved)
 	if err != nil {
-		return nil, fmt.Errorf("path %q: %w", p, err)
+		return nil, err
 	}
 	if err := checkFileInfo(p, info); err != nil {
 		return nil, err
 	}
-	return os.ReadFile(resolved)
+	return readDirectiveFile(p, resolved)
+}
+
+// statDirectiveFile lstats the resolved path, rewriting any error so it
+// only mentions the user-written path p (never the absolute resolved one).
+func statDirectiveFile(p, resolved string) (os.FileInfo, error) {
+	info, err := os.Lstat(resolved)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("file %q not found", p)
+		}
+		return nil, fmt.Errorf("cannot stat file %q: not accessible", p)
+	}
+	return info, nil
+}
+
+// readDirectiveFile reads the resolved path, rewriting any error so it
+// only mentions the user-written path p (never the absolute resolved one).
+func readDirectiveFile(p, resolved string) ([]byte, error) {
+	contents, err := os.ReadFile(resolved)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("file %q not found", p)
+		}
+		return nil, fmt.Errorf("cannot read file %q: not accessible", p)
+	}
+	return contents, nil
 }
 
 // safeResolve joins baseDir/p and ensures the result stays under baseDir.

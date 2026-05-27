@@ -138,6 +138,13 @@ func TestResolveFileDirectives_RejectsOversize(t *testing.T) {
 }
 
 func TestResolveFileDirectives_MissingFile(t *testing.T) {
+	// Use an absolute baseDir so we can detect leaks of the resolved
+	// absolute path in error messages. The CLI typically resolves to
+	// absolute paths before invoking ResolveFileDirectives.
+	absBase, err := filepath.Abs("testdata/command_file")
+	if err != nil {
+		t.Fatalf("filepath.Abs: %v", err)
+	}
 	w := &ir.Workflow{
 		Nodes: []*ir.Node{
 			{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{
@@ -145,11 +152,16 @@ func TestResolveFileDirectives_MissingFile(t *testing.T) {
 			}},
 		},
 	}
-	err := ResolveFileDirectives(w, "testdata/command_file")
+	err = ResolveFileDirectives(w, absBase)
 	if err == nil {
-		t.Errorf("expected missing-file error; got nil")
+		t.Fatalf("expected missing-file error; got nil")
 	}
+	// Error must reference the user-written path
 	if !strings.Contains(err.Error(), "nonexistent.sh") {
 		t.Errorf("error should reference user-written path; got %v", err)
+	}
+	// Error must NOT contain the resolved absolute path (information leak).
+	if strings.Contains(err.Error(), absBase) {
+		t.Errorf("error leaked resolved absolute path %q in message: %v", absBase, err)
 	}
 }
