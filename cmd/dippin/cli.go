@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/dipx"
@@ -231,6 +232,22 @@ func parseSingleFileArg(name, usage string, args []string, stderr io.Writer) (st
 	return fs.Arg(0), ExitCode(-1)
 }
 
+// parseAndResolveDip parses .dip source text and resolves any file directives
+// (e.g. command_file:) against the source file's directory. This is the shared
+// CLI-side parse path — LSP/WASM intentionally skip the resolver and view the
+// unresolved IR.
+func parseAndResolveDip(data []byte, path string) (*ir.Workflow, error) {
+	p := parser.NewParser(string(data), path)
+	w, err := p.Parse()
+	if err != nil {
+		return nil, err
+	}
+	if err := parser.ResolveFileDirectives(w, filepath.Dir(path)); err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
 // parseFile reads and parses a .dip or .dipx file, returning the entry workflow.
 // Unlike loadWorkflow it does not handle .dot — that's only used by the
 // migrate-related commands. .dipx bundles are integrity-verified via dipx.Load.
@@ -246,8 +263,7 @@ func parseFile(path string) (*ir.Workflow, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := parser.NewParser(string(data), path)
-	return p.Parse()
+	return parseAndResolveDip(data, path)
 }
 
 // loadWorkflow reads a file and parses it to IR. It auto-detects .dot vs .dip
@@ -270,8 +286,7 @@ func loadWorkflow(path string) (*ir.Workflow, error) {
 	if strings.HasSuffix(path, ".dot") {
 		return migrate.Migrate(string(data))
 	}
-	p := parser.NewParser(string(data), path)
-	return p.Parse()
+	return parseAndResolveDip(data, path)
 }
 
 // renderError formats a Go error as a diagnostic and writes it to stderr.
