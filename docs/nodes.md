@@ -261,7 +261,8 @@ Tool nodes execute shell commands and capture their output.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `command` | Multiline | — | Shell command(s) to execute. Supports full shell syntax including pipes, conditionals, and multi-line scripts. The command's stdout is captured as `ctx.tool_stdout` and stderr as `ctx.tool_stderr`. |
+| `command` | Multiline | Required (unless `command_file`) | Shell command(s) to execute. Supports full shell syntax including pipes, conditionals, and multi-line scripts. The command's stdout is captured as `ctx.tool_stdout` and stderr as `ctx.tool_stderr`. |
+| `command_file` | String | — | Path (relative to the `.dip` source directory) to an external file whose contents replace inline `command:`. Mutually exclusive with `command`. Loaded at CLI entry points (`dippin lint`, `pack`, `validate`); LSP and playground see the path unresolved. Security: absolute paths rejected, parent-tree escape rejected, symlinks rejected, 4 MiB size cap. |
 | `timeout` | Duration | — | Maximum execution time (e.g., `"30s"`, `"2m"`, `"1m30s"`). If the command exceeds this duration, it is killed. **Recommended** — the linter warns (DIP111) if omitted. |
 | `outputs` | CSV | — | Declared possible stdout values (comma-separated). Used by `dippin coverage` to check whether outgoing edge conditions cover all tool outputs. Advisory — not enforced at runtime. |
 | `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. Tracker validates and applies the regex at runtime. |

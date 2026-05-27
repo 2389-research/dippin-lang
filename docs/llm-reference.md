@@ -47,7 +47,7 @@ workflow <Name>
 |------|----------------|-----------------|
 | `agent` | `prompt` | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
 | `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
-| `tool` | `command` | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes) |
+| `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |

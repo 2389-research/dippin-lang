@@ -4,6 +4,21 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.33.0] — RELEASE_DATE
+
+New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long tracker workflows. Dippin-only release — no tracker coordination required (tracker reads inlined `Command` from `.dipx` bundles unchanged).
+
+### Added
+- `command_file: <path>` directive on tool nodes. Path is relative to the `.dip` source directory.
+- `parser.ResolveFileDirectives(w, baseDir)` — separate-pass file loader called by CLI entry points. Parser itself stays pure.
+- Path security in the resolver: absolute-path reject, parent-tree-escape reject, symlink reject (via `Lstat`), 4 MiB size cap. Error messages reference user-written paths, not resolved absolute paths.
+- Parser-time error when both `command:` and `command_file:` are set on the same tool node.
+- `examples/external_files.dip` + `examples/external_files/setup.sh` demonstrate the directive.
+
+### Notes
+- LSP and `cmd/wasm` (playground) skip the resolver. They see `cfg.CommandFile != "" && cfg.Command == ""`, which is the correct unresolved-IR view.
+- DOT round-trip is lossy for the directive form — pack-then-unpack rewrites `command_file:` to inline `command:`. Tracker reads from `.dipx` bundles where content is already inlined; no current consumer needs the path preserved through DOT. Deferred to a follow-up issue ([#69](https://github.com/2389-research/dippin-lang/issues/69)).
+
 ## [v0.32.0] — 2026-05-27
 
 New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `v0.31.0` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
