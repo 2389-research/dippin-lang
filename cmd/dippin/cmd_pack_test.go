@@ -1,9 +1,12 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/dipx"
@@ -178,4 +181,104 @@ func TestIsIntegrityErr_RejectsNonIntegrity(t *testing.T) {
 	if isIntegrityErr(dipx.ErrSubgraphParse) {
 		t.Error("isIntegrityErr(ErrSubgraphParse) = true, want false")
 	}
+}
+
+// TestRunPack_InlinesCommandFile confirms that a .dip referencing a script
+// via `command_file:` produces a self-contained bundle: the script content
+// appears inside the bundled .dip as an inline `command:` block, and the
+// external script file is not bundled. This is the core fix for the PR #71
+// concern that pack was leaving command_file: directives literal and
+// failing to embed the script.
+func TestRunPack_InlinesCommandFile(t *testing.T) {
+	dir := t.TempDir()
+	scriptContent := "#!/bin/sh\nset -eu\necho hello-from-script\n"
+	scriptDir := filepath.Join(dir, "scripts")
+	if err := os.MkdirAll(scriptDir, 0o755); err != nil {
+		t.Fatalf("mkdir scripts: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(scriptDir, "run.sh"), []byte(scriptContent), 0o644); err != nil {
+		t.Fatalf("write script: %v", err)
+	}
+	dipSrc := `workflow A
+  goal: "Pack-time inlining smoke test"
+  start: Run
+  exit: Done
+
+  tool Run
+    timeout: 30s
+    command_file: scripts/run.sh
+
+  agent Done
+    prompt:
+      Done.
+
+  edges
+    Run -> Done
+`
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(dipSrc), 0o644); err != nil {
+		t.Fatalf("write entry: %v", err)
+	}
+	out := filepath.Join(dir, "a.dipx")
+	var stdout, stderr bytes.Buffer
+	if code := runPack(&stdout, &stderr, []string{"-o", out, entry}); code != exitDipxOK {
+		t.Fatalf("pack exit = %d; stderr=%s", code, stderr.String())
+	}
+	bundled := readBundledDip(t, out, "workflows/a.dip")
+	if strings.Contains(bundled, "command_file:") {
+		t.Fatalf("bundled .dip still has command_file: directive:\n%s", bundled)
+	}
+	if !strings.Contains(bundled, "echo hello-from-script") {
+		t.Fatalf("bundled .dip missing inlined script content:\n%s", bundled)
+	}
+	// Script file should NOT appear in the bundle — only the .dip with the
+	// script inlined into its command: block.
+	for _, name := range listBundleEntries(t, out) {
+		if strings.HasSuffix(name, ".sh") {
+			t.Errorf("bundle unexpectedly contains script file: %s", name)
+		}
+	}
+}
+
+// readBundledDip extracts the named .dip file from the bundle and returns
+// its contents as a string. Fails the test on any read/zip error.
+func readBundledDip(t *testing.T, bundlePath, entryName string) string {
+	t.Helper()
+	r, err := zip.OpenReader(bundlePath)
+	if err != nil {
+		t.Fatalf("open bundle: %v", err)
+	}
+	defer r.Close()
+	for _, f := range r.File {
+		if f.Name != entryName {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			t.Fatalf("open %s: %v", entryName, err)
+		}
+		defer rc.Close()
+		body, err := io.ReadAll(rc)
+		if err != nil {
+			t.Fatalf("read %s: %v", entryName, err)
+		}
+		return string(body)
+	}
+	t.Fatalf("entry %s not found in bundle", entryName)
+	return ""
+}
+
+// listBundleEntries returns the names of every zip entry in bundlePath.
+func listBundleEntries(t *testing.T, bundlePath string) []string {
+	t.Helper()
+	r, err := zip.OpenReader(bundlePath)
+	if err != nil {
+		t.Fatalf("open bundle: %v", err)
+	}
+	defer r.Close()
+	names := make([]string, 0, len(r.File))
+	for _, f := range r.File {
+		names = append(names, f.Name)
+	}
+	return names
 }
