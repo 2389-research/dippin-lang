@@ -60,7 +60,9 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | Field | Type | Notes |
 |-------|------|-------|
 | `prompt` | multiline | Required (DIP110 if empty, start/exit exempt) |
+| `prompt_file` | string | Path (relative to `.dip` source directory) to an external file whose contents become the agent's `prompt`. Mutually exclusive with `prompt:`. See "Prompt File Directives" below. |
 | `system_prompt` | multiline | System message |
+| `system_prompt_file` | string | Path (relative to `.dip` source directory) to an external file whose contents become the agent's `system_prompt`. Mutually exclusive with `system_prompt:`. See "Prompt File Directives" below. |
 | `model` | string | Must be valid model ID (DIP108) |
 | `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
@@ -160,7 +162,31 @@ Mutually exclusive with `command:` — specifying both is a parse error.
 
 Loading: CLI entry points (`dippin lint`, `dippin pack`, `dippin validate`, `dippin doctor`) load the file contents into the IR after parse. The LSP and the playground skip loading; they show the path unresolved. Tracker reads `.dipx` bundles where content is already inlined, so the runtime sees no difference from inline `command:`.
 
-Non-goals (deferred): `prompt_file:` / `system_prompt_file:` directives ([#65](https://github.com/2389-research/dippin-lang/issues/65)), configurable size cap ([#66](https://github.com/2389-research/dippin-lang/issues/66)), full-chain symlink resolution ([#67](https://github.com/2389-research/dippin-lang/issues/67)), glob expansion ([#68](https://github.com/2389-research/dippin-lang/issues/68)), DOT round-trip preservation of the directive form ([#69](https://github.com/2389-research/dippin-lang/issues/69)), graceful LSP/WASM not-loaded signal ([#70](https://github.com/2389-research/dippin-lang/issues/70)). See issue [#52](https://github.com/2389-research/dippin-lang/issues/52).
+Non-goals (deferred): configurable size cap ([#66](https://github.com/2389-research/dippin-lang/issues/66)), full-chain symlink resolution ([#67](https://github.com/2389-research/dippin-lang/issues/67)), glob expansion ([#68](https://github.com/2389-research/dippin-lang/issues/68)), DOT round-trip preservation of the directive form ([#69](https://github.com/2389-research/dippin-lang/issues/69)), graceful LSP/WASM not-loaded signal ([#70](https://github.com/2389-research/dippin-lang/issues/70)). See issue [#52](https://github.com/2389-research/dippin-lang/issues/52).
+
+**Prompt File Directives (`prompt_file:` and `system_prompt_file:`)** — *added v0.34.0.*
+
+Reference external prompt files from agent nodes:
+
+```dip
+agent Reviewer
+  model: claude-sonnet-4-6
+  system_prompt_file: prompts/persona.md
+  prompt_file: prompts/task.md
+```
+
+Path resolution and security are identical to `command_file:` above:
+- Paths resolved relative to the `.dip` source directory
+- Absolute paths rejected
+- Parent-tree escapes (`..`) rejected
+- Symlinks rejected
+- 4 MiB size cap
+
+The two slots are independent — an agent may use any combination of inline `prompt:`, `prompt_file:`, inline `system_prompt:`, `system_prompt_file:`. Only same-slot conflict (`prompt:` + `prompt_file:`) is a parser-time error.
+
+**Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. Tracker reads inline prompts; no separate file lookup at runtime.
+
+**Non-goals:** defaults-block file-form support ([#72](https://github.com/2389-research/dippin-lang/issues/72)) and bundled-files `.dipx` redesign ([#73](https://github.com/2389-research/dippin-lang/issues/73)) are tracked as follow-up issues.
 
 ### parallel / fan_in — concurrent execution
 

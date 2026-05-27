@@ -73,9 +73,11 @@ node_decl       = agent_node | human_node | tool_node
 agent_node      = "agent" IDENTIFIER NEWLINE
                   INDENT { agent_field | common_field } OUTDENT ;
 
-agent_field     = "prompt"            ":" field_value
-                | "system_prompt"     ":" field_value
-                | "model"             ":" field_value
+agent_field     = "prompt"              ":" field_value
+                | "prompt_file"        ":" field_value    (* path relative to .dip dir; mutually exclusive with prompt *)
+                | "system_prompt"      ":" field_value
+                | "system_prompt_file" ":" field_value    (* path relative to .dip dir; mutually exclusive with system_prompt *)
+                | "model"              ":" field_value
                 | "provider"          ":" field_value
                 | "backend"           ":" field_value
                 | "working_dir"       ":" field_value
@@ -328,7 +330,8 @@ digit           = "0" | "1" | ... | "9" ;
 (*   fidelity, goal_gate, auto_status, max_turns,             *)
 (*   cmd_timeout, response_format, response_schema, params,   *)
 (*   retry_policy, max_retries, base_delay, retry_target,     *)
-(*   fallback_target, reads, writes, system_prompt, prompt    *)
+(*   fallback_target, reads, writes, system_prompt,           *)
+(*   system_prompt_file, prompt, prompt_file                  *)
 (* Human: label, mode, default, reads, writes                 *)
 (* Tool: label, timeout, reads, writes, command               *)
 (* Subgraph: label, ref                                       *)

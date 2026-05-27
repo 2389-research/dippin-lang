@@ -4,6 +4,21 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.34.0] — UNRELEASED
+
+### Added
+- `prompt_file:` and `system_prompt_file:` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`. Reuses the parser-pure resolver pass — pack-time inlining via the shadow tree carries the resolved content into `.dipx` bundles, so no tracker coordination is required.
+- `parser.ResolveFileDirectives` now walks agent nodes in addition to tool nodes. `loadDirectiveFile` and the 4-layer security model (absolute reject, parent-tree escape reject, symlink reject, 4-MiB cap) are shared across all three directives.
+- `examples/external_prompts.dip` demonstrating both prompt directives.
+
+### Fixed
+- `dippin fmt` previously silently dropped inline `system_prompt:` on agent nodes (pre-existing bug, latent since the field was introduced). Inline `system_prompt:` now round-trips correctly.
+
+### Notes
+- Parser stays pure (no FS I/O); resolver runs at CLI entry points only. LSP and WASM consumers see the unresolved IR view (`*File` set, content empty), which is the correct view for those contexts.
+- Per-node only; `defaults agent` does not currently support `prompt` / `system_prompt` fields, so file-form-in-defaults requires a larger design — filed as [#72](https://github.com/2389-research/dippin-lang/issues/72).
+- Bundled-files `.dipx` redesign considered and explicitly deferred so v0.34 stays dippin-only; filed as [#73](https://github.com/2389-research/dippin-lang/issues/73).
+
 ## [v0.33.0] — 2026-05-27
 
 New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long tracker workflows. Dippin-only release — no tracker coordination required (tracker reads inlined `Command` from `.dipx` bundles unchanged).
