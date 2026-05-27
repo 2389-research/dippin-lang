@@ -425,6 +425,16 @@ func TestFieldCompletionsIncludesToolAccess(t *testing.T) {
 	t.Error("missing completion for 'tool_access:' (v0.32.0 safety primitive)")
 }
 
+func TestFieldCompletionsIncludesCommandFile(t *testing.T) {
+	items := fieldCompletions()
+	for _, it := range items {
+		if it.Label == "command_file:" {
+			return
+		}
+	}
+	t.Error("missing completion for 'command_file:' (v0.33.0 directive)")
+}
+
 func TestConvertDiagnostic(t *testing.T) {
 	d := validator.Diagnostic{
 		Code:     "DIP001",

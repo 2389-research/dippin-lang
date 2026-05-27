@@ -53,6 +53,7 @@ func fieldCompletions() []protocol.CompletionItem {
 		{"fidelity:", "Fidelity level"},
 		{"tool_access:", "LLM tool catalog gate on agent (none = no tools; omit = full)"},
 		{"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
+		{"command_file:", "External script reference for tool node (path relative to .dip dir)"},
 		{"route_required:", "Require _TRACKER_ROUTE= sentinel line from tool stdout"},
 		{"output_limit:", "Per-node stdout byte cap (non-negative int; 0 = engine default)"},
 	}
