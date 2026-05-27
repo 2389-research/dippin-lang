@@ -25,12 +25,12 @@ tool Setup
 
 These are tracked as numbered follow-up issues, filed before merge (§ Release coordination):
 
-1. **`prompt_file:` and `system_prompt_file:` directives.** The cited production pain (tracker's `build_product.dip` heredoc bloat) is entirely shell scripts in tool nodes. Prompt variants ship when a workflow with the analogous prompt-bloat pain surfaces.
-2. **Configurable size cap.** v1 hardcodes 4MB. When someone has a legitimate larger file, file an issue with the use case and pick a real default; don't pre-emptively configure.
-3. **Symlink full-chain resolution.** v1 uses `os.Lstat` to reject symlinks at the directive's path. Full `EvalSymlinks` resolution (catching symlinks deeper in the resolved path) is deferred.
-4. **Glob support** (`command_file: scripts/*.sh`). Composition semantics undefined; no current need.
-5. **DOT round-trip preservation of `command_file:`.** DOT export emits inlined `command` only; pack-then-unpack loses the directive form. Spec documents the trade-off explicitly. Tracker reads from `.dipx` bundles where content is already inlined; no current consumer needs the path.
-6. **Graceful LSP/WASM "file directive seen; not loaded in this context" message.** Authors using the playground or LSP see `cfg.Command == ""` for tool nodes with `command_file:` set. v1 lets this silently work for lint (which doesn't dereference `Command`); a future polish surfaces a clearer signal.
+1. **`prompt_file:` and `system_prompt_file:` directives.** The cited production pain (tracker's `build_product.dip` heredoc bloat) is entirely shell scripts in tool nodes. Prompt variants ship when a workflow with the analogous prompt-bloat pain surfaces. ([#65](https://github.com/2389-research/dippin-lang/issues/65))
+2. **Configurable size cap.** v1 hardcodes 4MB. When someone has a legitimate larger file, file an issue with the use case and pick a real default; don't pre-emptively configure. ([#66](https://github.com/2389-research/dippin-lang/issues/66))
+3. **Symlink full-chain resolution.** v1 uses `os.Lstat` to reject symlinks at the directive's path. Full `EvalSymlinks` resolution (catching symlinks deeper in the resolved path) is deferred. ([#67](https://github.com/2389-research/dippin-lang/issues/67))
+4. **Glob support** (`command_file: scripts/*.sh`). Composition semantics undefined; no current need. ([#68](https://github.com/2389-research/dippin-lang/issues/68))
+5. **DOT round-trip preservation of `command_file:`.** DOT export emits inlined `command` only; pack-then-unpack loses the directive form. Spec documents the trade-off explicitly. Tracker reads from `.dipx` bundles where content is already inlined; no current consumer needs the path. ([#69](https://github.com/2389-research/dippin-lang/issues/69))
+6. **Graceful LSP/WASM "file directive seen; not loaded in this context" message.** Authors using the playground or LSP see `cfg.Command == ""` for tool nodes with `command_file:` set. v1 lets this silently work for lint (which doesn't dereference `Command`); a future polish surfaces a clearer signal. ([#70](https://github.com/2389-research/dippin-lang/issues/70))
 
 ## Dippin-side design
 
@@ -318,12 +318,12 @@ Auto-handled (no change needed): tree-sitter grammar, Zed highlights, site `high
 
 (Mirrors the #41 "task #0" pattern that broke the DIP28 anti-pattern of unfilled "follow-up if needed" promises.)
 
-1. **Add `prompt_file:` and `system_prompt_file:` directives.** When workflow authors hit prompt-bloat analogous to the shell-script pain, ship the symmetric directives. Estimated v0.34 or v0.35.
-2. **Configurable size cap for `*_file:` directives.** v1 hardcodes 4MB. If a legitimate use case exceeds it, expose a workflow-level or CLI-level config.
-3. **Symlink full-chain resolution via `EvalSymlinks`.** v1 only rejects symlinks at the directive's path. A deeper symlink (in a parent directory that resolves elsewhere) could still escape. Tighten if the threat model requires.
-4. **Glob support for `command_file:` patterns.** `command_file: scripts/*.sh` expansion with defined composition semantics.
-5. **Preserve `command_file:` path through DOT round-trip.** Required if tracker (or any other consumer) wants source-path attribution in debugging output. Currently no consumer needs this.
-6. **Graceful LSP/WASM "file directive seen; not loaded in this context" signal.** v1 lets these contexts silently render the unresolved IR. A future polish surfaces a clearer note in the LSP diagnostic stream and the playground UI.
+1. **Add `prompt_file:` and `system_prompt_file:` directives.** When workflow authors hit prompt-bloat analogous to the shell-script pain, ship the symmetric directives. Estimated v0.34 or v0.35. ([#65](https://github.com/2389-research/dippin-lang/issues/65))
+2. **Configurable size cap for `*_file:` directives.** v1 hardcodes 4MB. If a legitimate use case exceeds it, expose a workflow-level or CLI-level config. ([#66](https://github.com/2389-research/dippin-lang/issues/66))
+3. **Symlink full-chain resolution via `EvalSymlinks`.** v1 only rejects symlinks at the directive's path. A deeper symlink (in a parent directory that resolves elsewhere) could still escape. Tighten if the threat model requires. ([#67](https://github.com/2389-research/dippin-lang/issues/67))
+4. **Glob support for `command_file:` patterns.** `command_file: scripts/*.sh` expansion with defined composition semantics. ([#68](https://github.com/2389-research/dippin-lang/issues/68))
+5. **Preserve `command_file:` path through DOT round-trip.** Required if tracker (or any other consumer) wants source-path attribution in debugging output. Currently no consumer needs this. ([#69](https://github.com/2389-research/dippin-lang/issues/69))
+6. **Graceful LSP/WASM "file directive seen; not loaded in this context" signal.** v1 lets these contexts silently render the unresolved IR. A future polish surfaces a clearer note in the LSP diagnostic stream and the playground UI. ([#70](https://github.com/2389-research/dippin-lang/issues/70))
 
 ## Complexity budgets
 

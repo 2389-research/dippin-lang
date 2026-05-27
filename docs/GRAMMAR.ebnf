@@ -107,6 +107,7 @@ tool_node       = "tool" IDENTIFIER NEWLINE
                   INDENT { tool_field | common_field } OUTDENT ;
 
 tool_field      = "command" ":" field_value
+                | "command_file" ":" field_value
                 | "timeout" ":" DURATION
                 | "outputs" ":" identifier_list ;
 

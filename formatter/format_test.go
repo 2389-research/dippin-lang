@@ -1993,3 +1993,48 @@ func TestFormat_AgentToolAccessWhitespaceOnly(t *testing.T) {
 		t.Errorf("whitespace-only tool_access should not appear in formatted output:\n%s", out)
 	}
 }
+
+func TestFormat_ToolCommandFile(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  tool A
+    command_file: scripts/setup.sh
+`
+	p := parser.NewParser(src, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "command_file: scripts/setup.sh") {
+		t.Errorf("formatted output missing command_file directive:\n%s", out)
+	}
+	// And it should NOT also emit a multi-line command: block
+	if strings.Contains(out, "command:") {
+		t.Errorf("formatted output should not contain inline command: when file form used:\n%s", out)
+	}
+}
+
+func TestFormat_ToolCommandInline(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  tool A
+    command: echo hi
+`
+	p := parser.NewParser(src, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "command:") {
+		t.Errorf("formatted output missing inline command:\n%s", out)
+	}
+	if strings.Contains(out, "command_file:") {
+		t.Errorf("formatted output should not contain command_file when inline used:\n%s", out)
+	}
+}

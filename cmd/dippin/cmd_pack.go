@@ -37,6 +37,12 @@ func (c *CLI) CmdPack(args []string) ExitCode {
 
 // runPack implements `dippin pack <entry.dip> [-o output] [--dry-run]`.
 // Returns one of exitDipx* per the .dipx CLI contract.
+//
+// Before invoking dipx.Pack on the user-supplied entry, we build a shadow
+// source tree with all command_file: directives resolved to inline command:
+// blocks. dipx.Pack then walks the shadow tree, so the produced bundle is
+// self-contained and does not require the referenced script files to exist
+// when the bundle is later opened.
 func runPack(stdout, stderr io.Writer, args []string) int {
 	entry, dest, dryRun, code := parsePackArgs(stderr, args)
 	if code != -1 {
@@ -45,16 +51,29 @@ func runPack(stdout, stderr io.Writer, args []string) int {
 	if code := validateEntryPrePack(stderr, entry); code != exitDipxOK {
 		return code
 	}
+	shadowEntry, cleanup, err := prepShadowSourceTree(entry)
+	if err != nil {
+		fmt.Fprintf(stderr, "error: %v\n", err)
+		return exitDipxUserError
+	}
+	defer cleanup()
+	return dispatchPack(stdout, stderr, shadowEntry, dest, dryRun)
+}
+
+// dispatchPack routes the resolved shadow entry to the right dipx.Pack sink
+// (dry-run discard, stdout, or atomic file). Extracted so runPack stays under
+// the project's cyclomatic-5 cap.
+func dispatchPack(stdout, stderr io.Writer, shadowEntry, dest string, dryRun bool) int {
 	ctx := context.Background()
 	if dryRun {
-		_, err := dipx.Pack(ctx, entry, io.Discard)
+		_, err := dipx.Pack(ctx, shadowEntry, io.Discard)
 		return classifyExit(stderr, err)
 	}
 	if dest == "-" {
-		_, err := dipx.Pack(ctx, entry, stdout)
+		_, err := dipx.Pack(ctx, shadowEntry, stdout)
 		return classifyExit(stderr, err)
 	}
-	return packToFile(stderr, ctx, entry, dest)
+	return packToFile(stderr, ctx, shadowEntry, dest)
 }
 
 // validateEntryPrePack runs structural validation (DIP001-DIP009) on the entry
