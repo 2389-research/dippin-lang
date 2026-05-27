@@ -2,9 +2,9 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [v0.32.0] — RELEASE_DATE
+## [v0.32.0] — 2026-05-27
 
-New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `TRACKER_TAG` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
+New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `v0.31.0` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
 
 ### Added
 
@@ -14,9 +14,9 @@ New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalo
 
 ### Runtime requirement
 
-- Requires tracker `TRACKER_TAG`. Without tracker enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the joint release prevents this).
+- Requires tracker `v0.31.0`. Without tracker enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the joint release prevents this).
 
-### Tracker-side (linked to tracker tag `TRACKER_TAG`)
+### Tracker-side (linked to tracker tag `v0.31.0`)
 
 - Tool registry returns empty when `tool_access: none` is set.
 - Anthropic translator strips the `tools` array via `tool_choice: none`.
