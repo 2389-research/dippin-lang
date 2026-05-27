@@ -6,11 +6,27 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/2389-research/dippin-lang/formatter"
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/parser"
 )
+
+// ensureUnderRoot rejects any absolute path that resolves outside rootDir.
+// Guards the shadow-tree writer against a malicious subgraph ref like
+// `subgraph: ../../../escape.dip`, which would otherwise cause
+// writeShadowFile to write outside the temp shadow dir (since
+// filepath.Join(shadowDir, "../../../escape.dip") escapes). dipx.Pack does
+// its own escape check, but it runs AFTER we've built the shadow tree —
+// too late to prevent the out-of-tree write.
+func ensureUnderRoot(absPath, rootDir string) error {
+	rel, err := filepath.Rel(rootDir, absPath)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("pack-inline: ref escapes source root: %s", absPath)
+	}
+	return nil
+}
 
 // prepShadowSourceTree walks the entry workflow and every transitively-
 // reachable subgraph .dip, resolves any command_file: directives by reading
@@ -108,7 +124,7 @@ func inlineOne(srcAbs, rootDir, shadowDir string) ([]string, error) {
 	if err := writeShadowFile(srcAbs, rootDir, shadowDir, wf); err != nil {
 		return nil, err
 	}
-	return collectRefPaths(wf, filepath.Dir(srcAbs))
+	return collectRefPaths(wf, filepath.Dir(srcAbs), rootDir)
 }
 
 // clearCommandFileDirectives walks every tool node in wf and clears its
@@ -142,10 +158,10 @@ func writeShadowFile(srcAbs, rootDir, shadowDir string, wf *ir.Workflow) error {
 
 // collectRefPaths returns absolute disk paths for every subgraph ref in wf,
 // resolved against srcDir (the directory of the workflow that declared them).
-// Returns an error if any ref escapes the source root would only matter for
-// dipx.Pack's later walk — we leave that validation to dipx and just enqueue
-// the reachable refs here.
-func collectRefPaths(wf *ir.Workflow, srcDir string) ([]string, error) {
+// Each resolved target is validated to be under rootDir — refs that escape
+// fail fast here (before BFS enqueues them) so the parent workflow's context
+// is in the error message.
+func collectRefPaths(wf *ir.Workflow, srcDir, rootDir string) ([]string, error) {
 	var out []string
 	for _, n := range wf.Nodes {
 		ref := refFromNodeForShadow(n)
@@ -154,6 +170,9 @@ func collectRefPaths(wf *ir.Workflow, srcDir string) ([]string, error) {
 		}
 		target, err := filepath.Abs(filepath.Join(srcDir, ref))
 		if err != nil {
+			return nil, err
+		}
+		if err := ensureUnderRoot(target, rootDir); err != nil {
 			return nil, err
 		}
 		out = append(out, target)

@@ -240,6 +240,44 @@ func TestRunPack_InlinesCommandFile(t *testing.T) {
 	}
 }
 
+// TestRunPack_RejectsSubgraphRefEscape confirms that prepShadowSourceTree's
+// ensureUnderRoot check rejects a workflow whose subgraph reference escapes
+// the entry's directory. Without the check, writeShadowFile would compute
+// a relative path with ".." segments and write outside the temp shadow dir.
+func TestRunPack_RejectsSubgraphRefEscape(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "entry.dip")
+	src := `workflow E
+  goal: "escape-attempt"
+  start: S
+  exit: D
+
+  subgraph S
+    label: "escape"
+    ref: ../escaped.dip
+
+  agent D
+    prompt:
+      done
+
+  edges
+    S -> D
+`
+	if err := os.WriteFile(entry, []byte(src), 0o644); err != nil {
+		t.Fatalf("write entry: %v", err)
+	}
+	out := filepath.Join(dir, "e.dipx")
+	var stdout, stderr bytes.Buffer
+	code := runPack(&stdout, &stderr, []string{"-o", out, entry})
+	if code == exitDipxOK {
+		t.Fatalf("expected pack to fail on subgraph ref escape; stderr=%s", stderr.String())
+	}
+	combined := stderr.String() + stdout.String()
+	if !strings.Contains(combined, "escapes source root") {
+		t.Errorf("expected 'escapes source root' in error; got: %s", combined)
+	}
+}
+
 // readBundledDip extracts the named .dip file from the bundle and returns
 // its contents as a string. Fails the test on any read/zip error.
 func readBundledDip(t *testing.T, bundlePath, entryName string) string {
