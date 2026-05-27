@@ -49,7 +49,7 @@ workflow <Name>
 |------|----------------|-----------------|
 | `agent` | `prompt` | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
 | `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
-| `tool` | `command` | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes) |
+| `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
@@ -310,7 +310,8 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `command` | multiline | Shell command. Supports pipes, here-docs, case/esac. |
+| `command` | multiline | Shell command. Supports pipes, here-docs, case/esac. Required unless `command_file` is set. |
+| `command_file` | string | Path (relative to the `.dip` source directory) to an external script whose contents replace inline `command:`. Mutually exclusive with `command`. See "Tool Command File" below. |
 | `timeout` | duration | **Required** (DIP111). e.g. `30s`, `5m` |
 | `outputs` | CSV | Possible stdout values for condition checks |
 | `marker_grep` | string | Regex matched against stdout; sets `ctx.tool_marker`. Tracker validates at runtime. |
@@ -320,6 +321,23 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 | `writes` | CSV | Context keys written |
 
 Do NOT use `${ctx.*}` in commands — they expand to empty at parse time (DIP124). Output is captured as `ctx.tool_stdout` and `ctx.tool_stderr`.
+
+**Tool Command File (`command_file:`)** — *added v0.33.0.*
+
+Reference an external file for a tool node's command instead of inlining a heredoc:
+
+```dip
+tool Setup
+  command_file: scripts/setup.sh
+```
+
+Path resolution: relative to the `.dip` source directory. Absolute paths rejected. Symlinks rejected. Parent-tree escape (`../../etc/passwd`) rejected. 4 MiB size cap.
+
+Mutually exclusive with `command:` — specifying both is a parse error.
+
+Loading: CLI entry points (`dippin lint`, `dippin pack`, `dippin validate`, `dippin doctor`) load the file contents into the IR after parse. The LSP and the playground skip loading; they show the path unresolved. Tracker reads `.dipx` bundles where content is already inlined, so the runtime sees no difference from inline `command:`.
+
+Non-goals (deferred): `prompt_file:` / `system_prompt_file:` directives ([#65](https://github.com/2389-research/dippin-lang/issues/65)), configurable size cap ([#66](https://github.com/2389-research/dippin-lang/issues/66)), full-chain symlink resolution ([#67](https://github.com/2389-research/dippin-lang/issues/67)), glob expansion ([#68](https://github.com/2389-research/dippin-lang/issues/68)), DOT round-trip preservation of the directive form ([#69](https://github.com/2389-research/dippin-lang/issues/69)), graceful LSP/WASM not-loaded signal ([#70](https://github.com/2389-research/dippin-lang/issues/70)). See issue [#52](https://github.com/2389-research/dippin-lang/issues/52).
 
 ### parallel / fan_in — concurrent execution
 
