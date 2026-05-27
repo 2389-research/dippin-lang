@@ -42,6 +42,9 @@ func nodeIDCompletions(doc *document) []protocol.CompletionItem {
 func fieldCompletions() []protocol.CompletionItem {
 	fields := []struct{ name, detail string }{
 		{"prompt:", "Agent prompt text"},
+		{"prompt_file:", "Load prompt from external file (relative to .dip dir)"},
+		{"system_prompt:", "Agent system prompt text"},
+		{"system_prompt_file:", "Load system_prompt from external file (relative to .dip dir)"},
 		{"model:", "LLM model name"},
 		{"provider:", "LLM provider name"},
 		{"max_turns:", "Maximum agentic turns"},
