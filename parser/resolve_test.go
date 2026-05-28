@@ -242,7 +242,9 @@ func TestResolveFileDirectives_AgentErrorIdentifiesDirective(t *testing.T) {
 	if !strings.Contains(err.Error(), "system_prompt_file") {
 		t.Errorf("error should identify directive `system_prompt_file`; got %v", err)
 	}
-	if strings.Contains(err.Error(), "prompt_file:") && !strings.Contains(err.Error(), "system_prompt_file") {
+	// Substring `prompt_file:` matches both directives; the bare directive token
+	// is preceded by a space in the error format, so we use that as the anchor.
+	if strings.Contains(err.Error(), " prompt_file:") {
 		t.Errorf("error must not be ambiguous between prompt_file and system_prompt_file; got %v", err)
 	}
 }

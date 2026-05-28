@@ -359,7 +359,7 @@ Path resolution and security are identical to `command_file:` above:
 - Symlinks rejected
 - 4 MiB size cap
 
-The two slots are independent — an agent may use any combination of inline `prompt:`, `prompt_file:`, inline `system_prompt:`, `system_prompt_file:`. Only same-slot conflict (`prompt:` + `prompt_file:`) is a parser-time error.
+The two slots are independent — an agent may use any combination of inline `prompt:`, `prompt_file:`, inline `system_prompt:`, `system_prompt_file:`. Only same-slot conflicts (`prompt:` + `prompt_file:`, or `system_prompt:` + `system_prompt_file:`) are parser-time errors. Cross-slot mixes (e.g. `prompt:` + `system_prompt_file:`) are fine.
 
 **Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. Tracker reads inline prompts; no separate file lookup at runtime.
 

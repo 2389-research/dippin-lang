@@ -2058,7 +2058,7 @@ func TestFormat_AgentPromptFile(t *testing.T) {
 	if !strings.Contains(out, "prompt_file: prompts/task.md") {
 		t.Errorf("expected `prompt_file: prompts/task.md` in output; got:\n%s", out)
 	}
-	if strings.Contains(out, "prompt: ") && !strings.Contains(out, "prompt_file:") {
+	if strings.Contains(out, "\n    prompt:") {
 		t.Errorf("formatter emitted inline prompt: when PromptFile was set; got:\n%s", out)
 	}
 }
@@ -2079,6 +2079,9 @@ func TestFormat_AgentSystemPromptFile(t *testing.T) {
 	out := Format(wf)
 	if !strings.Contains(out, "system_prompt_file: prompts/persona.md") {
 		t.Errorf("expected `system_prompt_file: prompts/persona.md` in output; got:\n%s", out)
+	}
+	if strings.Contains(out, "\n    system_prompt:") {
+		t.Errorf("formatter emitted inline system_prompt: when SystemPromptFile was set; got:\n%s", out)
 	}
 }
 
