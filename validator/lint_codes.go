@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP139).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP140).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -41,6 +41,7 @@ const (
 	DIP137 = "DIP137" // unbounded manager_loop: no stop_condition and no max_cycles
 	DIP138 = "DIP138" // tool node routes on stdout but declares no marker_grep / outputs (reserved)
 	DIP139 = "DIP139" // invalid tool_access value on agent node
+	DIP140 = "DIP140" // params re-enables tools that tool_access strips
 )
 
 func init() {
@@ -84,4 +85,5 @@ func init() {
 	CodeDescription[DIP137] = "unbounded manager_loop: no stop_condition and no max_cycles"
 	CodeDescription[DIP138] = "tool node routes on stdout but declares no marker_grep / outputs"
 	CodeDescription[DIP139] = "invalid tool_access value on agent node"
+	CodeDescription[DIP140] = "params re-enables tools that tool_access strips"
 }
