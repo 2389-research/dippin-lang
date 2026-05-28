@@ -160,11 +160,11 @@ func safeResolve(baseDir, p string) (string, error) {
 // defeats both. Resolving the parent — not the leaf — leaves the separate
 // leaf-symlink rejection in checkFileInfo intact. (#67)
 func checkContainment(baseDir, resolved, p string) error {
-	realBase, err := filepath.EvalSymlinks(baseDir)
+	realBase, err := realPath(baseDir)
 	if err != nil {
 		return pathErr(p, err, "stat")
 	}
-	realParent, err := filepath.EvalSymlinks(filepath.Dir(resolved))
+	realParent, err := realPath(filepath.Dir(resolved))
 	if err != nil {
 		return pathErr(p, err, "stat")
 	}
@@ -172,6 +172,20 @@ func checkContainment(baseDir, resolved, p string) error {
 		return fmt.Errorf("path %q resolves outside source directory", p)
 	}
 	return nil
+}
+
+// realPath resolves path's symlink chain and returns it absolute and cleaned.
+// Both the base and the parent must be absolute before escapesBase compares
+// them: with a relative baseDir, a symlink whose target is absolute yields a
+// relative base but an absolute parent, and filepath.Rel errors on that pair —
+// which would otherwise be misread as an escape and reject a valid in-dir file
+// (e.g. `dippin validate workflow.dip`, baseDir "."). (#67)
+func realPath(path string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(resolved)
 }
 
 // escapesBase reports whether target lies outside base via a `..` ancestor
