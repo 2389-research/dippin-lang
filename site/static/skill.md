@@ -353,7 +353,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP009) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001-DIP139) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001-DIP140) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -474,6 +474,7 @@ The primary loop for authoring .dip files:
 | DIP132 | Invalid JSON in response_schema | Fix the JSON syntax |
 | DIP133 | Params key shadows field | Rename the params key |
 | DIP139 | Invalid `tool_access` value | Use `tool_access: none` or omit the field; runtime fail-closes on unknown values |
+| DIP140 | `params` re-enables tools that `tool_access` strips | Remove the `params` key (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`); `tool_access` governs the catalog |
 
 ## Best Practices
 
