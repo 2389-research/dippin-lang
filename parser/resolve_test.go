@@ -116,6 +116,105 @@ func TestResolveFileDirectives_RejectsSymlink(t *testing.T) {
 	}
 }
 
+func TestResolveFileDirectives_RejectsSymlinkedParentDir(t *testing.T) {
+	// The leaf file is a real (non-symlink) file, so the leaf-only Lstat
+	// check passes. The escape is via a symlinked *parent directory* that
+	// points outside baseDir — lexical filepath.Rel never resolves it, so
+	// only full-chain EvalSymlinks containment catches this. (#67)
+	tmp := t.TempDir()
+	external := t.TempDir() // sibling dir, outside tmp
+	if err := os.WriteFile(filepath.Join(external, "secret.txt"), []byte("secret"), 0o644); err != nil {
+		t.Fatalf("write secret: %v", err)
+	}
+	if err := os.Symlink(external, filepath.Join(tmp, "sub")); err != nil {
+		t.Skipf("symlink not supported on this platform: %v", err)
+	}
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				CommandFile: "sub/secret.txt",
+			}},
+		},
+	}
+	err := ResolveFileDirectives(w, tmp)
+	if err == nil || !strings.Contains(err.Error(), "resolves outside source directory") {
+		t.Errorf("expected symlinked-parent escape rejection; got %v", err)
+	}
+}
+
+func TestResolveFileDirectives_AllowsInternalSymlinkUnderRelativeBase(t *testing.T) {
+	// Regression: when baseDir is RELATIVE (e.g. `dippin validate
+	// workflow.dip` → baseDir "."), an internal symlink whose target is
+	// absolute makes EvalSymlinks(parent) absolute while EvalSymlinks(base)
+	// stays relative. filepath.Rel(relative, absolute) errors, which must
+	// NOT be read as an escape. Both sides are normalized to absolute. (#67)
+	tmp := t.TempDir()
+	realSub := filepath.Join(tmp, "real_sub")
+	if err := os.Mkdir(realSub, 0o755); err != nil {
+		t.Fatalf("mkdir real_sub: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(realSub, "data.sh"), []byte("echo hi"), 0o644); err != nil {
+		t.Fatalf("write data: %v", err)
+	}
+	// os.Symlink with an absolute target → the link resolves to an absolute path.
+	if err := os.Symlink(realSub, filepath.Join(tmp, "link")); err != nil {
+		t.Skipf("symlink not supported on this platform: %v", err)
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	relBase, err := filepath.Rel(cwd, tmp)
+	if err != nil {
+		t.Fatalf("rel base: %v", err)
+	}
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				CommandFile: "link/data.sh",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, relBase); err != nil {
+		t.Fatalf("expected internal symlink under relative base to load; got %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.ToolConfig)
+	if cfg.Command != "echo hi" {
+		t.Errorf("Command not loaded under relative base; got %q", cfg.Command)
+	}
+}
+
+func TestResolveFileDirectives_AllowsSymlinkedParentDirInsideBase(t *testing.T) {
+	// A symlinked parent directory that resolves to a location *inside*
+	// baseDir must still load — the containment check rejects escapes, not
+	// all symlinks. Guards against over-blocking legitimate internal links.
+	tmp := t.TempDir()
+	realSub := filepath.Join(tmp, "real_sub")
+	if err := os.Mkdir(realSub, 0o755); err != nil {
+		t.Fatalf("mkdir real_sub: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(realSub, "data.sh"), []byte("echo hi"), 0o644); err != nil {
+		t.Fatalf("write data: %v", err)
+	}
+	if err := os.Symlink(realSub, filepath.Join(tmp, "link")); err != nil {
+		t.Skipf("symlink not supported on this platform: %v", err)
+	}
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				CommandFile: "link/data.sh",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, tmp); err != nil {
+		t.Fatalf("expected internal symlinked dir to load; got %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.ToolConfig)
+	if cfg.Command != "echo hi" {
+		t.Errorf("Command not loaded through internal symlink; got %q", cfg.Command)
+	}
+}
+
 func TestResolveFileDirectives_RejectsOversize(t *testing.T) {
 	tmp := t.TempDir()
 	bigPath := filepath.Join(tmp, "big.sh")

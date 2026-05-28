@@ -94,6 +94,9 @@ func loadDirectiveFile(baseDir, p string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := checkContainment(baseDir, resolved, p); err != nil {
+		return nil, err
+	}
 	info, err := statDirectiveFile(p, resolved)
 	if err != nil {
 		return nil, err
@@ -109,10 +112,7 @@ func loadDirectiveFile(baseDir, p string) ([]byte, error) {
 func statDirectiveFile(p, resolved string) (os.FileInfo, error) {
 	info, err := os.Lstat(resolved)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("file %q not found", p)
-		}
-		return nil, fmt.Errorf("cannot stat file %q: not accessible", p)
+		return nil, pathErr(p, err, "stat")
 	}
 	return info, nil
 }
@@ -122,26 +122,78 @@ func statDirectiveFile(p, resolved string) (os.FileInfo, error) {
 func readDirectiveFile(p, resolved string) ([]byte, error) {
 	contents, err := os.ReadFile(resolved)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("file %q not found", p)
-		}
-		return nil, fmt.Errorf("cannot read file %q: not accessible", p)
+		return nil, pathErr(p, err, "read")
 	}
 	return contents, nil
 }
 
+// pathErr maps a filesystem error to a user-path-only diagnostic. *fs.PathError
+// values from the os package carry the resolved absolute path in their
+// stringification, so we branch on the error kind and emit a message that names
+// only the user-written path p (verb is the failed operation, e.g. "stat").
+func pathErr(p string, err error, verb string) error {
+	if errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("file %q not found", p)
+	}
+	return fmt.Errorf("cannot %s file %q: not accessible", verb, p)
+}
+
 // safeResolve joins baseDir/p and ensures the result stays under baseDir.
-// Rejects absolute paths and any path that escapes via `..`.
+// Rejects absolute paths and any path that escapes via `..`. This is a purely
+// lexical check; symlink-based escapes are caught separately by
+// checkContainment.
 func safeResolve(baseDir, p string) (string, error) {
 	if filepath.IsAbs(p) {
 		return "", fmt.Errorf("absolute paths not allowed: %q", p)
 	}
 	resolved := filepath.Join(baseDir, p)
-	rel, err := filepath.Rel(baseDir, resolved)
-	if err != nil || hasParentRef(rel) || filepath.IsAbs(rel) {
+	if escapesBase(baseDir, resolved) {
 		return "", fmt.Errorf("path %q resolves outside source directory", p)
 	}
 	return resolved, nil
+}
+
+// checkContainment resolves the symlink chain of the file's parent directory
+// and rejects the path if its real location escapes baseDir. safeResolve only
+// does lexical containment and checkFileInfo's Lstat only inspects the leaf, so
+// a symlinked *parent* directory (e.g. baseDir/sub -> /etc, then sub/passwd)
+// defeats both. Resolving the parent — not the leaf — leaves the separate
+// leaf-symlink rejection in checkFileInfo intact. (#67)
+func checkContainment(baseDir, resolved, p string) error {
+	realBase, err := realPath(baseDir)
+	if err != nil {
+		return pathErr(p, err, "stat")
+	}
+	realParent, err := realPath(filepath.Dir(resolved))
+	if err != nil {
+		return pathErr(p, err, "stat")
+	}
+	if escapesBase(realBase, realParent) {
+		return fmt.Errorf("path %q resolves outside source directory", p)
+	}
+	return nil
+}
+
+// realPath resolves path's symlink chain and returns it absolute and cleaned.
+// Both the base and the parent must be absolute before escapesBase compares
+// them: with a relative baseDir, a symlink whose target is absolute yields a
+// relative base but an absolute parent, and filepath.Rel errors on that pair —
+// which would otherwise be misread as an escape and reject a valid in-dir file
+// (e.g. `dippin validate workflow.dip`, baseDir "."). (#67)
+func realPath(path string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(resolved)
+}
+
+// escapesBase reports whether target lies outside base via a `..` ancestor
+// reference or an unrelated root. Shared by the lexical (safeResolve) and
+// full-chain (checkContainment) containment checks.
+func escapesBase(base, target string) bool {
+	rel, err := filepath.Rel(base, target)
+	return err != nil || hasParentRef(rel) || filepath.IsAbs(rel)
 }
 
 // checkFileInfo enforces symlink and size policies on the resolved file.
