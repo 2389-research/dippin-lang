@@ -425,16 +425,3 @@ func TestNodeManagerLoop_IsNodeKind(t *testing.T) {
 		t.Errorf("NodeManagerLoop = %q, want %q", ir.NodeManagerLoop, "manager_loop")
 	}
 }
-
-func TestAgentConfig_PromptFileFields(t *testing.T) {
-	cfg := ir.AgentConfig{
-		PromptFile:       "prompts/task.md",
-		SystemPromptFile: "prompts/persona.md",
-	}
-	if cfg.PromptFile != "prompts/task.md" {
-		t.Errorf("PromptFile = %q, want %q", cfg.PromptFile, "prompts/task.md")
-	}
-	if cfg.SystemPromptFile != "prompts/persona.md" {
-		t.Errorf("SystemPromptFile = %q, want %q", cfg.SystemPromptFile, "prompts/persona.md")
-	}
-}

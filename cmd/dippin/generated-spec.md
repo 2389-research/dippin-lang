@@ -47,7 +47,7 @@ workflow <Name>
 
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| `agent` | `prompt` (or `prompt_file`) | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt`, `prompt_file` (external file for `prompt`; mutually exclusive with `prompt:`), `system_prompt_file` (external file for `system_prompt`; mutually exclusive with `system_prompt:`) |
+| `agent` | `prompt` (or `prompt_file`) | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `prompt_file` (external file for `prompt`; mutually exclusive with `prompt:`), `system_prompt`, `system_prompt_file` (external file for `system_prompt`; mutually exclusive with `system_prompt:`) |
 | `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
 | `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
