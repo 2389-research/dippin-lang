@@ -2,6 +2,20 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.34.0] — UNRELEASED
+
+### Added
+- `prompt_file: <path>` and `system_prompt_file: <path>` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`; same path-relative-to-`.dip` rules and security cap. `dippin pack` inlines the content, so no tracker coordination is required.
+- `examples/external_prompts.dip` demonstrating both directives.
+
+### Fixed
+- `dippin fmt --write` previously stripped inline `system_prompt:` from agent nodes on save (latent since the field was introduced). If you've been re-adding `system_prompt:` after running fmt, this fix is for you.
+
+### Notes
+- Parser stays pure (no FS I/O); resolver runs at CLI entry points only. LSP and WASM consumers see the unresolved IR view (`*File` set, content empty), which is the correct view for those contexts.
+- Per-node only; `defaults agent` does not currently support `prompt` / `system_prompt` fields, so file-form-in-defaults requires a larger design — filed as [#72](https://github.com/2389-research/dippin-lang/issues/72).
+- Bundled-files `.dipx` redesign considered and explicitly deferred so v0.34 stays dippin-only; filed as [#73](https://github.com/2389-research/dippin-lang/issues/73).
+
 ## [v0.33.0] — 2026-05-27
 
 New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long tracker workflows. Dippin-only release — no tracker coordination required (tracker reads inlined `Command` from `.dipx` bundles unchanged).

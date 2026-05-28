@@ -42,6 +42,9 @@ func nodeIDCompletions(doc *document) []protocol.CompletionItem {
 func fieldCompletions() []protocol.CompletionItem {
 	fields := []struct{ name, detail string }{
 		{"prompt:", "Agent prompt text"},
+		{"prompt_file:", "Load prompt from external file (relative to .dip source directory)"},
+		{"system_prompt:", "Agent system prompt text"},
+		{"system_prompt_file:", "Load system_prompt from external file (relative to .dip source directory)"},
 		{"model:", "LLM model name"},
 		{"provider:", "LLM provider name"},
 		{"max_turns:", "Maximum agentic turns"},
@@ -53,7 +56,7 @@ func fieldCompletions() []protocol.CompletionItem {
 		{"fidelity:", "Fidelity level"},
 		{"tool_access:", "LLM tool catalog gate on agent (none = no tools; omit = full)"},
 		{"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
-		{"command_file:", "External script reference for tool node (path relative to .dip dir)"},
+		{"command_file:", "External script reference for tool node (path relative to .dip source directory)"},
 		{"route_required:", "Require _TRACKER_ROUTE= sentinel line from tool stdout"},
 		{"output_limit:", "Per-node stdout byte cap (non-negative int; 0 = engine default)"},
 	}

@@ -1,0 +1,1 @@
+fixture: ResolveFileDirectives prompt test

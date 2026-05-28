@@ -31,21 +31,54 @@ func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
 	return nil
 }
 
-// resolveNodeDirective resolves a single node's CommandFile, if any.
-// Returns nil if the node has no tool config, no CommandFile, or already
-// has an inline Command populated (inline wins — Task 2's parser check
-// should prevent both being set, but be defensive).
+// resolveNodeDirective resolves any file-directive fields on a single node.
+// Dispatches per node-config kind so the per-kind loader functions stay
+// focused on their own field set.
 func resolveNodeDirective(n *ir.Node, baseDir string) error {
-	tc, ok := n.Config.(ir.ToolConfig)
-	if !ok || tc.CommandFile == "" || tc.Command != "" {
+	switch cfg := n.Config.(type) {
+	case ir.ToolConfig:
+		return resolveToolDirective(n, cfg, baseDir)
+	case ir.AgentConfig:
+		return resolveAgentDirective(n, cfg, baseDir)
+	}
+	return nil
+}
+
+// resolveToolDirective populates ToolConfig.Command from CommandFile, if set.
+func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
+	if err := loadDirectiveInto(&cfg.Command, cfg.CommandFile, baseDir, n.ID, "command_file"); err != nil {
+		return err
+	}
+	n.Config = cfg
+	return nil
+}
+
+// resolveAgentDirective populates Prompt and SystemPrompt from their *File
+// twins on AgentConfig. The two slots are independent — either, both, or
+// neither may be set.
+func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string) error {
+	if err := loadDirectiveInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
+		return err
+	}
+	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
+		return err
+	}
+	n.Config = cfg
+	return nil
+}
+
+// loadDirectiveInto reads path (relative to baseDir) into *dst, no-op if path
+// is empty. The *dst != "" guard preserves an inline value if one is already
+// set, defensive against the parser's mutual-exclusion check getting bypassed.
+func loadDirectiveInto(dst *string, path, baseDir, nodeID, directive string) error {
+	if path == "" || *dst != "" {
 		return nil
 	}
-	contents, err := loadDirectiveFile(baseDir, tc.CommandFile)
+	contents, err := loadDirectiveFile(baseDir, path)
 	if err != nil {
-		return fmt.Errorf("node %q command_file: %w", n.ID, err)
+		return fmt.Errorf("node %q %s: %w", nodeID, directive, err)
 	}
-	tc.Command = string(contents)
-	n.Config = tc
+	*dst = string(contents)
 	return nil
 }
 
@@ -117,9 +150,21 @@ func checkFileInfo(p string, info os.FileInfo) error {
 		return fmt.Errorf("symlinks not allowed: %q", p)
 	}
 	if info.Size() > maxDirectiveFileSize {
-		return fmt.Errorf("file %q exceeds %d byte limit (size %d)", p, maxDirectiveFileSize, info.Size())
+		return fmt.Errorf("file %q is too large (size %s, max %s)",
+			p, formatMiB(info.Size()), formatMiB(maxDirectiveFileSize))
 	}
 	return nil
+}
+
+// formatMiB renders a byte count as a human-readable MiB string. The limit
+// (4 MiB) is a whole-MiB value, so an integer cap renders cleanly; user-file
+// sizes get one decimal place to distinguish, e.g., 5.0 MiB from 4.9 MiB.
+func formatMiB(n int64) string {
+	const mib = 1 << 20
+	if n%mib == 0 {
+		return fmt.Sprintf("%d MiB", n/mib)
+	}
+	return fmt.Sprintf("%.1f MiB", float64(n)/float64(mib))
 }
 
 // hasParentRef returns true if rel contains a `..` path segment.

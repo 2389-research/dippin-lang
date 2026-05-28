@@ -2017,6 +2017,100 @@ func TestFormat_ToolCommandFile(t *testing.T) {
 	}
 }
 
+func TestFormat_AgentInlineSystemPromptRoundTrip(t *testing.T) {
+	// Regression: pre-#65, writeAgentFields silently dropped SystemPrompt
+	// on format. This test pins the fix.
+	wf := &ir.Workflow{
+		Name:  "W",
+		Goal:  "test",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Model:        "claude-sonnet-4-6",
+				SystemPrompt: "You are a code reviewer.",
+			}},
+		},
+	}
+	out := Format(wf)
+	if !strings.Contains(out, "system_prompt:") {
+		t.Errorf("formatter dropped inline system_prompt; output:\n%s", out)
+	}
+	if !strings.Contains(out, "You are a code reviewer.") {
+		t.Errorf("formatter dropped system_prompt content; output:\n%s", out)
+	}
+}
+
+func TestFormat_AgentPromptFile(t *testing.T) {
+	wf := &ir.Workflow{
+		Name:  "W",
+		Goal:  "test",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Model:      "claude-sonnet-4-6",
+				PromptFile: "prompts/task.md",
+			}},
+		},
+	}
+	out := Format(wf)
+	if !strings.Contains(out, "prompt_file: prompts/task.md") {
+		t.Errorf("expected `prompt_file: prompts/task.md` in output; got:\n%s", out)
+	}
+	if strings.Contains(out, "\n    prompt:") {
+		t.Errorf("formatter emitted inline prompt: when PromptFile was set; got:\n%s", out)
+	}
+}
+
+func TestFormat_AgentSystemPromptFile(t *testing.T) {
+	wf := &ir.Workflow{
+		Name:  "W",
+		Goal:  "test",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Model:            "claude-sonnet-4-6",
+				SystemPromptFile: "prompts/persona.md",
+			}},
+		},
+	}
+	out := Format(wf)
+	if !strings.Contains(out, "system_prompt_file: prompts/persona.md") {
+		t.Errorf("expected `system_prompt_file: prompts/persona.md` in output; got:\n%s", out)
+	}
+	if strings.Contains(out, "\n    system_prompt:") {
+		t.Errorf("formatter emitted inline system_prompt: when SystemPromptFile was set; got:\n%s", out)
+	}
+}
+
+func TestFormat_AgentCrossSlotMix(t *testing.T) {
+	wf := &ir.Workflow{
+		Name:  "W",
+		Goal:  "test",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Model:        "claude-sonnet-4-6",
+				PromptFile:   "prompts/task.md",
+				SystemPrompt: "You are a reviewer.",
+			}},
+		},
+	}
+	out := Format(wf)
+	if !strings.Contains(out, "prompt_file: prompts/task.md") {
+		t.Errorf("missing prompt_file: line; got:\n%s", out)
+	}
+	if !strings.Contains(out, "system_prompt:") {
+		t.Errorf("missing inline system_prompt:; got:\n%s", out)
+	}
+	if !strings.Contains(out, "You are a reviewer.") {
+		t.Errorf("missing system_prompt content; got:\n%s", out)
+	}
+}
+
 func TestFormat_ToolCommandInline(t *testing.T) {
 	src := `workflow X
   start: A

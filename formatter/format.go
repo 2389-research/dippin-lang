@@ -330,8 +330,22 @@ func writeAgentFields(wr *writer, n *ir.Node, cfg ir.AgentConfig) {
 	writeRetryFields(wr, n)
 	writeIOFields(wr, n)
 	writeSortedMapBlock(wr, "params", cfg.Params)
+	writeAgentPromptFields(wr, cfg)
+}
 
-	if cfg.Prompt != "" {
+// writeAgentPromptFields emits the four prompt-related fields: system_prompt
+// and prompt, each in either *_file: directive form (if *File is set) or
+// inline multiline-block form (if the content field is set). The conditional
+// pairs preserve the authored form across format round-trips.
+func writeAgentPromptFields(wr *writer, cfg ir.AgentConfig) {
+	if cfg.SystemPromptFile != "" {
+		wr.line("system_prompt_file: %s", quoteValue(cfg.SystemPromptFile))
+	} else if cfg.SystemPrompt != "" {
+		wr.multilineBlock("system_prompt", cfg.SystemPrompt)
+	}
+	if cfg.PromptFile != "" {
+		wr.line("prompt_file: %s", quoteValue(cfg.PromptFile))
+	} else if cfg.Prompt != "" {
 		wr.multilineBlock("prompt", cfg.Prompt)
 	}
 }

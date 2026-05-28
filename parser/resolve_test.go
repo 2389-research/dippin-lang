@@ -132,8 +132,11 @@ func TestResolveFileDirectives_RejectsOversize(t *testing.T) {
 		},
 	}
 	err := ResolveFileDirectives(w, tmp)
-	if err == nil || !strings.Contains(err.Error(), "exceeds") {
+	if err == nil || !strings.Contains(err.Error(), "too large") {
 		t.Errorf("expected oversize rejection; got %v", err)
+	}
+	if err != nil && !strings.Contains(err.Error(), "max 4 MiB") {
+		t.Errorf("expected size cap rendered in MiB; got %v", err)
 	}
 }
 
@@ -163,5 +166,121 @@ func TestResolveFileDirectives_MissingFile(t *testing.T) {
 	// Error must NOT contain the resolved absolute path (information leak).
 	if strings.Contains(err.Error(), absBase) {
 		t.Errorf("error leaked resolved absolute path %q in message: %v", absBase, err)
+	}
+}
+
+func TestResolveFileDirectives_LoadsAgentPrompt(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				PromptFile: "task.md",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, "testdata/prompt_file"); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if !strings.Contains(cfg.Prompt, "fixture: ResolveFileDirectives prompt test") {
+		t.Errorf("Prompt not populated from file; got %q", cfg.Prompt)
+	}
+	if cfg.PromptFile != "task.md" {
+		t.Errorf("PromptFile = %q, want %q (must be preserved post-resolve)", cfg.PromptFile, "task.md")
+	}
+}
+
+func TestResolveFileDirectives_LoadsAgentSystemPrompt(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				SystemPromptFile: "persona.md",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, "testdata/prompt_file"); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if !strings.Contains(cfg.SystemPrompt, "fixture: ResolveFileDirectives system_prompt test") {
+		t.Errorf("SystemPrompt not populated from file; got %q", cfg.SystemPrompt)
+	}
+	if cfg.SystemPromptFile != "persona.md" {
+		t.Errorf("SystemPromptFile = %q, want %q", cfg.SystemPromptFile, "persona.md")
+	}
+}
+
+func TestResolveFileDirectives_LoadsBothAgentSlots(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				PromptFile:       "task.md",
+				SystemPromptFile: "persona.md",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, "testdata/prompt_file"); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if !strings.Contains(cfg.Prompt, "ResolveFileDirectives prompt test") {
+		t.Errorf("Prompt not populated; got %q", cfg.Prompt)
+	}
+	if !strings.Contains(cfg.SystemPrompt, "ResolveFileDirectives system_prompt test") {
+		t.Errorf("SystemPrompt not populated; got %q", cfg.SystemPrompt)
+	}
+}
+
+func TestResolveFileDirectives_AgentErrorIdentifiesDirective(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				SystemPromptFile: "nonexistent.md",
+			}},
+		},
+	}
+	err := ResolveFileDirectives(w, "testdata/prompt_file")
+	if err == nil {
+		t.Fatal("expected missing-file error, got nil")
+	}
+	if !strings.Contains(err.Error(), "system_prompt_file") {
+		t.Errorf("error should identify directive `system_prompt_file`; got %v", err)
+	}
+	// Substring `prompt_file:` matches both directives; the bare directive token
+	// is preceded by a space in the error format, so we use that as the anchor.
+	if strings.Contains(err.Error(), " prompt_file:") {
+		t.Errorf("error must not be ambiguous between prompt_file and system_prompt_file; got %v", err)
+	}
+}
+
+func TestResolveFileDirectives_ExternalPromptsExample(t *testing.T) {
+	// Pins end-to-end resolution of examples/external_prompts.dip.
+	// Mirrors the equivalent integration test for examples/external_files.dip
+	// that #52 added.
+	srcAbs, err := filepath.Abs("../examples/external_prompts.dip")
+	if err != nil {
+		t.Fatalf("Abs: %v", err)
+	}
+	data, err := os.ReadFile(srcAbs)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	wf, err := NewParser(string(data), srcAbs).Parse()
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if err := ResolveFileDirectives(wf, filepath.Dir(srcAbs)); err != nil {
+		t.Fatalf("ResolveFileDirectives: %v", err)
+	}
+	var reviewer ir.AgentConfig
+	for _, n := range wf.Nodes {
+		if n.ID == "Reviewer" {
+			reviewer = n.Config.(ir.AgentConfig)
+		}
+	}
+	if !strings.Contains(reviewer.SystemPrompt, "senior code reviewer") {
+		t.Errorf("SystemPrompt not loaded from file; got %q", reviewer.SystemPrompt)
+	}
+	if !strings.Contains(reviewer.Prompt, "STATUS: success") {
+		t.Errorf("Prompt not loaded from file; got %q", reviewer.Prompt)
 	}
 }

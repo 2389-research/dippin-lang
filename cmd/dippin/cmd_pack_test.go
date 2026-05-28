@@ -240,6 +240,70 @@ func TestRunPack_InlinesCommandFile(t *testing.T) {
 	}
 }
 
+// TestRunPack_InlinesPromptFiles confirms that pack-shadow's clearFileDirectives
+// extension (v0.34 / #65) walks agent nodes too: a workflow referencing prompts
+// via prompt_file: / system_prompt_file: produces a self-contained bundle whose
+// inline prompt: / system_prompt: blocks carry the file contents and whose
+// *_file: directives are absent. Without the agent-walk extension, tracker would
+// receive .dipx bundles that still carry prompt_file: / system_prompt_file:
+// directives — exactly the failure mode the pack-shadow machinery exists to
+// prevent.
+func TestRunPack_InlinesPromptFiles(t *testing.T) {
+	dir := t.TempDir()
+	promptDir := filepath.Join(dir, "prompts")
+	if err := os.MkdirAll(promptDir, 0o755); err != nil {
+		t.Fatalf("mkdir prompts: %v", err)
+	}
+	personaContent := "You are a senior reviewer. PERSONA_MARKER\n"
+	taskContent := "Review the diff. TASK_MARKER\n"
+	if err := os.WriteFile(filepath.Join(promptDir, "persona.md"), []byte(personaContent), 0o644); err != nil {
+		t.Fatalf("write persona: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(promptDir, "task.md"), []byte(taskContent), 0o644); err != nil {
+		t.Fatalf("write task: %v", err)
+	}
+	dipSrc := `workflow A
+  goal: "Pack-time inlining smoke test for prompt directives"
+  start: Reviewer
+  exit: Reviewer
+
+  agent Reviewer
+    model: claude-sonnet-4-6
+    system_prompt_file: prompts/persona.md
+    prompt_file: prompts/task.md
+    auto_status: true
+`
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(dipSrc), 0o644); err != nil {
+		t.Fatalf("write entry: %v", err)
+	}
+	out := filepath.Join(dir, "a.dipx")
+	var stdout, stderr bytes.Buffer
+	if code := runPack(&stdout, &stderr, []string{"-o", out, entry}); code != exitDipxOK {
+		t.Fatalf("pack exit = %d; stderr=%s", code, stderr.String())
+	}
+	bundled := readBundledDip(t, out, "workflows/a.dip")
+	if strings.Contains(bundled, "prompt_file:") {
+		t.Fatalf("bundled .dip still has prompt_file: directive:\n%s", bundled)
+	}
+	if strings.Contains(bundled, "system_prompt_file:") {
+		t.Fatalf("bundled .dip still has system_prompt_file: directive:\n%s", bundled)
+	}
+	if !strings.Contains(bundled, "PERSONA_MARKER") {
+		t.Fatalf("bundled .dip missing inlined system_prompt content:\n%s", bundled)
+	}
+	if !strings.Contains(bundled, "TASK_MARKER") {
+		t.Fatalf("bundled .dip missing inlined prompt content:\n%s", bundled)
+	}
+	// Prompt files should NOT appear in the bundle — only the .dip with the
+	// prompts inlined into their content blocks.
+	for _, name := range listBundleEntries(t, out) {
+		if strings.HasSuffix(name, ".md") {
+			t.Errorf("bundle unexpectedly contains prompt file: %s", name)
+		}
+	}
+}
+
 // TestRunPack_RejectsSubgraphRefEscape confirms that prepShadowSourceTree's
 // ensureUnderRoot check rejects a workflow whose subgraph reference escapes
 // the entry's directory. Without the check, writeShadowFile would compute

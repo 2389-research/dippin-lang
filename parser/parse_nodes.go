@@ -138,7 +138,7 @@ func (p *Parser) applyConfigField(n *ir.Node, key, val string, loc ir.SourceLoca
 func (p *Parser) applyPrimaryConfigField(n *ir.Node, key, val string, loc ir.SourceLocation) bool {
 	switch cfg := n.Config.(type) {
 	case ir.AgentConfig:
-		p.applyAgentField(&cfg, key, val, loc)
+		p.applyAgentField(&cfg, n.ID, key, val, loc)
 		n.Config = cfg
 	case ir.HumanConfig:
 		p.applyHumanField(&cfg, key, val, loc)
@@ -153,7 +153,7 @@ func (p *Parser) applyPrimaryConfigField(n *ir.Node, key, val string, loc ir.Sou
 func (p *Parser) applySecondaryConfigField(n *ir.Node, key, val string, loc ir.SourceLocation) {
 	switch cfg := n.Config.(type) {
 	case ir.ToolConfig:
-		p.applyToolField(&cfg, key, val, loc)
+		p.applyToolField(&cfg, n.ID, key, val, loc)
 		n.Config = cfg
 	case ir.SubgraphConfig:
 		p.applySubgraphField(&cfg, key, val, loc)
@@ -229,8 +229,10 @@ func (p *Parser) applyCommonComplexField(n *ir.Node, key, val string, loc ir.Sou
 }
 
 // applyAgentField applies agent-specific configuration fields.
-func (p *Parser) applyAgentField(cfg *ir.AgentConfig, key, val string, loc ir.SourceLocation) {
+func (p *Parser) applyAgentField(cfg *ir.AgentConfig, nodeID, key, val string, loc ir.SourceLocation) {
 	if applyAgentStringField(cfg, key, val) {
+		p.checkPromptFileConflict(cfg, nodeID, key, loc)
+		p.checkSystemPromptFileConflict(cfg, nodeID, key, loc)
 		return
 	}
 	p.applyAgentComplexField(cfg, key, val, loc)
@@ -247,13 +249,17 @@ func applyAgentStringField(cfg *ir.AgentConfig, key, val string) bool {
 	return applyAgentRuntimeField(cfg, key, val)
 }
 
-// applyAgentPromptField handles prompt-related agent fields.
+// applyAgentPromptField handles the agent fields that drive an LLM call:
+// the two prompt/<prompt>_file pairs plus the response-shaping fields
+// reasoning_effort and response_schema. Returns true if handled.
 func applyAgentPromptField(cfg *ir.AgentConfig, key, val string) bool {
+	if applyAgentPromptPair(&cfg.Prompt, &cfg.PromptFile, "prompt", key, val) {
+		return true
+	}
+	if applyAgentPromptPair(&cfg.SystemPrompt, &cfg.SystemPromptFile, "system_prompt", key, val) {
+		return true
+	}
 	switch key {
-	case "prompt":
-		cfg.Prompt = val
-	case "system_prompt":
-		cfg.SystemPrompt = val
 	case "reasoning_effort":
 		cfg.ReasoningEffort = val
 	case "response_schema":
@@ -262,6 +268,48 @@ func applyAgentPromptField(cfg *ir.AgentConfig, key, val string) bool {
 		return false
 	}
 	return true
+}
+
+// applyAgentPromptPair assigns val to either the inline or *_file target
+// depending on whether key is base or base+"_file". Returns false if key
+// matches neither, so the caller can keep dispatching.
+func applyAgentPromptPair(inline, file *string, base, key, val string) bool {
+	switch key {
+	case base:
+		*inline = val
+	case base + "_file":
+		*file = val
+	default:
+		return false
+	}
+	return true
+}
+
+// checkPromptFileConflict emits a diagnostic if both prompt: and prompt_file:
+// are set on the same agent node. Parser-time error (not a DIP code) because
+// the conflict is syntactic. Gated on the assigning key being prompt or
+// prompt_file so subsequent unrelated agent string-field writes don't re-emit.
+func (p *Parser) checkPromptFileConflict(cfg *ir.AgentConfig, nodeID, key string, loc ir.SourceLocation) {
+	if key != "prompt" && key != "prompt_file" {
+		return
+	}
+	if cfg.Prompt != "" && cfg.PromptFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"agent node %q has both `prompt` and `prompt_file` set (second assignment at %d:%d); choose one",
+			nodeID, loc.Line, loc.Column))
+	}
+}
+
+// checkSystemPromptFileConflict — same shape, for system_prompt vs system_prompt_file.
+func (p *Parser) checkSystemPromptFileConflict(cfg *ir.AgentConfig, nodeID, key string, loc ir.SourceLocation) {
+	if key != "system_prompt" && key != "system_prompt_file" {
+		return
+	}
+	if cfg.SystemPrompt != "" && cfg.SystemPromptFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"agent node %q has both `system_prompt` and `system_prompt_file` set (second assignment at %d:%d); choose one",
+			nodeID, loc.Line, loc.Column))
+	}
 }
 
 // applyAgentModelField handles model-related agent fields.
@@ -405,9 +453,9 @@ func applyHumanInterviewField(cfg *ir.HumanConfig, key, val string) bool {
 }
 
 // applyToolField applies tool-specific configuration fields.
-func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.SourceLocation) {
+func (p *Parser) applyToolField(cfg *ir.ToolConfig, nodeID, key, val string, loc ir.SourceLocation) {
 	if applyToolStringField(cfg, key, val) {
-		p.checkCommandFileConflict(cfg, key, loc)
+		p.checkCommandFileConflict(cfg, nodeID, key, loc)
 		return
 	}
 	if p.applyToolBoolField(cfg, key, val, loc) {
@@ -424,14 +472,14 @@ func (p *Parser) applyToolField(cfg *ir.ToolConfig, key, val string, loc ir.Sour
 // DIP code) because the conflict is syntactic. Gated on the assigning key being
 // command or command_file so subsequent unrelated tool string-field writes
 // (outputs, marker_grep, etc.) don't re-emit the same diagnostic.
-func (p *Parser) checkCommandFileConflict(cfg *ir.ToolConfig, key string, loc ir.SourceLocation) {
+func (p *Parser) checkCommandFileConflict(cfg *ir.ToolConfig, nodeID, key string, loc ir.SourceLocation) {
 	if key != "command" && key != "command_file" {
 		return
 	}
 	if cfg.Command != "" && cfg.CommandFile != "" {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
-			"tool node has both `command` and `command_file` set; choose one at %d:%d",
-			loc.Line, loc.Column))
+			"tool node %q has both `command` and `command_file` set (second assignment at %d:%d); choose one",
+			nodeID, loc.Line, loc.Column))
 	}
 }
 

@@ -2198,7 +2198,7 @@ func TestParseTool_CommandFile(t *testing.T) {
     command: echo hi
     command_file: scripts/setup.sh
 `,
-			wantDiagContains: "both `command` and `command_file`",
+			wantDiagContains: "tool node \"A\" has both `command` and `command_file`",
 		},
 		{
 			name: "both set (command_file first)",
@@ -2210,7 +2210,7 @@ func TestParseTool_CommandFile(t *testing.T) {
     command_file: scripts/setup.sh
     command: echo hi
 `,
-			wantDiagContains: "both `command` and `command_file`",
+			wantDiagContains: "tool node \"A\" has both `command` and `command_file`",
 		},
 	}
 	for _, tc := range cases {
@@ -2248,5 +2248,177 @@ func TestParseTool_CommandFile(t *testing.T) {
 				t.Errorf("Command = %q, want %q", cfg.Command, tc.wantCommand)
 			}
 		})
+	}
+}
+
+func TestParser_AgentPromptFile(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt_file: prompts/task.md
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if len(w.Nodes) != 1 {
+		t.Fatalf("got %d nodes, want 1", len(w.Nodes))
+	}
+	cfg, ok := w.Nodes[0].Config.(ir.AgentConfig)
+	if !ok {
+		t.Fatalf("node 0 config is not AgentConfig: %T", w.Nodes[0].Config)
+	}
+	if cfg.PromptFile != "prompts/task.md" {
+		t.Errorf("PromptFile = %q, want %q", cfg.PromptFile, "prompts/task.md")
+	}
+	if cfg.Prompt != "" {
+		t.Errorf("Prompt = %q, want empty (parser must not load file)", cfg.Prompt)
+	}
+}
+
+func TestParser_AgentSystemPromptFile(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    system_prompt_file: prompts/persona.md
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if cfg.SystemPromptFile != "prompts/persona.md" {
+		t.Errorf("SystemPromptFile = %q, want %q", cfg.SystemPromptFile, "prompts/persona.md")
+	}
+	if cfg.SystemPrompt != "" {
+		t.Errorf("SystemPrompt = %q, want empty (parser must not load file)", cfg.SystemPrompt)
+	}
+}
+
+func TestParser_AgentPromptConflict(t *testing.T) {
+	cases := []struct {
+		name string
+		src  string
+	}{
+		{
+			name: "inline first",
+			src: `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt: "inline"
+    prompt_file: prompts/task.md
+`,
+		},
+		{
+			name: "file first",
+			src: `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt_file: prompts/task.md
+    prompt: "inline"
+`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewParser(tc.src, "test.dip").Parse()
+			if err == nil {
+				t.Fatal("expected diagnostic for prompt + prompt_file conflict, got nil error")
+			}
+			if !strings.Contains(err.Error(), "agent node \"A\" has both `prompt` and `prompt_file`") {
+				t.Errorf("diagnostic must name the node and both directives; got %q", err.Error())
+			}
+			if !strings.Contains(err.Error(), "second assignment at") {
+				t.Errorf("diagnostic should mention the line of the second assignment; got %q", err.Error())
+			}
+		})
+	}
+}
+
+func TestParser_AgentSystemPromptConflict(t *testing.T) {
+	cases := []struct {
+		name string
+		src  string
+	}{
+		{
+			name: "inline first",
+			src: `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    system_prompt: "inline persona"
+    system_prompt_file: prompts/persona.md
+`,
+		},
+		{
+			name: "file first",
+			src: `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    system_prompt_file: prompts/persona.md
+    system_prompt: "inline persona"
+`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewParser(tc.src, "test.dip").Parse()
+			if err == nil {
+				t.Fatal("expected diagnostic for system_prompt + system_prompt_file conflict, got nil error")
+			}
+			if !strings.Contains(err.Error(), "agent node \"A\" has both `system_prompt` and `system_prompt_file`") {
+				t.Errorf("diagnostic must name the node and both directives; got %q", err.Error())
+			}
+			if !strings.Contains(err.Error(), "second assignment at") {
+				t.Errorf("diagnostic should mention the line of the second assignment; got %q", err.Error())
+			}
+		})
+	}
+}
+
+func TestParser_AgentCrossSlotMixOK(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt_file: prompts/task.md
+    system_prompt: "you are a code reviewer"
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("mixed slots should not error: %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if cfg.PromptFile != "prompts/task.md" {
+		t.Errorf("PromptFile = %q", cfg.PromptFile)
+	}
+	if cfg.SystemPrompt != "you are a code reviewer" {
+		t.Errorf("SystemPrompt = %q", cfg.SystemPrompt)
 	}
 }

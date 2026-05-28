@@ -90,7 +90,9 @@ type NodeConfig interface {
 // AgentConfig holds configuration for LLM agent nodes.
 type AgentConfig struct {
 	Prompt              string
+	PromptFile          string // Source path; coexists with Prompt after resolve (formatter prefers the directive form). Populated by parser.ResolveFileDirectives.
 	SystemPrompt        string
+	SystemPromptFile    string // Source path; coexists with SystemPrompt after resolve (formatter prefers the directive form). Populated by parser.ResolveFileDirectives.
 	Model               string // Per-node override
 	Provider            string
 	MaxTurns            int
@@ -128,7 +130,7 @@ func (HumanConfig) nodeConfig() {}
 // ToolConfig holds configuration for shell command nodes.
 type ToolConfig struct {
 	Command       string // Shell command (multiline OK)
-	CommandFile   string // Source path when Command was loaded from command_file:; empty if inline. Populated by parser.ResolveFileDirectives.
+	CommandFile   string // Source path; coexists with Command after resolve (formatter prefers the directive form). Populated by parser.ResolveFileDirectives.
 	Timeout       time.Duration
 	Outputs       []string // Declared possible stdout values for coverage analysis
 	MarkerGrep    string   // Regex matched line-by-line against stdout; populates ctx.tool_marker
