@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [v0.34.0] — UNRELEASED
+## [v0.34.0] — 2026-05-28
 
 ### Added
 - `prompt_file: <path>` and `system_prompt_file: <path>` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`; same path-relative-to-`.dip` rules and security cap. `dippin pack` inlines the content, so no tracker coordination is required.

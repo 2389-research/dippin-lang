@@ -55,7 +55,7 @@ Key gotcha: The parser stores edge conditions as `Condition.Raw` (plain text). `
 
 ## Versioning
 
-Tag semver releases after batches of meaningful changes. The tracker team installs via `go install ...@latest` and needs stable versions to pin to. Update CHANGELOG.md when tagging.
+Tag semver releases after batches of meaningful changes. The tracker team **always pins to a specific dippin version, never `@latest`** — so merged work on `main` is invisible to them until it's tagged. Cutting a tag is what delivers a feature to tracker; they then bump their pin to adopt it. Update CHANGELOG.md when tagging.
 
 ```sh
 git tag -a v0.X.0 -m "description" && git push origin v0.X.0

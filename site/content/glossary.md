@@ -85,7 +85,7 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 **WASM playground** — The browser-side parse / lint / format experience at `/playground.html`. The `dippin` core compiled to WebAssembly under `cmd/wasm/`.
 
-**Tracker** — The runtime that executes Dippin workflows. Consumes the JSON IR and installs `dippin` via `go install ...@latest`.
+**Tracker** — The runtime that executes Dippin workflows. Consumes the JSON IR and pins `dippin` to a specific tagged version (never `@latest`), bumping the pin to adopt new releases.
 
 ## Related
 
