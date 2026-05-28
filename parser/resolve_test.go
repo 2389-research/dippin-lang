@@ -132,8 +132,11 @@ func TestResolveFileDirectives_RejectsOversize(t *testing.T) {
 		},
 	}
 	err := ResolveFileDirectives(w, tmp)
-	if err == nil || !strings.Contains(err.Error(), "exceeds") {
+	if err == nil || !strings.Contains(err.Error(), "too large") {
 		t.Errorf("expected oversize rejection; got %v", err)
+	}
+	if err != nil && !strings.Contains(err.Error(), "max 4 MiB") {
+		t.Errorf("expected size cap rendered in MiB; got %v", err)
 	}
 }
 

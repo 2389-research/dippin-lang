@@ -157,9 +157,21 @@ func checkFileInfo(p string, info os.FileInfo) error {
 		return fmt.Errorf("symlinks not allowed: %q", p)
 	}
 	if info.Size() > maxDirectiveFileSize {
-		return fmt.Errorf("file %q exceeds %d byte limit (size %d)", p, maxDirectiveFileSize, info.Size())
+		return fmt.Errorf("file %q is too large (size %s, max %s)",
+			p, formatMiB(info.Size()), formatMiB(maxDirectiveFileSize))
 	}
 	return nil
+}
+
+// formatMiB renders a byte count as a human-readable MiB string. The limit
+// (4 MiB) is a whole-MiB value, so an integer cap renders cleanly; user-file
+// sizes get one decimal place to distinguish, e.g., 5.0 MiB from 4.9 MiB.
+func formatMiB(n int64) string {
+	const mib = 1 << 20
+	if n%mib == 0 {
+		return fmt.Sprintf("%d MiB", n/mib)
+	}
+	return fmt.Sprintf("%.1f MiB", float64(n)/float64(mib))
 }
 
 // hasParentRef returns true if rel contains a `..` path segment.

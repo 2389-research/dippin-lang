@@ -66,7 +66,7 @@ func checkEmptyPrompt(n *ir.Node, w *ir.Workflow) (Diagnostic, bool) {
 			Severity: SeverityWarning,
 			Message:  fmt.Sprintf("agent node %q has an empty prompt", n.ID),
 			Location: n.Source,
-			Help:     "add a prompt: field with instructions for the LLM",
+			Help:     "add prompt: (inline) or prompt_file: <path> with instructions for the LLM",
 		}, true
 	}
 	return Diagnostic{}, false

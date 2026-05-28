@@ -2198,7 +2198,7 @@ func TestParseTool_CommandFile(t *testing.T) {
     command: echo hi
     command_file: scripts/setup.sh
 `,
-			wantDiagContains: "both `command` and `command_file`",
+			wantDiagContains: "tool node \"A\" has both `command` and `command_file`",
 		},
 		{
 			name: "both set (command_file first)",
@@ -2210,7 +2210,7 @@ func TestParseTool_CommandFile(t *testing.T) {
     command_file: scripts/setup.sh
     command: echo hi
 `,
-			wantDiagContains: "both `command` and `command_file`",
+			wantDiagContains: "tool node \"A\" has both `command` and `command_file`",
 		},
 	}
 	for _, tc := range cases {
@@ -2304,7 +2304,13 @@ func TestParser_AgentSystemPromptFile(t *testing.T) {
 }
 
 func TestParser_AgentPromptConflict(t *testing.T) {
-	src := `workflow W
+	cases := []struct {
+		name string
+		src  string
+	}{
+		{
+			name: "inline first",
+			src: `workflow W
   goal: "test"
   start: A
   exit: A
@@ -2313,18 +2319,46 @@ func TestParser_AgentPromptConflict(t *testing.T) {
     model: claude-sonnet-4-6
     prompt: "inline"
     prompt_file: prompts/task.md
-`
-	_, err := NewParser(src, "test.dip").Parse()
-	if err == nil {
-		t.Fatal("expected diagnostic for prompt + prompt_file conflict, got nil error")
+`,
+		},
+		{
+			name: "file first",
+			src: `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    prompt_file: prompts/task.md
+    prompt: "inline"
+`,
+		},
 	}
-	if !strings.Contains(err.Error(), "both `prompt` and `prompt_file`") {
-		t.Errorf("diagnostic message missing expected phrase; got %q", err.Error())
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewParser(tc.src, "test.dip").Parse()
+			if err == nil {
+				t.Fatal("expected diagnostic for prompt + prompt_file conflict, got nil error")
+			}
+			if !strings.Contains(err.Error(), "agent node \"A\" has both `prompt` and `prompt_file`") {
+				t.Errorf("diagnostic must name the node and both directives; got %q", err.Error())
+			}
+			if !strings.Contains(err.Error(), "second assignment at") {
+				t.Errorf("diagnostic should mention the line of the second assignment; got %q", err.Error())
+			}
+		})
 	}
 }
 
 func TestParser_AgentSystemPromptConflict(t *testing.T) {
-	src := `workflow W
+	cases := []struct {
+		name string
+		src  string
+	}{
+		{
+			name: "inline first",
+			src: `workflow W
   goal: "test"
   start: A
   exit: A
@@ -2333,13 +2367,35 @@ func TestParser_AgentSystemPromptConflict(t *testing.T) {
     model: claude-sonnet-4-6
     system_prompt: "inline persona"
     system_prompt_file: prompts/persona.md
-`
-	_, err := NewParser(src, "test.dip").Parse()
-	if err == nil {
-		t.Fatal("expected diagnostic for system_prompt + system_prompt_file conflict, got nil error")
+`,
+		},
+		{
+			name: "file first",
+			src: `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  agent A
+    model: claude-sonnet-4-6
+    system_prompt_file: prompts/persona.md
+    system_prompt: "inline persona"
+`,
+		},
 	}
-	if !strings.Contains(err.Error(), "both `system_prompt` and `system_prompt_file`") {
-		t.Errorf("diagnostic message missing expected phrase; got %q", err.Error())
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewParser(tc.src, "test.dip").Parse()
+			if err == nil {
+				t.Fatal("expected diagnostic for system_prompt + system_prompt_file conflict, got nil error")
+			}
+			if !strings.Contains(err.Error(), "agent node \"A\" has both `system_prompt` and `system_prompt_file`") {
+				t.Errorf("diagnostic must name the node and both directives; got %q", err.Error())
+			}
+			if !strings.Contains(err.Error(), "second assignment at") {
+				t.Errorf("diagnostic should mention the line of the second assignment; got %q", err.Error())
+			}
+		})
 	}
 }
 
