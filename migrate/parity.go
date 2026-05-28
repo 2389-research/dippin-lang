@@ -222,16 +222,9 @@ func compareAgentConfigs(id, path string, ac ir.AgentConfig, bCfg interface{}) [
 		return []Difference{configMismatchDiff(id, path, "AgentConfig", bCfg)}
 	}
 	var diffs []Difference
-	diffs = append(diffs, compareAgentPromptAndModel(id, ac, bc)...)
-	diffs = append(diffs, compareAgentBehavior(id, ac, bc)...)
-	return diffs
-}
-
-// compareAgentPromptAndModel compares prompt, model, and provider fields.
-func compareAgentPromptAndModel(id string, ac, bc ir.AgentConfig) []Difference {
-	var diffs []Difference
 	diffs = append(diffs, compareAgentPromptFields(id, ac, bc)...)
 	diffs = append(diffs, compareAgentModelProvider(id, ac, bc)...)
+	diffs = append(diffs, compareAgentBehavior(id, ac, bc)...)
 	return diffs
 }
 

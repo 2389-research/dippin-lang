@@ -35,32 +35,28 @@ func lintNamespaceCollisions(w *ir.Workflow) []Diagnostic {
 }
 
 // lintEmptyPrompts checks DIP110: agent nodes should have a non-empty prompt.
-// An agent without a prompt has nothing to send to the LLM.
+// An agent without a prompt has nothing to send to the LLM. Start/exit nodes
+// are exempt — they're often degenerate (kickoff or aggregation).
 func lintEmptyPrompts(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
-		if d, ok := checkEmptyPrompt(n, w); ok {
+		if n.ID == w.Start || n.ID == w.Exit {
+			continue
+		}
+		if d, ok := checkEmptyPrompt(n); ok {
 			diags = append(diags, d)
 		}
 	}
 	return diags
 }
 
-// hasAuthoredPrompt returns true if the agent config has a prompt source (inline or file).
-func hasAuthoredPrompt(cfg ir.AgentConfig) bool {
-	return cfg.PromptFile != "" || strings.TrimSpace(cfg.Prompt) != ""
-}
-
-// checkEmptyPrompt checks a single node for DIP110.
-func checkEmptyPrompt(n *ir.Node, w *ir.Workflow) (Diagnostic, bool) {
-	if n.ID == w.Start || n.ID == w.Exit {
-		return Diagnostic{}, false
-	}
+// checkEmptyPrompt checks a single non-boundary node for DIP110.
+func checkEmptyPrompt(n *ir.Node) (Diagnostic, bool) {
 	cfg, ok := n.Config.(ir.AgentConfig)
 	if !ok {
 		return Diagnostic{}, false
 	}
-	if !hasAuthoredPrompt(cfg) {
+	if cfg.PromptFile == "" && strings.TrimSpace(cfg.Prompt) == "" {
 		return Diagnostic{
 			Code:     DIP110,
 			Severity: SeverityWarning,

@@ -249,38 +249,36 @@ func applyAgentStringField(cfg *ir.AgentConfig, key, val string) bool {
 	return applyAgentRuntimeField(cfg, key, val)
 }
 
-// applyAgentPromptField handles prompt-related agent fields.
+// applyAgentPromptField handles the agent fields that drive an LLM call:
+// the two prompt/<prompt>_file pairs plus the response-shaping fields
+// reasoning_effort and response_schema. Returns true if handled.
 func applyAgentPromptField(cfg *ir.AgentConfig, key, val string) bool {
-	if applyAgentPromptInlineField(cfg, key, val) {
+	if applyAgentPromptPair(&cfg.Prompt, &cfg.PromptFile, "prompt", key, val) {
 		return true
 	}
-	return applyAgentPromptSchemaField(cfg, key, val)
-}
-
-// applyAgentPromptInlineField handles prompt/system_prompt and their _file variants.
-func applyAgentPromptInlineField(cfg *ir.AgentConfig, key, val string) bool {
+	if applyAgentPromptPair(&cfg.SystemPrompt, &cfg.SystemPromptFile, "system_prompt", key, val) {
+		return true
+	}
 	switch key {
-	case "prompt":
-		cfg.Prompt = val
-	case "prompt_file":
-		cfg.PromptFile = val
-	case "system_prompt":
-		cfg.SystemPrompt = val
-	case "system_prompt_file":
-		cfg.SystemPromptFile = val
+	case "reasoning_effort":
+		cfg.ReasoningEffort = val
+	case "response_schema":
+		cfg.ResponseSchema = val
 	default:
 		return false
 	}
 	return true
 }
 
-// applyAgentPromptSchemaField handles reasoning_effort and response_schema fields.
-func applyAgentPromptSchemaField(cfg *ir.AgentConfig, key, val string) bool {
+// applyAgentPromptPair assigns val to either the inline or *_file target
+// depending on whether key is base or base+"_file". Returns false if key
+// matches neither, so the caller can keep dispatching.
+func applyAgentPromptPair(inline, file *string, base, key, val string) bool {
 	switch key {
-	case "reasoning_effort":
-		cfg.ReasoningEffort = val
-	case "response_schema":
-		cfg.ResponseSchema = val
+	case base:
+		*inline = val
+	case base + "_file":
+		*file = val
 	default:
 		return false
 	}

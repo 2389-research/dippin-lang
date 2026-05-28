@@ -45,17 +45,10 @@ func resolveNodeDirective(n *ir.Node, baseDir string) error {
 }
 
 // resolveToolDirective populates ToolConfig.Command from CommandFile, if set.
-// Skips if Command is already inline-populated (parser's mutual-exclusion
-// check should prevent both being set; defensive guard if it doesn't).
 func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
-	if cfg.CommandFile == "" || cfg.Command != "" {
-		return nil
+	if err := loadDirectiveInto(&cfg.Command, cfg.CommandFile, baseDir, n.ID, "command_file"); err != nil {
+		return err
 	}
-	contents, err := loadDirectiveFile(baseDir, cfg.CommandFile)
-	if err != nil {
-		return fmt.Errorf("node %q command_file: %w", n.ID, err)
-	}
-	cfg.Command = string(contents)
 	n.Config = cfg
 	return nil
 }
@@ -64,20 +57,20 @@ func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
 // twins on AgentConfig. The two slots are independent — either, both, or
 // neither may be set.
 func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string) error {
-	if err := loadInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
+	if err := loadDirectiveInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
 		return err
 	}
-	if err := loadInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
+	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
 		return err
 	}
 	n.Config = cfg
 	return nil
 }
 
-// loadInto populates *dst from path (relative to baseDir) if path != "" and
-// *dst == "". Skips if either condition fails (defensive: parser's mutual-
-// exclusion check should prevent both being set, but if it happens, inline wins).
-func loadInto(dst *string, path, baseDir, nodeID, directive string) error {
+// loadDirectiveInto reads path (relative to baseDir) into *dst, no-op if path
+// is empty. The *dst != "" guard preserves an inline value if one is already
+// set, defensive against the parser's mutual-exclusion check getting bypassed.
+func loadDirectiveInto(dst *string, path, baseDir, nodeID, directive string) error {
 	if path == "" || *dst != "" {
 		return nil
 	}

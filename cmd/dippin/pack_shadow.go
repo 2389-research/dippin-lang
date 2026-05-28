@@ -152,24 +152,15 @@ func clearToolFileDirective(n *ir.Node) {
 }
 
 // clearAgentFileDirectives clears AgentConfig.PromptFile and
-// AgentConfig.SystemPromptFile if either is set.
+// AgentConfig.SystemPromptFile.
 func clearAgentFileDirectives(n *ir.Node) {
 	ac, ok := n.Config.(ir.AgentConfig)
 	if !ok {
 		return
 	}
-	changed := false
-	if ac.PromptFile != "" {
-		ac.PromptFile = ""
-		changed = true
-	}
-	if ac.SystemPromptFile != "" {
-		ac.SystemPromptFile = ""
-		changed = true
-	}
-	if changed {
-		n.Config = ac
-	}
+	ac.PromptFile = ""
+	ac.SystemPromptFile = ""
+	n.Config = ac
 }
 
 // writeShadowFile mirrors srcAbs's path under shadowDir (relative to rootDir)
