@@ -352,6 +352,8 @@ agent Reviewer
   prompt_file: prompts/task.md
 ```
 
+Convention: keep prompt files in a `prompts/` directory alongside your `.dip`.
+
 Path resolution and security are identical to `command_file:` above:
 - Paths resolved relative to the `.dip` source directory
 - Absolute paths rejected

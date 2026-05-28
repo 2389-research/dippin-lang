@@ -1,10 +1,16 @@
 workflow ExternalPrompts
   goal: "Demonstrate prompt_file:/system_prompt_file: directives (issue #65)"
   start: Reviewer
-  exit: Reviewer
+  exit: Summarizer
 
   agent Reviewer
     model: claude-sonnet-4-6
     system_prompt_file: external_prompts/reviewer-persona.md
     prompt_file: external_prompts/reviewer-task.md
-    auto_status: true
+
+  agent Summarizer
+    model: claude-sonnet-4-6
+    prompt: "Summarize the reviewer's findings in two sentences for the PR description."
+
+  edges
+    Reviewer -> Summarizer
