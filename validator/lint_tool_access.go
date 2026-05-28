@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -37,6 +38,54 @@ func lintToolAccessValues(w *ir.Workflow) []Diagnostic {
 			Message:  fmt.Sprintf("node %q has tool_access %q which is not recognized", n.ID, cfg.ToolAccess),
 			Location: n.Source,
 			Help:     "valid value: none (omit the field for the full catalog). Invalid values fall back to no-tools at runtime — fix the typo or remove the field.",
+		})
+	}
+	return diags
+}
+
+// toolReenablingParamsKeys lists Params keys that re-grant LLM tools. When an
+// agent sets tool_access, tracker strips these (fail-closed); the lint surfaces
+// the neutralized override at author time. Source: v0.32.0 issue-41 design
+// § Params bypass defense.
+var toolReenablingParamsKeys = map[string]bool{
+	"allowed_tools":    true,
+	"disallowed_tools": true,
+	"tool_choice":      true,
+	"permission_mode":  true,
+}
+
+// lintParamsReenablesTools fires DIP140 when an agent declares tool_access
+// (non-empty) yet also sets a Params key that would re-enable tools. Tracker
+// ignores such keys when tool_access is set, so the override is silently
+// neutralized — a likely bypass attempt or dead config.
+func lintParamsReenablesTools(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	for _, n := range w.Nodes {
+		cfg, ok := n.Config.(ir.AgentConfig)
+		if !ok || strings.TrimSpace(cfg.ToolAccess) == "" || len(cfg.Params) == 0 {
+			continue
+		}
+		diags = append(diags, checkParamsReenable(n, cfg.Params)...)
+	}
+	return diags
+}
+
+func checkParamsReenable(n *ir.Node, params map[string]string) []Diagnostic {
+	keys := make([]string, 0, len(params))
+	for k := range params {
+		if toolReenablingParamsKeys[k] {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	var diags []Diagnostic
+	for _, k := range keys {
+		diags = append(diags, Diagnostic{
+			Code:     DIP140,
+			Severity: SeverityWarning,
+			Message:  fmt.Sprintf("node %q params key %q re-enables tools that tool_access strips — tracker ignores it", n.ID, k),
+			Location: n.Source,
+			Help:     "remove the params key; tool_access governs the tool catalog. To grant tools instead, omit tool_access.",
 		})
 	}
 	return diags

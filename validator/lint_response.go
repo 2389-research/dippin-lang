@@ -21,7 +21,7 @@ var agentFirstClassFields = map[string]bool{
 	"reasoning_effort": true, "fidelity": true,
 	"auto_status": true, "goal_gate": true,
 	"cache_tools": true, "compaction": true,
-	"compaction_threshold": true,
+	"compaction_threshold": true, "tool_access": true,
 }
 
 func lintResponseFormat(w *ir.Workflow) []Diagnostic {
