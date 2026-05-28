@@ -5,12 +5,11 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 ## [v0.34.0] — UNRELEASED
 
 ### Added
-- `prompt_file:` and `system_prompt_file:` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`. Reuses the parser-pure resolver pass — pack-time inlining via the shadow tree carries the resolved content into `.dipx` bundles, so no tracker coordination is required.
-- `parser.ResolveFileDirectives` now walks agent nodes in addition to tool nodes. `loadDirectiveFile` and the 4-layer security model (absolute reject, parent-tree escape reject, symlink reject, 4-MiB cap) are shared across all three directives.
-- `examples/external_prompts.dip` demonstrating both prompt directives.
+- `prompt_file: <path>` and `system_prompt_file: <path>` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`; same path-relative-to-`.dip` rules and security cap. `dippin pack` inlines the content, so no tracker coordination is required.
+- `examples/external_prompts.dip` demonstrating both directives.
 
 ### Fixed
-- `dippin fmt` previously silently dropped inline `system_prompt:` on agent nodes (pre-existing bug, latent since the field was introduced). Inline `system_prompt:` now round-trips correctly.
+- `dippin fmt --write` previously stripped inline `system_prompt:` from agent nodes on save (latent since the field was introduced). If you've been re-adding `system_prompt:` after running fmt, this fix is for you.
 
 ### Notes
 - Parser stays pure (no FS I/O); resolver runs at CLI entry points only. LSP and WASM consumers see the unresolved IR view (`*File` set, content empty), which is the correct view for those contexts.
