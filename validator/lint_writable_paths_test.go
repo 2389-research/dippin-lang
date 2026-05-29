@@ -53,6 +53,7 @@ func TestLint_DIP142_UnsafeEntries(t *testing.T) {
 		{"home", "~/secrets/**"},
 		{"windows drive", `C:\Users\x`},
 		{"parent escape", "../../etc/**"},
+		{"windows parent escape", `..\\secrets\\**`},
 		{"brace mis-split", "*.{md"},
 	}
 	for _, tc := range cases {

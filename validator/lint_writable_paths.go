@@ -103,7 +103,10 @@ func isDriveLetter(c byte) bool {
 
 // isParentEscape reports whether the cleaned entry contains a `..` segment that
 // would escape its base. Local copy of parser.hasParentRef (validator imports ir only).
+// Backslashes are normalised to forward slashes before cleaning so that Windows
+// escape patterns like `..\secrets\**` are caught on all host platforms.
 func isParentEscape(e string) bool {
+	e = strings.ReplaceAll(e, "\\", "/")
 	cleaned := filepath.ToSlash(filepath.Clean(e))
 	for _, seg := range strings.Split(cleaned, "/") {
 		if seg == ".." {

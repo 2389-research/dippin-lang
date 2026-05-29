@@ -284,7 +284,7 @@ A node-level glob list bounding where the agent's tools may write. Shape: comma-
 
 - `writable_paths: workspace/**, .ai/sprints/**` — tracker confines all file mutations (Write, Edit, ApplyPatch, Bash, and any process Bash spawns) to paths matching these globs, resolved against an **immutable session root**. `working_dir` and `Params` keys cannot relocate the anchor.
 - *omitted* — unbounded writes (current behavior, unchanged).
-- **Fail-closed:** A `writable_paths` that is present-but-empty, malformed, or **unrecognized by an older tracker** → tracker denies all writes or refuses to start. Never falls through to unbounded. **A tracker older than v0.35.0 does not enforce `writable_paths` at all; an unpinned or older tracker must refuse rather than run unbounded — this is a safety requirement, not a suggestion.** Always pair with `requires tracker >= v0.35.0`.
+- **Fail-closed:** A present-but-empty `writable_paths:` is rejected by `dippin validate`/`pack` (parse error — list at least one glob or omit the field). A `writable_paths` that is malformed or **unrecognized by an older tracker** → tracker denies all writes or refuses to start. Never falls through to unbounded. **A tracker older than v0.35.0 does not enforce `writable_paths` at all; an unpinned or older tracker must refuse rather than run unbounded — this is a safety requirement, not a suggestion.** Always pair with `requires tracker >= v0.35.0`.
 
 **Enforcement scope (native backend only):** `writable_paths` is enforced on the `native` backend. On `claude-code` and `acp`, session creation **refuses to start** when `writable_paths` is set — fail-closed, never a silent no-op.
 
