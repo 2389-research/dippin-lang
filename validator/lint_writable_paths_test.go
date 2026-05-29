@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"os"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/parser"
@@ -122,5 +123,16 @@ func TestLint_DIP142_Branch(t *testing.T) {
 `
 	if !hasCode(lintSrc(t, src), DIP142) {
 		t.Errorf("expected DIP142 on branch; got: %v", codes(lintSrc(t, src)))
+	}
+}
+
+func TestExampleAgentWritablePathsLintsClean(t *testing.T) {
+	data, err := os.ReadFile("../examples/agent_writable_paths.dip")
+	if err != nil {
+		t.Fatalf("read example: %v", err)
+	}
+	diags := lintSrc(t, string(data))
+	if hasCode(diags, DIP141) || hasCode(diags, DIP142) {
+		t.Errorf("example should be DIP141/DIP142-clean; got: %v", codes(diags))
 	}
 }

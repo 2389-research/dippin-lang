@@ -1,0 +1,36 @@
+workflow AgentWritablePaths
+  goal: "Demonstrate path-bounded write scope on failure-recorder agents (issue #75)"
+  start: Review
+  exit: RecoveryManager
+
+  agent Review
+    model: claude-sonnet-4-6
+    prompt: "Review the work. Emit STATUS: success or STATUS: fail."
+    auto_status: true
+
+  agent L6Failed
+    model: claude-sonnet-4-6
+    prompt: "Record the review failure to the sentinel file."
+    writable_paths: workspace/.review-failed
+
+  agent Gate1Failed
+    model: claude-sonnet-4-6
+    prompt: "Record the synthesis failure."
+    reads: gate1-findings.md
+    writable_paths: workspace/.synthesis-failed
+
+  agent Gate2Failed
+    model: claude-sonnet-4-6
+    prompt: "Record the validation failure."
+    writable_paths: workspace/.validation-failed
+
+  agent RecoveryManager
+    model: claude-sonnet-4-6
+    prompt: "Write the recovery analysis, the redecompose request, and the journal entry."
+    writable_paths: .ai/sprints/**, .ai/managers/recovery-journal.md
+
+  edges
+    Review -> L6Failed
+    L6Failed -> Gate1Failed
+    Gate1Failed -> Gate2Failed
+    Gate2Failed -> RecoveryManager
