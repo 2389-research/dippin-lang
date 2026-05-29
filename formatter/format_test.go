@@ -2132,3 +2132,25 @@ func TestFormat_ToolCommandInline(t *testing.T) {
 		t.Errorf("formatted output should not contain command_file when inline used:\n%s", out)
 	}
 }
+
+// A branch that sets ONLY tool_access must still be emitted (regression guard
+// for the writeBranch early-return that previously checked only model/provider/fidelity).
+func TestFormatBranchToolAccessOnly(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "T",
+		Start: "split",
+		Exit:  "join",
+		Nodes: []*ir.Node{
+			{ID: "a", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
+			{ID: "split", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets:  []string{"a"},
+				Branches: []ir.BranchConfig{{Target: "a", ToolAccess: "none"}},
+			}},
+			{ID: "join", Kind: ir.NodeFanIn, Config: ir.FanInConfig{Sources: []string{"a"}}},
+		},
+	}
+	out := Format(w)
+	if !strings.Contains(out, "tool_access: none") {
+		t.Errorf("formatted output missing per-branch tool_access; got:\n%s", out)
+	}
+}
