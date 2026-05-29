@@ -223,12 +223,27 @@ Extend `docs/nodes.md` (currently inline-only ~line 344) with the block-form
 `steer_context` percent-encoding row. `docs/GRAMMAR.ebnf` already specifies the
 block form — no change. **Do not touch `CHANGELOG.md`** — that is a tag-time step.
 
+## Parallel start/exit recovery (in scope — added during execution)
+
+A parallel node that is also the workflow start/exit has its shape overridden to
+Mdiamond/Msquare on export, so on import `resolveStartExitKind` must recover
+`NodeParallel` (it already recovers `NodeManagerLoop`/`NodeTool` via
+`hasManagerLoopAttrs`/`hasToolConfigAttrs`). Add a `hasParallelAttrs` check
+(detecting the `branches`/`targets` keys, which are unique to parallel nodes) so a
+parallel start/exit node round-trips its config instead of degrading to
+`NodeAgent`.
+
+This was originally scoped out as a pre-existing gap, but the canonical block-form
+example (`parser/testdata/parallel_branches.dip`) uses `start: split` — the
+parallel node *is* the entry point — so without this, the most realistic block-form
+pattern would not satisfy acceptance criterion #1. The fix is small and mirrors the
+existing kind-recovery helpers.
+
 ## Out of scope
 
 - **No new `examples/*.dip`.** Not in the acceptance criteria; the round-trip is
   proven by the tests above. (If one were added it would need top-level placement
   and DIP108-valid per-branch models — deliberately omitted.)
-- **Parallel start/exit recovery.** A parallel node that is also start/exit has its
-  shape overridden to Mdiamond/Msquare; `resolveStartExitKind` does not recover
-  `NodeParallel`. This is a pre-existing gap (it already loses `targets=`/component
-  shape today), not introduced here. Noted; not fixed in this change.
+- **Fan-in start/exit recovery.** A `fan_in` node that is also start/exit is not
+  recovered (`sources` is not checked). Pre-existing, not triggered by this change,
+  and not part of #76.
