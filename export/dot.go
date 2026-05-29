@@ -426,13 +426,14 @@ func encodeBranches(branches []ir.BranchConfig) string {
 }
 
 // encodeBranch encodes one branch as ';'-joined k=v tokens. target is always
-// first; model/provider/fidelity/tool_access only when non-empty.
+// first; model/provider/fidelity/tool_access/writable_paths only when non-empty.
 func encodeBranch(b ir.BranchConfig) string {
 	parts := []string{"target=" + encodeBranchToken(b.Target)}
 	parts = appendBranchField(parts, "model", b.Model)
 	parts = appendBranchField(parts, "provider", b.Provider)
 	parts = appendBranchField(parts, "fidelity", b.Fidelity)
 	parts = appendBranchField(parts, "tool_access", b.ToolAccess)
+	parts = appendBranchField(parts, "writable_paths", strings.Join(b.WritablePaths, ","))
 	return strings.Join(parts, ";")
 }
 
