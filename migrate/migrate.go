@@ -674,7 +674,8 @@ func applyBranchToken(b *ir.BranchConfig, field string) {
 	if len(kv) != 2 {
 		return
 	}
-	if set, ok := branchFieldSetters[kv[0]]; ok {
+	key := strings.TrimSpace(kv[0])
+	if set, ok := branchFieldSetters[key]; ok {
 		set(b, decodeBranchToken(kv[1]))
 	}
 }
