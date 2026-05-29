@@ -161,23 +161,24 @@ func appendBranchField(parts []string, key, val string) []string {
 	return append(parts, key+"="+encodeBranchToken(val))
 }
 
-// branchEncoder percent-encodes the four reserved delimiter characters of the
-// branches encoding: ';' (field sep), ',' (branch sep), '=' (k/v sep), and '%'
-// (the escape char itself, replaced first to avoid double-encoding). This is a
-// superset of steerContextEncoder — branches add ';'. The outer DOT-quote layer
-// (dotQuote) handles '"', '\', and newlines, so those are intentionally not
-// percent-encoded here.
+// branchEncoder percent-encodes the reserved characters of the branches
+// encoding: ';' (field sep), ',' (branch sep), '=' (k/v sep), '%' (escape char),
+// and '\' (backslash, so a literal '\' + n/l/r cannot survive the DOT-quote
+// layer as a DOT escape and be decoded to a newline by the migrate lexer). This
+// is a superset of steerContextEncoder. Order is irrelevant (single-pass
+// Replacer, mutually-exclusive patterns). The DOT-quote layer still handles '"'.
 var branchEncoder = strings.NewReplacer(
 	"%", "%25",
 	",", "%2C",
 	";", "%3B",
 	"=", "%3D",
+	"\\", "%5C",
 )
 
-// encodeBranchToken percent-encodes the reserved delimiter characters in a key
+// encodeBranchToken percent-encodes the reserved characters in a key
 // or value so the round-trip through DOT → migrate stays lossless.
 func encodeBranchToken(s string) string {
-	if !strings.ContainsAny(s, ",;=%") {
+	if !strings.ContainsAny(s, ",;=%\\") {
 		return s
 	}
 	return branchEncoder.Replace(s)
@@ -379,6 +380,7 @@ var branchDecoder = strings.NewReplacer(
 	"%2C", ",",
 	"%3B", ";",
 	"%3D", "=",
+	"%5C", "\\",
 )
 
 // decodeBranchToken reverses encodeBranchToken from export. Returns the input

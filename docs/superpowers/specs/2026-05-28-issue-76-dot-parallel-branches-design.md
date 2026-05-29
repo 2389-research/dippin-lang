@@ -72,21 +72,27 @@ split [shape=component,
 
 ### Reserved-character safety
 
-The four structural characters `%`, `,`, `;`, `=` are percent-encoded inside keys
-and values (`%`→`%25`, `,`→`%2C`, `;`→`%3B`, `=`→`%3D`), with `%` replaced first
-on encode. This is a **superset** of the `steer_context` encoder (which reserves
-only `% , =`) because `;` is the new within-branch field separator.
+Five characters are percent-encoded inside keys and values (`%`→`%25`, `,`→`%2C`,
+`;`→`%3B`, `=`→`%3D`, `\`→`%5C`). This is a **superset** of the `steer_context`
+encoder (which reserves only `% , =`): `;` is the new within-branch field
+separator, and `\` is encoded so a value containing a literal backslash followed
+by `n`/`l`/`r` cannot survive the outer DOT-quote layer as a DOT escape sequence
+(`\n`/`\l`/`\r`) and get decoded to a newline by the migrate lexer. Encode order
+is irrelevant: `strings.NewReplacer` is single-pass and the percent-encoded forms
+are mutually exclusive (none is a prefix of another), so an already-substituted
+token can never recombine into another reserved char.
 
-We do **not** reuse `steerContextEncoder` — adding `;` to it would change the
+We do **not** reuse `steerContextEncoder` — adding `;`/`\` to it would change the
 `steer_context` wire format and break its round-trip tests. Instead each package
 gets a dedicated `branchEncoder`/`branchDecoder` `strings.Replacer` pair, mirroring
 the steer pattern (encoder in `export`, decoder in `migrate`; the two packages
 cannot share private helpers and already duplicate the steer encoder/decoder
 across the boundary — this is the established, accepted norm).
 
-The outer DOT-quote layer (`dotQuote` / lexer `readString`) handles `"`, `\`, and
-newlines, so those are intentionally **not** in the percent set. A code comment
-will note this so a future editor doesn't assume the percent set is self-sufficient.
+The outer DOT-quote layer (`dotQuote` / lexer `readString`) still handles `"` and
+newlines unambiguously, so those are intentionally **not** in the percent set
+(only `\` is, to defeat DOT escape-sequence interpretation). A code comment notes
+this so a future editor doesn't assume the percent set is self-sufficient.
 
 ### Decoding
 

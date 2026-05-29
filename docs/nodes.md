@@ -387,7 +387,7 @@ Block-form parallels export a `branches=` node attribute alongside the standard 
 branches="target=fast;model=claude-haiku-4-5;provider=anthropic;fidelity=summary,target=accurate;model=claude-opus-4-7;provider=anthropic;fidelity=full"
 ```
 
-The reserved characters `%`, `,`, `;`, `=`, and `\` are percent-encoded in keys and values (the same convention used by `steer_context`), so branch metadata round-trips losslessly through `migrate`.
+The reserved characters `%`, `,`, `;`, `=`, and `\` are percent-encoded in keys and values (the same percent-encoding approach as `steer_context`, though branches reserve a few more characters), so branch metadata round-trips losslessly through `migrate`.
 
 ---
 
