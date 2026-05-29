@@ -361,7 +361,7 @@ func assertBranchesEqual(t *testing.T, got, want []ir.BranchConfig) {
 		t.Fatalf("branches = %d, want %d", len(got), len(want))
 	}
 	for i := range want {
-		if got[i] != want[i] {
+		if !branchesEqual(got[i], want[i]) {
 			t.Errorf("branch[%d]: got %+v want %+v", i, got[i], want[i])
 		}
 	}

@@ -270,6 +270,9 @@ func compareAgentBehavior(id string, ac, bc ir.AgentConfig) []Difference {
 	if ac.ToolAccess != bc.ToolAccess {
 		diffs = append(diffs, fieldDiff(id, "tool_access", fmt.Sprintf("node %q tool_access: %q vs %q", id, ac.ToolAccess, bc.ToolAccess)))
 	}
+	if strings.Join(ac.WritablePaths, ",") != strings.Join(bc.WritablePaths, ",") {
+		diffs = append(diffs, fieldDiff(id, "writable_paths", fmt.Sprintf("node %q writable_paths: %v vs %v", id, ac.WritablePaths, bc.WritablePaths)))
+	}
 	return diffs
 }
 
@@ -363,19 +366,30 @@ func compareParallelTargets(id string, ac, bc ir.ParallelConfig) []Difference {
 }
 
 // compareParallelBranches compares branch slices position-by-position. Order is
-// significant (it maps to targets). BranchConfig is an all-string comparable
-// struct, so a direct != compares every field exactly — no delimiter-joined key,
-// which could collide when a field value contains the delimiter.
+// significant (it maps to targets). BranchConfig now carries a slice field
+// (WritablePaths), so it is no longer comparable with ==; compare field-by-field.
 func compareParallelBranches(id string, ac, bc ir.ParallelConfig) []Difference {
 	if len(ac.Branches) != len(bc.Branches) {
 		return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
 	}
 	for i := range ac.Branches {
-		if ac.Branches[i] != bc.Branches[i] {
+		if !branchesEqual(ac.Branches[i], bc.Branches[i]) {
 			return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
 		}
 	}
 	return nil
+}
+
+// branchesEqual reports whether two branch configs are field-equal (scalar
+// fields plus the comma-joined WritablePaths slice).
+func branchesEqual(a, b ir.BranchConfig) bool {
+	return branchScalarsEqual(a, b) &&
+		strings.Join(a.WritablePaths, ",") == strings.Join(b.WritablePaths, ",")
+}
+
+func branchScalarsEqual(a, b ir.BranchConfig) bool {
+	return a.Target == b.Target && a.Model == b.Model &&
+		a.Provider == b.Provider && a.Fidelity == b.Fidelity && a.ToolAccess == b.ToolAccess
 }
 
 func compareFanInConfigs(id, path string, ac ir.FanInConfig, bCfg interface{}) []Difference {
