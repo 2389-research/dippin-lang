@@ -349,10 +349,34 @@ func compareParallelConfigs(id, path string, ac ir.ParallelConfig, bCfg interfac
 	if !ok {
 		return []Difference{configMismatchDiff(id, path, "ParallelConfig", bCfg)}
 	}
+	var diffs []Difference
+	diffs = append(diffs, compareParallelTargets(id, ac, bc)...)
+	diffs = append(diffs, compareParallelBranches(id, ac, bc)...)
+	return diffs
+}
+
+func compareParallelTargets(id string, ac, bc ir.ParallelConfig) []Difference {
 	if strings.Join(ac.Targets, ",") != strings.Join(bc.Targets, ",") {
 		return []Difference{fieldDiff(id, "targets", fmt.Sprintf("node %q targets: %v vs %v", id, ac.Targets, bc.Targets))}
 	}
 	return nil
+}
+
+func compareParallelBranches(id string, ac, bc ir.ParallelConfig) []Difference {
+	if branchesKey(ac.Branches) != branchesKey(bc.Branches) {
+		return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
+	}
+	return nil
+}
+
+// branchesKey produces a stable comparison key for a branch slice (order
+// matters — it maps positionally to targets).
+func branchesKey(branches []ir.BranchConfig) string {
+	parts := make([]string, len(branches))
+	for i, b := range branches {
+		parts[i] = fmt.Sprintf("%s|%s|%s|%s", b.Target, b.Model, b.Provider, b.Fidelity)
+	}
+	return strings.Join(parts, ",")
 }
 
 func compareFanInConfigs(id, path string, ac ir.FanInConfig, bCfg interface{}) []Difference {
