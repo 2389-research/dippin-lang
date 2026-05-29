@@ -297,7 +297,7 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 }
 
-// applyAgentRuntimeAttrs adds backend, working_dir, and tool_access attributes.
+// applyAgentRuntimeAttrs adds backend, working_dir, tool_access, and writable_paths attributes.
 func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Backend != "" {
 		attrs["backend"] = cfg.Backend
@@ -307,6 +307,9 @@ func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 	if strings.TrimSpace(cfg.ToolAccess) != "" {
 		attrs["tool_access"] = cfg.ToolAccess
+	}
+	if len(cfg.WritablePaths) > 0 {
+		attrs["writable_paths"] = strings.Join(cfg.WritablePaths, ",")
 	}
 }
 
