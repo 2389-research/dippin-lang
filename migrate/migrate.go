@@ -335,19 +335,36 @@ func hasToolConfigAttrs(attrs map[string]string) bool {
 	return false
 }
 
+// hasParallelAttrs reports whether attrs contain a parallel-specific key
+// (branches or targets). Used to detect parallel nodes when their kind-based
+// shape was overridden to Mdiamond/Msquare by start/exit marker export. Both
+// keys are unique to parallel nodes and cannot collide with other kinds.
+func hasParallelAttrs(attrs map[string]string) bool {
+	if _, ok := attrs["branches"]; ok {
+		return true
+	}
+	if _, ok := attrs["targets"]; ok {
+		return true
+	}
+	return false
+}
+
 // resolveStartExitKind disambiguates start/exit-marker shapes (Mdiamond, Msquare)
 // by checking for kind-specific attributes. Start/exit override the kind-based
 // shape in export, so migrate has to recover the original kind from attrs.
-// Manager-loop attrs are checked first, then tool-config attrs; partial
-// configurations of either kind are detected so nothing is silently downgraded
-// to NodeAgent. Tool detection is bounded to tool-specific keys (the shared
-// timeout attr is excluded to avoid collision with HumanConfig).
+// Manager-loop attrs are checked first, then tool-config attrs, then parallel
+// attrs; partial configurations of any kind are detected so nothing is silently
+// downgraded to NodeAgent. Tool detection is bounded to tool-specific keys (the
+// shared timeout attr is excluded to avoid collision with HumanConfig).
 func resolveStartExitKind(attrs map[string]string) ir.NodeKind {
 	if hasManagerLoopAttrs(attrs) {
 		return ir.NodeManagerLoop
 	}
 	if hasToolConfigAttrs(attrs) {
 		return ir.NodeTool
+	}
+	if hasParallelAttrs(attrs) {
+		return ir.NodeParallel
 	}
 	return ir.NodeAgent
 }
@@ -582,10 +599,106 @@ func applyToolOutputLimitAttr(cfg *ir.ToolConfig, attrs map[string]string) error
 
 func buildParallelConfig(attrs map[string]string) ir.ParallelConfig {
 	cfg := ir.ParallelConfig{}
+	if v, ok := attrs["branches"]; ok && v != "" {
+		cfg.Branches = parseBranches(v)
+	}
+	applyParallelTargets(&cfg, attrs)
+	return cfg
+}
+
+// applyParallelTargets sets cfg.Targets. When branches are present they are the
+// source of truth for target order (reproducing the parser invariant
+// Targets[i] == Branches[i].Target). Otherwise targets= is used; if both are
+// absent, inferParallelFanIn backfills from edges.
+func applyParallelTargets(cfg *ir.ParallelConfig, attrs map[string]string) {
+	if len(cfg.Branches) > 0 {
+		cfg.Targets = parallelBranchTargets(cfg.Branches)
+		return
+	}
 	if v, ok := attrs["targets"]; ok {
 		cfg.Targets = splitComma(v)
 	}
-	return cfg
+}
+
+// parallelBranchTargets extracts target IDs from branch configs (local copy;
+// packages import ir only).
+func parallelBranchTargets(branches []ir.BranchConfig) []string {
+	targets := make([]string, len(branches))
+	for i, b := range branches {
+		targets[i] = b.Target
+	}
+	return targets
+}
+
+// parseBranches parses the branches= attribute ("k=v;k=v,k=v;...") into
+// BranchConfigs in order. A branch with an empty target is dropped (a branch
+// with no fan-out target would corrupt the edge mapping). Unknown field keys
+// are skipped, mirroring parseFlattenedSteerContext's non-erroring contract.
+func parseBranches(s string) []ir.BranchConfig {
+	var out []ir.BranchConfig
+	for _, raw := range strings.Split(s, ",") {
+		b := parseBranchToken(raw)
+		if b.Target != "" {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
+// parseBranchToken parses a single ';'-joined branch token into a BranchConfig.
+func parseBranchToken(s string) ir.BranchConfig {
+	var b ir.BranchConfig
+	for _, field := range strings.Split(s, ";") {
+		applyBranchToken(&b, field)
+	}
+	return b
+}
+
+// branchFieldSetters maps a branch field key to the BranchConfig field it sets.
+// Table-driven (rather than a switch) keeps applyBranchToken under the cyclo≤5
+// cap with the extra target case + malformed guard, and makes adding a key
+// (e.g. tool_access for #58) a one-line change.
+var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
+	"target":   func(b *ir.BranchConfig, v string) { b.Target = v },
+	"model":    func(b *ir.BranchConfig, v string) { b.Model = v },
+	"provider": func(b *ir.BranchConfig, v string) { b.Provider = v },
+	"fidelity": func(b *ir.BranchConfig, v string) { b.Fidelity = v },
+}
+
+// applyBranchToken sets one "key=value" field on a BranchConfig. The value is
+// percent-decoded. Tokens without '=' and unknown keys are skipped. The value is
+// NOT TrimSpace'd: branch targets are node IDs that must match edge endpoints
+// exactly.
+func applyBranchToken(b *ir.BranchConfig, field string) {
+	kv := strings.SplitN(field, "=", 2)
+	if len(kv) != 2 {
+		return
+	}
+	key := strings.TrimSpace(kv[0])
+	if set, ok := branchFieldSetters[key]; ok {
+		set(b, decodeBranchToken(kv[1]))
+	}
+}
+
+// branchDecoder reverses branchEncoder from export/dot.go. strings.NewReplacer
+// is single-pass and never re-scans inserted output, and the "%XX" patterns are
+// mutually exclusive (none is a prefix of another), so order is irrelevant —
+// e.g. a literal "%2C" encodes to "%252C" and decodes back to "%2C", not ",".
+var branchDecoder = strings.NewReplacer(
+	"%25", "%",
+	"%2C", ",",
+	"%3B", ";",
+	"%3D", "=",
+	"%5C", "\\",
+)
+
+// decodeBranchToken reverses encodeBranchToken from export. Returns the input
+// unchanged when it contains no '%' escapes.
+func decodeBranchToken(s string) string {
+	if !strings.Contains(s, "%") {
+		return s
+	}
+	return branchDecoder.Replace(s)
 }
 
 func buildFanInConfig(attrs map[string]string) ir.FanInConfig {
@@ -1020,7 +1133,7 @@ func inferParallelTargets(w *ir.Workflow, n *ir.Node, cfg ir.ParallelConfig) {
 	for _, e := range edges {
 		targets = append(targets, e.To)
 	}
-	n.Config = ir.ParallelConfig{Targets: targets}
+	n.Config = ir.ParallelConfig{Targets: targets, Branches: cfg.Branches}
 }
 
 // inferFanInSources sets sources from incoming edges if not already set.

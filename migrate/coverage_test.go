@@ -676,3 +676,18 @@ func TestCompareAgentConfigs_FieldDiffs(t *testing.T) {
 		t.Errorf("expected at least 5 diffs, got %d", len(diffs))
 	}
 }
+
+func TestCompareParallelConfigs_DifferentBranches(t *testing.T) {
+	a := ir.ParallelConfig{
+		Targets:  []string{"A"},
+		Branches: []ir.BranchConfig{{Target: "A", Model: "x"}},
+	}
+	b := ir.ParallelConfig{
+		Targets:  []string{"A"},
+		Branches: []ir.BranchConfig{{Target: "A", Model: "y"}},
+	}
+	diffs := compareParallelConfigs("P", "nodes.P", a, b)
+	if len(diffs) == 0 {
+		t.Fatal("expected a branches difference, got none")
+	}
+}

@@ -349,8 +349,31 @@ func compareParallelConfigs(id, path string, ac ir.ParallelConfig, bCfg interfac
 	if !ok {
 		return []Difference{configMismatchDiff(id, path, "ParallelConfig", bCfg)}
 	}
+	var diffs []Difference
+	diffs = append(diffs, compareParallelTargets(id, ac, bc)...)
+	diffs = append(diffs, compareParallelBranches(id, ac, bc)...)
+	return diffs
+}
+
+func compareParallelTargets(id string, ac, bc ir.ParallelConfig) []Difference {
 	if strings.Join(ac.Targets, ",") != strings.Join(bc.Targets, ",") {
 		return []Difference{fieldDiff(id, "targets", fmt.Sprintf("node %q targets: %v vs %v", id, ac.Targets, bc.Targets))}
+	}
+	return nil
+}
+
+// compareParallelBranches compares branch slices position-by-position. Order is
+// significant (it maps to targets). BranchConfig is an all-string comparable
+// struct, so a direct != compares every field exactly — no delimiter-joined key,
+// which could collide when a field value contains the delimiter.
+func compareParallelBranches(id string, ac, bc ir.ParallelConfig) []Difference {
+	if len(ac.Branches) != len(bc.Branches) {
+		return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
+	}
+	for i := range ac.Branches {
+		if ac.Branches[i] != bc.Branches[i] {
+			return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
+		}
 	}
 	return nil
 }

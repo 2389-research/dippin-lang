@@ -373,11 +373,100 @@ func applySubgraphAttrs(attrs map[string]string, cfg ir.SubgraphConfig) {
 	}
 }
 
-// applyParallelAttrs adds parallel-specific attributes.
+// applyParallelAttrs adds parallel-specific attributes: targets= (always) and
+// branches= (when per-branch config is present).
 func applyParallelAttrs(attrs map[string]string, cfg ir.ParallelConfig) {
-	if len(cfg.Targets) > 0 {
-		attrs["targets"] = strings.Join(cfg.Targets, ",")
+	applyParallelTargetsAttr(attrs, cfg)
+	applyParallelBranchesAttr(attrs, cfg)
+}
+
+// applyParallelTargetsAttr emits targets= from cfg.Targets, deriving from branch
+// targets when Targets is empty but Branches is present (so block-form-only IR
+// keeps its fan-out).
+func applyParallelTargetsAttr(attrs map[string]string, cfg ir.ParallelConfig) {
+	targets := cfg.Targets
+	if len(targets) == 0 && len(cfg.Branches) > 0 {
+		targets = parallelBranchTargets(cfg.Branches)
 	}
+	if len(targets) > 0 {
+		attrs["targets"] = strings.Join(targets, ",")
+	}
+}
+
+// applyParallelBranchesAttr emits branches= whenever per-branch config exists.
+// Emitted even when every branch is target-only, so block form round-trips
+// (does not downgrade to inline form on re-import).
+func applyParallelBranchesAttr(attrs map[string]string, cfg ir.ParallelConfig) {
+	if len(cfg.Branches) > 0 {
+		attrs["branches"] = encodeBranches(cfg.Branches)
+	}
+}
+
+// parallelBranchTargets extracts target IDs from branch configs. Local copy of
+// the parser's branchTargets (packages import ir only, not each other).
+func parallelBranchTargets(branches []ir.BranchConfig) []string {
+	targets := make([]string, len(branches))
+	for i, b := range branches {
+		targets[i] = b.Target
+	}
+	return targets
+}
+
+// encodeBranches encodes a branch slice as comma-joined branch tokens, in slice
+// order (order maps positionally to targets).
+func encodeBranches(branches []ir.BranchConfig) string {
+	parts := make([]string, 0, len(branches))
+	for _, b := range branches {
+		parts = append(parts, encodeBranch(b))
+	}
+	return strings.Join(parts, ",")
+}
+
+// encodeBranch encodes one branch as ';'-joined k=v tokens. target is always
+// first; model/provider/fidelity only when non-empty.
+func encodeBranch(b ir.BranchConfig) string {
+	parts := []string{"target=" + encodeBranchToken(b.Target)}
+	parts = appendBranchField(parts, "model", b.Model)
+	parts = appendBranchField(parts, "provider", b.Provider)
+	parts = appendBranchField(parts, "fidelity", b.Fidelity)
+	return strings.Join(parts, ";")
+}
+
+// appendBranchField appends key=value only when value is non-empty.
+func appendBranchField(parts []string, key, val string) []string {
+	if val == "" {
+		return parts
+	}
+	return append(parts, key+"="+encodeBranchToken(val))
+}
+
+// branchEncoder percent-encodes the reserved characters of the branches
+// encoding: ';' (field sep), ',' (branch sep), '=' (k/v sep), '%' (the escape
+// char itself), and '\' (backslash). Backslash is encoded so a value containing
+// a literal '\' followed by 'n'/'l'/'r' cannot survive the outer DOT-quote layer
+// as a DOT escape sequence and get decoded to a newline by the migrate lexer —
+// keeping branches losslessly round-trippable even for backslash-bearing values.
+// (This is a superset of steerContextEncoder.) The DOT-quote layer (dotQuote)
+// still handles '"' unambiguously, so '"' is not percent-encoded here.
+//
+// strings.NewReplacer is single-pass and never re-scans inserted output, so the
+// replacement order does not affect correctness; the percent-encoded forms are
+// mutually exclusive and cannot recombine into another reserved char.
+var branchEncoder = strings.NewReplacer(
+	"%", "%25",
+	",", "%2C",
+	";", "%3B",
+	"=", "%3D",
+	"\\", "%5C",
+)
+
+// encodeBranchToken percent-encodes the reserved characters in a key or value
+// so the round-trip through DOT → migrate stays lossless.
+func encodeBranchToken(s string) string {
+	if !strings.ContainsAny(s, ",;=%\\") {
+		return s
+	}
+	return branchEncoder.Replace(s)
 }
 
 // applyFanInAttrs adds fan_in-specific attributes.

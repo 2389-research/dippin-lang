@@ -1475,6 +1475,45 @@ func TestExportDOTToolRoutingFields(t *testing.T) {
 	}
 }
 
+func TestExportDOTParallelBranches(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "test",
+		Start: "S",
+		Exit:  "J",
+		Nodes: []*ir.Node{
+			{ID: "S", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go."}},
+			{ID: "P", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets: []string{"fast", "accurate"},
+				Branches: []ir.BranchConfig{
+					{Target: "fast", Model: "claude-haiku-4-5", Provider: "anthropic", Fidelity: "summary"},
+					{Target: "accurate", Model: "claude-opus-4-7", Provider: "anthropic", Fidelity: "full"},
+				},
+			}},
+			{ID: "fast", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "f."}},
+			{ID: "accurate", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a."}},
+			{ID: "J", Kind: ir.NodeFanIn, Config: ir.FanInConfig{Sources: []string{"fast", "accurate"}}},
+		},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	assertContains(t, out, `targets="fast,accurate"`)
+	assertContains(t, out, `branches="target=fast;model=claude-haiku-4-5;provider=anthropic;fidelity=summary,target=accurate;model=claude-opus-4-7;provider=anthropic;fidelity=full"`)
+}
+
+// Block form with only targets (no per-branch overrides) must still emit
+// branches= so re-import keeps block form instead of downgrading to inline.
+func TestExportDOTParallelBranchesTargetOnly(t *testing.T) {
+	attrs := map[string]string{}
+	applyParallelAttrs(attrs, ir.ParallelConfig{
+		Branches: []ir.BranchConfig{{Target: "A"}, {Target: "B"}},
+	})
+	if attrs["targets"] != "A,B" {
+		t.Errorf("targets = %q, want A,B", attrs["targets"])
+	}
+	if attrs["branches"] != "target=A,target=B" {
+		t.Errorf("branches = %q, want target=A,target=B", attrs["branches"])
+	}
+}
+
 func TestExportDOTToolRoutingOmitWhenZero(t *testing.T) {
 	wf := &ir.Workflow{
 		Name:  "tool_omit_test",

@@ -361,6 +361,34 @@ parallel <ID> -> <target1>, <target2>[, <target3>, ...]
 
 When execution reaches a parallel node, the engine launches all target nodes simultaneously. Each branch runs independently with its own copy of the context. The branches converge at the matching fan-in node.
 
+### Block Form
+
+Use block form when branches need different models, providers, or fidelity levels:
+
+```dippin
+  parallel split
+    branch: fast
+      model: claude-haiku-4-5
+      provider: anthropic
+      fidelity: summary
+    branch: accurate
+      model: claude-opus-4-7
+      provider: anthropic
+      fidelity: full
+```
+
+Each `branch:` entry declares a fan-out target (equivalent to an inline `-> fast, accurate`) and attaches per-branch overrides for `model`, `provider`, and `fidelity`. The fan-in node must still list the same target IDs.
+
+#### DOT mapping
+
+Block-form parallels export a `branches=` node attribute alongside the standard `targets=` attribute. Each branch is serialized as `;`-joined `key=value` tokens (`target` plus any of `model`/`provider`/`fidelity`), with branches joined by `,`:
+
+```text
+branches="target=fast;model=claude-haiku-4-5;provider=anthropic;fidelity=summary,target=accurate;model=claude-opus-4-7;provider=anthropic;fidelity=full"
+```
+
+The reserved characters `%`, `,`, `;`, `=`, and `\` are percent-encoded in keys and values (the same percent-encoding approach as `steer_context`, though branches reserve a few more characters), so branch metadata round-trips losslessly through `migrate`.
+
 ---
 
 ## Fan-In Nodes
