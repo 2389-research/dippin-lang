@@ -1111,7 +1111,7 @@ func inferParallelTargets(w *ir.Workflow, n *ir.Node, cfg ir.ParallelConfig) {
 	for _, e := range edges {
 		targets = append(targets, e.To)
 	}
-	n.Config = ir.ParallelConfig{Targets: targets}
+	n.Config = ir.ParallelConfig{Targets: targets, Branches: cfg.Branches}
 }
 
 // inferFanInSources sets sources from incoming edges if not already set.

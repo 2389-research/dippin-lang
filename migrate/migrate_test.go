@@ -2656,3 +2656,24 @@ func TestMigrateParallelBranchesMalformed(t *testing.T) {
 		t.Errorf("branch[0] = %+v, want {Target:B Model:y}", cfg.Branches[0])
 	}
 }
+
+// inferParallelFanIn rebuilds ParallelConfig when Targets is empty; it must not
+// discard Branches in the process.
+func TestInferParallelTargetsPreservesBranches(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "P", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Branches: []ir.BranchConfig{{Target: "A", Model: "m"}},
+			}},
+		},
+		Edges: []*ir.Edge{{From: "P", To: "A"}},
+	}
+	inferParallelFanIn(w)
+	cfg := w.Node("P").Config.(ir.ParallelConfig)
+	if len(cfg.Branches) != 1 || cfg.Branches[0].Model != "m" {
+		t.Errorf("branches lost during inference: %+v", cfg.Branches)
+	}
+	if len(cfg.Targets) != 1 || cfg.Targets[0] != "A" {
+		t.Errorf("targets = %v, want [A]", cfg.Targets)
+	}
+}
