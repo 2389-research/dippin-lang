@@ -440,23 +440,30 @@ func appendBranchField(parts []string, key, val string) []string {
 	return append(parts, key+"="+encodeBranchToken(val))
 }
 
-// branchEncoder percent-encodes the four reserved delimiter characters of the
-// branches encoding: ';' (field sep), ',' (branch sep), '=' (k/v sep), and '%'
-// (the escape char itself, replaced first to avoid double-encoding). This is a
-// superset of steerContextEncoder — branches add ';'. The outer DOT-quote layer
-// (dotQuote) handles '"', '\', and newlines, so those are intentionally not
-// percent-encoded here.
+// branchEncoder percent-encodes the reserved characters of the branches
+// encoding: ';' (field sep), ',' (branch sep), '=' (k/v sep), '%' (the escape
+// char itself), and '\' (backslash). Backslash is encoded so a value containing
+// a literal '\' followed by 'n'/'l'/'r' cannot survive the outer DOT-quote layer
+// as a DOT escape sequence and get decoded to a newline by the migrate lexer —
+// keeping branches losslessly round-trippable even for backslash-bearing values.
+// (This is a superset of steerContextEncoder.) The DOT-quote layer (dotQuote)
+// still handles '"' unambiguously, so '"' is not percent-encoded here.
+//
+// strings.NewReplacer is single-pass and never re-scans inserted output, so the
+// replacement order does not affect correctness; the percent-encoded forms are
+// mutually exclusive and cannot recombine into another reserved char.
 var branchEncoder = strings.NewReplacer(
 	"%", "%25",
 	",", "%2C",
 	";", "%3B",
 	"=", "%3D",
+	"\\", "%5C",
 )
 
-// encodeBranchToken percent-encodes the reserved delimiter characters in a key
-// or value so the round-trip through DOT → migrate stays lossless.
+// encodeBranchToken percent-encodes the reserved characters in a key or value
+// so the round-trip through DOT → migrate stays lossless.
 func encodeBranchToken(s string) string {
-	if !strings.ContainsAny(s, ",;=%") {
+	if !strings.ContainsAny(s, ",;=%\\") {
 		return s
 	}
 	return branchEncoder.Replace(s)

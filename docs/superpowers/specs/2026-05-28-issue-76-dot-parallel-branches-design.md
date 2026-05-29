@@ -64,7 +64,7 @@ Each branch is encoded as uniform `k=v` tokens joined by `;`:
 Branches are joined by `,`, in slice order (order is semantically meaningful —
 it maps positionally to targets). Example node attribute:
 
-```
+```dot
 split [shape=component,
   targets="fast,accurate",
   branches="target=fast;model=claude-haiku-4-5;provider=anthropic;fidelity=summary,target=accurate;model=claude-opus-4-7;provider=anthropic;fidelity=full"];

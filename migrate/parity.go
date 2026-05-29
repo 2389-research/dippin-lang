@@ -362,21 +362,20 @@ func compareParallelTargets(id string, ac, bc ir.ParallelConfig) []Difference {
 	return nil
 }
 
+// compareParallelBranches compares branch slices position-by-position. Order is
+// significant (it maps to targets). BranchConfig is an all-string comparable
+// struct, so a direct != compares every field exactly — no delimiter-joined key,
+// which could collide when a field value contains the delimiter.
 func compareParallelBranches(id string, ac, bc ir.ParallelConfig) []Difference {
-	if branchesKey(ac.Branches) != branchesKey(bc.Branches) {
+	if len(ac.Branches) != len(bc.Branches) {
 		return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
 	}
-	return nil
-}
-
-// branchesKey produces a stable comparison key for a branch slice (order
-// matters — it maps positionally to targets).
-func branchesKey(branches []ir.BranchConfig) string {
-	parts := make([]string, len(branches))
-	for i, b := range branches {
-		parts[i] = fmt.Sprintf("%s|%s|%s|%s", b.Target, b.Model, b.Provider, b.Fidelity)
+	for i := range ac.Branches {
+		if ac.Branches[i] != bc.Branches[i] {
+			return []Difference{fieldDiff(id, "branches", fmt.Sprintf("node %q branches differ", id))}
+		}
 	}
-	return strings.Join(parts, ",")
+	return nil
 }
 
 func compareFanInConfigs(id, path string, ac ir.FanInConfig, bCfg interface{}) []Difference {

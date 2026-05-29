@@ -338,12 +338,46 @@ func TestRoundtripPreservesToolAccess(t *testing.T) {
 	}
 }
 
-// Branch values containing reserved delimiters (',', ';', '=', '%') must
-// round-trip losslessly through encodeBranches → parseBranches.
+// assertNodeParallelConfig looks up a node and asserts it carries a
+// ParallelConfig, failing with a clear message (rather than a nil panic) if the
+// node is missing or the wrong kind.
+func assertNodeParallelConfig(t *testing.T, w *ir.Workflow, id string) ir.ParallelConfig {
+	t.Helper()
+	n := w.Node(id)
+	if n == nil {
+		t.Fatalf("node %q missing after migrate", id)
+	}
+	cfg, ok := n.Config.(ir.ParallelConfig)
+	if !ok {
+		t.Fatalf("node %q config type = %T, want ParallelConfig", id, n.Config)
+	}
+	return cfg
+}
+
+// assertBranchesEqual compares two branch slices position-by-position.
+func assertBranchesEqual(t *testing.T, got, want []ir.BranchConfig) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("branches = %d, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("branch[%d]: got %+v want %+v", i, got[i], want[i])
+		}
+	}
+}
+
+// Branch values containing reserved characters must round-trip losslessly
+// through the FULL export → DOT-quote → migrate-lexer → decode path. Covers the
+// structural delimiters (',', ';', '='), the escape char itself ('%' and a
+// literal "%2C" that must NOT double-decode to ','), and a backslash followed by
+// 'n' (which must not survive the DOT-quote layer as a "\n" escape and get
+// decoded to a newline by the migrate lexer). Goes through Migrate() rather than
+// parseBranches() directly so the DOT-quote/lexer interaction is exercised.
 func TestExportDOT_Parallel_BranchesReservedCharsRoundTrip(t *testing.T) {
 	original := []ir.BranchConfig{
 		{Target: "fast", Model: "a,b", Provider: "x=y", Fidelity: "100%"},
-		{Target: "accurate", Model: "p;q"},
+		{Target: "accurate", Model: "p;q", Provider: "%2C", Fidelity: "back\\nslash"},
 	}
 	w := &ir.Workflow{
 		Name:  "W",
@@ -362,19 +396,12 @@ func TestExportDOT_Parallel_BranchesReservedCharsRoundTrip(t *testing.T) {
 		Edges: []*ir.Edge{{From: "S", To: "P"}, {From: "P", To: "fast"}, {From: "P", To: "accurate"}, {From: "fast", To: "E"}, {From: "accurate", To: "E"}},
 	}
 	dot := export.ExportDOT(w, export.ExportOptions{})
-	attrVal := extractDOTAttr(dot, "branches")
-	if attrVal == "" {
-		t.Fatalf("branches attr not found in DOT output:\n%s", dot)
+	got, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
 	}
-	got := parseBranches(attrVal)
-	if len(got) != len(original) {
-		t.Fatalf("branches = %d, want %d", len(got), len(original))
-	}
-	for i, want := range original {
-		if got[i] != want {
-			t.Errorf("branch[%d] round-trip: got %+v want %+v", i, got[i], want)
-		}
-	}
+	cfg := assertNodeParallelConfig(t, got, "P")
+	assertBranchesEqual(t, cfg.Branches, original)
 }
 
 // Acceptance test for #76: a block-form-only parallel node survives
@@ -418,23 +445,12 @@ func TestRoundtripBlockFormParallel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
-	cfg, ok := got.Node("split").Config.(ir.ParallelConfig)
-	if !ok {
-		t.Fatalf("config type = %T, want ParallelConfig", got.Node("split").Config)
-	}
+	cfg := assertNodeParallelConfig(t, got, "split")
 	if len(cfg.Targets) != 2 || cfg.Targets[0] != "fast" || cfg.Targets[1] != "accurate" {
 		t.Errorf("targets = %v, want [fast accurate]", cfg.Targets)
 	}
-	if len(cfg.Branches) != 2 {
-		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
-	}
-	want := []ir.BranchConfig{
+	assertBranchesEqual(t, cfg.Branches, []ir.BranchConfig{
 		{Target: "fast", Model: "claude-haiku-4-5", Provider: "anthropic", Fidelity: "summary"},
 		{Target: "accurate", Model: "claude-opus-4-7", Provider: "anthropic", Fidelity: "full"},
-	}
-	for i := range want {
-		if cfg.Branches[i] != want[i] {
-			t.Errorf("branch[%d]: got %+v want %+v", i, cfg.Branches[i], want[i])
-		}
-	}
+	})
 }

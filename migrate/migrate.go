@@ -679,12 +679,16 @@ func applyBranchToken(b *ir.BranchConfig, field string) {
 	}
 }
 
-// branchDecoder reverses branchEncoder from export/dot.go.
+// branchDecoder reverses branchEncoder from export/dot.go. strings.NewReplacer
+// is single-pass and never re-scans inserted output, and the "%XX" patterns are
+// mutually exclusive (none is a prefix of another), so order is irrelevant —
+// e.g. a literal "%2C" encodes to "%252C" and decodes back to "%2C", not ",".
 var branchDecoder = strings.NewReplacer(
 	"%25", "%",
 	"%2C", ",",
 	"%3B", ";",
 	"%3D", "=",
+	"%5C", "\\",
 )
 
 // decodeBranchToken reverses encodeBranchToken from export. Returns the input
