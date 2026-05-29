@@ -1308,8 +1308,8 @@ workflow AgentWritablePaths
     writable_paths: .ai/sprints/**, .ai/managers/recovery-journal.md
 
   edges
-    Review -> L6Failed [condition: "fail"]
-    Review -> Gate1Failed [condition: "fail"]
+    Review -> L6Failed
+    Review -> Gate1Failed
     L6Failed -> Gate2Failed
     Gate1Failed -> Gate2Failed
     Gate2Failed -> RecoveryManager

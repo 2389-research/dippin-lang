@@ -133,20 +133,21 @@ This is a **safety polarity decision**: `writable_paths` fails *closed*, matchin
 `tool_access` ("any non-empty value disables tools; a typo still disables them"), not the
 advisory list fields.
 
-- **dippin side:** the parser uses `splitCommaNoEmpty` (not `splitComma`) for
-  `writable_paths`, so stray/blank entries are dropped and a bare `writable_paths:`
-  becomes `nil` (== absent in dippin's IR). This is a **deliberate deviation** from
-  `reads`/`writes`/`outputs` (which use the empty-keeping `splitComma`); it is called out
-  here because it makes both round-trip paths agree (§ Round-trip) and avoids re-emitting
-  a malformed `writable_paths:` line. *Consequence:* dippin's IR cannot distinguish "bare
-  `writable_paths:`" from "field absent," so dippin does **not** emit a lint for the
-  empty case — the fail-closed backstop is tracker-side.
-- **Tracker side (normative):** tracker re-parses the raw `.dip` bytes (via `.dipx`), so
-  it *can* see a present-but-empty `writable_paths:` in the source text. Tracker MUST
-  treat a `writable_paths` that is present-but-empty, all-blank, malformed (unparseable
-  glob, brace-expansion mis-split — § Known limitations), or **unrecognized by an older
-  tracker that predates this field** as **deny-all-writes or refuse-to-start** — never as
-  unbounded. The version-skew case (§ Release coordination) is the most dangerous: an old
+- **dippin side:** `dippin validate` and `dippin pack` **reject a present-but-empty
+  `writable_paths:` at parse time** (blocking error, not a DIP warning). This is
+  fail-closed: an empty safety field would silently become absent after `dippin pack`
+  reformats the workflow through a shadow tree (`cmd/dippin/pack_shadow.go`), which
+  re-formats via IR and drops nil `WritablePaths` — so a present-but-empty value would
+  ship as unbounded without any parse-time gate. The parser therefore blocks it. Authors
+  must either list at least one glob or omit the field entirely (omission = unbounded,
+  which is the explicit current-behavior choice). The parser still uses `splitCommaNoEmpty`
+  for non-empty values so that stray blank entries within a real list are dropped cleanly.
+- **Tracker side (normative):** Tracker MUST treat a `writable_paths` that is malformed
+  (unparseable glob, brace-expansion mis-split — § Known limitations), or **unrecognized
+  by an older tracker that predates this field** as **deny-all-writes or refuse-to-start**
+  — never as unbounded. The present-but-empty case is now caught by dippin at validate/pack
+  time, but tracker still MUST fail-closed on any value it cannot compile to a valid path
+  set. The version-skew case (§ Release coordination) is the most dangerous: an old
   tracker that silently ignores the field is the PR#25 incident in disguise.
 
 ## Threat model & dippin/tracker split
