@@ -43,3 +43,60 @@ func TestLint_DIP141_NotFiredWhenAlone(t *testing.T) {
 		t.Errorf("DIP141 should not fire without tool_access: none; got: %v", codes(lintSrc(t, src)))
 	}
 }
+
+func TestLint_DIP142_UnsafeEntries(t *testing.T) {
+	cases := []struct {
+		name, entry string
+	}{
+		{"absolute", "/etc/**"},
+		{"home", "~/secrets/**"},
+		{"windows drive", `C:\Users\x`},
+		{"parent escape", "../../etc/**"},
+		{"brace mis-split", "*.{md"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src := "workflow X\n  start: A\n  exit: A\n\n  agent A\n    prompt: \"x\"\n    writable_paths: " + tc.entry + "\n"
+			if !hasCode(lintSrc(t, src), DIP142) {
+				t.Errorf("expected DIP142 for %q; got: %v", tc.entry, codes(lintSrc(t, src)))
+			}
+		})
+	}
+}
+
+func TestLint_DIP142_SafeEntries(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    writable_paths: workspace/**, .ai/sprints/**, .ai/managers/recovery-journal.md
+`
+	if hasCode(lintSrc(t, src), DIP142) {
+		t.Errorf("DIP142 should not fire for relative globs; got: %v", codes(lintSrc(t, src)))
+	}
+}
+
+func TestLint_DIP142_Branch(t *testing.T) {
+	src := `workflow X
+  start: split
+  exit: join
+
+  agent a
+    prompt: "a"
+
+  parallel split
+    branch: a
+      writable_paths: /etc/**
+
+  fan_in join <- a
+
+  edges
+    split -> a
+    a -> join
+`
+	if !hasCode(lintSrc(t, src), DIP142) {
+		t.Errorf("expected DIP142 on branch; got: %v", codes(lintSrc(t, src)))
+	}
+}

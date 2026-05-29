@@ -427,5 +427,12 @@ func safetyExplanations() map[string]Explanation {
 			Fix:     "Remove writable_paths (there are no tools to bound) or drop tool_access: none to grant a bounded tool catalog. A branch that inherits writable_paths while setting tool_access: none is legitimate narrowing and is not flagged.",
 			Example: "agent Summarize\n  prompt: \"Summarize\"\n  tool_access: none\n  writable_paths: workspace/**   // DIP141: none strips all tools — nothing to bound",
 		},
+		DIP142: {
+			Code:    DIP142,
+			Summary: "unsafe writable_paths entry (absolute / ~ / parent-escape / brace)",
+			Trigger: "A writable_paths entry is an absolute path, starts with ~ or a Windows drive, escapes its base via .., or is a brace-expansion fragment torn apart by comma-splitting. Such an entry will not bound writes to the workspace the way the author expects.",
+			Fix:     "Use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, Windows-drive, and ..-escaping entries are rejected by the runtime fs jail; brace expansion (*.{md,yaml}) is split on commas — enumerate entries instead. This lint catches obvious lexical cases only; the runtime jail is the real boundary.",
+			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths: /etc/**   // DIP142: absolute path escapes the workspace jail",
+		},
 	}
 }

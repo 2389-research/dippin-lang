@@ -43,6 +43,7 @@ const (
 	DIP139 = "DIP139" // invalid tool_access value on agent node or parallel branch
 	DIP140 = "DIP140" // params re-enables tools that tool_access strips
 	DIP141 = "DIP141" // writable_paths nullified by tool_access: none (dead config)
+	DIP142 = "DIP142" // unsafe writable_paths entry (absolute / ~ / parent-escape / brace)
 )
 
 func init() {
@@ -88,4 +89,5 @@ func init() {
 	CodeDescription[DIP139] = "invalid tool_access value on agent node or parallel branch"
 	CodeDescription[DIP140] = "params re-enables tools that tool_access strips"
 	CodeDescription[DIP141] = "writable_paths nullified by tool_access: none (dead config)"
+	CodeDescription[DIP142] = "unsafe writable_paths entry (absolute / ~ / parent-escape / brace)"
 }
