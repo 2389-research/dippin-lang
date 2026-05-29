@@ -2133,6 +2133,22 @@ func TestFormat_ToolCommandInline(t *testing.T) {
 	}
 }
 
+func TestFormatAgentWritablePaths(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:        "x",
+				WritablePaths: []string{"workspace/**", ".ai/sprints/**"},
+			}},
+		},
+	}
+	out := Format(w)
+	if !strings.Contains(out, "writable_paths: workspace/**, .ai/sprints/**") {
+		t.Errorf("formatted output missing writable_paths; got:\n%s", out)
+	}
+}
+
 // A branch that sets ONLY tool_access must still be emitted (regression guard
 // for the writeBranch early-return that previously checked only model/provider/fidelity).
 func TestFormatBranchToolAccessOnly(t *testing.T) {

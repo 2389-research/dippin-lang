@@ -390,6 +390,9 @@ func writeAgentRuntimeFields(wr *writer, cfg ir.AgentConfig) {
 	if strings.TrimSpace(cfg.ToolAccess) != "" {
 		wr.line("tool_access: %s", quoteValue(cfg.ToolAccess))
 	}
+	if len(cfg.WritablePaths) > 0 {
+		wr.line("writable_paths: %s", strings.Join(cfg.WritablePaths, ", "))
+	}
 }
 
 // writeAgentResponseFields writes response format fields for agent nodes.
