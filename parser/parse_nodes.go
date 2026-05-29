@@ -338,6 +338,8 @@ func applyAgentRuntimeField(cfg *ir.AgentConfig, key, val string) bool {
 		cfg.WorkingDir = val
 	case "tool_access":
 		cfg.ToolAccess = val
+	case "writable_paths":
+		cfg.WritablePaths = splitCommaNoEmpty(val)
 	default:
 		return false
 	}
