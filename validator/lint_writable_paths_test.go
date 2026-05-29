@@ -78,6 +78,30 @@ func TestLint_DIP142_SafeEntries(t *testing.T) {
 	}
 }
 
+func TestLint_DIP141_Branch(t *testing.T) {
+	src := `workflow X
+  start: split
+  exit: join
+
+  agent a
+    prompt: "a"
+
+  parallel split
+    branch: a
+      writable_paths: workspace/**
+      tool_access: none
+
+  fan_in join <- a
+
+  edges
+    split -> a
+    a -> join
+`
+	if !hasCode(lintSrc(t, src), DIP141) {
+		t.Errorf("expected DIP141 on branch; got: %v", codes(lintSrc(t, src)))
+	}
+}
+
 func TestLint_DIP142_Branch(t *testing.T) {
 	src := `workflow X
   start: split
