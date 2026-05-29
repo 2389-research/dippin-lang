@@ -800,17 +800,20 @@ func (p *Parser) parseBranchFields(bc *ir.BranchConfig) {
 	}
 }
 
+// branchFieldSetters maps a branch field key to the BranchConfig field it sets.
+// Table-driven keeps applyBranchField under the cyclo≤5 cap as fields are added.
+var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
+	"model":          func(b *ir.BranchConfig, v string) { b.Model = v },
+	"provider":       func(b *ir.BranchConfig, v string) { b.Provider = v },
+	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
+	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
+	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitCommaNoEmpty(v) },
+}
+
 // applyBranchField sets a field on a BranchConfig.
 func applyBranchField(bc *ir.BranchConfig, key, val string) {
-	switch key {
-	case "model":
-		bc.Model = val
-	case "provider":
-		bc.Provider = val
-	case "fidelity":
-		bc.Fidelity = val
-	case "tool_access":
-		bc.ToolAccess = val
+	if set, ok := branchFieldSetters[key]; ok {
+		set(bc, val)
 	}
 }
 
