@@ -42,6 +42,7 @@ const (
 	DIP138 = "DIP138" // tool node routes on stdout but declares no marker_grep / outputs (reserved)
 	DIP139 = "DIP139" // invalid tool_access value on agent node or parallel branch
 	DIP140 = "DIP140" // params re-enables tools that tool_access strips
+	DIP141 = "DIP141" // writable_paths nullified by tool_access: none (dead config)
 )
 
 func init() {
@@ -86,4 +87,5 @@ func init() {
 	CodeDescription[DIP138] = "tool node routes on stdout but declares no marker_grep / outputs"
 	CodeDescription[DIP139] = "invalid tool_access value on agent node or parallel branch"
 	CodeDescription[DIP140] = "params re-enables tools that tool_access strips"
+	CodeDescription[DIP141] = "writable_paths nullified by tool_access: none (dead config)"
 }

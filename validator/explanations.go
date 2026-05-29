@@ -254,6 +254,9 @@ func advancedExplanations() map[string]Explanation {
 	for k, v := range nodeValidationExplanations() {
 		m[k] = v
 	}
+	for k, v := range safetyExplanations() {
+		m[k] = v
+	}
 	return m
 }
 
@@ -390,6 +393,12 @@ func nodeValidationExplanations() map[string]Explanation {
 			Fix:     "Set stop_condition (e.g., stack.child.outcome = success) or max_cycles to bound supervision.",
 			Example: "manager_loop Supervise\n  subgraph_ref: inner\n  stop_condition: stack.child.outcome = success  // or: max_cycles: 20",
 		},
+	}
+}
+
+// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP141+).
+func safetyExplanations() map[string]Explanation {
+	return map[string]Explanation{
 		DIP138: {
 			Code:    DIP138,
 			Summary: "tool node routes on stdout but declares no marker_grep / outputs",
@@ -410,6 +419,13 @@ func nodeValidationExplanations() map[string]Explanation {
 			Trigger: "An agent sets tool_access (any non-empty value) and also sets a params key that would re-grant tools: allowed_tools, disallowed_tools, tool_choice, or permission_mode. When tool_access is set, tracker ignores these params keys (fail-closed), so the override is silently neutralized — a likely bypass attempt or dead config.",
 			Fix:     "Remove the params key; tool_access governs the tool catalog. To grant tools instead, omit tool_access.",
 			Example: "agent Summarize\n  prompt: \"Summarize\"\n  tool_access: none\n  params:\n    allowed_tools: Bash   // DIP140: tracker strips this — tool_access wins",
+		},
+		DIP141: {
+			Code:    DIP141,
+			Summary: "writable_paths nullified by tool_access: none (dead config)",
+			Trigger: "An agent node or per-branch override sets writable_paths together with tool_access: none on the same object. tool_access: none strips the entire tool catalog, so there is no Write/Edit/Bash left for writable_paths to bound — the field is dead config.",
+			Fix:     "Remove writable_paths (there are no tools to bound) or drop tool_access: none to grant a bounded tool catalog. A branch that inherits writable_paths while setting tool_access: none is legitimate narrowing and is not flagged.",
+			Example: "agent Summarize\n  prompt: \"Summarize\"\n  tool_access: none\n  writable_paths: workspace/**   // DIP141: none strips all tools — nothing to bound",
 		},
 	}
 }
