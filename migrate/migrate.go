@@ -335,19 +335,36 @@ func hasToolConfigAttrs(attrs map[string]string) bool {
 	return false
 }
 
+// hasParallelAttrs reports whether attrs contain a parallel-specific key
+// (branches or targets). Used to detect parallel nodes when their kind-based
+// shape was overridden to Mdiamond/Msquare by start/exit marker export. Both
+// keys are unique to parallel nodes and cannot collide with other kinds.
+func hasParallelAttrs(attrs map[string]string) bool {
+	if _, ok := attrs["branches"]; ok {
+		return true
+	}
+	if _, ok := attrs["targets"]; ok {
+		return true
+	}
+	return false
+}
+
 // resolveStartExitKind disambiguates start/exit-marker shapes (Mdiamond, Msquare)
 // by checking for kind-specific attributes. Start/exit override the kind-based
 // shape in export, so migrate has to recover the original kind from attrs.
-// Manager-loop attrs are checked first, then tool-config attrs; partial
-// configurations of either kind are detected so nothing is silently downgraded
-// to NodeAgent. Tool detection is bounded to tool-specific keys (the shared
-// timeout attr is excluded to avoid collision with HumanConfig).
+// Manager-loop attrs are checked first, then tool-config attrs, then parallel
+// attrs; partial configurations of any kind are detected so nothing is silently
+// downgraded to NodeAgent. Tool detection is bounded to tool-specific keys (the
+// shared timeout attr is excluded to avoid collision with HumanConfig).
 func resolveStartExitKind(attrs map[string]string) ir.NodeKind {
 	if hasManagerLoopAttrs(attrs) {
 		return ir.NodeManagerLoop
 	}
 	if hasToolConfigAttrs(attrs) {
 		return ir.NodeTool
+	}
+	if hasParallelAttrs(attrs) {
+		return ir.NodeParallel
 	}
 	return ir.NodeAgent
 }

@@ -2677,3 +2677,37 @@ func TestInferParallelTargetsPreservesBranches(t *testing.T) {
 		t.Errorf("targets = %v, want [A]", cfg.Targets)
 	}
 }
+
+// A parallel node that is also the workflow start (shape overridden to Mdiamond)
+// must be recovered as NodeParallel with its branches intact, not degraded to
+// NodeAgent.
+func TestMigrateParallelAsStartNode(t *testing.T) {
+	dot := `digraph G {
+		split [shape=Mdiamond, targets="fast,accurate", branches="target=fast;model=claude-haiku-4-5,target=accurate;model=claude-opus-4-7"];
+		fast [shape=box];
+		accurate [shape=box];
+		join [shape=Msquare];
+		split -> fast;
+		split -> accurate;
+		fast -> join;
+		accurate -> join;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	n := w.Node("split")
+	if n.Kind != ir.NodeParallel {
+		t.Errorf("kind = %v, want parallel", n.Kind)
+	}
+	cfg, ok := n.Config.(ir.ParallelConfig)
+	if !ok {
+		t.Fatalf("config type = %T, want ParallelConfig", n.Config)
+	}
+	if len(cfg.Branches) != 2 {
+		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
+	}
+	if cfg.Branches[0].Model != "claude-haiku-4-5" || cfg.Branches[1].Model != "claude-opus-4-7" {
+		t.Errorf("branch models = %q, %q", cfg.Branches[0].Model, cfg.Branches[1].Model)
+	}
+}
