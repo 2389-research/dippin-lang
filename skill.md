@@ -98,6 +98,8 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 
 **Scope vs. tool-node safety:** `tool_access` gates *LLM-driven* tool calls on agent nodes. It is unrelated to `tool` nodes (shell commands authored directly in `.dip`), whose allowlist/denylist is controlled by the v0.28.x defaults `tool_commands_allow` and `tool_denylist_add`.
 
+`tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
+
 ### human — user decision gate
 
 ```
