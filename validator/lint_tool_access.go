@@ -59,15 +59,20 @@ func checkToolAccessValue(n *ir.Node, toolAccess, branch string) []Diagnostic {
 		return nil
 	}
 	msg := fmt.Sprintf("node %q has tool_access %q which is not recognized", n.ID, toolAccess)
+	// Omission semantics differ: an agent omitting tool_access gets the full
+	// catalog; a branch omitting it inherits the target agent's setting (never
+	// re-grants the full catalog). Tailor the fix hint so it isn't misleading.
+	help := "valid value: none (omit the field for the full catalog). Invalid values fall back to no-tools at runtime — fix the typo or remove the field."
 	if branch != "" {
 		msg = fmt.Sprintf("node %q branch %q has tool_access %q which is not recognized", n.ID, branch, toolAccess)
+		help = "valid value: none (omit to inherit the target agent's tool_access). Invalid values fall back to no-tools at runtime — fix the typo or remove the field."
 	}
 	return []Diagnostic{{
 		Code:     DIP139,
 		Severity: SeverityWarning,
 		Message:  msg,
 		Location: n.Source,
-		Help:     "valid value: none (omit the field for the full catalog). Invalid values fall back to no-tools at runtime — fix the typo or remove the field.",
+		Help:     help,
 	}}
 }
 
