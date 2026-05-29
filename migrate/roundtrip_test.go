@@ -337,3 +337,104 @@ func TestRoundtripPreservesToolAccess(t *testing.T) {
 		t.Errorf("ToolAccess after round-trip = %q, want %q; DOT:\n%s", cfg.ToolAccess, "none", dot)
 	}
 }
+
+// Branch values containing reserved delimiters (',', ';', '=', '%') must
+// round-trip losslessly through encodeBranches → parseBranches.
+func TestExportDOT_Parallel_BranchesReservedCharsRoundTrip(t *testing.T) {
+	original := []ir.BranchConfig{
+		{Target: "fast", Model: "a,b", Provider: "x=y", Fidelity: "100%"},
+		{Target: "accurate", Model: "p;q"},
+	}
+	w := &ir.Workflow{
+		Name:  "W",
+		Start: "S",
+		Exit:  "E",
+		Nodes: []*ir.Node{
+			{ID: "S", Kind: ir.NodeAgent, Config: ir.AgentConfig{}},
+			{ID: "P", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets:  []string{"fast", "accurate"},
+				Branches: original,
+			}},
+			{ID: "fast", Kind: ir.NodeAgent, Config: ir.AgentConfig{}},
+			{ID: "accurate", Kind: ir.NodeAgent, Config: ir.AgentConfig{}},
+			{ID: "E", Kind: ir.NodeAgent, Config: ir.AgentConfig{}},
+		},
+		Edges: []*ir.Edge{{From: "S", To: "P"}, {From: "P", To: "fast"}, {From: "P", To: "accurate"}, {From: "fast", To: "E"}, {From: "accurate", To: "E"}},
+	}
+	dot := export.ExportDOT(w, export.ExportOptions{})
+	attrVal := extractDOTAttr(dot, "branches")
+	if attrVal == "" {
+		t.Fatalf("branches attr not found in DOT output:\n%s", dot)
+	}
+	got := parseBranches(attrVal)
+	if len(got) != len(original) {
+		t.Fatalf("branches = %d, want %d", len(got), len(original))
+	}
+	for i, want := range original {
+		if got[i] != want {
+			t.Errorf("branch[%d] round-trip: got %+v want %+v", i, got[i], want)
+		}
+	}
+}
+
+// Acceptance test for #76: a block-form-only parallel node survives
+// parse → ExportDOT → Migrate with fan-out targets AND per-branch config intact.
+func TestRoundtripBlockFormParallel(t *testing.T) {
+	src := `workflow RT
+  start: split
+  exit: join
+
+  agent fast
+    prompt: "f."
+
+  agent accurate
+    prompt: "a."
+
+  parallel split
+    branch: fast
+      model: claude-haiku-4-5
+      provider: anthropic
+      fidelity: summary
+    branch: accurate
+      model: claude-opus-4-7
+      provider: anthropic
+      fidelity: full
+
+  fan_in join <- fast, accurate
+
+  edges
+    split -> fast
+    split -> accurate
+    fast -> join
+    accurate -> join
+`
+	p := dipparser.NewParser(src, "rt.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	dot := export.ExportDOT(w, export.ExportOptions{})
+	got, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	cfg, ok := got.Node("split").Config.(ir.ParallelConfig)
+	if !ok {
+		t.Fatalf("config type = %T, want ParallelConfig", got.Node("split").Config)
+	}
+	if len(cfg.Targets) != 2 || cfg.Targets[0] != "fast" || cfg.Targets[1] != "accurate" {
+		t.Errorf("targets = %v, want [fast accurate]", cfg.Targets)
+	}
+	if len(cfg.Branches) != 2 {
+		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
+	}
+	want := []ir.BranchConfig{
+		{Target: "fast", Model: "claude-haiku-4-5", Provider: "anthropic", Fidelity: "summary"},
+		{Target: "accurate", Model: "claude-opus-4-7", Provider: "anthropic", Fidelity: "full"},
+	}
+	for i := range want {
+		if cfg.Branches[i] != want[i] {
+			t.Errorf("branch[%d]: got %+v want %+v", i, cfg.Branches[i], want[i])
+		}
+	}
+}
