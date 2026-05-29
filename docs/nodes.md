@@ -112,6 +112,7 @@ Agent nodes invoke an LLM. They are the most configurable node kind.
 | `backend` | String | runtime default | Per-node backend override (e.g., `native`, `claude-code`, `acp`). |
 | `working_dir` | String | — | Per-node working directory override for isolated execution. |
 | `tool_access` | String | — (full catalog) | LLM tool-catalog gate. Set to `none` to strip the model's tool registry on this agent. Bounds the v0.28.2 single-agent multi-tool-call vector (DIP139 warns on unknown values; runtime fail-closes). |
+| `writable_paths` | CSV (globs) | — (unbounded) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`), resolved against the session root. Absent = unbounded. Present-but-empty or malformed fails **closed** at the tracker (deny-all / refuse-to-start). Enforced on the **native backend** only; `claude-code`/`acp` refuse to start. No brace-expansion globs: `writable_paths` is comma-split, so `*.{md,yaml}` is torn into `*.{md` and `yaml}` — enumerate entries instead (DIP142). Distinct from `writes:` (advisory context keys produced) — `writable_paths:` bounds enforced file-write paths. Requires tracker `>= v0.35.0`. |
 | `max_turns` | Integer | 1 | Maximum conversation turns in an agentic loop. A turn is one request-response cycle. Set higher for multi-step tool-using agents. |
 | `cmd_timeout` | Duration | — | Command execution timeout for the agent's agentic loop (e.g., `30s`, `5m`). Applies to tool/command calls made within the agent, not to the LLM API call itself. |
 | `cache_tools` | Boolean | workflow default | Whether to cache tool call results for this agent. Useful for expensive, deterministic tools. |
@@ -377,11 +378,11 @@ Use block form when branches need different models, providers, fidelity levels, 
       fidelity: full
 ```
 
-Each `branch:` entry declares a fan-out target (equivalent to an inline `-> fast, accurate`) and attaches per-branch overrides for `model`, `provider`, `fidelity`, and `tool_access`. The fan-in node must still list the same target IDs. A branch's `tool_access` follows the same rules as an agent's (`none` to strip tools, omit to inherit). An omitted branch `tool_access` inherits the target agent's setting — it never re-grants the full catalog.
+Each `branch:` entry declares a fan-out target (equivalent to an inline `-> fast, accurate`) and attaches per-branch overrides for `model`, `provider`, `fidelity`, `tool_access`, and `writable_paths`. The fan-in node must still list the same target IDs. A branch's `tool_access` follows the same rules as an agent's (`none` to strip tools, omit to inherit). An omitted branch `tool_access` inherits the target agent's setting — it never re-grants the full catalog. An omitted branch `writable_paths` **inherits the target agent's** setting — it never resets to unbounded (empty = inherit, not unrestricted).
 
 #### DOT mapping
 
-Block-form parallels export a `branches=` node attribute alongside the standard `targets=` attribute. Each branch is serialized as `;`-joined `key=value` tokens (`target` plus any of `model`/`provider`/`fidelity`/`tool_access`), with branches joined by `,`:
+Block-form parallels export a `branches=` node attribute alongside the standard `targets=` attribute. Each branch is serialized as `;`-joined `key=value` tokens (`target` plus any of `model`/`provider`/`fidelity`/`tool_access`/`writable_paths`), with branches joined by `,`:
 
 ```text
 branches="target=fast;model=claude-haiku-4-5;provider=anthropic;fidelity=summary,target=accurate;model=claude-opus-4-7;provider=anthropic;fidelity=full"
