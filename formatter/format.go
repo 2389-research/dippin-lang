@@ -264,7 +264,7 @@ func writeParallelBlock(wr *writer, id string, cfg ir.ParallelConfig) {
 // writeBranch writes a single branch entry in block-form parallel.
 func writeBranch(wr *writer, b ir.BranchConfig) {
 	wr.line("branch: %s", b.Target)
-	if b.Model == "" && b.Provider == "" && b.Fidelity == "" && b.ToolAccess == "" {
+	if !branchHasFields(b) {
 		return
 	}
 	wr.push()
@@ -272,8 +272,22 @@ func writeBranch(wr *writer, b ir.BranchConfig) {
 	wr.pop()
 }
 
+// branchHasFields reports whether a branch carries any optional field beyond its target.
+func branchHasFields(b ir.BranchConfig) bool {
+	return b.Model != "" || b.Provider != "" || b.Fidelity != "" ||
+		b.ToolAccess != "" || len(b.WritablePaths) > 0
+}
+
 // writeBranchFields writes the optional fields within a branch.
 func writeBranchFields(wr *writer, b ir.BranchConfig) {
+	writeBranchScalarFields(wr, b)
+	if len(b.WritablePaths) > 0 {
+		wr.line("writable_paths: %s", strings.Join(b.WritablePaths, ", "))
+	}
+}
+
+// writeBranchScalarFields writes the scalar per-branch overrides.
+func writeBranchScalarFields(wr *writer, b ir.BranchConfig) {
 	if b.Model != "" {
 		wr.line("model: %s", quoteValue(b.Model))
 	}
