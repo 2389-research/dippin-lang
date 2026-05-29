@@ -416,7 +416,8 @@ func applyModelAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	applyRuntimeAttrs(cfg, attrs)
 }
 
-// applyRuntimeAttrs applies runtime-cluster attributes (backend, working_dir, tool_access).
+// applyRuntimeAttrs applies runtime-cluster attributes (backend, working_dir,
+// tool_access, writable_paths).
 func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["backend"]; ok {
 		cfg.Backend = v
@@ -424,8 +425,16 @@ func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["working_dir"]; ok {
 		cfg.WorkingDir = v
 	}
+	applyRuntimeSafetyAttrs(cfg, attrs)
+}
+
+// applyRuntimeSafetyAttrs applies the tool_access + writable_paths safety attrs.
+func applyRuntimeSafetyAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["tool_access"]; ok && strings.TrimSpace(v) != "" {
 		cfg.ToolAccess = v
+	}
+	if v, ok := attrs["writable_paths"]; ok {
+		cfg.WritablePaths = splitComma(v)
 	}
 }
 

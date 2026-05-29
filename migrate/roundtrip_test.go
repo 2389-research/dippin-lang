@@ -455,3 +455,24 @@ func TestRoundtripBlockFormParallel(t *testing.T) {
 		{Target: "accurate", Model: "claude-opus-4-7", Provider: "anthropic", Fidelity: "full"},
 	})
 }
+
+func TestMigrateAgentWritablePaths(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:        "x",
+				WritablePaths: []string{"workspace/**", ".ai/**"},
+			}},
+		},
+	}
+	dot := export.ExportDOT(w, export.ExportOptions{})
+	got, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	cfg := got.Node("A").Config.(ir.AgentConfig)
+	if len(cfg.WritablePaths) != 2 || cfg.WritablePaths[0] != "workspace/**" || cfg.WritablePaths[1] != ".ai/**" {
+		t.Errorf("WritablePaths after migrate = %v, want [workspace/** .ai/**]", cfg.WritablePaths)
+	}
+}
