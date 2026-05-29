@@ -2593,3 +2593,66 @@ func TestMigrate_ToolAccessAttr(t *testing.T) {
 		t.Errorf("ToolAccess = %q, want %q", cfg.ToolAccess, "none")
 	}
 }
+
+func TestMigrateParallelBranches(t *testing.T) {
+	dot := `digraph G {
+		Start [shape=Mdiamond];
+		P [shape=component, targets="fast,accurate", branches="target=fast;model=claude-haiku-4-5;provider=anthropic;fidelity=summary,target=accurate;model=claude-opus-4-7;provider=anthropic;fidelity=full"];
+		fast [shape=box];
+		accurate [shape=box];
+		Exit [shape=Msquare];
+		Start -> P;
+		P -> fast;
+		P -> accurate;
+		fast -> Exit;
+		accurate -> Exit;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	cfg, ok := w.Node("P").Config.(ir.ParallelConfig)
+	if !ok {
+		t.Fatalf("config type = %T, want ParallelConfig", w.Node("P").Config)
+	}
+	if len(cfg.Branches) != 2 {
+		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
+	}
+	if len(cfg.Targets) != 2 || cfg.Targets[0] != "fast" || cfg.Targets[1] != "accurate" {
+		t.Errorf("targets = %v, want [fast accurate]", cfg.Targets)
+	}
+	b0 := cfg.Branches[0]
+	if b0.Target != "fast" || b0.Model != "claude-haiku-4-5" || b0.Provider != "anthropic" || b0.Fidelity != "summary" {
+		t.Errorf("branch[0] = %+v", b0)
+	}
+	b1 := cfg.Branches[1]
+	if b1.Target != "accurate" || b1.Model != "claude-opus-4-7" || b1.Provider != "anthropic" || b1.Fidelity != "full" {
+		t.Errorf("branch[1] = %+v", b1)
+	}
+}
+
+// Inline form (no branches=) must leave Branches nil so the formatter keeps
+// inline output.
+func TestMigrateParallelInlineNoBranches(t *testing.T) {
+	cfg := buildParallelConfig(map[string]string{"targets": "A,B"})
+	if cfg.Branches != nil {
+		t.Errorf("branches = %+v, want nil", cfg.Branches)
+	}
+	if len(cfg.Targets) != 2 {
+		t.Errorf("targets = %v, want [A B]", cfg.Targets)
+	}
+}
+
+// A branch token with no target= is dropped (a zero-target branch would corrupt
+// the edge mapping); unknown keys are skipped.
+func TestMigrateParallelBranchesMalformed(t *testing.T) {
+	cfg := buildParallelConfig(map[string]string{
+		"branches": "model=x,target=B;bogus=1;model=y",
+	})
+	if len(cfg.Branches) != 1 {
+		t.Fatalf("branches = %d, want 1 (target-less branch dropped)", len(cfg.Branches))
+	}
+	if cfg.Branches[0].Target != "B" || cfg.Branches[0].Model != "y" {
+		t.Errorf("branch[0] = %+v, want {Target:B Model:y}", cfg.Branches[0])
+	}
+}
