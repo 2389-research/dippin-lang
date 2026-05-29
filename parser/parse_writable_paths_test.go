@@ -191,6 +191,93 @@ func TestParseBranchUnknownFieldIsError(t *testing.T) {
 	}
 }
 
+// TestParseAgentWritablePathsCommaOnlyIsError verifies that a comma-only value
+// (e.g. "writable_paths: ,") is rejected at parse time.  The old guard only
+// checked TrimSpace == "", so "," slipped through and silently produced nil
+// WritablePaths — the same fail-open hole as a blank value.
+func TestParseAgentWritablePathsCommaOnlyIsError(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    writable_paths: ,
+`
+	_, err := NewParser(src, "test.dip").Parse()
+	if err == nil {
+		t.Error("expected parse error for comma-only writable_paths: ,, got nil")
+	}
+}
+
+// TestParseAgentWritablePathsMultiCommaOnlyIsError verifies that ", ," (multiple
+// commas, all empty entries) is also rejected.
+func TestParseAgentWritablePathsMultiCommaOnlyIsError(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    writable_paths: , ,
+`
+	_, err := NewParser(src, "test.dip").Parse()
+	if err == nil {
+		t.Error("expected parse error for comma-only writable_paths: , ,, got nil")
+	}
+}
+
+// TestParseBranchWritablePathsCommaOnlyIsError verifies the same fail-closed fix
+// applies to branch-level writable_paths.
+func TestParseBranchWritablePathsCommaOnlyIsError(t *testing.T) {
+	src := `workflow X
+  start: split
+  exit: join
+
+  agent a
+    prompt: "a"
+
+  parallel split
+    branch: a
+      writable_paths: ,
+
+  fan_in join <- a
+
+  edges
+    split -> a
+    a -> join
+`
+	_, err := NewParser(src, "test.dip").Parse()
+	if err == nil {
+		t.Error("expected parse error for comma-only branch writable_paths: ,, got nil")
+	}
+}
+
+// TestParseBranchWritablePathsSpacedCommaOnlyIsError verifies "  ,  ," is rejected.
+func TestParseBranchWritablePathsSpacedCommaOnlyIsError(t *testing.T) {
+	src := `workflow X
+  start: split
+  exit: join
+
+  agent a
+    prompt: "a"
+
+  parallel split
+    branch: a
+      writable_paths: , ,
+
+  fan_in join <- a
+
+  edges
+    split -> a
+    a -> join
+`
+	_, err := NewParser(src, "test.dip").Parse()
+	if err == nil {
+		t.Error("expected parse error for comma-only branch writable_paths: , ,, got nil")
+	}
+}
+
 // TestParseBranchValidFieldsParseClean confirms known branch fields still parse correctly.
 func TestParseBranchValidFieldsParseClean(t *testing.T) {
 	src := `workflow X

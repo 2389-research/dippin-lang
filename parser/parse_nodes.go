@@ -351,9 +351,11 @@ func applyAgentRuntimeField(cfg *ir.AgentConfig, key, val string) bool {
 }
 
 // writablePathsIsBlank reports whether a writable_paths value is present-but-empty.
-// Returns true when val (already read from source) trims to the empty string.
+// "Blank" means no non-empty entries after splitting on commas — so "", " ", ",",
+// ", ,", "  ,  " all return true, while "workspace/**" returns false.
+// This covers the comma-only hole: splitCommaNoEmpty(",") == nil → blank.
 func writablePathsIsBlank(val string) bool {
-	return strings.TrimSpace(val) == ""
+	return len(splitCommaNoEmpty(val)) == 0
 }
 
 // rejectEmptyWritablePaths appends a blocking diagnostic when writable_paths is present
