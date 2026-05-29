@@ -2188,3 +2188,26 @@ func TestFormatBranchToolAccessOnly(t *testing.T) {
 		t.Errorf("formatted output missing per-branch tool_access; got:\n%s", out)
 	}
 }
+
+func TestFormatAgentWritablePathsRoundTrips(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    writable_paths: workspace/**, .ai/sprints/**
+`
+	w1, err := parser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse1: %v", err)
+	}
+	w2, err := parser.NewParser(Format(w1), "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse2: %v", err)
+	}
+	got := w2.Node("A").Config.(ir.AgentConfig).WritablePaths
+	if len(got) != 2 || got[0] != "workspace/**" || got[1] != ".ai/sprints/**" {
+		t.Errorf("WritablePaths after format round-trip = %v, want [workspace/** .ai/sprints/**]", got)
+	}
+}

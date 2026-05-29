@@ -423,6 +423,7 @@ func TestRoundtripBlockFormParallel(t *testing.T) {
       provider: anthropic
       fidelity: summary
       tool_access: none
+      writable_paths: workspace/**, .ai/sprints/**
     branch: accurate
       model: claude-opus-4-7
       provider: anthropic
@@ -451,7 +452,7 @@ func TestRoundtripBlockFormParallel(t *testing.T) {
 		t.Errorf("targets = %v, want [fast accurate]", cfg.Targets)
 	}
 	assertBranchesEqual(t, cfg.Branches, []ir.BranchConfig{
-		{Target: "fast", Model: "claude-haiku-4-5", Provider: "anthropic", Fidelity: "summary", ToolAccess: "none"},
+		{Target: "fast", Model: "claude-haiku-4-5", Provider: "anthropic", Fidelity: "summary", ToolAccess: "none", WritablePaths: []string{"workspace/**", ".ai/sprints/**"}},
 		{Target: "accurate", Model: "claude-opus-4-7", Provider: "anthropic", Fidelity: "full"},
 	})
 }
