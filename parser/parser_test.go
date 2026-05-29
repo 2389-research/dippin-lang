@@ -2422,3 +2422,52 @@ func TestParser_AgentCrossSlotMixOK(t *testing.T) {
 		t.Errorf("SystemPrompt = %q", cfg.SystemPrompt)
 	}
 }
+
+func TestParseBranchToolAccess(t *testing.T) {
+	input := `workflow Test
+  start: split
+  exit: join
+
+  agent worker_a
+    prompt: "A"
+
+  agent worker_b
+    prompt: "B"
+
+  parallel split
+    branch: worker_a
+      tool_access: none
+    branch: worker_b
+      model: claude-haiku-4-5
+
+  fan_in join <- worker_a, worker_b
+
+  edges
+    join -> join
+`
+	p := NewParser(input, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var pNode *ir.Node
+	for _, n := range w.Nodes {
+		if n.Kind == ir.NodeParallel {
+			pNode = n
+			break
+		}
+	}
+	if pNode == nil {
+		t.Fatal("parallel node not found")
+	}
+	cfg := pNode.Config.(ir.ParallelConfig)
+	if len(cfg.Branches) != 2 {
+		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
+	}
+	if cfg.Branches[0].ToolAccess != "none" {
+		t.Errorf("branch[0].ToolAccess = %q, want none", cfg.Branches[0].ToolAccess)
+	}
+	if cfg.Branches[1].ToolAccess != "" {
+		t.Errorf("branch[1].ToolAccess = %q, want empty", cfg.Branches[1].ToolAccess)
+	}
+}

@@ -154,6 +154,14 @@ type BranchConfig struct {
 	Model    string
 	Provider string
 	Fidelity string
+	// ToolAccess is a per-branch override of the target agent's tool_access.
+	// Recognized values mirror AgentConfig.ToolAccess: "" (inherit) and "none"
+	// (strip tools); other values lint as DIP139 and fail closed at runtime.
+	// Empty INHERITS the target agent's tool_access (never resets to the full
+	// catalog) — tracker resolves effective = branch if non-empty else agent.
+	// dippin carries + lints this field; tracker enforces the override, exactly
+	// as it does for Model/Provider/Fidelity.
+	ToolAccess string
 }
 
 // FanInConfig holds configuration for join nodes.
