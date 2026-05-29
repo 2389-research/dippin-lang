@@ -40,7 +40,7 @@ const (
 	DIP136 = "DIP136" // manager_loop control field has invalid value (poll_interval or max_cycles)
 	DIP137 = "DIP137" // unbounded manager_loop: no stop_condition and no max_cycles
 	DIP138 = "DIP138" // tool node routes on stdout but declares no marker_grep / outputs (reserved)
-	DIP139 = "DIP139" // invalid tool_access value on agent node
+	DIP139 = "DIP139" // invalid tool_access value on agent node or parallel branch
 	DIP140 = "DIP140" // params re-enables tools that tool_access strips
 )
 
@@ -84,6 +84,6 @@ func init() {
 	CodeDescription[DIP136] = "manager_loop control field has invalid value (poll_interval or max_cycles)"
 	CodeDescription[DIP137] = "unbounded manager_loop: no stop_condition and no max_cycles"
 	CodeDescription[DIP138] = "tool node routes on stdout but declares no marker_grep / outputs"
-	CodeDescription[DIP139] = "invalid tool_access value on agent node"
+	CodeDescription[DIP139] = "invalid tool_access value on agent node or parallel branch"
 	CodeDescription[DIP140] = "params re-enables tools that tool_access strips"
 }

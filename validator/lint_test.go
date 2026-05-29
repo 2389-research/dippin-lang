@@ -2181,6 +2181,47 @@ func TestLintRetryRestartConfusion(t *testing.T) {
 	})
 }
 
+func TestDIP139_BranchInvalidToolAccess(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "split", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets: []string{"a", "b"},
+				Branches: []ir.BranchConfig{
+					{Target: "a", ToolAccess: "none"}, // valid
+					{Target: "b", ToolAccess: "nono"}, // invalid -> DIP139
+				},
+			}},
+		},
+	}
+	diags := lintToolAccessValues(w)
+	if len(diags) != 1 {
+		t.Fatalf("got %d diagnostics, want 1; %+v", len(diags), diags)
+	}
+	if diags[0].Code != DIP139 {
+		t.Errorf("code = %s, want DIP139", diags[0].Code)
+	}
+	if !strings.Contains(diags[0].Message, `branch "b"`) {
+		t.Errorf("message %q should name branch \"b\"", diags[0].Message)
+	}
+}
+
+func TestDIP139_BranchValidToolAccessSilent(t *testing.T) {
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "split", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets: []string{"a", "b"},
+				Branches: []ir.BranchConfig{
+					{Target: "a", ToolAccess: "none"},
+					{Target: "b"}, // empty -> inherit, silent
+				},
+			}},
+		},
+	}
+	if diags := lintToolAccessValues(w); len(diags) != 0 {
+		t.Errorf("got %d diagnostics, want 0; %+v", len(diags), diags)
+	}
+}
+
 // TestLintEmptyPrompts_PromptFileSuppresses verifies that an agent with
 // prompt_file: set does not trigger DIP110, even if Prompt is empty.
 // Regression test for issue #65: parser-pure design means PromptFile

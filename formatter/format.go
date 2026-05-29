@@ -264,7 +264,7 @@ func writeParallelBlock(wr *writer, id string, cfg ir.ParallelConfig) {
 // writeBranch writes a single branch entry in block-form parallel.
 func writeBranch(wr *writer, b ir.BranchConfig) {
 	wr.line("branch: %s", b.Target)
-	if b.Model == "" && b.Provider == "" && b.Fidelity == "" {
+	if b.Model == "" && b.Provider == "" && b.Fidelity == "" && b.ToolAccess == "" {
 		return
 	}
 	wr.push()
@@ -282,6 +282,9 @@ func writeBranchFields(wr *writer, b ir.BranchConfig) {
 	}
 	if b.Fidelity != "" {
 		wr.line("fidelity: %s", quoteValue(b.Fidelity))
+	}
+	if b.ToolAccess != "" {
+		wr.line("tool_access: %s", quoteValue(b.ToolAccess))
 	}
 }
 

@@ -807,6 +807,8 @@ func applyBranchField(bc *ir.BranchConfig, key, val string) {
 		bc.Provider = val
 	case "fidelity":
 		bc.Fidelity = val
+	case "tool_access":
+		bc.ToolAccess = val
 	}
 }
 

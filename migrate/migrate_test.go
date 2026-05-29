@@ -2711,3 +2711,35 @@ func TestMigrateParallelAsStartNode(t *testing.T) {
 		t.Errorf("branch models = %q, %q", cfg.Branches[0].Model, cfg.Branches[1].Model)
 	}
 }
+
+func TestMigrateBranchToolAccess(t *testing.T) {
+	dot := `digraph G {
+		Start [shape=Mdiamond];
+		P [shape=component, targets="a,b", branches="target=a;tool_access=none,target=b;model=claude-haiku-4-5"];
+		a [shape=box];
+		b [shape=box];
+		Exit [shape=Msquare];
+		Start -> P;
+		P -> a;
+		P -> b;
+		a -> Exit;
+		b -> Exit;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	cfg, ok := w.Node("P").Config.(ir.ParallelConfig)
+	if !ok {
+		t.Fatalf("config type = %T, want ParallelConfig", w.Node("P").Config)
+	}
+	if len(cfg.Branches) != 2 {
+		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
+	}
+	if cfg.Branches[0].ToolAccess != "none" {
+		t.Errorf("branch[0].ToolAccess = %q, want none", cfg.Branches[0].ToolAccess)
+	}
+	if cfg.Branches[1].ToolAccess != "" {
+		t.Errorf("branch[1].ToolAccess = %q, want empty", cfg.Branches[1].ToolAccess)
+	}
+}

@@ -1514,6 +1514,20 @@ func TestExportDOTParallelBranchesTargetOnly(t *testing.T) {
 	}
 }
 
+// Per-branch tool_access is encoded into the branches= token.
+func TestExportDOTParallelBranchToolAccess(t *testing.T) {
+	attrs := map[string]string{}
+	applyParallelAttrs(attrs, ir.ParallelConfig{
+		Branches: []ir.BranchConfig{
+			{Target: "a", ToolAccess: "none"},
+			{Target: "b", Model: "claude-haiku-4-5"},
+		},
+	})
+	if attrs["branches"] != "target=a;tool_access=none,target=b;model=claude-haiku-4-5" {
+		t.Errorf("branches = %q, want target=a;tool_access=none,target=b;model=claude-haiku-4-5", attrs["branches"])
+	}
+}
+
 func TestExportDOTToolRoutingOmitWhenZero(t *testing.T) {
 	wf := &ir.Workflow{
 		Name:  "tool_omit_test",

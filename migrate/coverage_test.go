@@ -691,3 +691,18 @@ func TestCompareParallelConfigs_DifferentBranches(t *testing.T) {
 		t.Fatal("expected a branches difference, got none")
 	}
 }
+
+func TestCompareParallelConfigs_DifferentBranchToolAccess(t *testing.T) {
+	a := ir.ParallelConfig{
+		Targets:  []string{"A"},
+		Branches: []ir.BranchConfig{{Target: "A", ToolAccess: "none"}},
+	}
+	b := ir.ParallelConfig{
+		Targets:  []string{"A"},
+		Branches: []ir.BranchConfig{{Target: "A"}},
+	}
+	diffs := compareParallelConfigs("P", "nodes.P", a, b)
+	if len(diffs) == 0 {
+		t.Fatal("expected a branches difference for differing tool_access, got none")
+	}
+}
