@@ -396,9 +396,7 @@ func nodeValidationExplanations() map[string]Explanation {
 	}
 }
 
-// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP141+).
-func safetyExplanations() map[string]Explanation {
-	return map[string]Explanation{
+// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP142).
 		DIP138: {
 			Code:    DIP138,
 			Summary: "tool node routes on stdout but declares no marker_grep / outputs",
