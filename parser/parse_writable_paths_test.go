@@ -46,14 +46,8 @@ func TestParseAgentWritablePathsEmptyIsError(t *testing.T) {
 }
 
 func TestParseAgentWritablePathsWhitespaceIsError(t *testing.T) {
-	src := `workflow X
-  start: A
-  exit: A
-
-  agent A
-    prompt: "x"
-    writable_paths:
-`
+	// Use string concatenation so gofmt cannot strip the trailing spaces after the colon.
+	src := "workflow X\n  start: A\n  exit: A\n\n  agent A\n    prompt: \"x\"\n    writable_paths:   \n"
 	_, err := NewParser(src, "test.dip").Parse()
 	if err == nil {
 		t.Error("expected parse error for whitespace-only writable_paths:, got nil")
