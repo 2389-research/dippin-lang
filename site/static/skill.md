@@ -68,6 +68,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
 | `working_dir` | string | Per-node working directory override for isolated execution. |
 | `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. Requires tracker `>= v0.31.0`. See "Agent Tool Access" below. |
+| `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded. Requires tracker `>= v0.35.0`. See "Writable Paths" below. |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
@@ -99,6 +100,24 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 **Scope vs. tool-node safety:** `tool_access` gates *LLM-driven* tool calls on agent nodes. It is unrelated to `tool` nodes (shell commands authored directly in `.dip`), whose allowlist/denylist is controlled by the v0.28.x defaults `tool_commands_allow` and `tool_denylist_add`.
 
 `tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
+
+**Writable Paths (`writable_paths:`)** — *added v0.35.0; requires tracker `>= v0.35.0`.*
+
+A node-level glob list bounding where the agent's tools may write. Shape: comma-separated globs (e.g. `workspace/**, .ai/sprints/**`).
+
+- `writable_paths: workspace/**, .ai/sprints/**` — tracker confines all file mutations (Write, Edit, ApplyPatch, Bash, and any process Bash spawns) to paths matching these globs, resolved against an **immutable session root**. `working_dir` and `Params` keys cannot relocate the anchor.
+- *omitted* — unbounded writes (current behavior, unchanged).
+- **Fail-closed:** A present-but-empty `writable_paths:` is rejected by `dippin validate`/`pack` (parse error — list at least one glob or omit the field). A `writable_paths` that is malformed or **unrecognized by an older tracker** → tracker denies all writes or refuses to start. Never falls through to unbounded. **A tracker older than v0.35.0 does not enforce `writable_paths` at all; an unpinned or older tracker must refuse rather than run unbounded — this is a safety requirement, not a suggestion.** Always pair with `requires tracker >= v0.35.0`.
+
+**Enforcement scope (native backend only):** `writable_paths` is enforced on the `native` backend. On `claude-code` and `acp`, session creation **refuses to start** when `writable_paths` is set — fail-closed, never a silent no-op.
+
+**Residual escape classes (out of scope):** `writable_paths` bounds *where writes land*; it does **not** bound network (e.g. `curl`, `cargo fetch`), reads / read-based exfiltration, or *content* within an allowed path (an agent with `writable_paths: workspace/**` can still poison `workspace/Cargo.toml`). Chain laundering (writing an allowed file that a downstream unbounded agent reads) is tracked in [#56](https://github.com/2389-research/dippin-lang/issues/56).
+
+**Non-goals (deferred):** cross-node propagation / defaults cascade ([#53](https://github.com/2389-research/dippin-lang/issues/53)), tool-name allowlists ([#55](https://github.com/2389-research/dippin-lang/issues/55)), chain-attack mitigation ([#56](https://github.com/2389-research/dippin-lang/issues/56)).
+
+**Lint:** DIP141 fires when `writable_paths` is set alongside `tool_access: none` on the same object (dead config — no tools to bound). DIP142 fires on unsafe entries: absolute paths, `~`, Windows drive letters, `..` escapes, or brace-expansion fragments (`*.{md` from `*.{md,yaml}` being comma-split). Use workspace-relative globs (e.g. `.ai/sprints/**`).
+
+`writable_paths` may also be set per-branch on a block-form `parallel` node; an omitted branch value **inherits the target agent's** setting — it never resets to unbounded.
 
 ### human — user decision gate
 

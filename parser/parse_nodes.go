@@ -230,6 +230,9 @@ func (p *Parser) applyCommonComplexField(n *ir.Node, key, val string, loc ir.Sou
 
 // applyAgentField applies agent-specific configuration fields.
 func (p *Parser) applyAgentField(cfg *ir.AgentConfig, nodeID, key, val string, loc ir.SourceLocation) {
+	if p.rejectEmptyWritablePaths(key, val, loc) {
+		return
+	}
 	if applyAgentStringField(cfg, key, val) {
 		p.checkPromptFileConflict(cfg, nodeID, key, loc)
 		p.checkSystemPromptFileConflict(cfg, nodeID, key, loc)
@@ -338,9 +341,32 @@ func applyAgentRuntimeField(cfg *ir.AgentConfig, key, val string) bool {
 		cfg.WorkingDir = val
 	case "tool_access":
 		cfg.ToolAccess = val
+	case "writable_paths":
+		cfg.WritablePaths = splitCommaNoEmpty(val)
+		return true
 	default:
 		return false
 	}
+	return true
+}
+
+// writablePathsIsBlank reports whether a writable_paths value is present-but-empty.
+// "Blank" means no non-empty entries after splitting on commas — so "", " ", ",",
+// ", ,", "  ,  " all return true, while "workspace/**" returns false.
+// This covers the comma-only hole: splitCommaNoEmpty(",") == nil → blank.
+func writablePathsIsBlank(val string) bool {
+	return len(splitCommaNoEmpty(val)) == 0
+}
+
+// rejectEmptyWritablePaths appends a blocking diagnostic when writable_paths is present
+// but blank. Returns true if the value was rejected (caller must not store it).
+func (p *Parser) rejectEmptyWritablePaths(key, val string, loc ir.SourceLocation) bool {
+	if key != "writable_paths" || !writablePathsIsBlank(val) {
+		return false
+	}
+	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+		"writable_paths declared with no paths at %d:%d — list at least one glob or omit the field (an empty safety field would grant unbounded writes)",
+		loc.Line, loc.Column))
 	return true
 }
 
@@ -791,25 +817,42 @@ func (p *Parser) parseBranchFields(bc *ir.BranchConfig) {
 			p.lexer.NextToken()
 			p.expect(TokenColon)
 			val := p.readFieldValue(t.Location.Line)
-			applyBranchField(bc, key, val)
+			p.applyBranchFieldChecked(bc, key, val, t.Location)
 		} else {
 			p.lexer.NextToken()
 		}
 	}
 }
 
-// applyBranchField sets a field on a BranchConfig.
-func applyBranchField(bc *ir.BranchConfig, key, val string) {
-	switch key {
-	case "model":
-		bc.Model = val
-	case "provider":
-		bc.Provider = val
-	case "fidelity":
-		bc.Fidelity = val
-	case "tool_access":
-		bc.ToolAccess = val
+// applyBranchFieldChecked applies a branch field after safety checks.
+// It rejects a present-but-empty writable_paths (FIX A) and emits an
+// unknown-field hint for unrecognized keys (FIX B).
+func (p *Parser) applyBranchFieldChecked(bc *ir.BranchConfig, key, val string, loc ir.SourceLocation) {
+	if p.rejectEmptyWritablePaths(key, val, loc) {
+		return
 	}
+	if !applyBranchField(bc, key, val) {
+		p.emitUnknownFieldHint("branch", key, loc)
+	}
+}
+
+// branchFieldSetters maps a branch field key to the BranchConfig field it sets.
+// Table-driven keeps applyBranchField under the cyclo≤5 cap as fields are added.
+var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
+	"model":          func(b *ir.BranchConfig, v string) { b.Model = v },
+	"provider":       func(b *ir.BranchConfig, v string) { b.Provider = v },
+	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
+	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
+	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitCommaNoEmpty(v) },
+}
+
+// applyBranchField sets a field on a BranchConfig. Returns true if the key was recognized.
+func applyBranchField(bc *ir.BranchConfig, key, val string) bool {
+	if set, ok := branchFieldSetters[key]; ok {
+		set(bc, val)
+		return true
+	}
+	return false
 }
 
 // branchTargets extracts target IDs from branch configs.

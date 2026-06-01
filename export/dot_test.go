@@ -1554,3 +1554,19 @@ func TestExportDOTToolRoutingOmitWhenZero(t *testing.T) {
 		}
 	}
 }
+
+func TestExportAgentWritablePaths(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:        "x",
+				WritablePaths: []string{"workspace/**", ".ai/**"},
+			}},
+		},
+	}
+	dot := ExportDOT(w, ExportOptions{})
+	if !strings.Contains(dot, `writable_paths="workspace/**,.ai/**"`) {
+		t.Errorf("DOT missing writable_paths attr; got:\n%s", dot)
+	}
+}

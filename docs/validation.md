@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin documents 44 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
+Dippin documents 46 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP139): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP142): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP009<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP139<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP142<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -224,7 +224,7 @@ error[DIP009]: duplicate edge
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP139)
+## Semantic Lint Warnings (DIP101–DIP142)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -898,6 +898,61 @@ warning[DIP139]: node "ReportFinalStatus" has tool_access "nono" which is not re
 
 ---
 
+### DIP141: `writable_paths` Nullified by `tool_access: none`
+
+**Severity**: Warning
+
+An agent node or per-branch override sets `writable_paths` together with `tool_access: none` on the same object. `tool_access: none` strips the entire tool catalog, so there is no Write/Edit/Bash left for `writable_paths` to bound — the field is dead config.
+
+```text
+warning[DIP141]: node "Summarize" has writable_paths but tool_access "none" — none strips all tools, so there is nothing to bound (dead config)
+  --> pipeline.dip:12:3
+  = help: remove writable_paths (no tools to bound) or drop tool_access: none to grant a bounded tool catalog.
+```
+
+**What triggers it**: An agent node or a per-branch override declares both a non-empty `writable_paths` and `tool_access: none` (case-insensitive) on the same object. Only the *same config object* declaring both is flagged — a branch that sets `tool_access: none` while *inheriting* an agent's `writable_paths` is legitimate narrowing and is not flagged.
+
+**How to fix**: Remove `writable_paths` (there are no tools to bound) or drop `tool_access: none` to grant a bounded tool catalog:
+
+```dippin
+  agent Summarize
+    prompt: "Summarize the results"
+    tool_access: none
+    writable_paths: workspace/**   # DIP141: none strips all tools — nothing to bound
+```
+
+---
+
+### DIP142: Unsafe `writable_paths` Entry
+
+**Severity**: Warning
+
+A `writable_paths` entry is an absolute path, starts with `~` or a Windows drive, escapes its base via `..`, or is a brace-expansion fragment torn apart by comma-splitting. Such an entry will not bound writes to the workspace the way the author expects.
+
+```text
+warning[DIP142]: node "Recorder" writable_paths entry "/etc/**" escapes the workspace (absolute / ~ / parent path) — the tracker write-jail will not honor it
+  --> pipeline.dip:12:3
+  = help: use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, and ..-escaping entries are rejected by the fs jail (it bounds writes to the session root); this lint catches obvious lexical cases only — the runtime jail is the real boundary. See #67/#77.
+```
+
+**What triggers it**: A `writable_paths` entry matches any of:
+- **Absolute** — leading `/`, `~`, `\`, or Windows drive letter (`C:\`)
+- **Parent escape** — contains a `..` segment that escapes the base (e.g. `../../etc/**`, `foo/../../bar`)
+- **Brace mis-split** — unbalanced `{` or `}` (a glob like `*.{md,yaml}` is torn apart by comma-splitting into `*.{md` and `yaml}` — enumerate entries instead)
+
+This is a lexical clarity check, not the security boundary — the tracker fs-jail is authoritative.
+
+**How to fix**: Use workspace-relative globs. Enumerate brace-expansion alternatives:
+
+```dippin
+  agent Recorder
+    prompt: "record"
+    writable_paths: /etc/**   # DIP142: absolute path escapes the workspace jail
+    # Fix: writable_paths: workspace/output.md
+```
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -914,7 +969,7 @@ Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP009 errors and DIP101–DIP139 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP009 errors and DIP101–DIP142 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

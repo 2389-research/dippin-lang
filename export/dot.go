@@ -297,7 +297,7 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 }
 
-// applyAgentRuntimeAttrs adds backend, working_dir, and tool_access attributes.
+// applyAgentRuntimeAttrs adds backend, working_dir, tool_access, and writable_paths attributes.
 func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Backend != "" {
 		attrs["backend"] = cfg.Backend
@@ -307,6 +307,9 @@ func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 	if strings.TrimSpace(cfg.ToolAccess) != "" {
 		attrs["tool_access"] = cfg.ToolAccess
+	}
+	if len(cfg.WritablePaths) > 0 {
+		attrs["writable_paths"] = strings.Join(cfg.WritablePaths, ",")
 	}
 }
 
@@ -423,13 +426,14 @@ func encodeBranches(branches []ir.BranchConfig) string {
 }
 
 // encodeBranch encodes one branch as ';'-joined k=v tokens. target is always
-// first; model/provider/fidelity/tool_access only when non-empty.
+// first; model/provider/fidelity/tool_access/writable_paths only when non-empty.
 func encodeBranch(b ir.BranchConfig) string {
 	parts := []string{"target=" + encodeBranchToken(b.Target)}
 	parts = appendBranchField(parts, "model", b.Model)
 	parts = appendBranchField(parts, "provider", b.Provider)
 	parts = appendBranchField(parts, "fidelity", b.Fidelity)
 	parts = appendBranchField(parts, "tool_access", b.ToolAccess)
+	parts = appendBranchField(parts, "writable_paths", strings.Join(b.WritablePaths, ","))
 	return strings.Join(parts, ";")
 }
 

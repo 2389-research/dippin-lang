@@ -2133,6 +2133,40 @@ func TestFormat_ToolCommandInline(t *testing.T) {
 	}
 }
 
+func TestFormatAgentWritablePaths(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:        "x",
+				WritablePaths: []string{"workspace/**", ".ai/sprints/**"},
+			}},
+		},
+	}
+	out := Format(w)
+	if !strings.Contains(out, "writable_paths: workspace/**, .ai/sprints/**") {
+		t.Errorf("formatted output missing writable_paths; got:\n%s", out)
+	}
+}
+
+func TestFormatBranchWritablePathsOnly(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "split", Exit: "join",
+		Nodes: []*ir.Node{
+			{ID: "a", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
+			{ID: "split", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets:  []string{"a"},
+				Branches: []ir.BranchConfig{{Target: "a", WritablePaths: []string{"workspace/**"}}},
+			}},
+			{ID: "join", Kind: ir.NodeFanIn, Config: ir.FanInConfig{Sources: []string{"a"}}},
+		},
+	}
+	out := Format(w)
+	if !strings.Contains(out, "writable_paths: workspace/**") {
+		t.Errorf("formatted output missing per-branch writable_paths; got:\n%s", out)
+	}
+}
+
 // A branch that sets ONLY tool_access must still be emitted (regression guard
 // for the writeBranch early-return that previously checked only model/provider/fidelity).
 func TestFormatBranchToolAccessOnly(t *testing.T) {
@@ -2152,5 +2186,28 @@ func TestFormatBranchToolAccessOnly(t *testing.T) {
 	out := Format(w)
 	if !strings.Contains(out, "tool_access: none") {
 		t.Errorf("formatted output missing per-branch tool_access; got:\n%s", out)
+	}
+}
+
+func TestFormatAgentWritablePathsRoundTrips(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    writable_paths: workspace/**, .ai/sprints/**
+`
+	w1, err := parser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse1: %v", err)
+	}
+	w2, err := parser.NewParser(Format(w1), "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse2: %v", err)
+	}
+	got := w2.Node("A").Config.(ir.AgentConfig).WritablePaths
+	if len(got) != 2 || got[0] != "workspace/**" || got[1] != ".ai/sprints/**" {
+		t.Errorf("WritablePaths after format round-trip = %v, want [workspace/** .ai/sprints/**]", got)
 	}
 }

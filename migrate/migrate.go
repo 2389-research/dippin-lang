@@ -416,7 +416,8 @@ func applyModelAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	applyRuntimeAttrs(cfg, attrs)
 }
 
-// applyRuntimeAttrs applies runtime-cluster attributes (backend, working_dir, tool_access).
+// applyRuntimeAttrs applies runtime-cluster attributes (backend, working_dir,
+// tool_access, writable_paths).
 func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["backend"]; ok {
 		cfg.Backend = v
@@ -424,8 +425,16 @@ func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["working_dir"]; ok {
 		cfg.WorkingDir = v
 	}
+	applyRuntimeSafetyAttrs(cfg, attrs)
+}
+
+// applyRuntimeSafetyAttrs applies the tool_access + writable_paths safety attrs.
+func applyRuntimeSafetyAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["tool_access"]; ok && strings.TrimSpace(v) != "" {
 		cfg.ToolAccess = v
+	}
+	if v, ok := attrs["writable_paths"]; ok {
+		cfg.WritablePaths = splitComma(v)
 	}
 }
 
@@ -659,11 +668,12 @@ func parseBranchToken(s string) ir.BranchConfig {
 // cap with the extra target case + malformed guard, and makes adding a key
 // (e.g. tool_access for #58) a one-line change.
 var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
-	"target":      func(b *ir.BranchConfig, v string) { b.Target = v },
-	"model":       func(b *ir.BranchConfig, v string) { b.Model = v },
-	"provider":    func(b *ir.BranchConfig, v string) { b.Provider = v },
-	"fidelity":    func(b *ir.BranchConfig, v string) { b.Fidelity = v },
-	"tool_access": func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
+	"target":         func(b *ir.BranchConfig, v string) { b.Target = v },
+	"model":          func(b *ir.BranchConfig, v string) { b.Model = v },
+	"provider":       func(b *ir.BranchConfig, v string) { b.Provider = v },
+	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
+	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
+	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitComma(v) },
 }
 
 // applyBranchToken sets one "key=value" field on a BranchConfig. The value is
