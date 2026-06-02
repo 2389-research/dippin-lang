@@ -2,6 +2,24 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.35.0] — 2026-06-02
+
+### Added
+- `writable_paths:` — a comma-separated glob list on agent nodes and parallel branches that bounds where an agent's tools may write (e.g. `writable_paths: workspace/**, .ai/sprints/**`) ([#75](https://github.com/2389-research/dippin-lang/issues/75)). Absent = unbounded; a per-branch empty value inherits the target agent's (never resets to unbounded). dippin **carries + lints**; tracker **enforces** an fs-level write jail on the `native` backend (covering `Write`/`Edit`/`ApplyPatch`, **`Bash` and any process Bash spawns**), resolved against an immutable session root. Distinct from the advisory `writes:` field (context keys). Carried through parse → IR → format → DOT export → migrate.
+- `DIP141` — `writable_paths` nullified by `tool_access: none` (dead config; nothing left to bound).
+- `DIP142` — unsafe `writable_paths` entry (absolute / `~` / Windows-drive / `..`-escape / brace mis-split). Author-clarity lint; the runtime fs-jail is the real boundary.
+- `examples/agent_writable_paths.dip` demonstrating the five motivating failure/recovery-recorder shapes.
+
+### Tracker pairing (requires tracker `>= v0.35.0`)
+- Enforcement ships in tracker [v0.35.0](https://github.com/2389-research/tracker/releases/tag/v0.35.0) ([tracker#275](https://github.com/2389-research/tracker/pull/275)): native fs-jail incl. Bash children, runtime symlink-chain resolution, immutable session-root anchor (`working_dir`/`Params` cannot relocate it), `Params`/`working_dir` bypass defense, and a single-turn red-team suite.
+- **Fail-closed.** A present-but-empty or comma-only `writable_paths:` is rejected by `dippin validate`/`pack` (parse error). A malformed or **tracker-unrecognized** value → tracker denies all writes or refuses to start, never unbounded. On `claude-code`/`acp`, tracker **refuses to start** when `writable_paths` is set (native-only enforcement) — never a prompt-level pretend-jail.
+- **Version-skew is a safety requirement, not a suggestion:** a tracker `< v0.35.0` does not enforce `writable_paths` and would run those agents **unbounded**. Pin `requires tracker >= v0.35.0`; never `@latest`.
+
+### Notes
+- The primitive bounds write *location*, not network (`curl`/`cargo fetch`), reads/exfil-by-read, or *content* within an allowed path (a `workspace/**` grant can still poison `workspace/Cargo.toml`). Chain laundering is tracked in [#56](https://github.com/2389-research/dippin-lang/issues/56).
+- Sequenced follow-ups: [#55](https://github.com/2389-research/dippin-lang/issues/55) (tool-name allowlists — now an orthogonal axis), [#53](https://github.com/2389-research/dippin-lang/issues/53) (defaults cascade).
+- Design spec: `docs/superpowers/specs/2026-05-29-issue-75-writable-paths-design.md`.
+
 ## [v0.34.0] — 2026-05-28
 
 ### Added
