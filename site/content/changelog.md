@@ -4,6 +4,22 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.36.0] — 2026-06-03
+
+Dippin-side only — no paired runtime release required.
+
+### Added
+- `DIP143` (Hint) — a `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) node references a child `.dip` that does not inherit the parent workflow's `tool_access` restrictions ([#59](https://github.com/2389-research/dippin-lang/issues/59)). Fires only when the workflow declares `tool_access` intent (any non-empty value on an agent or parallel branch) **and** references an external subgraph, reminding the author to give the child's agents their own `tool_access`. `tool_access` is per-node and does not cross a file boundary. A direct self-reference (a node whose ref resolves to its own source file) is not flagged. The lint never parses the child file (the validator may not import the parser); real cross-file effective-access enforcement, plus transitive cross-file cycles, are deferred to [#89](https://github.com/2389-research/dippin-lang/issues/89).
+
+### Hardened
+- The `@file` directive resolver is hardened against a leaf TOCTOU race ([#79](https://github.com/2389-research/dippin-lang/issues/79)). The path was validated and then read via a separate `os.ReadFile`, so a concurrent symlink/rename swap of the final component could redirect the read outside `baseDir`, bypassing the [#67](https://github.com/2389-research/dippin-lang/issues/67)/[#77](https://github.com/2389-research/dippin-lang/issues/77) containment under a race. Now a single open-once path — `os.OpenFile(O_RDONLY|O_NOFOLLOW)` → `f.Stat()` (fstat the fd) → containment check → `io.ReadAll` — operates entirely on one fd, closing the check-to-read race. On Unix, `O_NOFOLLOW` makes leaf-symlink rejection atomic (`ELOOP`); the resolved path is never leaked in the error. The residual parent-directory swap race is documented as out of scope.
+
+### Docs
+- Clarified that `tool_access` is node-scoped — it constrains the executor of a single node and does not taint downstream nodes — resolving [#57](https://github.com/2389-research/dippin-lang/issues/57) via documentation rather than a graph-topology lint ([#87](https://github.com/2389-research/dippin-lang/pull/87)).
+
+### Changed
+- Internal: removed the consumer product name "tracker" from dippin sources — dippin is consumer-agnostic ([#85](https://github.com/2389-research/dippin-lang/pull/85)).
+
 ## [v0.35.0] — 2026-06-02
 
 ### Added
