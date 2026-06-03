@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `tool_access: none` on agent nodes (joint dippin v0.32.0 + tracker release) so authors can bound the v0.28.2 runaway-agent vector per-node.
+**Goal:** Ship `tool_access: none` on agent nodes (coordinated runtime release) so authors can bound the v0.28.2 runaway-agent vector per-node.
 
-**Architecture:** One `string` field on `ir.AgentConfig`. One lint code (DIP139). Verbatim through parser/formatter/DOT/migrate. Tracker reads it and short-circuits the tool registry when non-empty. No defaults cascade, no named type, no canonical accessor — the simplification is the design.
+**Architecture:** One `string` field on `ir.AgentConfig`. One lint code (DIP139). Verbatim through parser/formatter/DOT/migrate. The runtime reads it and short-circuits the tool registry when non-empty. No defaults cascade, no named type, no canonical accessor — the simplification is the design.
 
-**Tech Stack:** Go, dippin's recursive-descent parser, validator's `lintX(w) []Diagnostic` pattern, tracker's `tracker/agent/session.go` enforcement layer.
+**Tech Stack:** Go, dippin's recursive-descent parser, validator's `lintX(w) []Diagnostic` pattern, the runtime's enforcement layer.
 
 **Spec:** `docs/superpowers/specs/2026-05-26-issue-41-design.md`
 
@@ -42,7 +42,7 @@ The nine issues, in spec order:
 5. Cross-node lint for tool_access leak (DIP141 candidate)
 6. `BranchConfig.ToolAccess` per-branch override (depends on per-branch DOT round-trip fix)
 7. `ManagerLoopConfig.SubgraphRef` cross-workflow tool_access propagation
-8. `Params` bypass lint (dippin-side companion to tracker runtime defense)
+8. `Params` bypass lint (dippin-side companion to runtime defense)
 9. Tool nodes under tool_access — skill.md cross-reference work
 
 Record the assigned issue numbers (e.g., `#56, #57, #58, ...`) for Step 2.
@@ -406,7 +406,7 @@ var validToolAccess = map[string]bool{
 
 // lintToolAccessValues fires DIP139 when an agent's tool_access is set to
 // a value other than "" or "none" (case-insensitive). Authors who skip
-// lint and ship an invalid value get fail-closed tracker behavior — DIP139
+// lint and ship an invalid value get fail-closed runtime behavior — DIP139
 // surfaces the typo at lint time.
 func lintToolAccessValues(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
@@ -773,10 +773,10 @@ Append to `migrate/roundtrip_test.go`:
 // survives the .dip → DOT → migrate cycle.
 //
 // Bug shape: an author writes tool_access: none on a summarizer node, ships
-// it to tracker via dipx bundle; the value must arrive intact at tracker
+// it to the runtime via dipx bundle; the value must arrive intact at the runtime
 // for the safety primitive to bind. This test exercises the dippin half of
-// that chain (parser → DOT export → migrate); the tracker half is covered
-// in the tracker-side red-team test.
+// that chain (parser → DOT export → migrate); the runtime-side half is covered
+// in the runtime-side red-team test.
 func TestRoundtripPreservesToolAccess(t *testing.T) {
 	src := `workflow ToolAccessRT
   start: A
@@ -937,10 +937,10 @@ Locate the agent-node field table or section in `site/static/skill.md` (search: 
 
   **Not the same as `tool_commands_allow:`** (DIP28). `tool_access:` bounds LLM-emitted tool calls. `tool_commands_allow:` / `tool_denylist_add:` bound `tool` node shell execution. They address distinct threats.
 
-  **Requires tracker ≥ vX.Y.Z** (will be filled in at release time once tracker tag is cut — see CHANGELOG).
+  **Requires an enforcing runtime** (will be filled in at release time once the runtime tag is cut — see CHANGELOG).
 ````
 
-After the tracker is tagged in Task 12, return here and replace `vX.Y.Z` with the actual tracker tag.
+After the runtime is tagged in Task 12, return here and replace `vX.Y.Z` with the actual version.
 
 - [ ] **Step 3: Add CHANGELOG entry**
 
@@ -949,14 +949,14 @@ Edit `CHANGELOG.md`. Add at the top:
 ```markdown
 ## [v0.32.0] — <date-at-release-time>
 
-New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `<tracker-tag>` — the dippin field is meaningless without tracker enforcement, so they ship together (see issue #41 for context, including the v0.28.2 runaway-agent incident this bounds).
+New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Coordinated runtime release — the dippin field is meaningless without runtime enforcement, so they ship together (see issue #41 for context, including the v0.28.2 runaway-agent incident this bounds).
 
 ### Added
 - `tool_access:` field on agent nodes. One explicit value: `none` (no LLM tools). Omitted = full catalog (current behavior).
 - DIP139 lint warns on invalid `tool_access` values.
 - `examples/agent_tool_access.dip` demonstrates the field on a summarizer node.
 
-### Tracker-side (linked to tracker tag `<tracker-tag>`)
+### Runtime-side
 - Tool registry returns empty when `tool_access: none` is set.
 - Anthropic translator strips the `tools` array via `tool_choice: none`.
 - System prompt scrubbed of tool-naming text when tools are disabled.
@@ -965,7 +965,7 @@ New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalo
 - Red-team test: multi-tool-call LLM response under `tool_access: none` produces zero executions (the actual v0.28.2 shape).
 ```
 
-The `<date-at-release-time>` and `<tracker-tag>` placeholders are filled in at Task 12.
+The `<date-at-release-time>` and `<runtime-tag>` placeholders are filled in at Task 12.
 
 - [ ] **Step 4: Run `just check`**
 
@@ -988,7 +988,7 @@ git commit -m "docs: document tool_access field, DIP139, and v0.32.0 changelog s
 
 - [ ] **Step 1: Update the Status line**
 
-Edit `docs/superpowers/research/2026-05-19-issue-41-terror-squad.md`. Find the Status line near the top (line 4: `**Status:** Issue #41 parked at end of brainstorming. Returns in v0.31.0 as a **joint dippin + tracker** release.`). Replace with:
+Edit `docs/superpowers/research/2026-05-19-issue-41-terror-squad.md`. Find the Status line near the top (line 4: `**Status:** Issue #41 parked at end of brainstorming. Returns in v0.31.0 as a **coordinated runtime release**.`). Replace with:
 
 ```markdown
 **Status:** Shipped in v0.32.0 — see [`docs/superpowers/specs/2026-05-26-issue-41-design.md`](../specs/2026-05-26-issue-41-design.md). The simplification process is documented in the spec's "Design journey" section.
@@ -1003,47 +1003,34 @@ git commit -m "docs(research): mark issue #41 terror-squad doc as shipped"
 
 ---
 
-## Task 11: Tracker-side PR (cross-repo umbrella)
+## Task 11: Runtime-side PR (cross-repo umbrella)
 
-**Repo:** `2389-research/tracker` (sibling repo; clone alongside `dippin-lang` if not present)
+**Repo:** the runtime repository (sibling repo; clone alongside `dippin-lang` if not present)
 
-**Files** (tracker repo paths; exact code informed by the spec § Tracker-side design):
-- Modify: `tracker/agent/session.go` (add `SessionConfig.ToolAccess string`)
-- Modify: `tracker/agent/profile.go` (`builtInToolsForConfig` short-circuit)
-- Modify: `tracker/agent/session_run.go` (set `ToolChoiceNone`, scrub system prompt)
-- Modify: `tracker/pipeline/dippin_adapter.go` (`extractAgentAttrs` reads `tool_access`)
-- Modify: `tracker/pipeline/handlers/codergen.go` and other Params-honoring codepaths (skip dangerous Params keys when `ToolAccess` is non-empty)
-- Create: tracker-side test files for unit, integration, red-team, system-prompt audit, backend-compat (see spec § Tests / Tracker)
+**Files** (runtime repo paths; exact code informed by the spec § Runtime-side design):
+- Modify: the runtime's agent session layer (add `SessionConfig.ToolAccess string`)
+- Modify: the runtime's agent profile layer (`builtInToolsForConfig` short-circuit)
+- Modify: the runtime's agent session-run layer (set `ToolChoiceNone`, scrub system prompt)
+- Modify: the runtime's pipeline adapter layer (`extractAgentAttrs` reads `tool_access`)
+- Modify: the runtime's pipeline handler layer and other Params-honoring codepaths (skip dangerous Params keys when `ToolAccess` is non-empty)
+- Create: runtime-side test files for unit, integration, red-team, system-prompt audit, backend-compat (see spec § Tests / Runtime)
 
-This task is **a single umbrella** — the tracker repo gets its own dedicated PR. The dippin spec describes the contract; the tracker engineer implements following the dippin spec § Tracker-side design.
+This task is **a single umbrella** — the runtime repo gets its own dedicated PR. The dippin spec describes the contract; the runtime engineer implements following the dippin spec § Runtime-side design.
 
-- [ ] **Step 1: Clone tracker if not present**
+- [ ] **Step 1: Clone the runtime repo if not present**
 
-If `../tracker` doesn't exist:
+If the runtime repo is not checked out locally, clone it. If access is restricted, escalate to the user before continuing.
 
-```bash
-cd ..
-gh repo clone 2389-research/tracker
-cd dippin-lang
-```
+- [ ] **Step 2: Verify runtime file paths cited in the spec**
 
-If access is restricted, escalate to the user before continuing.
+Verify the runtime's agent session, profile, session-run, and pipeline adapter files exist. If any path doesn't match, the spec's file references need updating — escalate to the user to reconcile before opening the runtime PR.
 
-- [ ] **Step 2: Verify tracker file paths cited in the spec**
+- [ ] **Step 3: Implement runtime changes per spec § Runtime-side design**
 
-```bash
-ls ../tracker/tracker/agent/{session.go,profile.go,session_run.go}
-ls ../tracker/tracker/pipeline/dippin_adapter.go
-```
+Follow the spec's runtime section (`docs/superpowers/specs/2026-05-26-issue-41-design.md`, the entire "Runtime-side design" subsection) as the source of truth. The implementer:
 
-If any path doesn't exist, the spec's file references need updating — escalate to the user to reconcile before opening the tracker PR.
-
-- [ ] **Step 3: Implement tracker changes per spec § Tracker-side design**
-
-Follow the spec's tracker section (`docs/superpowers/specs/2026-05-26-issue-41-design.md`, the entire "Tracker-side design" subsection) as the source of truth. The implementer:
-
-1. Adds `SessionConfig.ToolAccess string` to `tracker/agent/session.go`.
-2. Inserts the case-normalized short-circuit at the top of `builtInToolsForConfig` in `tracker/agent/profile.go`:
+1. Adds `SessionConfig.ToolAccess string` to the runtime's agent session layer.
+2. Inserts the case-normalized short-circuit at the top of `builtInToolsForConfig` in the runtime's agent profile layer:
    ```go
    canonical := strings.ToLower(strings.TrimSpace(cfg.ToolAccess))
    if canonical != "" {
@@ -1051,32 +1038,29 @@ Follow the spec's tracker section (`docs/superpowers/specs/2026-05-26-issue-41-d
    }
    // existing return
    ```
-3. In `session_run.go`, when `ToolAccess` is non-empty: set `request.ToolChoice = llm.ToolChoiceNone()` for Anthropic, and skip the "File tool arguments..." system-prompt prefix (line 24-31 of the existing file).
-4. In `dippin_adapter.go::extractAgentAttrs`, read `tool_access` from `graph.Attrs` into `cfg.ToolAccess` (mirror the existing `Backend`/`WorkingDir` extraction).
-5. In every codepath that translates `cfg.Params[...]` to runtime settings (audit: grep for `cfg.Params[` in `tracker/pipeline/`), check `cfg.ToolAccess` first; if non-empty, skip the bypass-eligible keys (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`).
+3. In the session-run layer, when `ToolAccess` is non-empty: set `request.ToolChoice = llm.ToolChoiceNone()` for Anthropic, and skip the "File tool arguments..." system-prompt prefix.
+4. In the pipeline adapter's `extractAgentAttrs`, read `tool_access` from `graph.Attrs` into `cfg.ToolAccess` (mirror the existing `Backend`/`WorkingDir` extraction).
+5. In every codepath that translates `cfg.Params[...]` to runtime settings (audit: grep for `cfg.Params[` in the pipeline layer), check `cfg.ToolAccess` first; if non-empty, skip the bypass-eligible keys (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`).
 6. Backend-compat: for `claude-code` and `acp`, verify the deny-equivalent spelling (cite docs URL + date in code comment) and ship a runtime test. If a backend can't be verified, that backend rejects session creation when `cfg.ToolAccess` is non-empty, with an error message pointing to the relevant follow-up issue.
 
-- [ ] **Step 4: Write tracker-side tests per spec § Tests / Tracker**
+- [ ] **Step 4: Write runtime-side tests per spec § Tests / Runtime**
 
-Required test set (all live in the tracker repo, under `tracker/agent/` or wherever existing session tests live):
+Required test set (all live in the runtime repo, under the agent layer or wherever existing session tests live):
 
-- **Unit:** `builtInToolsForConfig` returns empty slice when `cfg.ToolAccess = "none"`; non-empty `cfg.ToolAccess` of any value behaves the same (fail-closed). `session_run` sets `ToolChoiceNone` + omits tool-naming prefix.
+- **Unit:** `builtInToolsForConfig` returns empty slice when `cfg.ToolAccess = "none"`; non-empty `cfg.ToolAccess` of any value behaves the same (fail-closed). The session-run layer sets `ToolChoiceNone` + omits tool-naming prefix.
 - **Integration:** mocked-LLM test producing a single response with `[bash("rm -rf data/"), write("payload.py", "..."), bash("./payload.py")]` (the actual v0.28.2 multi-tool-call shape); assert zero tool-call executions. **This is the red-team test.**
 - **Bypass tests:** `tool_access: "none"` + `params: {"allowed_tools": "Bash"}` → zero tools registered. `tool_access: "noen"` (typo) → zero tools (fail-closed). `tool_access: "None"` (case variant) → zero tools.
 - **System-prompt audit:** assemble the system prompt under `tool_access: "none"`; assert no standalone case-insensitive occurrences of `read`, `write`, `edit`, `glob`, `grep_search`, `bash`, `apply_patch`.
 - **Backend-compat:** for each backend (`native`, `claude-code`, `acp`): integration test with `tool_access: none` + mocked LLM emitting tool calls; assert zero executions OR session-creation refusal with a clear error.
 
-- [ ] **Step 5: Open the tracker PR**
+- [ ] **Step 5: Open the runtime PR**
 
-```bash
-cd ../tracker
-git checkout -b feat/issue-41-tool-access
-# (after all changes + tests)
-git push -u origin feat/issue-41-tool-access
-gh pr create --title "feat: honor tool_access: none from dippin (issue #41 joint release)" --body "$(cat <<'EOF'
+Open a PR against the runtime repo with an appropriate branch name. The PR body should include:
+
+```
 ## Summary
 
-Joint release with dippin-lang v0.32.0. Implements runtime enforcement for the new `tool_access:` agent-node field — see dippin spec at https://github.com/2389-research/dippin-lang/blob/main/docs/superpowers/specs/2026-05-26-issue-41-design.md for the full design.
+Coordinated runtime release with dippin-lang v0.32.0. Implements runtime enforcement for the new `tool_access:` agent-node field — see dippin spec at https://github.com/2389-research/dippin-lang/blob/main/docs/superpowers/specs/2026-05-26-issue-41-design.md for the full design.
 
 When dippin sets `tool_access: none` on an agent node, this PR:
 - Returns an empty tool registry from `builtInToolsForConfig`.
@@ -1098,17 +1082,17 @@ EOF
 cd ../dippin-lang
 ```
 
-- [ ] **Step 6: Record the tracker PR number + target commit SHA in this plan**
+- [ ] **Step 6: Record the runtime PR number + target commit SHA in this plan**
 
-After the tracker PR is opened, record: **Tracker PR: #_____ — target SHA (once merged): _______**
+After the runtime PR is opened, record: **Runtime PR: #_____ — target SHA (once merged): _______**
 
-Return to the dippin spec (`docs/superpowers/specs/2026-05-26-issue-41-design.md`) and update the `**Tracker dependency:**` line at the top with the PR URL.
+Return to the dippin spec (`docs/superpowers/specs/2026-05-26-issue-41-design.md`) and update the `**Runtime dependency:**` line at the top with the PR URL.
 
 - [ ] **Step 7: Commit dippin spec backlink**
 
 ```bash
 git add docs/superpowers/specs/2026-05-26-issue-41-design.md
-git commit -m "docs(spec): link tracker PR for v0.32.0 joint release"
+git commit -m "docs(spec): link runtime PR for v0.32.0 coordinated runtime release"
 ```
 
 ---
@@ -1117,13 +1101,13 @@ git commit -m "docs(spec): link tracker PR for v0.32.0 joint release"
 
 **Sequence (DO NOT REORDER):**
 
-- [ ] **Step 1: Tracker PR review + merge**
+- [ ] **Step 1: Runtime PR review + merge**
 
-The tracker PR (from Task 11) goes through normal review. **Do not tag tracker yet.** Wait for dippin PR (Task 13 below) to be approved first; tag tracker just before tagging dippin to minimize the window where the tracker version is published without dippin pointing at it.
+The runtime PR (from Task 11) goes through normal review. **Do not tag the runtime yet.** Wait for dippin PR (Task 13 below) to be approved first; tag the runtime just before tagging dippin to minimize the window where the runtime version is published without dippin pointing at it.
 
 - [ ] **Step 2: Open dippin PR**
 
-From a feature branch in dippin (recommended: name it `feat/issue-41-tool-access` parallel to tracker's):
+From a feature branch in dippin (recommended: name it `feat/issue-41-tool-access` parallel to the runtime's):
 
 ```bash
 git checkout -b feat/issue-41-tool-access  # or rebase onto main if already named
@@ -1131,7 +1115,7 @@ git push -u origin feat/issue-41-tool-access
 gh pr create --title "v0.32.0: tool_access: agent-node safety primitive (#41)" --body "$(cat <<'EOF'
 ## Summary
 
-Closes #41. Joint release with tracker [PR link from Task 11].
+Closes #41. Coordinated runtime release [PR link from Task 11].
 
 - New `tool_access: none` field on agent nodes — bounds the v0.28.2 runaway-agent vector for any agent the author annotates.
 - DIP139 lint warns on invalid values.
@@ -1154,35 +1138,24 @@ EOF
 
 - [ ] **Step 3: Use go.mod replace during PR review (optional)**
 
-If integration tests need to run against the unmerged tracker PR, add a temporary `replace` directive to `go.mod`:
-
-```
-replace github.com/2389-research/tracker => ../tracker
-```
-
-Do NOT commit this `replace` directive. It's strictly for local validation during review. Remove before the final commit on the dippin PR.
+If integration tests need to run against the unmerged runtime PR, add a temporary `replace` directive to `go.mod` pointing to the local clone. Do NOT commit this `replace` directive. It's strictly for local validation during review. Remove before the final commit on the dippin PR.
 
 - [ ] **Step 4: Final tag sequence (after both PRs approved)**
 
 ```bash
-# In tracker repo (assumes you're authorized to tag and push):
-cd ../tracker
-git checkout main && git pull
-git tag -a v<tracker-version> -m "tool_access runtime enforcement for dippin #41"
-git push origin v<tracker-version>
+# In runtime repo (assumes you're authorized to tag and push):
+# Tag and push the runtime release first.
 
 # In dippin repo:
 cd ../dippin-lang
 git checkout main && git pull
-# Bump tracker dep in go.mod to the newly-tagged version:
-go get github.com/2389-research/tracker@v<tracker-version>
-go mod tidy
+# If dippin-lang imports the runtime, bump the dep to the newly-tagged version and run go mod tidy.
 just check  # verify
 # Update CHANGELOG.md: replace <date-at-release-time> with today's date,
-# and <tracker-tag> with the actual tracker tag. Same for skill.md's
-# "Requires tracker ≥ vX.Y.Z" line.
+# and <runtime-tag> with the actual runtime tag. Same for skill.md's
+# "Requires an enforcing runtime" line.
 git add CHANGELOG.md site/static/skill.md go.mod go.sum
-git commit -m "release: prep v0.32.0 (tracker v<tracker-version>)"
+git commit -m "release: prep v0.32.0"
 git tag -a v0.32.0 -m "tool_access: agent-node safety primitive (#41)"
 git push origin main
 git push origin v0.32.0
@@ -1196,7 +1169,7 @@ Check `gh run list --workflow=release.yml --limit=1` (or whatever the release wo
 
 - [ ] **Step 6: Announce in CHANGELOG comments / PR thread**
 
-Reply on issue #41 with: "Shipped in v0.32.0 (joint with tracker v<version>). See <CHANGELOG link>."
+Reply on issue #41 with: "Shipped in v0.32.0 (coordinated runtime release). See <CHANGELOG link>."
 
 Close issue #41.
 
@@ -1207,6 +1180,6 @@ Close issue #41.
 - **`just check` is your friend.** Run it after every task. The pre-commit hook runs it too; better to catch issues before pushing.
 - **Cyclomatic complexity ≤ 5 / cognitive ≤ 7 per function.** If a function trips the limit, extract a helper. Never add `//nolint`. The new `lintToolAccessValues` is well under the limit (cyclomatic 3).
 - **No hand-built IR in tests.** Every test parses real `.dip` text via `parser.NewParser(src, "test.dip").Parse()`. The DIP101 incident (root cause: tests pre-populated `Condition.Parsed` by hand, masking that production code never set it) is exactly the failure mode this rule prevents.
-- **Tracker file paths in Task 11 are best-effort.** If `tracker/agent/session.go:213` doesn't match what you find when you clone, the spec's line references are stale. Don't fight the spec — re-read the actual code, escalate to the user if the spec's described logic doesn't match the current tracker.
+- **Runtime file paths in Task 11 are best-effort.** If the runtime's agent session layer line references don't match what you find when you clone, the spec's line references are stale. Don't fight the spec — re-read the actual code, escalate to the user if the spec's described logic doesn't match the current runtime.
 - **Don't merge with bot review state in play.** Branch protection on dippin `main` is not enforced, so `gh pr merge` will go through even with a CodeRabbit `CHANGES_REQUESTED`. The project owner explicitly flagged this — always confirm with the user before merging if any review state is non-APPROVED, even from bots.
 - **Follow-up issues stay filed.** Task 0 is non-optional. The DIP28 anti-pattern is that follow-ups promised in a spec never get filed; we break it by filing them BEFORE merge with `gh issue create`.

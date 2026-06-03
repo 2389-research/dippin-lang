@@ -83,7 +83,7 @@ when not <expr>
 | 6 | Missing tool timeout | Add `timeout: 60s` (or appropriate duration) to every `tool` node. |
 | 7 | Exhaustive conditions flagged | `ctx.outcome = success` + `ctx.outcome = fail` is exhaustive — DIP101/DIP102 are auto-suppressed. No need to add a fallback edge. |
 | 8 | Verbose output sharing stdout with routing marker | When a tool's stdout drives routing, redirect verbose output to a sibling file and `printf` only the marker. Otherwise large output (test logs, stack traces) can crowd out the marker under runtime stdout caps. See `nodes.md` → Tool Nodes → Markers and Verbose Output. |
-| 9 | Hand-parsing tool stdout for routing | Use `marker_grep: "<regex>"` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Mirrors tracker's TRK101 recommendation; populates `ctx.tool_marker` directly. |
+| 9 | Hand-parsing tool stdout for routing | Use `marker_grep: "<regex>"` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Populates `ctx.tool_marker` directly — typed routing is more reliable than substring matching on raw stdout. |
 | 10 | DIP101/DIP102 flagged on marker-routed tool node | If the tool already declares `marker_grep:`, the validator treats it as a safe routing source and suppresses both warnings. If you're still seeing them, the source node isn't a `tool`, or `marker_grep` is empty. |
 | 11 | Boolean field rejected as invalid | Boolean fields (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off`, case-insensitive. Anything else is a parse error — pre-v0.29 silently coerced unknown values to `false`. |
 
@@ -179,7 +179,7 @@ A `.dipx` is a deterministic ZIP that packages a `.dip` entry plus every transit
 - **Inspect**: `dippin inspect pipeline.dipx` (prints manifest, sha256 identity, file list)
 - **Extract**: `dippin unpack pipeline.dipx -o ./out` (atomic via staging dir + rename)
 
-Workflow: author and lint as `.dip`; package with `dippin pack` for distribution to runtimes (e.g., Tracker). `dippin check pipeline.dipx` validates the bundled entry workflow exactly as if it were on disk. Bundle commands return distinct exit codes (`0` ok, `1` user error, `2` integrity error, `3` I/O error, `4` cancelled) so tooling can disambiguate failures that the analysis-command `0/1/2` ladder collapses.
+Workflow: author and lint as `.dip`; package with `dippin pack` for distribution to the runtime. `dippin check pipeline.dipx` validates the bundled entry workflow exactly as if it were on disk. Bundle commands return distinct exit codes (`0` ok, `1` user error, `2` integrity error, `3` I/O error, `4` cancelled) so tooling can disambiguate failures that the analysis-command `0/1/2` ladder collapses.
 
 ---
 

@@ -91,7 +91,7 @@ func applyDefaultExtraField(d *ir.WorkflowDefaults, key, val string) bool {
 }
 
 // applyDefaultToolField handles tool-safety defaults: tool_commands_allow and
-// tool_denylist_add. Values are stored verbatim; tracker owns split/glob semantics.
+// tool_denylist_add. Values are stored verbatim; the runtime owns split/glob semantics.
 func applyDefaultToolField(d *ir.WorkflowDefaults, key, val string) bool {
 	switch key {
 	case "tool_commands_allow":

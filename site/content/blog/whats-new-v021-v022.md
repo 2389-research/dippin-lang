@@ -39,11 +39,11 @@ edges
   ReviewGate -> Rollback when: timeout
 ```
 
-Round-trips through parse, format, DOT export, and migrate, so DOT-authored workflows pick it up automatically. Tracker consumes the semantics on its side (tracker#112).
+Round-trips through parse, format, DOT export, and migrate, so DOT-authored workflows pick it up automatically. The runtime consumes the semantics on its side.
 
 ## Hard budget caps
 
-**v0.21.0** &mdash; Three new `defaults:` fields let a workflow declare an upper bound on what it's allowed to spend before Tracker pulls the plug:
+**v0.21.0** &mdash; Three new `defaults:` fields let a workflow declare an upper bound on what it's allowed to spend before the runtime pulls the plug:
 
 ```dippin
 workflow ExpensiveThing
@@ -63,7 +63,7 @@ If you haven't used `dippin cost` yet, the [cost estimation post](cost-estimatio
 
 ## Manager loops: supervisors without the glue
 
-**v0.22.0** &mdash; The biggest addition of the two releases. Before this, "parent pipeline that spawns a child and steers it" was pattern-by-convention: you'd write an `agent` node that called out to a nested workflow, add a bunch of conditional edges to keep re-running it, and hope the retry logic held. Now it's a first-class node kind that maps directly onto Tracker's `stack.manager_loop` construct:
+**v0.22.0** &mdash; The biggest addition of the two releases. Before this, "parent pipeline that spawns a child and steers it" was pattern-by-convention: you'd write an `agent` node that called out to a nested workflow, add a bunch of conditional edges to keep re-running it, and hope the retry logic held. Now it's a first-class node kind that maps directly onto the runtime's `stack.manager_loop` construct:
 
 ```dippin
 manager_loop QualityGate
@@ -104,7 +104,7 @@ Three lints fire on common manager-loop mistakes:
 
 A few smaller items worth calling out:
 
-- **Scoped context reads.** `ctx.node.<id>.*` now validates as a legitimate pattern in `DIP121` / `DIP122`, fixing false-positive warnings when one node reads another node's state (tracker#75).
+- **Scoped context reads.** `ctx.node.<id>.*` now validates as a legitimate pattern in `DIP121` / `DIP122`, fixing false-positive warnings when one node reads another node's state.
 - **`reasoning_effort` expansion.** `DIP119` accepts `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max` — enough to cover Opus 4.7 and GPT-5.4.
 - **Model catalog refresh.** Added `claude-opus-4-7` (Anthropic, $5/$25), `mistral-small-2603` (Mistral Small 4), and `command-a-03-2025` (Cohere's flagship, $2.50/$10). Pricing verified 2026-04-17.
 - **Agent-readiness endpoints** on the docs site: `.well-known/agent-skills/index.json`, `.well-known/mcp/server-card.json`, `.well-known/api-catalog`, `robots.txt`, and a hosted `skill.md`. Coding agents can auto-discover dippin-lang tooling without hard-coded config.
@@ -112,6 +112,6 @@ A few smaller items worth calling out:
 
 ## What's next
 
-`v0.23.0` is queued up: first-class `defaults:` fields for Tracker's tool-safety allowlist (`tool_commands_allow`) and denylist additions (`tool_denylist_add`). No more smuggling those through `vars:`.
+`v0.23.0` is queued up: first-class `defaults:` fields for the runtime's tool-safety allowlist (`tool_commands_allow`) and denylist additions (`tool_denylist_add`). No more smuggling those through `vars:`.
 
 Full details in [CHANGELOG.md](https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md).

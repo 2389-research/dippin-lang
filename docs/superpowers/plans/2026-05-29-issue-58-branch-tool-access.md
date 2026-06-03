@@ -4,7 +4,7 @@
 
 **Goal:** Add `tool_access` as a per-branch override on block-form `parallel` nodes — carried faithfully through parse → format → DOT round-trip and validated via DIP139 — mirroring how `Model`/`Provider`/`Fidelity` already work.
 
-**Architecture:** Add `ToolAccess` to `ir.BranchConfig` and plug it into the table-driven extension points #76 left in place (one line each in parser, formatter, DOT export, DOT migrate). Generalize the DIP139 lint to scan branches, mirroring DIP114's `checkBranchFidelities`. dippin carries + lints; tracker enforces the override (inherit-on-empty) at runtime.
+**Architecture:** Add `ToolAccess` to `ir.BranchConfig` and plug it into the table-driven extension points #76 left in place (one line each in parser, formatter, DOT export, DOT migrate). Generalize the DIP139 lint to scan branches, mirroring DIP114's `checkBranchFidelities`. dippin carries + lints; the runtime enforces the override (inherit-on-empty) at runtime.
 
 **Tech Stack:** Go. Packages `ir`, `parser`, `formatter`, `export`, `migrate`, `validator`. Spec: `docs/superpowers/specs/2026-05-29-issue-58-branch-tool-access-design.md`.
 
@@ -113,8 +113,8 @@ type BranchConfig struct {
 	// Recognized values mirror AgentConfig.ToolAccess: "" (inherit) and "none"
 	// (strip tools); other values lint as DIP139 and fail closed at runtime.
 	// Empty INHERITS the target agent's tool_access (never resets to the full
-	// catalog) — tracker resolves effective = branch if non-empty else agent.
-	// dippin carries + lints this field; tracker enforces the override, exactly
+	// catalog) — the runtime resolves effective = branch if non-empty else agent.
+	// dippin carries + lints this field; the runtime enforces the override, exactly
 	// as it does for Model/Provider/Fidelity.
 	ToolAccess string
 }
@@ -384,7 +384,7 @@ Expected: FAIL — `lintToolAccessValues` only scans `AgentConfig`, so it return
 // lintToolAccessValues fires DIP139 when an agent node — or a per-branch override
 // on a parallel node — sets tool_access to a value other than "" or "none"
 // (case-insensitive). Authors who skip lint and ship an invalid value get
-// fail-closed tracker behavior; DIP139 surfaces the typo at lint time.
+// fail-closed runtime behavior; DIP139 surfaces the typo at lint time.
 func lintToolAccessValues(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
@@ -568,14 +568,14 @@ Adds `tool_access` as a per-branch override on block-form `parallel` nodes, carr
 - DIP139 now validates per-branch `tool_access` (mirrors DIP114's branch handling); invalid values fail closed at runtime, branch-qualified lint message.
 - Parity (`--check`) auto-covers the new field via struct `!=`; covered by a regression test.
 
-## Safety semantics (for the tracker side)
-Empty branch `tool_access` **inherits** the target agent's value — it never resets to the full catalog. `effective = branch if non-empty else agent`. dippin carries + lints; tracker enforces. See the spec for the normative rule and the rationale for why no extra lint is needed in v1 (the value set can't express a widening).
+## Safety semantics (for the runtime side)
+Empty branch `tool_access` **inherits** the target agent's value — it never resets to the full catalog. `effective = branch if non-empty else agent`. dippin carries + lints; the runtime enforces. See the spec for the normative rule and the rationale for why no extra lint is needed in v1 (the value set can't express a widening).
 
 ## Testing
 - Parser, formatter (tool_access-only branch), DOT round-trip, DIP139 (branch-qualified, pos+neg), acceptance round-trip, parity coverage.
 - `just check` green.
 
-Note: CHANGELOG untouched (tag-time per CLAUDE.md). Tracker consumption of per-branch tool_access is out of scope — this carries the field through the toolchain, mirroring how Model/Provider/Fidelity are carried.
+Note: CHANGELOG untouched (tag-time per CLAUDE.md). Runtime consumption of per-branch tool_access is out of scope — this carries the field through the toolchain, mirroring how Model/Provider/Fidelity are carried.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF

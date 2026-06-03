@@ -27,7 +27,7 @@ Each directive references an external file relative to the `.dip` source directo
 These are tracked as numbered follow-up issues, filed before merge (§ Release coordination):
 
 1. **Defaults-block support for `prompt_file:` / `system_prompt_file:`.** Per-node only in v1, matching what `command_file:` shipped with. Today's `defaults agent` block does not support `prompt` or `system_prompt` at all (see `parser/parse_defaults.go` recognized-keys list), so file-form support would have to ship alongside inline-form support — that's a meaningfully larger design (cascade semantics, override rules, per-node-vs-default mutual exclusion) and not justified by current pain. File-form-in-defaults ships when an author wants to share one large external persona doc across agents. ([#72](https://github.com/2389-research/dippin-lang/issues/72))
-2. **Bundled-files `.dipx` redesign.** Currently `dippin pack` inlines file contents into the bundled `.dip` text via the shadow-tree machinery (`cmd/dippin/pack_shadow.go`). An alternative model would package the referenced scripts/prompts as separate files inside the `.dipx` and have tracker (and any other dipx consumer) call `parser.ResolveFileDirectives` against the unpacked bundle dir. Wins: tracker logs can reference original file paths; `.dipx` debug inspection shows author intent. Costs: tracker coordination required (the `.dipx` format version would bump); the shadow-tree machinery is obsoleted; old bundles need a cutover plan. Considered for this spec and explicitly deferred so v0.34 stays dippin-only. ([#73](https://github.com/2389-research/dippin-lang/issues/73))
+2. **Bundled-files `.dipx` redesign.** Currently `dippin pack` inlines file contents into the bundled `.dip` text via the shadow-tree machinery (`cmd/dippin/pack_shadow.go`). An alternative model would package the referenced scripts/prompts as separate files inside the `.dipx` and have the runtime (and any other dipx consumer) call `parser.ResolveFileDirectives` against the unpacked bundle dir. Wins: runtime logs can reference original file paths; `.dipx` debug inspection shows author intent. Costs: runtime coordination required (the `.dipx` format version would bump); the shadow-tree machinery is obsoleted; old bundles need a cutover plan. Considered for this spec and explicitly deferred so v0.34 stays dippin-only. ([#73](https://github.com/2389-research/dippin-lang/issues/73))
 3. **Glob support** (`prompt_file: prompts/*.md`). Composition semantics undefined; no current need. Mirrors the same follow-up filed against `command_file:` ([#68](https://github.com/2389-research/dippin-lang/issues/68)).
 
 ## Dippin-side design
@@ -174,7 +174,7 @@ func clearFileDirectives(wf *ir.Workflow) {
 
 If this trips cyclomatic ≤5, extract the agent branch to its own helper (`clearAgentFileDirectives`) — keeps the parent function at 3, the helper at 4.
 
-Result: pack-shadow walks each `.dip`, resolves all three directive families into IR content fields, clears all three `*File` fields, formats with inline `command:` / `prompt:` / `system_prompt:` blocks, writes to the shadow tree. `dipx.Pack` then bundles the fully-inlined `.dip` — tracker sees inline content, same as today. **No tracker coordination required for v0.34.**
+Result: pack-shadow walks each `.dip`, resolves all three directive families into IR content fields, clears all three `*File` fields, formats with inline `command:` / `prompt:` / `system_prompt:` blocks, writes to the shadow tree. `dipx.Pack` then bundles the fully-inlined `.dip` — the runtime sees inline content, same as today. **No runtime coordination required for v0.34.**
 
 ### Formatter (`formatter/format.go`)
 
@@ -199,7 +199,7 @@ if cfg.PromptFile != "" {
 
 ### DOT export + migrate
 
-**DOT export does NOT emit `prompt_file` or `system_prompt_file`.** Mirrors #52: DOT emits inlined `prompt` / `system_prompt` only. Tracker reads from `.dipx` bundles where content has already been inlined by the pack-shadow pass.
+**DOT export does NOT emit `prompt_file` or `system_prompt_file`.** Mirrors #52: DOT emits inlined `prompt` / `system_prompt` only. The runtime reads from `.dipx` bundles where content has already been inlined by the pack-shadow pass.
 
 **Migrate does NOT extract `prompt_file` or `system_prompt_file` from DOT attrs.** A `.dip → DOT → .dip` round-trip is lossy for the directive form (becomes inline). Documented in skill.md as an explicit non-goal, mirroring the `command_file:` round-trip trade-off.
 
@@ -209,11 +209,11 @@ if cfg.PromptFile != "" {
 
 `dippin pack` follows the same flow as other CLI commands: parse → resolve → pack. If a referenced prompt file is missing, the resolver returns a clean error before pack writes the bundle. Authors get the error at pack time, not at runtime. Same UX as #52.
 
-## Tracker-side design
+## Runtime-side design
 
-**None.** This is a dippin-internal feature. Tracker reads from `.dipx` bundles where `Prompt` and `SystemPrompt` are already populated by the pack-shadow pass. Tracker sees the same IR shape it sees today.
+**None.** This is a dippin-internal feature. The runtime reads from `.dipx` bundles where `Prompt` and `SystemPrompt` are already populated by the pack-shadow pass. The runtime sees the same IR shape it sees today.
 
-No tracker coordination required. v0.34.0 ships dippin-only.
+No runtime coordination required. v0.34.0 ships dippin-only.
 
 ## Tests
 
@@ -313,7 +313,7 @@ The example demonstrates the canonical use case: an agent with both a persona-st
 2. PR reviewed + approved.
 3. Bump CHANGELOG date + tag dippin v0.34.0.
 
-No tracker coordination needed. Tracker continues to read `.dipx` bundles where content is already inlined by the pack-shadow pass.
+No runtime coordination needed. The runtime continues to read `.dipx` bundles where content is already inlined by the pack-shadow pass.
 
 ### Version
 
@@ -343,7 +343,7 @@ Auto-handled (no change needed): tree-sitter grammar, Zed highlights, site `high
 (Mirrors the #52 "task #0" pattern that broke the DIP28 anti-pattern of unfilled "follow-up if needed" promises.)
 
 1. **Defaults-block support for `prompt_file:` / `system_prompt_file:`.** v1 is per-node only, matching `command_file:`. When a workflow needs a shared external persona doc across agents, expose the file-form in `defaults agent`. ([#72](https://github.com/2389-research/dippin-lang/issues/72))
-2. **Bundled-files `.dipx` redesign.** Replace the pack-shadow inline-into-`.dip` mechanism with bundled-as-files semantics: pack copies referenced scripts/prompts into the `.dipx` preserving relative paths; tracker (or any dipx consumer) calls `parser.ResolveFileDirectives` against the unpacked bundle dir. Trade-offs documented in § Non-goals #2. This is the more elegant end state but requires tracker coordination and a `.dipx` format version bump; deferred so v0.34 stays dippin-only. ([#73](https://github.com/2389-research/dippin-lang/issues/73))
+2. **Bundled-files `.dipx` redesign.** Replace the pack-shadow inline-into-`.dip` mechanism with bundled-as-files semantics: pack copies referenced scripts/prompts into the `.dipx` preserving relative paths; the runtime (or any dipx consumer) calls `parser.ResolveFileDirectives` against the unpacked bundle dir. Trade-offs documented in § Non-goals #2. This is the more elegant end state but requires runtime coordination and a `.dipx` format version bump; deferred so v0.34 stays dippin-only. ([#73](https://github.com/2389-research/dippin-lang/issues/73))
 
 ## Complexity budgets
 
@@ -372,6 +372,6 @@ If `clearFileDirectives` trips `just complexity`, extract the agent branch to it
 Brainstorming surfaced two non-trivial decisions:
 
 1. **Defaults-block scope:** per-node only, matching #52. The inline form (`defaults agent system_prompt: ...`) already covers the shared-config use case; the file-form-in-defaults is a v2 polish for a use case that hasn't surfaced.
-2. **Bundled-files `.dipx` redesign:** considered and explicitly deferred. The current inlining model (introduced by #52 because dipx couldn't import formatter) is structurally less elegant than bundling referenced files alongside `workflow.dip` and resolving at unpack time. But the bundled-files model requires tracker coordination and a format version bump, and the user-visible behavior is identical (referenced content reaches tracker either way). The redesign is filed as a follow-up so v0.34 stays dippin-only and ships fast.
+2. **Bundled-files `.dipx` redesign:** considered and explicitly deferred. The current inlining model (introduced by #52 because dipx couldn't import formatter) is structurally less elegant than bundling referenced files alongside `workflow.dip` and resolving at unpack time. But the bundled-files model requires runtime coordination and a format version bump, and the user-visible behavior is identical (referenced content reaches the runtime either way). The redesign is filed as a follow-up so v0.34 stays dippin-only and ships fast.
 
 Everything else mechanical: copy the #52 model field-by-field to two new agent fields, extend the existing resolver dispatcher with an agent branch, extend `clearCommandFileDirectives` → `clearFileDirectives` with an agent branch. The simplification is that there is no simplification needed — the work shipped in #52 was already the right shape for this extension.

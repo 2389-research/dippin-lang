@@ -3201,21 +3201,21 @@ git commit -m "feat(dipx): add atomic Extract"
 
 ### Phase 6 gate
 
-**Type:** Tracker-integration squad subagent.
+**Type:** Runtime-integration squad subagent.
 
-The Source interface is the contract Tracker swaps in. A subtle wrong shape here means Tracker can't migrate.
+The Source interface is the contract the runtime swaps in. A subtle wrong shape here means the runtime can't migrate.
 
-- [ ] **Dispatch tracker-integration subagent.**
+- [ ] **Dispatch runtime-integration subagent.**
 
 ```
 Agent({
-  description: "Phase 6 gate — Source interface and Tracker contract",
+  description: "Phase 6 gate — Source interface and runtime contract",
   subagent_type: "general-purpose",
   prompt: """
-You are a Tracker Integration Reviewer auditing the Source interface and dirSource implementation.
+You are a Runtime Integration Reviewer auditing the Source interface and dirSource implementation.
 
 Read in full:
-- /home/clint/code/2389/dippin-lang/docs/superpowers/specs/2026-05-06-dipx-bundle-format-design.md (focus on § 'Tracker integration contract', § 'Source implementations', § 'Path safety on every read')
+- /home/clint/code/2389/dippin-lang/docs/superpowers/specs/2026-05-06-dipx-bundle-format-design.md (focus on § 'Runtime integration contract', § 'Source implementations', § 'Path safety on every read')
 - /home/clint/code/2389/dippin-lang/dipx/source.go
 - /home/clint/code/2389/dippin-lang/dipx/source_test.go
 - /home/clint/code/2389/dippin-lang/dipx/bundle.go (Workflow/Resolve methods)
@@ -4637,7 +4637,7 @@ mcp__pal__chat({
 - Versioning → Task 6 (`SupportedFormatVersions`, version check)
 - Forward compat / signatures rejection → Task 5 (decodeManifest signatures rejected)
 - Concurrency → Task 25 (test); design holds via immutability
-- Tracker contract → Task 14 (Source interface), Task 21 (load helper)
+- Runtime contract → Task 14 (Source interface), Task 21 (load helper)
 - Operational ergonomics → CLI exit codes (Task 18), `--format=json` (Task 20), `--dry-run` (Task 18)
 - Known v1 limitations → No tasks; documentation-only in spec
 - Testing strategy → covered across every task; integration test in Task 22

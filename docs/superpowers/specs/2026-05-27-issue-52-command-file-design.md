@@ -3,12 +3,12 @@
 **Date:** 2026-05-27
 **Closes:** [#52](https://github.com/2389-research/dippin-lang/issues/52)
 **Status:** Design approved 2026-05-27
-**Predecessor:** v0.32.0 (`tool_access:`) shipped 2026-05-27 as a joint dippin + tracker release. Issue #52 was filed during v0.32 work; the four-round squad simplification pattern from #41 informs this spec's tight scope.
+**Predecessor:** v0.32.0 (`tool_access:`) shipped 2026-05-27 as a coordinated runtime release. Issue #52 was filed during v0.32 work; the four-round squad simplification pattern from #41 informs this spec's tight scope.
 **Research:** Three reviewer transcripts (YAGNI / pragmatism, parser+security, future-maintainer + integration) consulted while writing this spec — recorded the converged design below.
 
 ## Problem
 
-`.dip` tool nodes inline shell scripts via multiline `command:` blocks. There is no way to reference an external file. The result on real workflows is heredoc bloat — tracker's `examples/build_product.dip` is 1212 lines, of which ~200 are heredoc-write helpers (`Setup` writes shell scripts to disk for downstream nodes to source). The "Setup writes helper, downstream `source` it" pattern is a workaround that bloats `Setup` and forces a runtime write step for content that could live in the repo.
+`.dip` tool nodes inline shell scripts via multiline `command:` blocks. There is no way to reference an external file. The result on real workflows is heredoc bloat — a production `build_product.dip` is 1212 lines, of which ~200 are heredoc-write helpers (`Setup` writes shell scripts to disk for downstream nodes to source). The "Setup writes helper, downstream `source` it" pattern is a workaround that bloats `Setup` and forces a runtime write step for content that could live in the repo.
 
 ## Design
 
@@ -25,11 +25,11 @@ tool Setup
 
 These are tracked as numbered follow-up issues, filed before merge (§ Release coordination):
 
-1. **`prompt_file:` and `system_prompt_file:` directives.** The cited production pain (tracker's `build_product.dip` heredoc bloat) is entirely shell scripts in tool nodes. Prompt variants ship when a workflow with the analogous prompt-bloat pain surfaces. ([#65](https://github.com/2389-research/dippin-lang/issues/65))
+1. **`prompt_file:` and `system_prompt_file:` directives.** The cited production pain (a production `build_product.dip`'s heredoc bloat) is entirely shell scripts in tool nodes. Prompt variants ship when a workflow with the analogous prompt-bloat pain surfaces. ([#65](https://github.com/2389-research/dippin-lang/issues/65))
 2. **Configurable size cap.** v1 hardcodes 4MB. When someone has a legitimate larger file, file an issue with the use case and pick a real default; don't pre-emptively configure. ([#66](https://github.com/2389-research/dippin-lang/issues/66))
 3. **Symlink full-chain resolution.** v1 uses `os.Lstat` to reject symlinks at the directive's path. Full `EvalSymlinks` resolution (catching symlinks deeper in the resolved path) is deferred. ([#67](https://github.com/2389-research/dippin-lang/issues/67))
 4. **Glob support** (`command_file: scripts/*.sh`). Composition semantics undefined; no current need. ([#68](https://github.com/2389-research/dippin-lang/issues/68))
-5. **DOT round-trip preservation of `command_file:`.** DOT export emits inlined `command` only; pack-then-unpack loses the directive form. Spec documents the trade-off explicitly. Tracker reads from `.dipx` bundles where content is already inlined; no current consumer needs the path. ([#69](https://github.com/2389-research/dippin-lang/issues/69))
+5. **DOT round-trip preservation of `command_file:`.** DOT export emits inlined `command` only; pack-then-unpack loses the directive form. Spec documents the trade-off explicitly. The runtime reads from `.dipx` bundles where content is already inlined; no current consumer needs the path. ([#69](https://github.com/2389-research/dippin-lang/issues/69))
 6. **Graceful LSP/WASM "file directive seen; not loaded in this context" message.** Authors using the playground or LSP see `cfg.Command == ""` for tool nodes with `command_file:` set. v1 lets this silently work for lint (which doesn't dereference `Command`); a future polish surfaces a clearer signal. ([#70](https://github.com/2389-research/dippin-lang/issues/70))
 
 ## Dippin-side design
@@ -192,9 +192,9 @@ if cfg.CommandFile != "" {
 
 ### DOT export + migrate
 
-**DOT export does NOT emit `command_file`.** The DOT exporter only ever emits the inlined `command` attribute. Tracker reads from `.dipx` bundles where content has already been inlined by the CLI's resolver pass during `dippin pack`.
+**DOT export does NOT emit `command_file`.** The DOT exporter only ever emits the inlined `command` attribute. The runtime reads from `.dipx` bundles where content has already been inlined by the CLI's resolver pass during `dippin pack`.
 
-**Migrate does NOT extract `command_file` from DOT attrs.** A `.dip → DOT → .dip` round-trip is lossy for the directive form (becomes inline). This is documented in skill.md as an explicit non-goal. The use case for round-trip preservation is debugging tracker workflows; not justified for v1 (filed as follow-up).
+**Migrate does NOT extract `command_file` from DOT attrs.** A `.dip → DOT → .dip` round-trip is lossy for the directive form (becomes inline). This is documented in skill.md as an explicit non-goal. The use case for round-trip preservation is debugging runtime workflows; not justified for v1 (filed as follow-up).
 
 `migrate/parity.go` adds `CommandFile` to `compareToolConfigs`'s field-list to catch parity regressions. The new field-equality check is a single line; mirrors the v0.32 pattern.
 
@@ -202,11 +202,11 @@ if cfg.CommandFile != "" {
 
 `dippin pack` follows the same flow as other CLI commands: parse → resolve → pack. If a referenced file is missing, the resolver returns a clean error before pack writes the bundle. Authors get the error at pack time, not at runtime.
 
-## Tracker-side design
+## Runtime-side design
 
-**None.** This is a dippin-internal feature. Tracker reads from `.dipx` bundles where `Command` is already populated by the CLI's resolver pass during pack. Tracker sees the same IR shape it sees today.
+**None.** This is a dippin-internal feature. The runtime reads from `.dipx` bundles where `Command` is already populated by the CLI's resolver pass during pack. The runtime sees the same IR shape it sees today.
 
-No tracker coordination required. v0.33.0 ships dippin-only.
+No runtime coordination required. v0.33.0 ships dippin-only.
 
 ## Tests
 
@@ -288,7 +288,7 @@ The example demonstrates the canonical use case: an external shell script invoke
 2. PR reviewed + approved.
 3. Bump CHANGELOG date + tag dippin v0.33.0.
 
-No tracker coordination needed. Tracker continues to read `.dipx` bundles where content is already inlined.
+No runtime coordination needed. The runtime continues to read `.dipx` bundles where content is already inlined.
 
 ### Version
 
@@ -322,7 +322,7 @@ Auto-handled (no change needed): tree-sitter grammar, Zed highlights, site `high
 2. **Configurable size cap for `*_file:` directives.** v1 hardcodes 4MB. If a legitimate use case exceeds it, expose a workflow-level or CLI-level config. ([#66](https://github.com/2389-research/dippin-lang/issues/66))
 3. **Symlink full-chain resolution via `EvalSymlinks`.** v1 only rejects symlinks at the directive's path. A deeper symlink (in a parent directory that resolves elsewhere) could still escape. Tighten if the threat model requires. ([#67](https://github.com/2389-research/dippin-lang/issues/67))
 4. **Glob support for `command_file:` patterns.** `command_file: scripts/*.sh` expansion with defined composition semantics. ([#68](https://github.com/2389-research/dippin-lang/issues/68))
-5. **Preserve `command_file:` path through DOT round-trip.** Required if tracker (or any other consumer) wants source-path attribution in debugging output. Currently no consumer needs this. ([#69](https://github.com/2389-research/dippin-lang/issues/69))
+5. **Preserve `command_file:` path through DOT round-trip.** Required if the runtime (or any other consumer) wants source-path attribution in debugging output. Currently no consumer needs this. ([#69](https://github.com/2389-research/dippin-lang/issues/69))
 6. **Graceful LSP/WASM "file directive seen; not loaded in this context" signal.** v1 lets these contexts silently render the unresolved IR. A future polish surfaces a clearer note in the LSP diagnostic stream and the playground UI. ([#70](https://github.com/2389-research/dippin-lang/issues/70))
 
 ## Complexity budgets

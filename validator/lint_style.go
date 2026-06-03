@@ -90,7 +90,7 @@ func lintToolTimeout(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
-// validFidelityLevels is the set of fidelity levels recognized by Tracker's engine.
+// validFidelityLevels is the set of fidelity levels recognized by the runtime engine.
 var validFidelityLevels = map[string]bool{
 	"full":           true,
 	"summary:high":   true,

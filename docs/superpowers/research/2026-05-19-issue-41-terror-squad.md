@@ -12,21 +12,21 @@ Mid-brainstorming for v0.30.0, a five-reviewer panel (language-design / security
 
 ## The parking decision
 
-The original framing: dippin v0.30.0 ships parser + IR + validator + DOT export + migrate for new `tools:` and `disallowed_tools:` agent-node fields. Tracker untouched until a follow-up. The fields would be a runtime no-op until tracker plumbed them through.
+The original framing: dippin v0.30.0 ships parser + IR + validator + DOT export + migrate for new `tools:` and `disallowed_tools:` agent-node fields. The runtime untouched until a follow-up. The fields would be a runtime no-op until the runtime plumbed them through.
 
-**This is the load-bearing critical finding.** The Security and Future-maintainer reviewers independently concluded that shipping lint-validated, runtime-no-op safety fields is *materially worse* than the status quo: authors get green diagnostics on `tools: none` and ship believing they're sandboxed when they aren't. The project's own track record (v0.22, v0.23) shipped tracker side in the same batch when the language surface had security semantics. Shipping advisory-only contradicts that pattern.
+**This is the load-bearing critical finding.** The Security and Future-maintainer reviewers independently concluded that shipping lint-validated, runtime-no-op safety fields is *materially worse* than the status quo: authors get green diagnostics on `tools: none` and ship believing they're sandboxed when they aren't. The project's own track record (v0.22, v0.23) shipped runtime-side in the same batch when the language surface had security semantics. Shipping advisory-only contradicts that pattern.
 
 Three coupled scope choices were on the table:
 
 1. **Park #41**, do a smaller v0.30.0 (chosen).
-2. Ship narrowed dippin-only with a hard-warn lint on every use of the new fields until tracker lands.
-3. Pull tracker into the same batch as a joint release.
+2. Ship narrowed dippin-only with a hard-warn lint on every use of the new fields until the runtime lands.
+3. Pull the runtime into the same batch as a joint release.
 
-Choice 1 was selected. Choice 3 is the natural return path for v0.31.0 — design dippin and tracker together, ship together, no advisory window.
+Choice 1 was selected. Choice 3 is the natural return path for v0.31.0 — design dippin and the runtime together, ship together, no advisory window.
 
 ## What blocks unparking
 
-- Approval to design a tracker-side change concurrent with the dippin spec (tracker has been intentionally untouched through v0.28/v0.29/v0.30).
+- Approval to design a runtime-side change concurrent with the dippin spec (the runtime has been intentionally untouched through v0.28/v0.29/v0.30).
 - Time budget for a cross-repo design pass (two specs, two plans, coordinated PRs, joint release).
 - Decision on the criticals below (a fresh brainstorming pass for #41 should *start* with this list, not rediscover it).
 
@@ -40,10 +40,10 @@ The v0.28.2 incident was an *author-judgment* failure — the author didn't iden
 
 ### 2. DIP141 reserved-only ships a known typo footgun
 
-`disallowed_tools: bash, applypatch` (lowercase) silently no-ops against tracker's CamelCase catalog (`Bash`, `ApplyPatch`). DIP141 was reserved to catch this but with no firing logic. The v0.29.0 spec explicitly rejected this exact pattern (`route_required: yes` silently parsing as `false`) as "**not acceptable**" when the failure mode silently disables a safety net. Reserving DIP141 contradicts the project's own established precedent.
+`disallowed_tools: bash, applypatch` (lowercase) silently no-ops against the runtime's CamelCase catalog (`Bash`, `ApplyPatch`). DIP141 was reserved to catch this but with no firing logic. The v0.29.0 spec explicitly rejected this exact pattern (`route_required: yes` silently parsing as `false`) as "**not acceptable**" when the failure mode silently disables a safety net. Reserving DIP141 contradicts the project's own established precedent.
 
 **Resolutions:**
-- Ship `ir.KnownAgentTools = []string{"Read","Write","Edit","ApplyPatch","Glob","GrepSearch","Bash"}` — already implicitly coupled to tracker; making it explicit beats silent failure.
+- Ship `ir.KnownAgentTools = []string{"Read","Write","Edit","ApplyPatch","Glob","GrepSearch","Bash"}` — already implicitly coupled to the runtime; making it explicit beats silent failure.
 - Case-normalize on parse to canonical CamelCase.
 - Or: drop `disallowed_tools` from the surface entirely (see #5 below).
 
@@ -51,7 +51,7 @@ The v0.28.2 incident was an *author-judgment* failure — the author didn't iden
 
 ### 3. `Params` map is a parallel attack surface
 
-`agent X { tools: none; params: { allowed_tools: Bash, Edit } }` re-enables tools the typed field disabled. Tracker already reads runtime-affecting keys from `Params` (e.g., `permission_mode`). The original design has zero coverage.
+`agent X { tools: none; params: { allowed_tools: Bash, Edit } }` re-enables tools the typed field disabled. The runtime already reads runtime-affecting keys from `Params` (e.g., `permission_mode`). The original design has zero coverage.
 
 **Resolution:** new lint code for known-dangerous param keys (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`) shadowing the typed `tools:` field. Extend `agentFirstClassFields` in `validator/lint_response.go` to include the new tool-access fields so DIP133 fires automatically.
 
@@ -106,7 +106,7 @@ Parser has no coded-diagnostic infrastructure today — only untyped freeform st
 
 ### 9. `DisallowedTools []string` contradicts DIP28's `ToolCommandsAllow string`
 
-Same struct neighborhood, same problem shape, different decision. DIP28's rationale ("tracker owns parsing, IR stays authoring-format-agnostic, avoids drift") still applies to `disallowed_tools`. Two representations of the same concept across two structs is a bug factory.
+Same struct neighborhood, same problem shape, different decision. DIP28's rationale ("the runtime owns parsing, IR stays authoring-format-agnostic, avoids drift") still applies to `disallowed_tools`. Two representations of the same concept across two structs is a bug factory.
 
 **Resolutions:**
 - Keep both `string` (DIP28's choice — preferred).
@@ -135,7 +135,7 @@ Same struct neighborhood, same problem shape, different decision. DIP28's ration
 | `splitComma` produces empty-string entries on edge inputs — use `splitCommaNoEmpty`; the proposed `parseListAttr` helper is redundant | Parser C3 + I3, IR I4 |
 | Casing not normalized — `tools: NONE` silently becomes default-full-catalog | Parser edge case, Security M3 |
 | Backend coupling: `tools: none` semantics differ between `backend: native` and `backend: claude-code`. Original spec didn't disambiguate | Security I5 |
-| Authoring guidance debt — skill.md would have to hedge ("ineffective until tracker vX") forever | Future #7 |
+| Authoring guidance debt — skill.md would have to hedge ("ineffective until the runtime enforces it") forever | Future #7 |
 | `examples/agent_tool_access.dip` must lint-clean; DIP140-tripping example would be permanent CI noise. Mirror the issue body's `ReportFinalStatus` framing | Future #10 |
 
 ## Predicted regret (Future-maintainer's closing line)
@@ -146,14 +146,14 @@ Same struct neighborhood, same problem shape, different decision. DIP28's ration
 
 This is **not** a design — it is a starting point that addresses every critical above. The v0.31 brainstorming should reconsider every choice.
 
-- **Cross-repo scope.** dippin + tracker as a joint release. No advisory window.
+- **Cross-repo scope.** dippin + the runtime as a joint release. No advisory window.
 - **Field name.** `tool_access:` (source) / `ToolAccess` (IR) — avoids the `tools`/`tool` collision.
 - **Surface.** `tool_access: none | read_filesystem | full`. Drop `"all"`, drop `"read_only"` naming. No `disallowed_tools` in the first cut — defer to a richer follow-up if needed (precedent rules already locked).
 - **Defaults cascade.** `defaults: tool_access: read_filesystem` works; per-node `tool_access:` overrides (matches `Model`/`Provider` precedent: full override, no merge).
 - **Parser.** Stores `cfg.ToolAccess = val` verbatim; no validation. On unknown value, fail closed to `"none"`.
 - **Linter.** New `validator/lint_tool_access.go` with `validToolAccess` map. DIP139 fires on invalid value, DIP140 fires when `Params` shadows `tool_access` (`allowed_tools`/`disallowed_tools`/`tool_choice`/`permission_mode` in `params:`), DIP141 fires when parent of a parallel/manager-loop block has restrictive `tool_access` but children don't.
 - **Precedence rules.** Locked: `tool_access:` resolves to a starting catalog. Future `allowed_tools:` intersects. Future `disallowed_tools:` subtracts.
-- **Tracker side.** Honors `ToolAccess == "none"` by setting `tool_choice: none` (Anthropic) / equivalent (OpenAI). Filter tool registry for `read_filesystem`. System-prompt scrubbing: when `ToolAccess == "none"`, omit the "File tool arguments MUST use..." line.
+- **Runtime side.** Honors `ToolAccess == "none"` by setting `tool_choice: none` (Anthropic) / equivalent (OpenAI). Filter tool registry for `read_filesystem`. System-prompt scrubbing: when `ToolAccess == "none"`, omit the "File tool arguments MUST use..." line.
 - **Cross-node injection.** Out of scope for this primitive, but spec should call out the `${ctx.last_response}` auto-injection vector and link to a separate follow-up issue.
 
 ## Raw reports

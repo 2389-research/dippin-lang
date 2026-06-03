@@ -228,7 +228,7 @@
 ### 17. Multi-line Prompts Without Escaping
 **Synopsis**: The #1 reason Dippin exists. How indentation-based blocks solve DOT's escaping nightmare.
 **Cover**:
-- The DOT problem: `prompt="line1\nline2\n\"quoted\""` — real examples from tracker
+- The DOT problem: `prompt="line1\nline2\n\"quoted\""` — real examples from production pipelines
 - The Dippin solution: indent after `:`, write anything
 - What's preserved: blank lines, markdown, code blocks, shell scripts, JSON
 - How the lexer handles indentation: indent stack, base-level stripping

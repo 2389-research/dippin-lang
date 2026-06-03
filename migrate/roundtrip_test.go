@@ -289,10 +289,10 @@ func TestRoundtripPreservesToolAsStart(t *testing.T) {
 // survives the .dip → DOT → migrate cycle.
 //
 // Bug shape: an author writes tool_access: none on a summarizer node, ships
-// it to tracker via dipx bundle; the value must arrive intact at tracker
+// it to the runtime via dipx bundle; the value must arrive intact at the runtime
 // for the safety primitive to bind. This test exercises the dippin half of
-// that chain (parser → DOT export → migrate); the tracker half is covered
-// in the tracker-side red-team test.
+// that chain (parser → DOT export → migrate); the runtime-side coverage is
+// handled separately.
 func TestRoundtripPreservesToolAccess(t *testing.T) {
 	src := `workflow ToolAccessRT
   start: A

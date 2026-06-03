@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `command_file:` on tool nodes so authors can replace inline `command:` heredocs with external file references. v0.33.0 is dippin-internal — no tracker coordination required.
+**Goal:** Ship `command_file:` on tool nodes so authors can replace inline `command:` heredocs with external file references. v0.33.0 is dippin-internal — no runtime coordination required.
 
 **Architecture:** Parser stays pure. Stores the path verbatim in a new `ToolConfig.CommandFile` field. A separate `parser.ResolveFileDirectives(w, baseDir)` pass loads files at CLI entry points; LSP and WASM skip the resolver and see the unresolved IR view without error. Path security (absolute / parent-tree / symlink / 4MB) lives entirely in the resolver. Mutual exclusion with inline `command:` is a parser-time error (no DIP code). Formatter preserves directive form via `cfg.CommandFile != ""` branch.
 
@@ -938,7 +938,7 @@ Path resolution: relative to the `.dip` source directory. Absolute paths rejecte
 
 Mutually exclusive with `command:` — specifying both is a parse error.
 
-Loading: CLI entry points (`dippin lint`, `dippin pack`, `dippin validate`, `dippin doctor`) load the file contents into the IR after parse. The LSP and the playground (cmd/wasm) skip loading; they show the path unresolved. Tracker reads `.dipx` bundles where content is already inlined, so the runtime sees no difference from inline `command:`.
+Loading: CLI entry points (`dippin lint`, `dippin pack`, `dippin validate`, `dippin doctor`) load the file contents into the IR after parse. The LSP and the playground (cmd/wasm) skip loading; they show the path unresolved. The runtime reads `.dipx` bundles where content is already inlined, so the runtime sees no difference from inline `command:`.
 
 Non-goals (deferred): `prompt_file:` / `system_prompt_file:` directives, glob expansion, configurable size cap, DOT round-trip preservation of the directive form. See follow-up issues linked from issue [#52](https://github.com/2389-research/dippin-lang/issues/52).
 ```
@@ -950,7 +950,7 @@ Edit `CHANGELOG.md`. Add at the top (above v0.32.0):
 ```markdown
 ## [v0.33.0] — RELEASE_DATE
 
-New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long tracker workflows. Dippin-only release — no tracker coordination required (tracker reads inlined `Command` from `.dipx` bundles unchanged).
+New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long pipelines. Dippin-only release — no runtime coordination required (the runtime reads inlined `Command` from `.dipx` bundles unchanged).
 
 ### Added
 - `command_file: <path>` directive on tool nodes. Path is relative to the `.dip` source directory.
@@ -961,7 +961,7 @@ New `command_file:` directive on tool nodes replaces inline `command:` heredocs 
 
 ### Notes
 - LSP and `cmd/wasm` (playground) skip the resolver. They see `cfg.CommandFile != "" && cfg.Command == ""`, which is the correct unresolved-IR view. Lints that need command content (none today on tool nodes) would need a defensive check for the unresolved case.
-- DOT round-trip is lossy for the directive form — pack-then-unpack rewrites `command_file:` to inline `command:`. Tracker reads from `.dipx` bundles where content is already inlined; no current consumer needs the path preserved through DOT. Deferred to a follow-up issue.
+- DOT round-trip is lossy for the directive form — pack-then-unpack rewrites `command_file:` to inline `command:`. The runtime reads from `.dipx` bundles where content is already inlined; no current consumer needs the path preserved through DOT. Deferred to a follow-up issue.
 ```
 
 The `RELEASE_DATE` placeholder gets filled at Task 10 tag time.
@@ -996,7 +996,7 @@ Open `lsp/completion.go`. Find `fieldCompletions` (around line 42-67). Add an en
 ```go
 {"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
 {"command_file:", "External script reference for tool node (path relative to .dip dir)"},
-{"route_required:", "Require _TRACKER_ROUTE= sentinel line from tool stdout"},
+{"route_required:", "Fail the node if the command emits no runtime-recognized routing signal on stdout"},
 ```
 
 - [ ] **Step 2: Add LSP completion regression test**
@@ -1067,7 +1067,7 @@ Closes [#52](https://github.com/2389-research/dippin-lang/issues/52).
 
 Adds `command_file:` directive on tool nodes. Author can replace inline `command:` heredoc with external file reference. Parser stays pure; a separate `ResolveFileDirectives` pass runs at CLI entry points. LSP and WASM playground skip the resolver and see the unresolved IR view.
 
-Dippin-internal — no tracker coordination needed.
+Dippin-internal — no runtime coordination needed.
 
 ## Spec
 docs/superpowers/specs/2026-05-27-issue-52-command-file-design.md

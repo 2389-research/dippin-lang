@@ -29,7 +29,7 @@ site/resources/
 site/static/dippin.wasm
 site/static/wasm_exec.js
 
-# Tracker build artifacts
+# Pipeline working-dir artifacts
 .tracker/
 .ai/
 .DS_Store

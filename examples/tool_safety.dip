@@ -5,10 +5,10 @@ workflow ToolSafety
 
   defaults
     model: claude-sonnet-4-6
-    # Restrict tool nodes to a glob allowlist. Tracker parses the comma-separated
+    # Restrict tool nodes to a glob allowlist. The runtime parses the comma-separated
     # list at runtime and rejects commands that don't match any pattern.
     tool_commands_allow: "git *,make *,npm test,npm run *"
-    # Patterns appended to tracker's default denylist, in addition to its
+    # Patterns appended to the runtime's default denylist, in addition to its
     # built-in blocks on destructive commands.
     tool_denylist_add: "rm -rf /,dd if=*"
 

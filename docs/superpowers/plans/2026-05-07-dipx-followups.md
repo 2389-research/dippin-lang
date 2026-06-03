@@ -13,7 +13,7 @@ Path canonicalization rules 1 and 4 (per spec § "Path canonicalization") cover 
 
 These pass current Canonicalize rules and could enable visual-spoofing attacks at the operator-UI layer.
 
-**Disposition**: defer to v1.1. Investigate adding NFKC normalization rejection or a "no format-class characters" rule. Coordinate with Tracker (which presents bundle paths to operators).
+**Disposition**: defer to v1.1. Investigate adding NFKC normalization rejection or a "no format-class characters" rule. Coordinate with downstream consumers (which present bundle paths to operators).
 
 ## Wider "any other separator" interpretation (Phase 2 gate)
 
@@ -109,7 +109,7 @@ The `verifiedBytes` zero-value `verifiedBytes{}` and one-arg constructor `newVer
 
 ### dirSource cache is unbounded with global mutex (Phase 6, M1/M2)
 
-Spec § "Source implementations" mandates "LRU of 256 entries with singleflight.Group for cold-call coalescing." Implementation is unbounded `map[string]*ir.Workflow` guarded by sync.Mutex held across parseDipFile (disk I/O). Two issues: long-running Tracker processes leak parsed IR, and concurrent reads on different paths serialize on the global mutex. **Disposition:** v1.1. Drop in `golang.org/x/sync/singleflight` and a small LRU (e.g. `github.com/hashicorp/golang-lru/v2`) — or hand-roll. The singleflight key is the bundle-relative path; the LRU bounds memory.
+Spec § "Source implementations" mandates "LRU of 256 entries with singleflight.Group for cold-call coalescing." Implementation is unbounded `map[string]*ir.Workflow` guarded by sync.Mutex held across parseDipFile (disk I/O). Two issues: long-running runtime processes leak parsed IR, and concurrent reads on different paths serialize on the global mutex. **Disposition:** v1.1. Drop in `golang.org/x/sync/singleflight` and a small LRU (e.g. `github.com/hashicorp/golang-lru/v2`) — or hand-roll. The singleflight key is the bundle-relative path; the LRU bounds memory.
 
 ### Extract atomicity edge cases (Phase 6, M3/M4) — SUPERSEDED by P10.1 resolution
 
@@ -117,7 +117,7 @@ Spec § "Source implementations" mandates "LRU of 256 entries with singleflight.
 
 ### Source.Workflow doesn't take context (Phase 6, L4)
 
-`Source.Workflow(refPath, relativeTo)` performs disk I/O for dirSource but no ctx. Spec is internally inconsistent: § "Cancellation" line 272 says I/O entry points take ctx, but § "Tracker integration contract" example shows ctx-less Workflow. **Disposition:** v1.1 spec clarification. Decide whether Source is a "fast lookup" or "I/O entry point." If the latter, breaking signature change.
+`Source.Workflow(refPath, relativeTo)` performs disk I/O for dirSource but no ctx. Spec is internally inconsistent: § "Cancellation" line 272 says I/O entry points take ctx, but § "Runtime integration contract" example shows ctx-less Workflow. **Disposition:** v1.1 spec clarification. Decide whether Source is a "fast lookup" or "I/O entry point." If the latter, breaking signature change.
 
 ## Phase 7 gate findings (deferred)
 

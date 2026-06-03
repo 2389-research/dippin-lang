@@ -20,7 +20,7 @@ var validToolAccess = map[string]bool{
 // lintToolAccessValues fires DIP139 when an agent node — or a per-branch override
 // on a parallel node — sets tool_access to a value other than "" or "none"
 // (case-insensitive). Authors who skip lint and ship an invalid value get
-// fail-closed tracker behavior; DIP139 surfaces the typo at lint time.
+// fail-closed runtime behavior; DIP139 surfaces the typo at lint time.
 func lintToolAccessValues(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
@@ -77,7 +77,7 @@ func checkToolAccessValue(n *ir.Node, toolAccess, branch string) []Diagnostic {
 }
 
 // toolReenablingParamsKeys lists Params keys that re-grant LLM tools. When an
-// agent sets tool_access, tracker strips these (fail-closed); the lint surfaces
+// agent sets tool_access, the runtime strips these (fail-closed); the lint surfaces
 // the neutralized override at author time. Source: v0.32.0 issue-41 design
 // § Params bypass defense.
 var toolReenablingParamsKeys = map[string]bool{
@@ -92,7 +92,7 @@ var toolReenablingParamsKeys = map[string]bool{
 // tool-re-enabling bypass would reopen at the branch level.
 
 // lintParamsReenablesTools fires DIP140 when an agent declares tool_access
-// (non-empty) yet also sets a Params key that would re-enable tools. Tracker
+// (non-empty) yet also sets a Params key that would re-enable tools. The runtime
 // ignores such keys when tool_access is set, so the override is silently
 // neutralized — a likely bypass attempt or dead config.
 func lintParamsReenablesTools(w *ir.Workflow) []Diagnostic {
@@ -120,7 +120,7 @@ func checkParamsReenable(n *ir.Node, params map[string]string) []Diagnostic {
 		diags = append(diags, Diagnostic{
 			Code:     DIP140,
 			Severity: SeverityWarning,
-			Message:  fmt.Sprintf("node %q params key %q re-enables tools that tool_access strips — tracker ignores it", n.ID, k),
+			Message:  fmt.Sprintf("node %q params key %q re-enables tools that tool_access strips — the runtime ignores it", n.ID, k),
 			Location: n.Source,
 			Help:     "remove the params key; tool_access governs the tool catalog. To grant tools instead, omit tool_access.",
 		})

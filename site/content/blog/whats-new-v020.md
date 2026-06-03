@@ -46,7 +46,7 @@ workflow SemportRust
     target_module: "claude-agents-rs/src/"
 ```
 
-Vars export as DOT graph-level attributes (what Tracker reads via `graph.Attrs`), round-trip through parse/format/export/migrate, and the parser catches duplicate keys. DOT migration now captures unknown graph attributes into `Workflow.Vars` instead of silently dropping them.
+Vars export as DOT graph-level attributes (read by the runtime via `graph.Attrs`), round-trip through parse/format/export/migrate, and the parser catches duplicate keys. DOT migration now captures unknown graph attributes into `Workflow.Vars` instead of silently dropping them.
 
 ## Shell-aware tool linting
 

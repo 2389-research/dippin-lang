@@ -2,7 +2,7 @@
 
 ## Project
 
-dippin-lang is a DSL and toolchain for authoring AI pipeline workflows. It replaces Graphviz DOT as the authoring format for Tracker pipelines.
+dippin-lang is a DSL and toolchain for authoring AI pipeline workflows. It replaces Graphviz DOT as the authoring format consumed by a downstream pipeline runtime.
 
 ## Claude Code Skill
 
@@ -56,7 +56,7 @@ Key gotcha: The parser stores edge conditions as `Condition.Raw` (plain text). `
 ## Git Workflow
 
 - **Never commit or push to `main`.** All work happens on a unique feature branch (e.g. `fix/<issue>-<slug>`, `feat/<slug>`). Branch first, then commit.
-- **Never push directly to `main`.** Changes reach `main` only through a reviewed Pull Request. `main` is delivered to the tracker team via tags (see Versioning), so it must stay green and intentional.
+- **Never push directly to `main`.** Changes reach `main` only through a reviewed Pull Request. `main` is delivered to downstream consumers via tags (see Versioning), so it must stay green and intentional.
 - **Work off an isolated worktree per unit of work**, not the shared checkout — so an in-progress branch never collides with other work. Use `git worktree add` (or the `superpowers:using-git-worktrees` skill).
 - **Parallel subagents each get their own worktree.** When dispatching subagents to work on independent/parallel branches of work simultaneously, give each its own git worktree (`isolation: "worktree"` for the Agent tool / `opts.isolation: "worktree"` in workflows) so concurrent edits can't conflict. Sequential subagents editing the same branch share the one worktree.
 - Leave `.claude/settings.local.json` uncommitted.
@@ -64,7 +64,7 @@ Key gotcha: The parser stores edge conditions as `Condition.Raw` (plain text). `
 
 ## Versioning
 
-Tag semver releases after batches of meaningful changes. The tracker team **always pins to a specific dippin version, never `@latest`** — so merged work on `main` is invisible to them until it's tagged. Cutting a tag is what delivers a feature to tracker; they then bump their pin to adopt it. Update CHANGELOG.md when tagging.
+Tag semver releases after batches of meaningful changes. Downstream consumers **always pin to a specific dippin version, never `@latest`** — so merged work on `main` is invisible to them until it's tagged. Cutting a tag is what delivers a feature to consumers; they then bump their pin to adopt it. Update CHANGELOG.md when tagging.
 
 ```sh
 git tag -a v0.X.0 -m "description" && git push origin v0.X.0

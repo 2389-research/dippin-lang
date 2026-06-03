@@ -10,7 +10,7 @@ Dippin provides two integration paths:
 
 ```mermaid
 graph LR
-    subgraph "Go Consumers (e.g., Tracker)"
+    subgraph "Go Consumers"
         LIB["Import as Go library<br><code>github.com/2389-research/dippin-lang</code>"]
         LIB --> PARSE["parser.NewParser().Parse()"]
         PARSE --> IR["*ir.Workflow"]
@@ -29,7 +29,7 @@ graph LR
 | **Go library** | Your project is in Go | Type-safe, no subprocess overhead, access to all IR types | Adds a Go module dependency |
 | **CLI (JSON)** | Any language, CI pipelines, scripting | Language-agnostic, no build dependency | Subprocess overhead, JSON parsing required |
 
-For Go projects like Tracker, **use both**: the library for production integration, the CLI for development tooling (formatting, linting, DOT export).
+For Go projects, **use both**: the library for production integration, the CLI for development tooling (formatting, linting, DOT export).
 
 ---
 
@@ -260,16 +260,16 @@ The loop handles question generation with inline options, structured answer coll
 
 ---
 
-## Writing an Adapter (Tracker Example)
+## Writing an Adapter
 
 The recommended pattern: your project imports dippin-lang and converts `*ir.Workflow` into your own types. This keeps dippin-lang generic and your project in control of the mapping.
 
-### Tracker's Current Types
+### Example Consumer Types
 
-Tracker uses `pipeline.Graph`, `pipeline.Node`, and `pipeline.Edge` with a shape-to-handler mapping:
+A typical runtime might use `pipeline.Graph`, `pipeline.Node`, and `pipeline.Edge` with a shape-to-handler mapping:
 
 ```go
-// Tracker's types (simplified)
+// Example consumer types (simplified)
 type Graph struct {
     Name, StartNode, ExitNode string
     Nodes map[string]*Node
@@ -299,7 +299,7 @@ import (
 )
 
 // kindToShape maps Dippin node kinds back to DOT shapes
-// that Tracker's handler registry understands.
+// that the runtime's handler registry understands.
 var kindToShape = map[ir.NodeKind]string{
     ir.NodeAgent:    "box",
     ir.NodeHuman:    "hexagon",
@@ -309,7 +309,7 @@ var kindToShape = map[ir.NodeKind]string{
     ir.NodeSubgraph: "tab",
 }
 
-// FromDippinIR converts a Dippin IR workflow into a Tracker Graph.
+// FromDippinIR converts a Dippin IR workflow into a runtime Graph.
 // The returned Graph is ready for use with NewEngine and the handler registry.
 func FromDippinIR(w *ir.Workflow) *Graph {
     g := NewGraph(w.Name)
@@ -425,7 +425,7 @@ func FromDippinIR(w *ir.Workflow) *Graph {
             Attrs: make(map[string]string),
         }
 
-        // Flatten condition AST back to string for Tracker's engine.
+        // Flatten condition AST back to string for the runtime's engine.
         if e.Condition != nil {
             edge.Condition = e.Condition.Raw
         }
@@ -673,7 +673,7 @@ Use JSON output for GitHub Actions annotations or similar:
 
 ## Condition String Compatibility
 
-Tracker currently stores conditions as raw strings (`edge.Condition`). Dippin parses conditions into an AST but preserves the raw text in `Condition.Raw`. When adapting back to Tracker types, use the raw string:
+Runtimes that store conditions as raw strings (`edge.Condition`) can use Dippin's `Condition.Raw` field directly — Dippin parses conditions into an AST but always preserves the original raw text. When adapting back to such runtime types, use the raw string:
 
 ```go
 if e.Condition != nil {
@@ -681,7 +681,7 @@ if e.Condition != nil {
 }
 ```
 
-**Namespace difference**: Dippin uses namespaced variables (`ctx.outcome`), while Tracker uses bare names (`outcome`) or prefixed names (`context.tool_stdout`). During migration, the `migrate` command handles the translation. When writing new `.dip` files, always use the `ctx.` namespace — the adapter should strip the prefix when converting to Tracker's format if needed.
+**Namespace difference**: Dippin uses namespaced variables (`ctx.outcome`), while some runtimes use bare names (`outcome`) or prefixed names (`context.tool_stdout`). During migration, the `migrate` command handles the translation. When writing new `.dip` files, always use the `ctx.` namespace — the adapter should strip the prefix when converting to the runtime's format if needed.
 
 ---
 
@@ -768,4 +768,4 @@ Dippin is a **language and toolchain**, not a runtime. It does not:
 - Handle human interaction UI
 - Run shell commands
 
-These responsibilities stay in the consuming project (e.g., Tracker's engine, handler registry, and TUI). Dippin's job is to parse, validate, format, and export — the consuming project does everything else.
+These responsibilities stay in the consuming project (e.g., the runtime's engine, handler registry, and UI). Dippin's job is to parse, validate, format, and export — the consuming project does everything else.

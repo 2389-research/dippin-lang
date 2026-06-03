@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `writable_paths` glob-list field to dippin agent nodes and parallel branches that carries + lints path-bounded write scope (tracker enforces the fs-jail at runtime).
+**Goal:** Add a `writable_paths` glob-list field to dippin agent nodes and parallel branches that carries + lints path-bounded write scope (the runtime enforces the fs-jail at runtime).
 
-**Architecture:** `writable_paths` is a `[]string` on `AgentConfig` and `BranchConfig`, orthogonal to the `tool_access` scalar. It rides the established list-field rails (`reads`/`writes`/`outputs`) through parse → IR → format → DOT export → migrate, plus two new lints (DIP141 dead-config, DIP142 unsafe entry). dippin does no resolution/coercion; the parser uses `splitCommaNoEmpty` so empty fails closed at the tracker. This plan is **dippin-side only** — the tracker fs-jail enforcement is a separate, joint-released PR (see spec § Release coordination).
+**Architecture:** `writable_paths` is a `[]string` on `AgentConfig` and `BranchConfig`, orthogonal to the `tool_access` scalar. It rides the established list-field rails (`reads`/`writes`/`outputs`) through parse → IR → format → DOT export → migrate, plus two new lints (DIP141 dead-config, DIP142 unsafe entry). dippin does no resolution/coercion; the parser uses `splitCommaNoEmpty` so empty fails closed at the runtime. This plan is **dippin-side only** — the runtime fs-jail enforcement is a separate, joint-released PR (see spec § Release coordination).
 
 **Tech Stack:** Go; `just` for all build/test/lint; pre-commit enforces cyclo ≤ 5 / cognit ≤ 7, gofmt, golangci-lint, race tests, example validation.
 
@@ -95,8 +95,8 @@ In `ir/ir.go`, in `AgentConfig`, immediately after the `ToolAccess` field (line 
 	// WritablePaths bounds the file paths this agent's tools may write, as
 	// author-chosen globs (e.g. "workspace/**", ".ai/sprints/**") resolved against
 	// the session root. Empty/absent = unbounded. A present-but-empty or malformed
-	// value fails CLOSED at the tracker (deny-all / refuse-to-start), never
-	// unbounded. dippin carries + lints; tracker enforces an fs-level write jail on
+	// value fails CLOSED at the runtime (deny-all / refuse-to-start), never
+	// unbounded. dippin carries + lints; the runtime enforces an fs-level write jail on
 	// the native backend (Bash + its children included); claude-code/acp refuse to
 	// start. See issue #75.
 	WritablePaths []string
@@ -107,8 +107,8 @@ In `BranchConfig`, after the `ToolAccess` field (line 164):
 ```go
 	// WritablePaths is a per-branch override of the target agent's writable_paths.
 	// Empty INHERITS the target agent's writable_paths (never resets to unbounded) —
-	// tracker resolves effective = branch if non-empty else agent. dippin carries +
-	// lints; tracker enforces. See issue #75.
+	// the runtime resolves effective = branch if non-empty else agent. dippin carries +
+	// lints; the runtime enforces. See issue #75.
 	WritablePaths []string
 ```
 
@@ -269,7 +269,7 @@ func TestParseAgentWritablePathsEmptyIsNil(t *testing.T) {
 	}
 	cfg := w.Node("A").Config.(ir.AgentConfig)
 	if cfg.WritablePaths != nil {
-		t.Errorf("bare writable_paths should be nil (fail-closed at tracker), got %v", cfg.WritablePaths)
+		t.Errorf("bare writable_paths should be nil (fail-closed at the runtime), got %v", cfg.WritablePaths)
 	}
 }
 ```
@@ -958,7 +958,7 @@ import (
 
 // lintWritablePaths fires DIP141 (writable_paths nullified by tool_access: none)
 // and DIP142 (unsafe writable_paths entry) on agent nodes and per-branch overrides.
-// dippin carries + lints the field; the tracker enforces the fs-level write jail.
+// dippin carries + lints the field; the runtime enforces the fs-level write jail.
 func lintWritablePaths(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
@@ -1143,7 +1143,7 @@ Add the predicate + diagnostic helpers at the end of the file:
 ```go
 // unsafeEntryKind classifies a writable_paths entry that will not bound writes as
 // the author expects. Returns "" for a safe relative glob. This is a lexical
-// clarity check, not the security boundary — the tracker fs-jail is authoritative.
+// clarity check, not the security boundary — the runtime fs-jail is authoritative.
 func unsafeEntryKind(entry string) string {
 	e := strings.TrimSpace(entry)
 	if e == "" {
@@ -1202,7 +1202,7 @@ func writablePathReason(kind string) string {
 	if kind == "brace" {
 		return "is malformed (brace expansion is split on commas — enumerate entries instead)"
 	}
-	return "escapes the workspace (absolute / ~ / parent path) — the tracker write-jail will not honor it"
+	return "escapes the workspace (absolute / ~ / parent path) — the runtime write-jail will not honor it"
 }
 ```
 
@@ -1352,7 +1352,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 In `lsp/completion.go`, in the `fields` slice, after the `tool_access:` entry (line 57):
 
 ```go
-		{"writable_paths:", "Glob list bounding where this agent's tools may write (native backend; tracker-enforced fs jail)"},
+		{"writable_paths:", "Glob list bounding where this agent's tools may write (native backend; runtime-enforced fs jail)"},
 ```
 
 - [ ] **Step 2: Update `docs/nodes.md`**
@@ -1361,7 +1361,7 @@ Add `writable_paths` to the agent-node field list and the per-branch field list.
 
 - [ ] **Step 3: Update `site/static/skill.md`**
 
-Add a `writable_paths` entry to the agent-node field section documenting: the glob-list shape; native-backend enforcement, fail-closed (empty/malformed → deny-all/refuse), and the immutable session-root anchor; the residual-escape scope (network / content-within-path / reads are out of scope); the chain caveat and cross-node non-goals with links to #55/#53/#56; the **`requires tracker ≥ <tag>` safety requirement** (an older tracker does not enforce it — refuse/pin, do not run unbounded); and one sentence that it is settable per-branch (pointing to the agent-level semantics).
+Add a `writable_paths` entry to the agent-node field section documenting: the glob-list shape; native-backend enforcement, fail-closed (empty/malformed → deny-all/refuse), and the immutable session-root anchor; the residual-escape scope (network / content-within-path / reads are out of scope); the chain caveat and cross-node non-goals with links to #55/#53/#56; the **safety requirement that an enforcing runtime is required** (an older runtime does not enforce it — refuse/pin, do not run unbounded); and one sentence that it is settable per-branch (pointing to the agent-level semantics).
 
 - [ ] **Step 4: Update `docs/validation.md`**
 
@@ -1407,19 +1407,19 @@ Fixes #75.
 
 Adds `writable_paths` — a comma-separated glob list on agent nodes and parallel
 branches that bounds where an agent's tools may write. dippin **carries + lints**
-the field (DIP141 dead-config, DIP142 unsafe entry); the **tracker enforces** an
+the field (DIP141 dead-config, DIP142 unsafe entry); **the runtime enforces** an
 fs-level write jail (Bash + children) on the native backend. Orthogonal to the
-`tool_access` scalar; fails **closed** on empty/malformed (tracker deny-all/refuse).
+`tool_access` scalar; fails **closed** on empty/malformed (runtime deny-all/refuse).
 
 Design: `docs/superpowers/specs/2026-05-29-issue-75-writable-paths-design.md`
 Plan: `docs/superpowers/plans/2026-05-29-issue-75-writable-paths.md`
 
-**Joint release.** This is the dippin side. The tracker fs-jail enforcement
+**Coordinated runtime release.** This is the dippin side. The runtime's fs-jail enforcement
 (native-only; claude-code/acp refuse-to-start; immutable session-root anchor;
 fail-closed on empty/unrecognized; symlink-chain resolution; `Params`/`working_dir`
-bypass defense; red-team suite) ships in a paired tracker PR. **A tracker older than
+bypass defense; red-team suite) ships in a paired runtime PR. **A runtime older than
 the paired tag does not enforce `writable_paths` and must refuse rather than run
-unbounded** — `requires tracker ≥ <tag>` is a safety requirement, recorded at tag time.
+unbounded** — requiring an enforcing runtime is a safety requirement, recorded at tag time.
 
 Sequenced follow-ups (not in this PR): #55 (tool-name allowlists, orthogonal axis),
 #53 (defaults cascade), #56 (chain-attack mitigation).
@@ -1429,13 +1429,13 @@ EOF
 )"
 ```
 
-Expected: PR created on `feat/75-write-paths`. The tracker team sees this only after a release tag is cut (v0.35.0).
+Expected: PR created on `feat/75-write-paths`. Downstream consumers see this only after a release tag is cut (v0.35.0).
 
 ---
 
 ## Self-review checklist (run before declaring the plan done)
 
-- **Spec coverage:** IR (T1), parser agent+branch (T2/T3), formatter agent+branch (T4/T5), DOT export agent+branch (T6/T7), migrate agent+branch (T8/T9), round-trip (T10), DIP141 (T11), DIP142 (T12), example + dedicated lint test (T13), docs/skill/validation/counts/LSP (T14), follow-up gate (T0), release/PR (T15). Fail-closed (`splitCommaNoEmpty`) in T2/T3; native-only + tracker contract documented in T14 skill.md; parity non-comparable fix in T1.
-- **Tracker-side** work (fs-jail, backends, red-team) is intentionally OUT of this plan — separate repo/PR per the spec.
+- **Spec coverage:** IR (T1), parser agent+branch (T2/T3), formatter agent+branch (T4/T5), DOT export agent+branch (T6/T7), migrate agent+branch (T8/T9), round-trip (T10), DIP141 (T11), DIP142 (T12), example + dedicated lint test (T13), docs/skill/validation/counts/LSP (T14), follow-up gate (T0), release/PR (T15). Fail-closed (`splitCommaNoEmpty`) in T2/T3; native-only + runtime contract documented in T14 skill.md; parity non-comparable fix in T1.
+- **Runtime-side** work (fs-jail, backends, red-team) is intentionally OUT of this plan — separate repo/PR per the spec.
 - **Complexity:** every function touched that was at cyclo 5 (`applyBranchField`, `writeBranch`, `writeBranchFields`, `applyRuntimeAttrs`) is refactored with helpers in its task; new lint helpers are each ≤ 5.
 - **Type consistency:** field is `WritablePaths []string` everywhere; helpers `branchesEqual`/`branchScalarsEqual`/`branchHasFields`/`writeBranchScalarFields`/`applyRuntimeSafetyAttrs`/`unsafeEntryKind`/`isAbsoluteEntry`/`hasWindowsDrive`/`isParentEscape` are each defined once.

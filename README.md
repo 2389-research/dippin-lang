@@ -2,7 +2,7 @@
 
 A language and toolchain for authoring AI pipeline workflows.
 
-Dippin is a domain-specific language that replaces [Graphviz DOT](https://graphviz.org/doc/info/lang.html) as the authoring format for [Tracker](https://github.com/2389-research/tracker) pipelines. It gives prompts, shell scripts, model configuration, and branching logic first-class syntax — things that DOT forces into escaped string attributes.
+Dippin is a domain-specific language that replaces [Graphviz DOT](https://graphviz.org/doc/info/lang.html) as the authoring format for AI pipeline workflows. It gives prompts, shell scripts, model configuration, and branching logic first-class syntax — things that DOT forces into escaped string attributes.
 
 ## Why Not Just DOT?
 
@@ -10,7 +10,7 @@ DOT is a great graph language. Dippin doesn't replace DOT for visualization — 
 
 ```mermaid
 graph LR
-    A["Author in Dippin"] --> B["Execute with Tracker"]
+    A["Author in Dippin"] --> B["Execute with the runtime"]
     A --> C["Export to DOT for visualization<br>(dippin export-dot)"]
     A --> D["Render with Graphviz<br>(dot -Tpng)"]
     E["Legacy DOT files"] --> F["Migrate to Dippin<br>(dippin migrate)"]
@@ -113,7 +113,7 @@ dippin lint pipeline.dip
 
 ### Bundle a Workflow as a `.dipx`
 
-A `.dipx` is a deterministic, content-addressed ZIP that bundles a `.dip` entry workflow plus every transitively-reachable subgraph into one integrity-verified artifact. Tracker and other runtimes can load a `.dipx` as a single SHA-256-verified artifact instead of walking a directory of `.dip` files at deploy time.
+A `.dipx` is a deterministic, content-addressed ZIP that bundles a `.dip` entry workflow plus every transitively-reachable subgraph into one integrity-verified artifact. The runtime can load a `.dipx` as a single SHA-256-verified artifact instead of walking a directory of `.dip` files at deploy time.
 
 ```sh
 dippin pack pipeline.dip                # → pipeline.dipx (deterministic bytes)
@@ -271,7 +271,7 @@ workflow <Name>
     ref: other_workflow.dip
 ```
 
-**`manager_loop`** — supervises a child sub-pipeline, polling it on a cadence and optionally steering it by injecting context during execution. Maps to Tracker's `stack.manager_loop` and DOT shape `house`.
+**`manager_loop`** — supervises a child sub-pipeline, polling it on a cadence and optionally steering it by injecting context during execution. Maps to `stack.manager_loop` in the runtime and DOT shape `house`.
 
 ```dippin
   manager_loop QualityGate
@@ -477,7 +477,7 @@ See the [extension README](editors/vscode/README.md) for installation.
 
 The [`examples/`](examples/) directory contains 17 workflows:
 
-**Production patterns** (migrated from Tracker, with original `.dot` files):
+**Production patterns** (migrated from DOT, with original `.dot` files):
 
 | Example | Pattern |
 |---------|---------|

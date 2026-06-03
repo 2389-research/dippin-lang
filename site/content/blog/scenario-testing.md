@@ -325,6 +325,6 @@ logic deterministically. Related topics:
   <h3>Notes</h3>
   <ol>
     <li id="fn1">The simulator doesn't call any LLMs. It walks the graph using your injected context values to pick edges, which is why tests run in milliseconds and cost nothing. The simulation implementation is in <a href="https://github.com/2389-research/dippin-lang/tree/main/simulate"><code>simulate/</code></a>.</li>
-    <li id="fn2">The <code>not_visited</code> fragility was discovered during field testing with the Tracker team. Retry loops with <code>restart: true</code> create cycles, and the simulator breaks them after a bounded number of iterations -- but the nodes visited during those iterations can surprise you. See the <a href="../testing.html">testing reference</a> for details on loop-breaking behavior.</li>
+    <li id="fn2">The <code>not_visited</code> fragility was discovered during field testing. Retry loops with <code>restart: true</code> create cycles, and the simulator breaks them after a bounded number of iterations -- but the nodes visited during those iterations can surprise you. See the <a href="../testing.html">testing reference</a> for details on loop-breaking behavior.</li>
   </ol>
 </div>

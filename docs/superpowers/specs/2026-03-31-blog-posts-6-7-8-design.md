@@ -31,7 +31,7 @@ Three blog posts using a hub-and-spokes model: one prospect-facing hub post that
 
 ### DOT Example Source
 
-Use a real prompt from one of the migrated tracker pipelines in `examples/`. During implementation, grep the `.dot` files for the longest escaped `prompt=` string — ideally one with embedded JSON or markdown. If no sufficiently painful example exists in the repo, construct a representative one based on real DOT patterns.
+Use a real prompt from one of the migrated pipelines in `examples/`. During implementation, grep the `.dot` files for the longest escaped `prompt=` string — ideally one with embedded JSON or markdown. If no sufficiently painful example exists in the repo, construct a representative one based on real DOT patterns.
 
 ### SEO
 

@@ -930,7 +930,7 @@ warning[DIP141]: node "Summarize" has writable_paths but tool_access "none" — 
 A `writable_paths` entry is an absolute path, starts with `~` or a Windows drive, escapes its base via `..`, or is a brace-expansion fragment torn apart by comma-splitting. Such an entry will not bound writes to the workspace the way the author expects.
 
 ```text
-warning[DIP142]: node "Recorder" writable_paths entry "/etc/**" escapes the workspace (absolute / ~ / parent path) — the tracker write-jail will not honor it
+warning[DIP142]: node "Recorder" writable_paths entry "/etc/**" escapes the workspace (absolute / ~ / parent path) — the runtime write-jail will not honor it
   --> pipeline.dip:12:3
   = help: use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, and ..-escaping entries are rejected by the fs jail (it bounds writes to the session root); this lint catches obvious lexical cases only — the runtime jail is the real boundary. See #67/#77.
 ```
@@ -940,7 +940,7 @@ warning[DIP142]: node "Recorder" writable_paths entry "/etc/**" escapes the work
 - **Parent escape** — contains a `..` segment that escapes the base (e.g. `../../etc/**`, `foo/../../bar`)
 - **Brace mis-split** — unbalanced `{` or `}` (a glob like `*.{md,yaml}` is torn apart by comma-splitting into `*.{md` and `yaml}` — enumerate entries instead)
 
-This is a lexical clarity check, not the security boundary — the tracker fs-jail is authoritative.
+This is a lexical clarity check, not the security boundary — the runtime fs-jail is authoritative.
 
 **How to fix**: Use workspace-relative globs. Enumerate brace-expansion alternatives:
 

@@ -46,7 +46,7 @@ func TestParseToolMarkerGrepUnquoted(t *testing.T) {
 }
 
 func TestParseToolMarkerGrepRegexMetachars(t *testing.T) {
-	// Stored verbatim — dippin does not validate the regex (tracker does).
+	// Stored verbatim — dippin does not validate the regex (the runtime does).
 	cfg, diags := parseToolFixture(t, `    marker_grep: "^\[(PASS|FAIL)\]\s+\d+$"`)
 	if len(diags) != 0 {
 		t.Fatalf("unexpected diagnostics: %v", diags)

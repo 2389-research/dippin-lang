@@ -1,6 +1,6 @@
 # AGENTS.md — dippin-lang
 
-dippin-lang is a domain-specific language and toolchain for authoring AI pipeline workflows. It replaces Graphviz DOT as the authoring format for the Tracker runtime.
+dippin-lang is a domain-specific language and toolchain for authoring AI pipeline workflows. It replaces Graphviz DOT as the authoring format for AI pipeline workflows.
 
 This file describes how AI coding agents (Claude Code, Cursor, Aider, etc.) can install, configure, and use the toolchain. For human-targeted docs see [`README.md`](README.md) and [`https://dippin.org`](https://dippin.org).
 

@@ -12,7 +12,7 @@ This is a planning artifact, not an implementation plan. Nothing in this doc pro
 
 ## Rubric
 
-The two ranking axes are **Tracker integration value** and **spec correctness**. Items that score high on both go to v1.1. Items that score high on only one go to v1.2. Items that score low on both — including the security-only ZIP I/O defenses, the Unicode-spoofing hardening, and most testing additions — go to Later.
+The two ranking axes are **runtime integration value** and **spec correctness**. Items that score high on both go to v1.1. Items that score high on only one go to v1.2. Items that score low on both — including the security-only ZIP I/O defenses, the Unicode-spoofing hardening, and most testing additions — go to Later.
 
 The rubric explicitly omits two axes that could have driven a different cut:
 
@@ -21,9 +21,9 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 ## Tier definitions
 
-**v1.1.** Next release. Items must score high on **both** Tracker value AND spec correctness. Each bundle has a sketched approach, acceptance criteria, affected files, and any open spec questions that must be resolved during the work. Ready to feed into `writing-plans` without rereading the followups doc.
+**v1.1.** Next release. Items must score high on **both** runtime value AND spec correctness. Each bundle has a sketched approach, acceptance criteria, affected files, and any open spec questions that must be resolved during the work. Ready to feed into `writing-plans` without rereading the followups doc.
 
-**v1.2.** Following release. Scores high on one axis, not both. Each bundle has title, original followup IDs, one-paragraph problem statement, and a one-line v1.2 rationale. No acceptance criteria — that comes when v1.2 brainstorming starts.
+**v1.2.** Following release. Scores high on one axis, not both. Each bundle has title, original followup IDs, one-paragraph problem statement, and a one-line v1.2 rationale. No acceptance criteria — that comes when v1.2 planning starts.
 
 **Later.** Deferred indefinitely. Low on both axes given the chosen rubric, OR blocked on something external (e.g., a non-Go `.dipx` reader). Re-tiering is fine when the rubric or external context changes. One-bullet entries.
 
@@ -37,10 +37,10 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Covers:** Phase 6 L4, P10.2, P10.7, P10.10.
 
-**Problem.** Spec § "Cancellation" line 272 says I/O entry points take ctx and check it between CPU-bound stages. Implementation only checks ctx in `Open` between stages and at `writeBundle`'s outermost level. `walkSourceTree` (Pack), `writeBundle`'s inner zip-writer loop, and `verifyAllHashes`' inner per-entry loop all run uninterruptible. `Source.Workflow` takes no ctx at all, so dirSource disk I/O cannot be cancelled either. Tracker is a long-running process; an uncancellable Pack against a deep source tree or an uncancellable verify against a many-entry bundle blocks request-handling goroutines for the duration of the operation.
+**Problem.** Spec § "Cancellation" line 272 says I/O entry points take ctx and check it between CPU-bound stages. Implementation only checks ctx in `Open` between stages and at `writeBundle`'s outermost level. `walkSourceTree` (Pack), `writeBundle`'s inner zip-writer loop, and `verifyAllHashes`' inner per-entry loop all run uninterruptible. `Source.Workflow` takes no ctx at all, so dirSource disk I/O cannot be cancelled either. The runtime is a long-running process; an uncancellable Pack against a deep source tree or an uncancellable verify against a many-entry bundle blocks request-handling goroutines for the duration of the operation.
 
 **Open spec questions.**
-- § "Tracker integration contract" example shows ctx-less `Source.Workflow`. Either fix the example to add ctx, or split `Source` into a fast-lookup interface and an I/O entry point. Pick one. Bundle 6 must resolve this.
+- § "Runtime integration contract" example shows ctx-less `Source.Workflow`. Either fix the example to add ctx, or split `Source` into a fast-lookup interface and an I/O entry point. Pick one. Bundle 6 must resolve this.
 
 **Approach sketch.**
 - Add `case <-ctx.Done(): return ctx.Err()` at the top of `walkSourceTree.visitNext`, `writeBundle`'s per-entry zip-writer loop, and `verifyAllHashes`' per-entry loop.
@@ -57,7 +57,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Affected files.** `dipx/pack.go`, `dipx/zipio.go`, `dipx/dipx.go`, `dipx/source.go`, `dipx/loader.go`, `parser/parser.go`, any `cmd/dippin/*` call sites, `CHANGELOG.md`.
 
-**Risk / coupling.** `Source.Workflow` signature change is breaking for any external caller. Tracker is the primary consumer and pins to dippin-lang via `go install`; the change ships in v0.25.0+ and Tracker bumps the import. CHANGELOG entry must call out the signature change explicitly.
+**Risk / coupling.** `Source.Workflow` signature change is breaking for any external caller. The runtime is the primary consumer and pins to dippin-lang; the change ships in v0.25.0+ and the runtime bumps the import. CHANGELOG entry must call out the signature change explicitly.
 
 ---
 
@@ -65,7 +65,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Covers:** Phase 8 M4, L1, L2, P10.4.
 
-**Problem.** Spec § "CLI / Inspect" example shows `status: VALID (3 files, 24831 bytes, format_version 1)` for text output and "manifest plus a status object" for JSON. Implementation: text footer omits the byte total; JSON `status` is a bare string `"VALID"`, not an object. Separately, `inspect --no-verify` is parsed and prints a stderr advisory but `dipx.Open` is invoked unconditionally — the flag is a no-op, and forensically-suspect bundles cannot be inspected without integrity errors firing. All three of these are surfaces the Tracker UI consumes when presenting bundle metadata to operators.
+**Problem.** Spec § "CLI / Inspect" example shows `status: VALID (3 files, 24831 bytes, format_version 1)` for text output and "manifest plus a status object" for JSON. Implementation: text footer omits the byte total; JSON `status` is a bare string `"VALID"`, not an object. Separately, `inspect --no-verify` is parsed and prints a stderr advisory but `dipx.Open` is invoked unconditionally — the flag is a no-op, and forensically-suspect bundles cannot be inspected without integrity errors firing. All three of these are surfaces the runtime UI consumes when presenting bundle metadata to operators.
 
 **Open spec questions.**
 - JSON status object schema is confirmed in Bundle 6 (criterion #6); this bundle implements to match. If Bundle 6 lands first the question is closed by the time work starts here.
@@ -86,7 +86,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Affected files.** `cmd/dippin/cmd_inspect.go`, `dipx/dipx.go` (no-verify path), `dipx/inspect.go` (new helper if extracted), `docs/dipx-spec.md` (example update — coordinate with Bundle 6), `CHANGELOG.md`.
 
-**Risk / coupling.** JSON shape change is breaking for any consumer parsing `status` as a string. Tracker is the main consumer; the bump must be coordinated. CHANGELOG must call out the breaking schema change.
+**Risk / coupling.** JSON shape change is breaking for any consumer parsing `status` as a string. The runtime is the main consumer; the bump must be coordinated. CHANGELOG must call out the breaking schema change.
 
 ---
 
@@ -94,7 +94,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Covers:** Phase 3 gate (manifest decoder error-context), P10.6, P10.9.
 
-**Problem.** Spec § "Per-sentinel error context" table calls for `BundleError.Path` to be the bundle path. The manifest decoder runs before the bundle path is in scope, so current implementation puts either an empty string or a JSON field name (e.g., `format_version`) in `Path` for `ErrManifestInvalid` and `ErrUnsupportedFormatVersion`. Pack-side errors put the source filesystem absolute path in `Path` because no bundle file exists yet. Separately, `parsePackSource` is invoked from `readAndRecord` for both the entry workflow and every transitively-reachable subgraph, but always classifies parse failures as `ErrEntryParse` — subgraph parse failures are misattributed to the entry. All three issues surface in operator UI through Tracker; current attribution is misleading.
+**Problem.** Spec § "Per-sentinel error context" table calls for `BundleError.Path` to be the bundle path. The manifest decoder runs before the bundle path is in scope, so current implementation puts either an empty string or a JSON field name (e.g., `format_version`) in `Path` for `ErrManifestInvalid` and `ErrUnsupportedFormatVersion`. Pack-side errors put the source filesystem absolute path in `Path` because no bundle file exists yet. Separately, `parsePackSource` is invoked from `readAndRecord` for both the entry workflow and every transitively-reachable subgraph, but always classifies parse failures as `ErrEntryParse` — subgraph parse failures are misattributed to the entry. All three issues surface in operator UI through the runtime; current attribution is misleading.
 
 **Open spec questions.**
 - Bundle 6 must resolve "what does `Path` mean for: pre-bundle Pack errors? manifest decode errors before bundle path is known? subgraph parse during Pack?" before this bundle implements.
@@ -143,7 +143,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 6. **§ CLI / Inspect example** — update the JSON output example so `status` is an object: `{"valid": bool, "verify_skipped": bool, "file_count": int, "byte_total": int, "format_version": int}`. Update the text output example footer to include the byte total: `status: VALID (3 files, 24831 bytes, format_version 1)`. Bundle 2 implements code to match.
 
-7. **§ Tracker integration contract** — fix the `Source.Workflow` example to take ctx, resolving the internal inconsistency with § "Cancellation" line 272. Bundle 1 implements the signature change.
+7. **§ Runtime integration contract** — fix the `Source.Workflow` example to take ctx, resolving the internal inconsistency with § "Cancellation" line 272. Bundle 1 implements the signature change.
 
 **Affected files.** `docs/dipx-spec.md`, `dipx/loader.go` (detectCycles tightening), `cmd/dippin/cmd_inspect.go` (classifyExit), `CHANGELOG.md`.
 
@@ -157,9 +157,9 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Covers:** P9.5.
 
-**Problem.** Spec § "Soft caps" says "A conformant reader MAY enforce stricter limits configured for its deployment context." Implementation hardcodes the conformance caps (50 MB per file, 50 MB total, file count, etc.). No `WithMaxFiles(n)` / `WithMaxBytes(n)` functional options on `Open` / `OpenReader`. Tracker deployments may want stricter limits; today they have to fork the package.
+**Problem.** Spec § "Soft caps" says "A conformant reader MAY enforce stricter limits configured for its deployment context." Implementation hardcodes the conformance caps (50 MB per file, 50 MB total, file count, etc.). No `WithMaxFiles(n)` / `WithMaxBytes(n)` functional options on `Open` / `OpenReader`. Runtime deployments may want stricter limits; today they have to fork the package.
 
-**v1.2 rationale.** High Tracker value, medium spec correctness (the spec invites this as MAY). Goes to v1.2 because no spec contract is being violated. Composes naturally with Bundle 2's `WithSkipHashVerify` if both ship as functional options.
+**v1.2 rationale.** High runtime value, medium spec correctness (the spec invites this as MAY). Goes to v1.2 because no spec contract is being violated. Composes naturally with Bundle 2's `WithSkipHashVerify` if both ship as functional options.
 
 ---
 
@@ -169,7 +169,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Problem.** Three independent CLI papercuts plus one preflight gap: (a) Go's `flag` package stops at the first non-flag arg, so `dippin pack examples/foo.dip -o out.dipx` errors; (b) `pack --dry-run -o -` silently discards stdout intent; (c) `parseFile` / `loadWorkflow` print `BundleError.Error()` without the `error:` prefix other commands use; (d) `unpack` lacks the `PATH_MAX` + free-space preflight the spec mandates.
 
-**v1.2 rationale.** Medium Tracker value (operator UX; Tracker likely uses the Go API directly, not the CLI), low-to-medium spec correctness. Bundle these to amortize the cost of switching to `pflag`/`cobra` if (a) drives that decision.
+**v1.2 rationale.** Medium runtime value (operator UX; the runtime likely uses the Go API directly, not the CLI), low-to-medium spec correctness. Bundle these to amortize the cost of switching to `pflag`/`cobra` if (a) drives that decision.
 
 ---
 
@@ -179,7 +179,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Problem.** `ErrZipTruncated` is over-broadened: mid-stream EOF, corrupt deflate, malformed central directory, and `archive/zip.ErrInsecurePath` all map to it. Operationally distinct conditions are conflated. Separately, `archive/zip.ErrInsecurePath` (Go-version dependent on `GODEBUG=zipinsecurepath`) should map to `ErrPathUnsafe`, not `ErrZipTruncated`.
 
-**v1.2 rationale.** Medium Tracker value (clearer operator diagnostics), high spec correctness (spec wants distinct sentinels). Held back from v1.1 because the breaking change to error sentinels is best paired with Bundle 6's spec edits if they land in the same release window — but Bundle 6 already had enough scope. Land in v1.2 with a CHANGELOG entry.
+**v1.2 rationale.** Medium runtime value (clearer operator diagnostics), high spec correctness (spec wants distinct sentinels). Held back from v1.1 because the breaking change to error sentinels is best paired with Bundle 6's spec edits if they land in the same release window — but Bundle 6 already had enough scope. Land in v1.2 with a CHANGELOG entry.
 
 ---
 
@@ -189,7 +189,7 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Problem.** Spec § "OpenLax discipline" mandates a structured warning to a caller-provided logger on every invocation; impl emits nothing. Spec § "Operational ergonomics / Diagnostic mode" calls for env-gated `DIPX_DEBUG=1` step trace; not implemented.
 
-**v1.2 rationale.** Medium Tracker value (Tracker debugging integration issues), high spec correctness (spec mandates both). Both are additive; no breaking change. Held to v1.2 only because v1.1 has enough scope.
+**v1.2 rationale.** Medium runtime value (runtime debugging integration issues), high spec correctness (spec mandates both). Both are additive; no breaking change. Held to v1.2 only because v1.1 has enough scope.
 
 ---
 
@@ -197,15 +197,15 @@ The rubric explicitly omits two axes that could have driven a different cut:
 
 **Covers:** Phase 6 H2, M1, M2.
 
-**Problem.** Spec § "Source implementations" mandates "LRU of 256 entries with `singleflight.Group` for cold-call coalescing." Impl is unbounded `map[string]*ir.Workflow` guarded by `sync.Mutex` held across `parseDipFile` (disk I/O). Two issues: long-running Tracker processes leak parsed IR, and concurrent reads on different paths serialize on the global mutex. Separately, `dirSource.resolveDir` doesn't reject NUL bytes, control chars, NFD-encoded paths, or Windows-reserved names.
+**Problem.** Spec § "Source implementations" mandates "LRU of 256 entries with `singleflight.Group` for cold-call coalescing." Impl is unbounded `map[string]*ir.Workflow` guarded by `sync.Mutex` held across `parseDipFile` (disk I/O). Two issues: long-running runtime processes leak parsed IR, and concurrent reads on different paths serialize on the global mutex. Separately, `dirSource.resolveDir` doesn't reject NUL bytes, control chars, NFD-encoded paths, or Windows-reserved names.
 
-**v1.2 rationale.** High Tracker value (process-leak + lock-contention are real for long-running processes), medium spec correctness (impl violates a normative line, but the violation is silent — correct results, just unbounded memory + serialization). Held back from v1.1 because the LRU+singleflight rewrite is a non-trivial restructure and the contention is bounded in practice (Tracker reuse patterns aren't pathological today).
+**v1.2 rationale.** High runtime value (process-leak + lock-contention are real for long-running processes), medium spec correctness (impl violates a normative line, but the violation is silent — correct results, just unbounded memory + serialization). Held back from v1.1 because the LRU+singleflight rewrite is a non-trivial restructure and the contention is bounded in practice (runtime reuse patterns aren't pathological today).
 
 ---
 
 ## Later
 
-- **Bundle 10 — Unicode hardening.** Phase 2 spec gaps (NFKC, format-class characters, bidi controls, IDN homographs); manifest case-fold (`strings.ToLower` → `cases.Fold()`) at three sites — manifest `verifyOneFile`, ZIP `recordEntry` (P9.2), ZIP entry canonicalization at admission (P9.3). Deferred: low Tracker value (no homograph attack vector through the Tracker UI today), spec-correctness gap exists but the implementation is **stricter** than the spec, not laxer — current code rejects more than it must, so non-action does not break any spec-conformant bundle.
+- **Bundle 10 — Unicode hardening.** Phase 2 spec gaps (NFKC, format-class characters, bidi controls, IDN homographs); manifest case-fold (`strings.ToLower` → `cases.Fold()`) at three sites — manifest `verifyOneFile`, ZIP `recordEntry` (P9.2), ZIP entry canonicalization at admission (P9.3). Deferred: low runtime value (no homograph attack vector through the runtime UI today), spec-correctness gap exists but the implementation is **stricter** than the spec, not laxer — current code rejects more than it must, so non-action does not break any spec-conformant bundle.
 
 - **Bundle 11 — ZIP I/O defense in depth.** C2 (central-directory ↔ local-header mismatch), C3 (per-file compression-ratio cap 1000:1), I5 (hardlink / repeated central-dir pointer), Phase 7 H1 (Pack compression-ratio cap), Phase 7 M2 (Pack `O_NOFOLLOW`), P10.5 (Extract `writeOneFile` `O_EXCL` | `O_NOFOLLOW`). Deferred: per spec § "Conventions" v1 is Go-only; cross-implementation interop is the primary motivation for these defenses, and that surface doesn't yet exist. The 50 MB absolute caps + hash verification provide DoS / smuggling protection in the meantime. **Re-tier when a non-Go `.dipx` reader appears.**
 
