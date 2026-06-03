@@ -111,9 +111,9 @@ func loadDirectiveFile(baseDir, p string) ([]byte, error) {
 // O_NOFOLLOW (oNoFollow on Unix) makes leaf-symlink rejection atomic: open()
 // fails with ELOOP when the final path component is a symlink. It affects only
 // the final component, so contained parent symlinks stay followed and remain
-// validated by checkContainment. Windows is unsupported (oNoFollow == 0, see
-// resolve_nofollow_windows.go): the fd-based fstat→read still closes the
-// fstat-to-read race there, but atomic leaf-symlink rejection is Unix-only.
+// validated by checkContainment. On non-unix targets (oNoFollow == 0, see
+// resolve_nofollow_other.go): the fd-based fstat→read still closes the
+// fstat-to-read race there, but atomic leaf-symlink rejection is unix-only.
 //
 // Residual (out of scope for #79): checkContainment validates the parent chain
 // at open-adjacent time, but a fully race-free parent walk needs
@@ -147,7 +147,7 @@ func readFromFD(p string, f *os.File) ([]byte, error) {
 		return nil, pathErr(p, err, "read")
 	}
 	if int64(len(contents)) > maxDirectiveFileSize {
-		return nil, fmt.Errorf("file %q is too large (max %s)", p, formatMiB(maxDirectiveFileSize))
+		return nil, fmt.Errorf("file %q is too large (exceeds max %s)", p, formatMiB(maxDirectiveFileSize))
 	}
 	return contents, nil
 }

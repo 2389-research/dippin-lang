@@ -293,7 +293,7 @@ func TestResolveFileDirectives_AllowsMaxSize(t *testing.T) {
 	// maxDirectiveFileSize must load in full — the LimitReader's +1 headroom
 	// must not truncate legitimate max-size content.
 	tmp := t.TempDir()
-	content := make([]byte, 4<<20) // exactly 4 MiB
+	content := make([]byte, maxDirectiveFileSize) // exactly at the cap
 	for i := range content {
 		content[i] = 'x'
 	}
