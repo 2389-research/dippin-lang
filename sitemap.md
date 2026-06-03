@@ -17,7 +17,7 @@ A flat index of every page on this site, grouped for agent consumption. The cano
 
 ## Blog
 
-- [What's New in Dippin v0.28](https://dippin.org/blog/whats-new-v028.html) — Typed tool routing — marker_grep, route_required, and output_limit close a parser/runtime parity gap with tracker's TRK101.
+- [What's New in Dippin v0.28](https://dippin.org/blog/whats-new-v028.html) — Typed tool routing — marker_grep, route_required, and output_limit close a parser/runtime parity gap with the runtime's TRK101.
 - [What's New in Dippin v0.27](https://dippin.org/blog/whats-new-v027.html) — Model catalog refresh — 11+ new IDs across six providers, seven price corrections, and a retirement calendar worth pinning somewhere.
 - [What's New in Dippin v0.26](https://dippin.org/blog/whats-new-v026.html) — Workflow `requires:` keyword — declare what your workflow needs to run so runtimes can preflight, instead of crashing 20 minutes in.
 - [What's New in Dippin v0.25](https://dippin.org/blog/whats-new-v025.html) — .dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should.
