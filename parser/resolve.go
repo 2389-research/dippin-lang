@@ -136,11 +136,18 @@ func openCheckRead(p, resolved string) ([]byte, error) {
 }
 
 // readFromFD reads the already-open fd, rewriting any error so it only mentions
-// the user-written path p (never the absolute resolved one).
+// the user-written path p (never the absolute resolved one). The read is bounded
+// by io.LimitReader as a belt to checkFileInfo's fstat size check: under
+// untrusted-.dip-in-CI a concurrent writer could grow the file on the same fd
+// between fstat and read, so capping the read at maxDirectiveFileSize+1 keeps
+// memory bounded regardless of post-fstat growth.
 func readFromFD(p string, f *os.File) ([]byte, error) {
-	contents, err := io.ReadAll(f)
+	contents, err := io.ReadAll(io.LimitReader(f, maxDirectiveFileSize+1))
 	if err != nil {
 		return nil, pathErr(p, err, "read")
+	}
+	if int64(len(contents)) > maxDirectiveFileSize {
+		return nil, fmt.Errorf("file %q is too large (max %s)", p, formatMiB(maxDirectiveFileSize))
 	}
 	return contents, nil
 }

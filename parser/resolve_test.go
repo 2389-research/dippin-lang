@@ -288,6 +288,34 @@ func TestResolveFileDirectives_RejectsOversize(t *testing.T) {
 	}
 }
 
+func TestResolveFileDirectives_AllowsMaxSize(t *testing.T) {
+	// Boundary for the io.LimitReader read-cap (#79): a file exactly at
+	// maxDirectiveFileSize must load in full — the LimitReader's +1 headroom
+	// must not truncate legitimate max-size content.
+	tmp := t.TempDir()
+	content := make([]byte, 4<<20) // exactly 4 MiB
+	for i := range content {
+		content[i] = 'x'
+	}
+	if err := os.WriteFile(filepath.Join(tmp, "atcap.sh"), content, 0o644); err != nil {
+		t.Fatalf("write atcap: %v", err)
+	}
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				CommandFile: "atcap.sh",
+			}},
+		},
+	}
+	if err := ResolveFileDirectives(w, tmp); err != nil {
+		t.Fatalf("expected max-size file to load; got %v", err)
+	}
+	cfg := w.Nodes[0].Config.(ir.ToolConfig)
+	if len(cfg.Command) != len(content) {
+		t.Errorf("max-size file truncated: got %d bytes, want %d", len(cfg.Command), len(content))
+	}
+}
+
 func TestResolveFileDirectives_MissingFile(t *testing.T) {
 	// Use an absolute baseDir so we can detect leaks of the resolved
 	// absolute path in error messages. The CLI typically resolves to
