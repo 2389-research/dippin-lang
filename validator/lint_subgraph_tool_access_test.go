@@ -166,6 +166,30 @@ func TestLint_DIP143_EmptyRefNoFire(t *testing.T) {
 	}
 }
 
+func TestLint_DIP143_SelfReferenceNoFire(t *testing.T) {
+	// A node referencing its own source file (test.dip, the lintSrc filename) is
+	// not a cross-file boundary — there is nothing the parent's restriction fails
+	// to reach. Transitive cross-file cycles remain out of scope (#89).
+	src := `workflow X
+  start: Lock
+  exit: Sup
+
+  agent Lock
+    prompt: "x"
+    tool_access: none
+
+  manager_loop Sup
+    subgraph_ref: test.dip
+    max_cycles: 3
+
+  edges
+    Lock -> Sup
+`
+	if hasCode(lintSrc(t, src), dip143) {
+		t.Errorf("DIP143 should not fire on a self-reference; got: %v", codes(lintSrc(t, src)))
+	}
+}
+
 func TestLint_DIP143_OneHintPerReferencingNode(t *testing.T) {
 	src := `workflow X
   start: Lock

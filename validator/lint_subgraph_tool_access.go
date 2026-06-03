@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -70,7 +71,7 @@ func toolAccessSet(s string) bool {
 // checkSubgraphBoundary emits DIP143 for a node referencing an external subgraph.
 func checkSubgraphBoundary(n *ir.Node) *Diagnostic {
 	kind, ref := subgraphRefOf(n)
-	if ref == "" {
+	if ref == "" || refIsSelf(ref, n.Source.File) {
 		return nil
 	}
 	return &Diagnostic{
@@ -84,6 +85,22 @@ func checkSubgraphBoundary(n *ir.Node) *Diagnostic {
 			"audit the agents in %q for their own tool_access — restrictions declared in this workflow do not propagate into a referenced subgraph. Cross-file enforcement is tracked as #89.",
 			ref),
 	}
+}
+
+// refIsSelf reports whether ref resolves to the node's own source file — a direct
+// self-reference, where there is no cross-file boundary to warn about. Resolution
+// mirrors resolveRefPath (relative to the source file's directory) but stays
+// filepath-only so this lint compiles for wasm. Transitive cross-file cycles
+// (A → B → A) require multi-file traversal and remain out of scope (#89).
+func refIsSelf(ref, sourceFile string) bool {
+	if sourceFile == "" {
+		return false
+	}
+	resolved := ref
+	if !filepath.IsAbs(ref) {
+		resolved = filepath.Join(filepath.Dir(sourceFile), ref)
+	}
+	return filepath.Clean(resolved) == filepath.Clean(sourceFile)
 }
 
 // subgraphRefOf returns the node-kind label and the external subgraph reference

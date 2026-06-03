@@ -1,6 +1,6 @@
 # Validation and Linting Reference
 
-Dippin documents 46 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
+Dippin documents 47 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP143): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
@@ -968,6 +968,8 @@ hint[DIP143]: manager_loop "Supervise" references subgraph "child.dip", defined 
 **What triggers it**: All of the following hold:
 - A node references an external subgraph — `manager_loop` via `subgraph_ref`, or `subgraph` via `ref` (non-empty).
 - The workflow declares `tool_access` (any non-empty value — a fail-closed typo still expresses restriction) on some agent or parallel branch.
+
+A node whose ref resolves to its **own source file** (a direct self-reference) is not flagged — there is no cross-file boundary. Transitive cross-file cycles (A → B → A) are not detected and are deferred to [#89](https://github.com/2389-research/dippin-lang/issues/89).
 
 This is a Hint, not a Warning: the referencing node has no defect. The check is **file-level** — it does not verify that the restricted node and the subgraph node are related, and it does **not** read the child file (the validator cannot parse it). It bounds the child's *tool catalog* concern, not information flow across the supervisory boundary (`steer_context` / `stack.child.*` — see [#56](https://github.com/2389-research/dippin-lang/issues/56)). Real cross-file effective-access enforcement is deferred to [#89](https://github.com/2389-research/dippin-lang/issues/89).
 

@@ -84,13 +84,18 @@ Help:    audit the agents in %q for their own tool_access — restrictions decla
 ### Suppresses when
 
 - No node in the workflow declares `tool_access` (no containment intent), **or**
-- The referencing node's ref is empty (owned by DIP135 / DIP126).
+- The referencing node's ref is empty (owned by DIP135 / DIP126), **or**
+- The ref resolves to the node's own source file — a **direct self-reference** has no
+  cross-file boundary, so the hint would be wrong (post-review, Copilot). Resolution is
+  filepath-only (`refIsSelf`), mirroring `resolveRefPath`. Transitive cross-file cycles
+  (A → B → A) still require multi-file traversal and remain deferred to #89.
 
 ## Implementation
 
-New file `validator/lint_subgraph_tool_access.go` — pure IR logic, **no** `os`/`filepath`
+New file `validator/lint_subgraph_tool_access.go` — pure IR logic with no `os`/filesystem
 access, so **no `//go:build` split** (unlike `lint_manager_loop.go`, which is split only
-because it `os.Stat`s the child path). Decomposed to stay within cyclomatic ≤5 / cognitive ≤7
+because it `os.Stat`s the child path). `path/filepath` path-math (`refIsSelf`) is wasm-safe;
+only `os` syscalls are not. Decomposed to stay within cyclomatic ≤5 / cognitive ≤7
 (security/arch review: a single type-switch-with-branch-loop would blow the cognitive gate):
 
 ```
