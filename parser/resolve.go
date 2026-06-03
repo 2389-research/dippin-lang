@@ -158,6 +158,12 @@ func readFromFD(p string, f *os.File) ([]byte, error) {
 // errors.Is and emit the same user-path-only "symlinks not allowed" message the
 // old Lstat-based leaf check produced. Other errors defer to pathErr, which is
 // also user-path-only.
+//
+// This check needs no build tag (unlike oNoFollow): syscall.ELOOP is a portable
+// errno defined on every target, including js/wasm and windows, whereas
+// syscall.O_NOFOLLOW exists only on unix. On a non-unix build oNoFollow is 0, so
+// open never returns ELOOP and this branch is simply dead — never reached, but
+// it compiles everywhere.
 func openErr(p string, err error) error {
 	if errors.Is(err, syscall.ELOOP) {
 		return fmt.Errorf("symlinks not allowed: %q", p)
@@ -235,10 +241,10 @@ func escapesBase(base, target string) bool {
 }
 
 // checkFileInfo enforces symlink and size policies on the fd's fstat info. The
-// size cap is authoritative. The symlink-mode check is defensive: on Unix the
+// size cap is authoritative. The symlink-mode check is defensive: on unix the
 // leaf symlink was already rejected atomically by O_NOFOLLOW at open, so fstat
-// never sees one; on Windows (unsupported) open follows the leaf, so fstat sees
-// the target and this check cannot fire.
+// never sees one; on non-unix targets (oNoFollow == 0) open follows the leaf,
+// so fstat sees the target and this check cannot fire.
 func checkFileInfo(p string, info os.FileInfo) error {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return fmt.Errorf("symlinks not allowed: %q", p)
