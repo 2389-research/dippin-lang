@@ -125,7 +125,7 @@ Tool-node routing fields land in the parser and IR. Authors following the runtim
 ### Added
 
 - `tool.marker_grep` — regex matched line-by-line against captured stdout; populates `ctx.tool_marker` at runtime.
-- `tool.route_required` — boolean; when true, the node fails with `EventToolRouteMissing` if the command emits no `_TRACKER_ROUTE=<value>` sentinel line.
+- `tool.route_required` — boolean; when true, the node fails with `EventToolRouteMissing` if the command emits no routing signal recognized by the runtime.
 - `tool.output_limit` — non-negative integer (bytes); 0 uses the engine default stdout tail-window. `dippin fmt` omits the field when the value is zero.
 - Reserved context variables: `ctx.tool_marker`, `ctx.tool_route`.
 

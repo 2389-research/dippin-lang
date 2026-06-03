@@ -338,7 +338,7 @@ A node-level glob list bounding where the agent's tools may write. Shape: comma-
 | `timeout` | duration | **Required** (DIP111). e.g. `30s`, `5m` |
 | `outputs` | CSV | Possible stdout values for condition checks |
 | `marker_grep` | string | Regex matched against stdout; sets `ctx.tool_marker`. The runtime validates and applies the regex. |
-| `route_required` | bool | When true, fails the node if no `_TRACKER_ROUTE=<value>` sentinel line is emitted. |
+| `route_required` | bool | When true, fails the node if the command emits no routing signal recognized by the runtime (the runtime defines the routing-signal format). |
 | `output_limit` | int | Per-node stdout byte cap (non-negative integer); 0 (or omitted) uses the engine default. |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
@@ -733,7 +733,7 @@ The primary loop for authoring .dip files:
 | `ctx.human_response` | Freeform human input |
 | `ctx.tool_stdout` | Tool command stdout |
 | `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
-| `ctx.tool_route` | `_TRACKER_ROUTE=<value>` sentinel (when `route_required: true`) |
+| `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout (format defined by the runtime; set when `route_required` is honored) |
 | `ctx.preferred_label` | Human choice selection (maps to edge label) |
 | `ctx.interview_answers` | Interview mode answers (via `answers_key`) |
 | `params.<key>` | Parent subgraph params |

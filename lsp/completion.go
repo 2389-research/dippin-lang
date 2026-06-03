@@ -58,7 +58,7 @@ func fieldCompletions() []protocol.CompletionItem {
 		{"writable_paths:", "Glob list bounding where this agent's tools may write (native backend; runtime-enforced fs jail)"},
 		{"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
 		{"command_file:", "External script reference for tool node (path relative to .dip source directory)"},
-		{"route_required:", "Require _TRACKER_ROUTE= sentinel line from tool stdout"},
+		{"route_required:", "Fail the node if the command emits no runtime-recognized routing signal on stdout"},
 		{"output_limit:", "Per-node stdout byte cap (non-negative int; 0 = engine default)"},
 	}
 	var items []protocol.CompletionItem

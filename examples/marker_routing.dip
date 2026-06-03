@@ -11,7 +11,6 @@ workflow MarkerRouting
     label: "Run test suite, route by marker"
     outputs: tests_green, tests_red
     marker_grep: "^(tests_green|tests_red)$"
-    route_required: true
     output_limit: 65536
     timeout: 2m
     command:
@@ -19,10 +18,8 @@ workflow MarkerRouting
       set -eu
       if go test ./... > /tmp/test.log 2>&1; then
         printf 'tests_green\n'
-        printf '_TRACKER_ROUTE=passed\n'
       else
         printf 'tests_red\n'
-        printf '_TRACKER_ROUTE=failed\n'
       fi
 
   agent Done

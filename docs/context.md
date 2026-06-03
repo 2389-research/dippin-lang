@@ -43,7 +43,7 @@ The primary namespace. Contains handler outputs and reserved keys.
 | `ctx.tool_stdout` | Tool nodes | Standard output from the shell command |
 | `ctx.tool_stderr` | Tool nodes | Standard error from the shell command |
 | `ctx.tool_marker` | Tool nodes | Tool stdout regex match (when `marker_grep` is declared on the source tool node) |
-| `ctx.tool_route` | Tool nodes | Tool stdout `_TRACKER_ROUTE=<value>` sentinel (when `route_required: true`) |
+| `ctx.tool_route` | Tool nodes | A routing value the runtime extracts from the tool's stdout (format defined by the runtime; set when `route_required` is honored) |
 
 These reserved keys are **always available** — the validator knows about them at parse time and can flag typos.
 

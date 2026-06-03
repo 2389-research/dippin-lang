@@ -91,7 +91,7 @@ type ToolConfig struct {
 	Timeout       time.Duration
 	Outputs       []string // Declared possible stdout values for coverage analysis
 	MarkerGrep    string   // Regex matched line-by-line against stdout; populates ctx.tool_marker
-	RouteRequired bool     // True → node fails if no _TRACKER_ROUTE= sentinel is emitted
+	RouteRequired bool     // True → node fails if the command emits no routing signal recognized by the runtime
 	OutputLimit   int      // Bytes; > 0 = override engine default
 }
 ```
@@ -1094,7 +1094,7 @@ In `lsp/completion.go`, extend the `fields` slice in `fieldCompletions`:
 
 ```go
 {"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
-{"route_required:", "Require _TRACKER_ROUTE= sentinel line from tool stdout"},
+{"route_required:", "Fail the node if the command emits no runtime-recognized routing signal on stdout"},
 {"output_limit:", "Per-node stdout byte cap (positive int)"},
 ```
 
@@ -1262,10 +1262,8 @@ workflow MarkerRouting
       set -eu
       if go test ./... > /tmp/test.log 2>&1; then
         printf 'tests_green\n'
-        printf '_TRACKER_ROUTE=passed\n'
       else
         printf 'tests_red\n'
-        printf '_TRACKER_ROUTE=failed\n'
       fi
 
   agent Done
@@ -1315,7 +1313,7 @@ After the `outputs` row:
 
 ```markdown
 | `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. The runtime validates and applies the regex at runtime. |
-| `route_required` | Boolean | false | When true, the node fails if the command's stdout contains no `_TRACKER_ROUTE=<value>` sentinel line. The matched value populates `ctx.tool_route`. |
+| `route_required` | Boolean | false | When true, the node fails if the command emits no routing signal recognized by the runtime (the runtime defines the routing-signal format). The routing value populates `ctx.tool_route`. |
 | `output_limit` | Integer | — | Per-node override for the engine's captured-stdout byte cap. Positive integer; omit (or set 0) to use the engine default. |
 ```
 
@@ -1380,7 +1378,7 @@ In each file: locate the existing reserved `ctx.*` table or list and add two row
 
 ```markdown
 | `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` is declared) |
-| `ctx.tool_route` | Tool stdout `_TRACKER_ROUTE=<value>` sentinel (when `route_required` is true) |
+| `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout (format defined by the runtime; set when `route_required` is honored) |
 ```
 
 Match the surrounding style — `grep -n 'ctx\.tool_stdout' docs/context.md docs/edges.md docs/validation.md` to find the exact insertion point in each.
@@ -1429,7 +1427,7 @@ Add:
 
 ```markdown
 | `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
-| `ctx.tool_route` | `_TRACKER_ROUTE=<value>` sentinel (when `route_required: true`) |
+| `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout (format defined by the runtime; set when `route_required` is honored) |
 ```
 
 - [ ] **Step 4: Update `site/content/language.md` `### tool` section (line ~175)**
@@ -1446,7 +1444,7 @@ Replace the existing tool example with one that shows the new fields too:
       pytest --tb=short
 ```
 
-Add a short prose line below the example: "Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes a missing `_TRACKER_ROUTE=` sentinel fail the node; `output_limit` overrides the captured-stdout byte cap."
+Add a short prose line below the example: "Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes the node fail if the command emits no routing signal recognized by the runtime; `output_limit` overrides the captured-stdout byte cap."
 
 - [ ] **Step 5: Commit**
 
@@ -1501,7 +1499,7 @@ Issue #39 closes a parser gap: the runtime already supported `marker_grep`, `rou
 ### What each field does
 
 - **`marker_grep`** — regex matched against stdout. Last match populates `ctx.tool_marker`. Routing edges can reference it instead of regexing `ctx.tool_stdout`.
-- **`route_required`** — when true, the node fails (`EventToolRouteMissing`) if the command emits no `_TRACKER_ROUTE=<value>` sentinel line. The value populates `ctx.tool_route`.
+- **`route_required`** — when true, the node fails (`EventToolRouteMissing`) if the command emits no routing signal recognized by the runtime. The routing value populates `ctx.tool_route`.
 - **`output_limit`** — per-node override of the engine's captured-stdout byte cap, for tools that need a larger or smaller window than the global default.
 
 ### Why it matters
@@ -1552,7 +1550,7 @@ Tool-node routing fields land in the parser and IR. Authors following the runtim
 ### Added
 
 - `tool.marker_grep` — regex matched line-by-line against captured stdout; populates `ctx.tool_marker` at runtime.
-- `tool.route_required` — boolean; when true, the node fails with `EventToolRouteMissing` if the command emits no `_TRACKER_ROUTE=<value>` sentinel line.
+- `tool.route_required` — boolean; when true, the node fails with `EventToolRouteMissing` if the command emits no routing signal recognized by the runtime.
 - `tool.output_limit` — positive integer (bytes) overriding the engine default stdout tail-window for this node.
 - Reserved context variables: `ctx.tool_marker`, `ctx.tool_route`.
 

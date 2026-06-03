@@ -142,7 +142,7 @@ type ToolConfig struct {
 	Timeout       time.Duration
 	Outputs       []string // Declared possible stdout values for coverage analysis
 	MarkerGrep    string   // Regex matched line-by-line against stdout; populates ctx.tool_marker
-	RouteRequired bool     // True → node fails if no _TRACKER_ROUTE= sentinel is emitted
+	RouteRequired bool     // True → node fails if the command emits no routing signal recognized by the runtime
 	OutputLimit   int      // Bytes; > 0 = override engine default
 }
 

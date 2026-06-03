@@ -269,7 +269,7 @@ Tool nodes execute shell commands and capture their output.
 | `timeout` | Duration | — | Maximum execution time (e.g., `"30s"`, `"2m"`, `"1m30s"`). If the command exceeds this duration, it is killed. **Recommended** — the linter warns (DIP111) if omitted. |
 | `outputs` | CSV | — | Declared possible stdout values (comma-separated). Used by `dippin coverage` to check whether outgoing edge conditions cover all tool outputs. Advisory — not enforced at runtime. |
 | `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. The runtime validates and applies the regex at runtime. |
-| `route_required` | Boolean | false | When true, the node fails if the command's stdout contains no `_TRACKER_ROUTE=<value>` sentinel line. The matched value populates `ctx.tool_route`. |
+| `route_required` | Boolean | false | When true, the node fails if the command emits no routing signal recognized by the runtime (the runtime defines the routing-signal format). The routing value populates `ctx.tool_route`. |
 | `output_limit` | Integer | — | Per-node override for the engine's captured-stdout byte cap. Non-negative integer; 0 (or omitted) uses the engine default. `dippin fmt` omits the field when the value is zero. |
 
 ### Command Output
@@ -328,7 +328,7 @@ The same pattern applies to any tool whose output drives routing — build comma
       [ $? -eq 0 ] && printf 'tests_pass\n' || printf 'tests_fail\n'
 ```
 
-When `marker_grep` is declared, the runtime populates `ctx.tool_marker` and routing edges can reference it instead of `ctx.tool_stdout`. `route_required: true` makes the absence of any match a hard failure (the runtime fails the node if no `_TRACKER_ROUTE=` sentinel appears). `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
+When `marker_grep` is declared, the runtime populates `ctx.tool_marker` and routing edges can reference it instead of `ctx.tool_stdout`. `route_required: true` makes the absence of any match a hard failure (the runtime fails the node if it produces no routing result). `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
 
 **Lint:** A tool node that declares `marker_grep:` is treated as a "safe routing source" — outgoing conditional edges that test `ctx.tool_marker` no longer trip `DIP101` (unreachable target) or `DIP102` (no default edge), even with a single conditional edge. The declaration is an explicit author signal that routing is typed.
 

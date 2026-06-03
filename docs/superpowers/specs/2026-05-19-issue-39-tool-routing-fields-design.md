@@ -10,7 +10,7 @@
 The runtime supports three tool-node primitives for stdout-driven routing:
 
 - `marker_grep: '<regex>'` — typed routing channel; populates `ctx.tool_marker`.
-- `route_required: true` — paired with `_TRACKER_ROUTE=<value>` sentinel lines; populates `ctx.tool_route`.
+- `route_required: true` — fails the node if the command emits no routing signal recognized by the runtime; populates `ctx.tool_route`.
 - `output_limit: <bytes>` — per-node stdout tail-window override.
 
 The runtime's `TRK101` lint recommends these as the canonical fix for stdout truncation. Dippin hard-fails: `unrecognized tool field "marker_grep"`. Authors who follow TRK101 advice can't.
@@ -27,7 +27,7 @@ type ToolConfig struct {
     Timeout       time.Duration
     Outputs       []string
     MarkerGrep    string // regex matched line-by-line against captured stdout; populates ctx.tool_marker
-    RouteRequired bool   // true → node fails if no _TRACKER_ROUTE= sentinel is emitted
+    RouteRequired bool   // true → node fails if the command emits no routing signal recognized by the runtime
     OutputLimit   int    // bytes; > 0 = override engine default
 }
 ```

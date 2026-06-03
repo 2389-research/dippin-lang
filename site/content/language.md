@@ -186,7 +186,7 @@ Tool nodes execute shell commands. The command's stdout is captured as `ctx.tool
       pytest --tb=short
 ```
 
-Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes a missing `_TRACKER_ROUTE=` sentinel fail the node at the runtime; `output_limit` overrides the captured-stdout byte cap.
+Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes the node fail if the command emits no routing signal recognized by the runtime; `output_limit` overrides the captured-stdout byte cap.
 
 ### parallel
 

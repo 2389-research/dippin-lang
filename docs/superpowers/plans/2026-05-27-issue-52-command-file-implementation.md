@@ -996,7 +996,7 @@ Open `lsp/completion.go`. Find `fieldCompletions` (around line 42-67). Add an en
 ```go
 {"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
 {"command_file:", "External script reference for tool node (path relative to .dip dir)"},
-{"route_required:", "Require _TRACKER_ROUTE= sentinel line from tool stdout"},
+{"route_required:", "Fail the node if the command emits no runtime-recognized routing signal on stdout"},
 ```
 
 - [ ] **Step 2: Add LSP completion regression test**

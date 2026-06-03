@@ -30,7 +30,7 @@ tool RunTests
 ```
 
 - **`marker_grep`** — regex matched against captured stdout. The last match populates `ctx.tool_marker`, so routing edges can reference it instead of parsing raw `ctx.tool_stdout`.
-- **`route_required`** — when true, the node fails (`EventToolRouteMissing`) if the command emits no `_TRACKER_ROUTE=<value>` sentinel line. The matched value populates `ctx.tool_route`.
+- **`route_required`** — when true, the node fails (`EventToolRouteMissing`) if the command emits no routing signal recognized by the runtime. The routing value populates `ctx.tool_route`.
 - **`output_limit`** — per-node override of the engine's captured-stdout byte cap, for tools that need a larger or smaller window than the global default.
 
 ## Why it matters
