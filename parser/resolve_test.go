@@ -3,6 +3,7 @@ package parser
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -113,6 +114,54 @@ func TestResolveFileDirectives_RejectsSymlink(t *testing.T) {
 	err := ResolveFileDirectives(w, tmp)
 	if err == nil || !strings.Contains(err.Error(), "symlinks not allowed") {
 		t.Errorf("expected symlink rejection; got %v", err)
+	}
+}
+
+func TestResolveFileDirectives_LeafSwapCannotEscape(t *testing.T) {
+	// TOCTOU hardening (#79): the leaf is opened once with O_NOFOLLOW and
+	// validated + read via that fd, so a leaf swapped to a symlink pointing
+	// outside baseDir can never redirect the read. O_NOFOLLOW makes the leaf
+	// check atomic with the open, closing the check-to-read race that a
+	// separate Lstat-then-ReadFile pair left open. The structural guarantee
+	// is "same fd"; an O_NOFOLLOW-based assertion is sufficient to pin it.
+	// Skipped on Windows, which has no atomic O_NOFOLLOW (documented fallback).
+	if runtime.GOOS == "windows" {
+		t.Skip("O_NOFOLLOW atomic leaf rejection is Unix-only; Windows uses fstat fallback")
+	}
+	tmp := t.TempDir()
+	secretDir := t.TempDir() // outside tmp
+	secret := "TOP-SECRET-OUTSIDE-BASE"
+	if err := os.WriteFile(filepath.Join(secretDir, "secret.txt"), []byte(secret), 0o644); err != nil {
+		t.Fatalf("write secret: %v", err)
+	}
+	// The leaf is a symlink escaping baseDir — stands in for an attacker's
+	// post-validation swap. The fd-based open must refuse to follow it.
+	linkPath := filepath.Join(tmp, "leaf.sh")
+	if err := os.Symlink(filepath.Join(secretDir, "secret.txt"), linkPath); err != nil {
+		t.Skipf("symlink not supported on this platform: %v", err)
+	}
+	w := &ir.Workflow{
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				CommandFile: "leaf.sh",
+			}},
+		},
+	}
+	err := ResolveFileDirectives(w, tmp)
+	if err == nil || !strings.Contains(err.Error(), "symlinks not allowed") {
+		t.Fatalf("expected leaf-symlink rejection; got %v", err)
+	}
+	// The read must not escape: external content must never be loaded.
+	if cfg, ok := w.Nodes[0].Config.(ir.ToolConfig); ok && strings.Contains(cfg.Command, secret) {
+		t.Errorf("read escaped baseDir via leaf symlink: Command leaked external content")
+	}
+	// Error must name only the user-written path, never the resolved/target one
+	// (an O_NOFOLLOW *fs.PathError carries the resolved abs path; it must be mapped).
+	if strings.Contains(err.Error(), secretDir) || strings.Contains(err.Error(), linkPath) {
+		t.Errorf("error leaked a resolved path; got %v", err)
+	}
+	if !strings.Contains(err.Error(), "leaf.sh") {
+		t.Errorf("error should reference user-written path leaf.sh; got %v", err)
 	}
 }
 

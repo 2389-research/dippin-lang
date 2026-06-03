@@ -3,10 +3,12 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/2389-research/dippin-lang/ir"
 )
@@ -85,10 +87,10 @@ func loadDirectiveInto(dst *string, path, baseDir, nodeID, directive string) err
 // loadDirectiveFile resolves p relative to baseDir, applies path security
 // checks, and reads the file. Error messages reference the user-written
 // path (p), never the resolved absolute path, to avoid leaking directory
-// structure into diagnostics. In particular, *fs.PathError values from
-// os.Lstat / os.ReadFile carry the resolved absolute path in their
-// stringification, so we never wrap them with %w — instead we branch on
-// the error kind and emit a user-path-only message.
+// structure into diagnostics. In particular, *fs.PathError values from the
+// os package carry the resolved absolute path in their stringification, so we
+// never wrap them with %w — instead we branch on the error kind and emit a
+// user-path-only message.
 func loadDirectiveFile(baseDir, p string) ([]byte, error) {
 	resolved, err := safeResolve(baseDir, p)
 	if err != nil {
@@ -97,34 +99,63 @@ func loadDirectiveFile(baseDir, p string) ([]byte, error) {
 	if err := checkContainment(baseDir, resolved, p); err != nil {
 		return nil, err
 	}
-	info, err := statDirectiveFile(p, resolved)
+	return openCheckRead(p, resolved)
+}
+
+// openCheckRead opens resolved exactly once and validates + reads the file
+// through that single fd. Opening, fstat, and read all operate on the same
+// descriptor, so nothing is re-resolved by pathname between the symlink/size
+// checks and the read — closing the leaf check-to-read TOCTOU race that a
+// separate Lstat+ReadFile pair left open (#79).
+//
+// O_NOFOLLOW (oNoFollow on Unix) makes leaf-symlink rejection atomic: open()
+// fails with ELOOP when the final path component is a symlink. It affects only
+// the final component, so contained parent symlinks stay followed and remain
+// validated by checkContainment. Windows is unsupported (oNoFollow == 0, see
+// resolve_nofollow_windows.go): the fd-based fstat→read still closes the
+// fstat-to-read race there, but atomic leaf-symlink rejection is Unix-only.
+//
+// Residual (out of scope for #79): checkContainment validates the parent chain
+// at open-adjacent time, but a fully race-free parent walk needs
+// openat-per-component, a much larger cross-platform lift. This closes the LEAF
+// check-to-read race only.
+func openCheckRead(p, resolved string) ([]byte, error) {
+	f, err := os.OpenFile(resolved, os.O_RDONLY|oNoFollow, 0)
 	if err != nil {
-		return nil, err
+		return nil, openErr(p, err)
+	}
+	defer func() { _ = f.Close() }()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, pathErr(p, err, "stat")
 	}
 	if err := checkFileInfo(p, info); err != nil {
 		return nil, err
 	}
-	return readDirectiveFile(p, resolved)
+	return readFromFD(p, f)
 }
 
-// statDirectiveFile lstats the resolved path, rewriting any error so it
-// only mentions the user-written path p (never the absolute resolved one).
-func statDirectiveFile(p, resolved string) (os.FileInfo, error) {
-	info, err := os.Lstat(resolved)
-	if err != nil {
-		return nil, pathErr(p, err, "stat")
-	}
-	return info, nil
-}
-
-// readDirectiveFile reads the resolved path, rewriting any error so it
-// only mentions the user-written path p (never the absolute resolved one).
-func readDirectiveFile(p, resolved string) ([]byte, error) {
-	contents, err := os.ReadFile(resolved)
+// readFromFD reads the already-open fd, rewriting any error so it only mentions
+// the user-written path p (never the absolute resolved one).
+func readFromFD(p string, f *os.File) ([]byte, error) {
+	contents, err := io.ReadAll(f)
 	if err != nil {
 		return nil, pathErr(p, err, "read")
 	}
 	return contents, nil
+}
+
+// openErr maps an os.OpenFile error to a user-path-only diagnostic. An
+// O_NOFOLLOW open of a symlink leaf fails with ELOOP inside an *fs.PathError
+// whose stringification embeds the resolved absolute path; we detect it via
+// errors.Is and emit the same user-path-only "symlinks not allowed" message the
+// old Lstat-based leaf check produced. Other errors defer to pathErr, which is
+// also user-path-only.
+func openErr(p string, err error) error {
+	if errors.Is(err, syscall.ELOOP) {
+		return fmt.Errorf("symlinks not allowed: %q", p)
+	}
+	return pathErr(p, err, "open")
 }
 
 // pathErr maps a filesystem error to a user-path-only diagnostic. *fs.PathError
@@ -196,7 +227,11 @@ func escapesBase(base, target string) bool {
 	return err != nil || hasParentRef(rel) || filepath.IsAbs(rel)
 }
 
-// checkFileInfo enforces symlink and size policies on the resolved file.
+// checkFileInfo enforces symlink and size policies on the fd's fstat info. The
+// size cap is authoritative. The symlink-mode check is defensive: on Unix the
+// leaf symlink was already rejected atomically by O_NOFOLLOW at open, so fstat
+// never sees one; on Windows (unsupported) open follows the leaf, so fstat sees
+// the target and this check cannot fire.
 func checkFileInfo(p string, info os.FileInfo) error {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return fmt.Errorf("symlinks not allowed: %q", p)
