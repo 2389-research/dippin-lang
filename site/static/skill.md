@@ -556,7 +556,7 @@ The primary loop for authoring .dip files:
 | `ctx.human_response` | Freeform human input |
 | `ctx.tool_stdout` | Tool command stdout |
 | `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
-| `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout (format defined by the runtime; set when `route_required` is honored) |
+| `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout — populated when the tool emits a routing sentinel the runtime recognizes (format defined by the runtime); `route_required: true` additionally fails the node if none is emitted |
 | `ctx.preferred_label` | Human choice selection (maps to edge label) |
 | `ctx.interview_answers` | Interview mode answers (via `answers_key`) |
 | `params.<key>` | Parent subgraph params |

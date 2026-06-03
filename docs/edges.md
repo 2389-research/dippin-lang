@@ -183,7 +183,7 @@ Common variables used in conditions:
 | `ctx.tool_stdout` | Tool nodes | Command's stdout output |
 | `ctx.tool_stderr` | Tool nodes | Command's stderr output |
 | `ctx.tool_marker` | Tool nodes | Tool stdout regex match (when `marker_grep` is declared on the source tool node) |
-| `ctx.tool_route` | Tool nodes | A routing value the runtime extracts from the tool's stdout (format defined by the runtime; set when `route_required` is honored) |
+| `ctx.tool_route` | Tool nodes | A routing value the runtime extracts from the tool's stdout — populated when the tool emits a routing sentinel the runtime recognizes (format defined by the runtime); `route_required: true` additionally fails the node if none is emitted |
 | `ctx.human_response` | Human nodes | User's text input |
 | `ctx.last_response` | Agent nodes | LLM's response text |
 | `graph.goal` | Workflow header | The workflow's goal string |
