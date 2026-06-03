@@ -1,5 +1,6 @@
 # Binary
 /dippin
+/wasm
 
 # Coverage
 cover*.out
