@@ -103,6 +103,8 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 
 `tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
 
+**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the rejected in-file graph-topology lint ([#57](https://github.com/2389-research/dippin-lang/issues/57)): it concerns the cross-*file* boundary, and cross-file enforcement is tracked as [#89](https://github.com/2389-research/dippin-lang/issues/89).
+
 **Writable Paths (`writable_paths:`)** — *added v0.35.0; an enforcing runtime is required.*
 
 A node-level glob list bounding where the agent's tools may write. Shape: comma-separated globs (e.g. `workspace/**, .ai/sprints/**`).
