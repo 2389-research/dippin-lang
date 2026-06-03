@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP142).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP143).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -44,6 +44,7 @@ const (
 	DIP140 = "DIP140" // params re-enables tools that tool_access strips
 	DIP141 = "DIP141" // writable_paths nullified by tool_access: none (dead config)
 	DIP142 = "DIP142" // unsafe writable_paths entry (absolute / ~ / parent-escape / brace)
+	DIP143 = "DIP143" // referenced subgraph does not inherit this workflow's tool_access restrictions
 )
 
 func init() {
@@ -90,4 +91,5 @@ func init() {
 	CodeDescription[DIP140] = "params re-enables tools that tool_access strips"
 	CodeDescription[DIP141] = "writable_paths nullified by tool_access: none (dead config)"
 	CodeDescription[DIP142] = "unsafe writable_paths entry (absolute / ~ / parent-escape / brace)"
+	CodeDescription[DIP143] = "referenced subgraph does not inherit this workflow's tool_access restrictions"
 }

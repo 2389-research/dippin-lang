@@ -187,10 +187,10 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-51 diagnostic codes across two categories:
+52 diagnostic codes across two categories:
 
 - **DIP001–DIP009** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch
-- **DIP101–DIP142** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety
+- **DIP101–DIP143** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary
 
 ---
 
@@ -279,6 +279,8 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 **Scope vs. tool-node safety:** `tool_access` gates *LLM-driven* tool calls on agent nodes. It is unrelated to `tool` nodes (shell commands authored directly in `.dip`), whose allowlist/denylist is controlled by the v0.28.x defaults `tool_commands_allow` and `tool_denylist_add`.
 
 `tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
+
+**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the rejected in-file graph-topology lint ([#57](https://github.com/2389-research/dippin-lang/issues/57)): it concerns the cross-*file* boundary, and cross-file enforcement is tracked as [#89](https://github.com/2389-research/dippin-lang/issues/89).
 
 **Writable Paths (`writable_paths:`)** — *added v0.35.0; an enforcing runtime is required.*
 
