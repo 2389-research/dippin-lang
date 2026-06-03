@@ -88,10 +88,9 @@ time. The runtime handles expansion.
 ## The runtime contract
 
 Dippin defines the subgraph — the ref, the params, the edges into
-and out of it. The runtime (in our case, Tracker) is responsible for
-loading the referenced file, substituting params, and executing the
-child workflow as part of the parent pipeline. The IR gives the
-runtime everything it needs:
+and out of it. The runtime is responsible for loading the referenced
+file, substituting params, and executing the child workflow as part
+of the parent pipeline. The IR gives the runtime everything it needs:
 
 ```go
 cfg := node.Config.(ir.SubgraphConfig)

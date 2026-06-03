@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a new `manager_loop` node kind to dippin-lang so `.dip` files can natively express Tracker v0.20.0's `stack.manager_loop` supervisor — a node that runs a child subgraph, polls on an interval, and can steer the running child by injecting context.
+**Goal:** Add a new `manager_loop` node kind to dippin-lang so `.dip` files can natively express the runtime's `stack.manager_loop` supervisor — a node that runs a child subgraph, polls on an interval, and can steer the running child by injecting context.
 
-**Architecture:** Add `NodeManagerLoop` + `ManagerLoopConfig` to the IR, mirroring the existing `SubgraphConfig` shape with duration/int/condition/map fields. Parser dispatch follows the existing per-kind handler pattern in `parser/parse_nodes.go`. `stop_condition` and `steer_condition` reuse `ir.Condition{Raw, Parsed}` and are parsed on demand via an extended `simulate.EnsureConditionsParsed`. `steer_context` uses `map[string]string` and supports both inline CSV (`key=val,key=val`) and a multi-line block form mirroring `subgraph.params`. DOT exports as `shape=house` (matching Tracker's existing DOT parser) with a lossless flat-attr round-trip. Linter allocates DIP135/136/137 and extends DIP120's namespace list with `stack.child.*`. Tree-sitter grammar, VS Code TextMate, LSP symbol map, DOT migrator, scaffold, docs, site, and changelog all updated in the same PR. Tree-sitter generated files are committed (consumers compile `src/parser.c` directly); a CI drift check prevents them going stale.
+**Architecture:** Add `NodeManagerLoop` + `ManagerLoopConfig` to the IR, mirroring the existing `SubgraphConfig` shape with duration/int/condition/map fields. Parser dispatch follows the existing per-kind handler pattern in `parser/parse_nodes.go`. `stop_condition` and `steer_condition` reuse `ir.Condition{Raw, Parsed}` and are parsed on demand via an extended `simulate.EnsureConditionsParsed`. `steer_context` uses `map[string]string` and supports both inline CSV (`key=val,key=val`) and a multi-line block form mirroring `subgraph.params`. DOT exports as `shape=house` (matching the runtime's existing DOT parser) with a lossless flat-attr round-trip. Linter allocates DIP135/136/137 and extends DIP120's namespace list with `stack.child.*`. Tree-sitter grammar, VS Code TextMate, LSP symbol map, DOT migrator, scaffold, docs, site, and changelog all updated in the same PR. Tree-sitter generated files are committed (consumers compile `src/parser.c` directly); a CI drift check prevents them going stale.
 
 **Tech Stack:** Go 1.25, `just` task runner, `simulate.EnsureConditionsParsed` for condition AST, tree-sitter CLI (`tree-sitter-cli ^0.24.0`), Hugo for site.
 
@@ -40,18 +40,18 @@ Skim these before starting — they establish the patterns this plan mirrors:
 
 | Decision | Value | Why |
 |---|---|---|
-| Keyword | `manager_loop` | Matches Tracker's `stack.manager_loop`; `fan_in` precedent for underscored multi-word kinds; `manager` alone collides with "manager agent" in AI-pipeline vocabulary. |
+| Keyword | `manager_loop` | Matches the runtime's `stack.manager_loop`; `fan_in` precedent for underscored multi-word kinds; `manager` alone collides with "manager agent" in AI-pipeline vocabulary. |
 | IR constant | `NodeManagerLoop NodeKind = "manager_loop"` | Underscores match string value. |
 | Config struct | `ManagerLoopConfig` | Matches naming of `ParallelConfig`, `SubgraphConfig`. |
 | Required field | `subgraph_ref` (not `ref`) | A manager_loop is not itself a subgraph — `ref` would mislead. |
 | Condition fields | `StopCondition *ir.Condition`, `SteerCondition *ir.Condition` | Reuse existing Condition struct; plug into `simulate.EnsureConditionsParsed` so `Parsed` AST is guaranteed before lint/simulate (per the DIP101 bug pattern CLAUDE.md warns about). |
 | `steer_context` | `map[string]string`, supports inline CSV AND block form | Mirrors `AgentConfig.Params` / `SubgraphConfig.Params`. Parse-time structuring keeps column-precise diagnostics. |
-| DOT shape | `house` | Matches Tracker's existing DOT parser mapping for `stack.manager_loop`. |
+| DOT shape | `house` | Matches the runtime's existing DOT parser mapping for `stack.manager_loop`. |
 | DIP codes | DIP135, DIP136, DIP137 (3 codes, not 5) | `poll_interval`/`max_cycles`/`steer_context` shape errors collapse into DIP136 per existing DIP116/DIP130 precedent. DIP137 covers "unbounded manager" as a DIP104 analog. |
 | Tree-sitter generated files | Commit them | Zed pins a commit SHA and compiles `src/parser.c` directly; canonical grammars (tree-sitter-go/rust/python) all commit. Add `just tree-sitter-generate` + CI drift check to prevent staleness. |
 | Scaffold template | Add `dippin scaffold manager_loop` | Precedent: `conditional` is a one-kind-showcase template. |
 | VS Code regex | Fix `parallel`/`fan_in` omission in same PR | One-line regex edit, trivial revert, repo precedent (commit `bfa4219`). |
-| Tracker adapter | Separate Tracker repo issue filed first, cross-linked in PR body; do NOT block merge | Tracker pins versions — they can pin to `<v0.22.0` until their adapter ships. |
+| Runtime adapter | Separate runtime issue filed first, cross-linked in PR body; do NOT block merge | Downstream consumers pin versions — they can pin to `<v0.22.0` until their adapter ships. |
 | Version | v0.22.0 | Pre-1.0 additive; no breaking IR change. |
 
 ---
@@ -184,7 +184,7 @@ Expected: PASS.
 git add ir/ir.go ir/ir_test.go
 git commit -m "feat(ir): add NodeManagerLoop kind and ManagerLoopConfig
 
-Supports Tracker's stack.manager_loop supervisor nodes — a child subgraph
+Supports the runtime's stack.manager_loop supervisor nodes — a child subgraph
 ref, poll interval, max cycles, stop/steer conditions (reusing ir.Condition
 for AST parsing consistency), and a key-value steer_context map."
 ```
@@ -899,7 +899,7 @@ git commit -m "feat(export): emit manager_loop nodes as DOT shape=house
 
 Flat attrs: subgraph_ref, poll_interval, max_cycles, stop_condition,
 steer_condition, and steer_context (flattened to canonical sorted
-k=v,k=v so round-trip through Tracker's DOT adapter is lossless)."
+k=v,k=v so round-trip through the runtime's DOT adapter is lossless)."
 ```
 
 ---
@@ -1055,7 +1055,7 @@ Expected: PASS.
 git add migrate/migrate.go migrate/migrate_test.go
 git commit -m "feat(migrate): convert DOT shape=house to NodeManagerLoop
 
-Reverses the export direction so 'dippin migrate' can convert Tracker
+Reverses the export direction so 'dippin migrate' can convert runtime
 DOT pipelines that use stack.manager_loop. Handles all six manager
 attrs plus the flattened steer_context back into a map."
 ```
@@ -2171,7 +2171,7 @@ Add after the "Subgraph Nodes" section (around line 420):
 
 ## Manager Loop Nodes
 
-Manager loop nodes supervise a child sub-pipeline, polling it on a cadence and optionally steering it by injecting context during execution. They map to Tracker's `stack.manager_loop` and DOT's `shape=house`.
+Manager loop nodes supervise a child sub-pipeline, polling it on a cadence and optionally steering it by injecting context during execution. They map to the runtime's `stack.manager_loop` and DOT's `shape=house`.
 
 ```dippin
   manager_loop QualityGate
@@ -2307,7 +2307,7 @@ Add above the v0.21.0 entry:
 ## [v0.22.0] — YYYY-MM-DD
 
 ### Added
-- **`manager_loop` node kind** for supervising a child sub-pipeline with polling and mid-run context steering. Maps to Tracker's `stack.manager_loop` and DOT `shape=house`. Fields: `subgraph_ref`, `poll_interval`, `max_cycles`, `stop_condition`, `steer_condition`, `steer_context` (inline CSV or block form). Round-trips through parser → formatter → DOT export → migrate. Requires Tracker adapter update (tracker#NNN). ([#26](https://github.com/2389-research/dippin-lang/issues/26))
+- **`manager_loop` node kind** for supervising a child sub-pipeline with polling and mid-run context steering. Maps to the runtime's `stack.manager_loop` and DOT `shape=house`. Fields: `subgraph_ref`, `poll_interval`, `max_cycles`, `stop_condition`, `steer_condition`, `steer_context` (inline CSV or block form). Round-trips through parser → formatter → DOT export → migrate. Requires a coordinated runtime release. ([#26](https://github.com/2389-research/dippin-lang/issues/26))
 - **DIP135-137** lint codes for manager_loop validation: missing/nonexistent `subgraph_ref` (DIP135), invalid control field (DIP136), unbounded supervision (DIP137 — the manager_loop analog of DIP104).
 - **`stack.*` namespace** recognized by DIP120; `stop_condition`/`steer_condition` can reference `stack.child.cycles`, `stack.child.outcome`, etc., without namespace warnings.
 - **`dippin scaffold manager_loop`** template emits a starter supervisor workflow.
@@ -2336,37 +2336,37 @@ git commit -m "docs: changelog for manager_loop feature (unreleased)"
 
 ---
 
-## Task 19: File the Tracker follow-up issue
+## Task 19: File the runtime follow-up issue
 
 **Pre-merge task — do this BEFORE the dippin-lang PR opens.**
 
-- [ ] **Step 19.1: Check for tracker field-report style**
+- [ ] **Step 19.1: Check for cross-repo coordination style**
 
-Look at `.tracker/` (gitignored) or past references for cross-repo coordination style. `CHANGELOG.md` line 8 shows entries like `tracker#112`, `tracker#67` — indicating Tracker uses GitHub issues cross-linked by number.
+Review past CHANGELOG entries for cross-repo coordination style.
 
-- [ ] **Step 19.2: Draft the Tracker issue body**
+- [ ] **Step 19.2: Draft the runtime adapter issue body**
 
-Title: `feat: add ir.NodeManagerLoop support to pipeline/dippin_adapter.go`
+Title: `feat: add ir.NodeManagerLoop support to the runtime's pipeline adapter layer`
 
 Body:
 ```
 dippin-lang v0.22.0 (see 2389-research/dippin-lang#26) adds a new IR node
 kind `NodeManagerLoop` that expresses `stack.manager_loop` supervisors.
-Tracker's DOT parser already handles the node via `shape=house`, but the
-dippin → Tracker adapter does not yet map `ir.NodeManagerLoop` → flat
+The runtime's DOT parser already handles the node via `shape=house`, but the
+dippin → runtime adapter does not yet map `ir.NodeManagerLoop` → flat
 adapter attrs.
 
-**Until this lands**, pin Tracker to `dippin-lang@v0.21.0`. Bumping to
+**Until this lands**, pin the runtime to `dippin-lang@v0.21.0`. Bumping to
 v0.22.0 without this adapter update will cause `stack.manager_loop` nodes
-authored in `.dip` to silently lose their config on the Tracker side.
+authored in `.dip` to silently lose their config on the runtime side.
 
 **What needs to happen in this repo**:
 
-1. `pipeline/dippin_adapter.go` `nodeKindToShapeMap`: add
+1. The pipeline adapter's `nodeKindToShapeMap`: add
    `ir.NodeManagerLoop: "house"`.
 2. In the flat-attr extractor for manager nodes, read these fields from
    `ir.ManagerLoopConfig` and write them as DOT-style flat attrs that
-   `pipeline/handlers/manager_loop.go` already consumes: `subgraph_ref`,
+   the runtime's pipeline handler for manager_loop already consumes: `subgraph_ref`,
    `poll_interval` (as string duration), `max_cycles` (as stringified int),
    `stop_condition`, `steer_condition`, `steer_context` (flattened to
    canonical sorted `k=v,k=v`).
@@ -2376,13 +2376,9 @@ Reference (dippin side): `export/dot.go applyManagerLoopAttrs` has the
 same flattening logic; mirror it.
 ```
 
-- [ ] **Step 19.3: File the issue**
+- [ ] **Step 19.3: File the issue in the runtime repo**
 
-```
-gh issue create --repo 2389-research/tracker --title "feat: add ir.NodeManagerLoop support to pipeline/dippin_adapter.go" --body "..."
-```
-
-Copy the issue number (call it `tracker#NNN`). Update the dippin PR body to reference it and update the CHANGELOG entry from `tracker#NNN` to the real number.
+File the issue in the runtime repository. Copy the issue number and update the dippin PR body to reference it and update the CHANGELOG entry with the real number.
 
 ---
 
@@ -2454,7 +2450,7 @@ git push -u origin feat/manager-loop-node
 gh pr create --title "feat: add manager_loop node kind (issue #26)" --body "$(cat <<'EOF'
 ## Summary
 
-Adds a new `manager_loop` node kind to the dippin-lang IR so `.dip` files can natively express Tracker's `stack.manager_loop` supervisors — a node that runs a child sub-pipeline, polls on an interval, and can steer the running child via context injection. Closes #26.
+Adds a new `manager_loop` node kind to the dippin-lang IR so `.dip` files can natively express the runtime's `stack.manager_loop` supervisors — a node that runs a child sub-pipeline, polls on an interval, and can steer the running child via context injection. Closes #26.
 
 Without this change, pipelines using manager_loop must be authored in DOT format end-to-end.
 
@@ -2479,7 +2475,7 @@ Also folds in a pre-existing bug fix: the VS Code TextMate node-declaration rege
 
 ## Cross-repo coordination
 
-**Tracker side: tracker#NNN** — the dippin → Tracker adapter (`pipeline/dippin_adapter.go`) needs a parallel update to map `ir.NodeManagerLoop` → `shape=house` with flat attrs. **Until that lands, pin Tracker to `dippin-lang@v0.21.0`.** Bumping to v0.22.0 without the adapter change will silently drop manager_loop config on the Tracker side.
+**Runtime side** — the runtime's pipeline adapter layer needs a parallel update to map `ir.NodeManagerLoop` → `shape=house` with flat attrs. **Until that lands, downstream consumers should pin to `dippin-lang@v0.21.0`.** Bumping to v0.22.0 without the adapter change will silently drop manager_loop config on the runtime side.
 
 ## Post-merge TODO
 
@@ -2505,7 +2501,7 @@ Create a reminder (issue, TODO, or calendar note):
 
 1. Update `editors/zed-dippin/extension.toml` `commit = ...` to the merge commit SHA.
 2. Tag `v0.22.0` when ready; GoReleaser handles the rest.
-3. Coordinate with Tracker to land tracker#NNN + bump their `dippin-lang` pin.
+3. Coordinate with downstream consumers to land the matching adapter update + bump their `dippin-lang` pin.
 
 ---
 

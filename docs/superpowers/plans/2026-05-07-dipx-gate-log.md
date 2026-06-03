@@ -50,9 +50,9 @@
 
 ## Phase 6 gate (2026-05-07)
 
-- **Reviewer:** standard — Tracker integration subagent
+- **Reviewer:** standard — runtime integration subagent
 - **Result:** REMEDIATED → PASS (with deferrals)
-- **Summary:** Tasks 14 (Source interface), 15 (dirSource + Load), 16 (Extract atomic). Tracker-integration gate confirmed: Source.Workflow argument order matches flatten.Resolver, dirSource preserves Windows filepath behavior, simulate.EnsureConditionsParsed eagerly applied, single verifiedBytes-pathway parser.NewParser invariant intact. Two cheap fixes applied in commit `3476dce`: H1 (dirSource boundary check uses canonical `rel == ".." || HasPrefix(rel, ".."+sep)` idiom) and H3 (Load strict extension allowlist; .DIPX uppercase routes to Open; non-.dip/.dipx returns ErrPathUnsafe). 2 new tests. Deferred findings (H2 dirSource Canonicalize-style validation, M1/M2 LRU+singleflight cache, M3/M4 Extract atomicity edge cases, L4 Source.Workflow ctx) appended to followups in commit `d38f065`. Tests passing.
+- **Summary:** Tasks 14 (Source interface), 15 (dirSource + Load), 16 (Extract atomic). Runtime-integration gate confirmed: Source.Workflow argument order matches flatten.Resolver, dirSource preserves Windows filepath behavior, simulate.EnsureConditionsParsed eagerly applied, single verifiedBytes-pathway parser.NewParser invariant intact. Two cheap fixes applied in commit `3476dce`: H1 (dirSource boundary check uses canonical `rel == ".." || HasPrefix(rel, ".."+sep)` idiom) and H3 (Load strict extension allowlist; .DIPX uppercase routes to Open; non-.dip/.dipx returns ErrPathUnsafe). 2 new tests. Deferred findings (H2 dirSource Canonicalize-style validation, M1/M2 LRU+singleflight cache, M3/M4 Extract atomicity edge cases, L4 Source.Workflow ctx) appended to followups in commit `d38f065`. Tests passing.
 
 ## Phase 5 gate (2026-05-07)
 

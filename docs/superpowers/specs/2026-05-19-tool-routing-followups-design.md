@@ -9,9 +9,9 @@
 
 `marker_grep:` made `ctx.tool_marker` an authoritative routing channel on tool nodes. That changes the lint and round-trip expectations the toolchain inherited from the pre-#39 world:
 
-1. **Lint false positives (#42).** A clean marker-routed workflow with single-conditional edges per marker value still trips DIP101 / DIP102 today because the existing exhaustive-source detection only knows about `ctx.outcome` pairs and equality partitions. Tracker authors who follow the "TRK101 option (d)" guidance — enumerate every marker as a separate conditional edge — get false-positive coverage hits.
+1. **Lint false positives (#42).** A clean marker-routed workflow with single-conditional edges per marker value still trips DIP101 / DIP102 today because the existing exhaustive-source detection only knows about `ctx.outcome` pairs and equality partitions. Authors who follow the "TRK101 option (d)" guidance — enumerate every marker as a separate conditional edge — get false-positive coverage hits.
 2. **Foot-gun bool parsing (#43).** The new `route_required:` field uses the existing `val == "true"` strict equality pattern shared with `goal_gate`, `auto_status`, `cache_tools`. Anything other than the literal `"true"` silently becomes `false` — `route_required: yes` parses as `false` and the safety net is disabled with no warning. This was acceptable for `goal_gate` (failure mode is conservative); it is not acceptable for `route_required`.
-3. **`outputs:` dropped on DOT round-trip (#44).** Tracker exports a workflow to DOT to talk to legacy tooling. The export side never emitted `outputs`, and the migrate side never read it back. A `.dip → DOT → .dip` round-trip silently dropped the field, so coverage / output-set analysis on the migrated copy ran against an empty set.
+3. **`outputs:` dropped on DOT round-trip (#44).** The runtime exports a workflow to DOT to talk to legacy tooling. The export side never emitted `outputs`, and the migrate side never read it back. A `.dip → DOT → .dip` round-trip silently dropped the field, so coverage / output-set analysis on the migrated copy ran against an empty set.
 
 Each is independently small. Together they round out the v0.28.0 tool-routing surface.
 

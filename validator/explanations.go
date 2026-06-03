@@ -416,9 +416,9 @@ func safetyExplanations() map[string]Explanation {
 		DIP140: {
 			Code:    DIP140,
 			Summary: "params re-enables tools that tool_access strips",
-			Trigger: "An agent sets tool_access (any non-empty value) and also sets a params key that would re-grant tools: allowed_tools, disallowed_tools, tool_choice, or permission_mode. When tool_access is set, tracker ignores these params keys (fail-closed), so the override is silently neutralized — a likely bypass attempt or dead config.",
+			Trigger: "An agent sets tool_access (any non-empty value) and also sets a params key that would re-grant tools: allowed_tools, disallowed_tools, tool_choice, or permission_mode. When tool_access is set, the runtime ignores these params keys (fail-closed), so the override is silently neutralized — a likely bypass attempt or dead config.",
 			Fix:     "Remove the params key; tool_access governs the tool catalog. To grant tools instead, omit tool_access.",
-			Example: "agent Summarize\n  prompt: \"Summarize\"\n  tool_access: none\n  params:\n    allowed_tools: Bash   // DIP140: tracker strips this — tool_access wins",
+			Example: "agent Summarize\n  prompt: \"Summarize\"\n  tool_access: none\n  params:\n    allowed_tools: Bash   // DIP140: the runtime strips this — tool_access wins",
 		},
 		DIP141: {
 			Code:    DIP141,

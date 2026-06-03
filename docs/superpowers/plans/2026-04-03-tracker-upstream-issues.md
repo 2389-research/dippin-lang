@@ -1,8 +1,8 @@
-# Tracker Upstream Issues Implementation Plan
+# Runtime Upstream Issues Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Address all 4 issues from tracker upstream dependency report (GitHub issue #3): bracket edge syntax error, model catalog extensibility, conditional node kind, and nested retry block error.
+**Goal:** Address all 4 issues from the runtime upstream dependency report (GitHub issue #3): bracket edge syntax error, model catalog extensibility, conditional node kind, and nested retry block error.
 
 **Architecture:** Four independent changes to the parser, IR, validator, formatter, DOT exporter, migrate, scaffold, and LSP packages. Issue 1 (bracket syntax) and Issue 4 (retry blocks) emit helpful parse errors pointing to correct syntax. Issue 2 (model catalog) adds `--extra-models` CLI flag. Issue 3 (conditional node) adds a new `NodeConditional` kind with `ConditionalConfig` throughout the pipeline.
 
@@ -118,7 +118,7 @@ Expected: All checks pass (build, vet, fmt, test-race, complexity, validate-exam
 
 ```bash
 git add parser/lexer.go parser/parse_edges.go parser/parser_test.go
-git commit -m "fix: emit parse error for bracket edge syntax [label: ...] (tracker #18)"
+git commit -m "fix: emit parse error for bracket edge syntax [label: ...] (upstream issue #18)"
 ```
 
 ---
@@ -244,7 +244,7 @@ Expected: All checks pass.
 
 ```bash
 git add validator/lint_model.go cmd/dippin/cli.go validator/lint_test.go
-git commit -m "feat: --extra-models flag to extend DIP108 model catalog (tracker #36)"
+git commit -m "feat: --extra-models flag to extend DIP108 model catalog (upstream issue #36)"
 ```
 
 ---
@@ -959,7 +959,7 @@ Expected: All checks pass.
 
 ```bash
 git add parser/parse_nodes.go parser/parser_test.go
-git commit -m "fix: clear error for nested retry blocks, suggest flat syntax (tracker #3)"
+git commit -m "fix: clear error for nested retry blocks, suggest flat syntax (upstream issue #3)"
 ```
 
 ---
@@ -991,9 +991,9 @@ Expected: All commands succeed cleanly.
 - [ ] **Step 4: Create PR**
 
 ```bash
-gh pr create --title "fix: address 4 tracker upstream issues (#3)" --body "$(cat <<'EOF'
+gh pr create --title "fix: address 4 runtime upstream issues (#3)" --body "$(cat <<'EOF'
 ## Summary
-Addresses all 4 issues from the tracker upstream dependency report (issue #3):
+Addresses all 4 issues from the runtime upstream dependency report (issue #3):
 
 - **Issue 1 (P1):** Bracket edge syntax `[label: ...]` now emits a clear parse error with hint to use `when`/`label:` keyword syntax, instead of silently discarding annotations
 - **Issue 2 (P2):** New `--extra-models` CLI flag on `lint` and `doctor` commands lets users extend the DIP108 model catalog with private/new models

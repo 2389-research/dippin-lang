@@ -57,7 +57,7 @@ v1 is the smallest thing that lets the next layer get built. Validation, typing,
 
 ## The motivating use case
 
-The feature was filed from [tracker's git-preflight design](https://github.com/2389-research/tracker/blob/main/docs/superpowers/specs/2026-05-15-tracker-git-preflight-design.md). Tracker is the first runtime to read this field: its `--git=` preflight reads `Workflow.Requires`, checks `git` exists on PATH before the first agent fires, and hard-fails in seconds when it doesn't — instead of burning $20–$100 of LLM spend before falling over at the first `git commit` tool call. Future preflights (`--docker=`, `--gh=`, …) will follow the same shape against the same field.
+The motivating use case was a git-preflight check: a `--git=` preflight that reads `Workflow.Requires`, checks `git` exists on PATH before the first agent fires, and hard-fails in seconds when it doesn't — instead of burning $20–$100 of LLM spend before falling over at the first `git commit` tool call. Future preflights (`--docker=`, `--gh=`, …) can follow the same shape against the same field.
 
 Any other runtime can read the same field and do the same kind of preflight. The contract is in the `.dip` file; the implementation is in whichever executor's hands.
 

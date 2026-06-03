@@ -17,7 +17,7 @@ per-branch DOT round-trip infrastructure; this issue adds `tool_access` to it.
 Add `ToolAccess` to `ir.BranchConfig`, plumb it through every path the existing
 branch fields travel (parser → formatter → DOT export → DOT migrate), and validate
 invalid values via the existing DIP139 check. dippin **carries and lints** the
-field; tracker **enforces** the override at runtime, exactly as it does for
+field; the runtime **enforces** the override at runtime, exactly as it does for
 `Model`/`Provider`/`Fidelity`.
 
 ## Semantic model (normative)
@@ -39,9 +39,9 @@ field would silently run with all tools — an invisible loosening of the exact
 safety primitive `tool_access` exists to provide. Inherit-on-empty is the safe
 default and the only one that composes with the future defaults cascade (#53).
 
-This rule is a **tracker runtime-resolution requirement**. dippin cannot enforce it
-(it emits IR/`.dipx`; tracker resolves). It is documented normatively here, in the
-IR field doc comment, and in `skill.md` so the tracker-side implementation
+This rule is a **runtime resolution requirement**. dippin cannot enforce it
+(it emits IR/`.dipx`; the runtime resolves). It is documented normatively here, in the
+IR field doc comment, and in `skill.md` so the runtime-side implementation
 resolves *inherit, not reset*, and ships with a red-team test (agent
 `tool_access: none` + branch with empty `tool_access` → zero tools).
 
@@ -75,7 +75,7 @@ ordering lint would belong — noted for #54, out of scope here.
 - `migrate/parity.go` — `compareParallelBranches` compares the whole struct with
   `!=`, so the new field is auto-covered. (Keep a coverage *test* as a regression guard.)
 - `dipx/`, `cmd/dippin/cmd_pack.go` — `.dipx` bundles raw `.dip` source bytes;
-  tracker re-parses. No per-field branch serialization exists. Not a path.
+  the runtime re-parses. No per-field branch serialization exists. Not a path.
 - `simulate/parallel.go` — reads only `b.Target`. Unaffected.
 
 ## Validation (DIP139 generalization)
@@ -133,6 +133,6 @@ reserved-char test would be redundant.
 - **No new `examples/*.dip`** — proven by tests, per #76's precedent;
   `examples/agent_tool_access.dip` already documents the agent-level primitive.
 - **No cascade/resolution logic** — effective-value resolution across
-  defaults→agent→branch is #53/tracker's job. dippin carries the raw string only.
+  defaults→agent→branch is #53/the runtime's job. dippin carries the raw string only.
 - **Branch `model`/`provider` validation** (DIP108 is agent-only) and **branch diffing**
   (`diff/diff.go` has no ParallelConfig case) are pre-existing gaps, not part of #58.

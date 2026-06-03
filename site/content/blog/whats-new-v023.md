@@ -15,14 +15,14 @@ related:
     summary: "Conditional nodes, vars, shell-aware linting."
 ---
 
-`v0.23.0` is a small, security-flavored release. Two new `defaults:` fields give you first-class control over what tool nodes are allowed to shell out — something you previously could only reach by dropping to raw DOT or patching the `Workflow.Vars` map in Tracker directly.
+`v0.23.0` is a small, security-flavored release. Two new `defaults:` fields give you first-class control over what tool nodes are allowed to shell out — something you previously could only reach by dropping to raw DOT or patching the `Workflow.Vars` map in the runtime directly.
 
 ## The problem
 
-Dippin `tool` nodes execute real shell commands. Tracker's runtime reads an allowlist and denylist at start time to decide which commands are permitted. Until this release, those lists lived in `graph.Attrs` — DOT-level attributes. If you wanted to set them from a `.dip` file, your options were:
+Dippin `tool` nodes execute real shell commands. The runtime reads an allowlist and denylist at start time to decide which commands are permitted. Until this release, those lists lived in `graph.Attrs` — DOT-level attributes. If you wanted to set them from a `.dip` file, your options were:
 
-1. Export to DOT, hand-edit the graph attributes, and run Tracker from the DOT file.
-2. Patch `Workflow.Vars` programmatically via Tracker's library API.
+1. Export to DOT, hand-edit the graph attributes, and run the runtime from the DOT file.
+2. Patch `Workflow.Vars` programmatically via the runtime's library API.
 
 Both defeat the purpose of `.dip` as the authoring format. The feature requested by [#28](https://github.com/2389-research/dippin-lang/issues/28) was simple: accept these two keys in the `defaults:` block, same as every other workflow-level setting.
 
@@ -38,7 +38,7 @@ workflow ToolSafety
     model: claude-sonnet-4-6
     # Glob allowlist — commands matching ANY pattern are permitted
     tool_commands_allow: "git *,make *,npm test,npm run *"
-    # Patterns appended to tracker's built-in default denylist
+    # Patterns appended to the runtime's built-in default denylist
     tool_denylist_add: "rm -rf /,dd if=*"
 
   tool RunTests
@@ -50,7 +50,7 @@ workflow ToolSafety
   # ...
 ```
 
-Both values are comma-separated glob patterns. Dippin-lang itself doesn't validate the glob syntax and stores the string verbatim — tracker owns splitting and matching semantics at runtime, so there's no parse-time normalization that could drift from tracker's parser.
+Both values are comma-separated glob patterns. Dippin-lang itself doesn't validate the glob syntax and stores the string verbatim — the runtime owns splitting and matching semantics, so there's no parse-time normalization that could drift from the runtime's parser.
 
 Both fields round-trip through parse → format → DOT export → migrate, so DOT-authored workflows and migrations from legacy DOT files carry them through unchanged. See `examples/tool_safety.dip` for a working example.
 
@@ -86,4 +86,4 @@ If you previously smuggled `tool_commands_allow` or `tool_denylist_add` through 
 
 ## What's next
 
-Full notes in [CHANGELOG.md](https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md). The tracker side of this is [tracker#169](https://github.com/2389-research/tracker/pull/169) (allowlist runtime, shipped) and tracker#168 (denylist runtime, pending). Once tracker#168 lands, `tool_denylist_add` gets teeth — until then, the field parses and round-trips but tracker only enforces its built-in defaults.
+Full notes in [CHANGELOG.md](https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md). The runtime-side allowlist is shipped; the denylist runtime is pending. Once that lands, `tool_denylist_add` gets teeth — until then, the field parses and round-trips but the runtime only enforces its built-in defaults.

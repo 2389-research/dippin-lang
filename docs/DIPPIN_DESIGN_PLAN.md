@@ -1,12 +1,12 @@
 # Dippin: Design Plan
 
-A repo-grounded engineering plan for replacing DOT as the authoring format for Tracker pipelines.
+A repo-grounded engineering plan for replacing DOT as the authoring format for AI pipeline workflows.
 
 ---
 
 ## 1. Executive Summary
 
-Tracker is a production Go pipeline engine that executes AI-driven workflows defined as Graphviz DOT graphs. DOT was a pragmatic starting point — graph-native, visual, widely tooled — but it's now carrying too much weight: prompts, model configuration, branching logic, retry semantics, CSS-like stylesheets, and shell scripts are all stuffed into DOT string attributes.
+The runtime is a production Go pipeline engine that executes AI-driven workflows defined as Graphviz DOT graphs. DOT was a pragmatic starting point — graph-native, visual, widely tooled — but it's now carrying too much weight: prompts, model configuration, branching logic, retry semantics, CSS-like stylesheets, and shell scripts are all stuffed into DOT string attributes.
 
 **Dippin** replaces DOT as the authoring format while keeping DOT as an export target. The architecture is:
 
@@ -16,17 +16,17 @@ Dippin source → Parser → Canonical IR → Execution Engine
                                       → Linter / Validator
 ```
 
-This plan proposes a concrete syntax (two candidates evaluated), a canonical IR, a composition model, tooling strategy, and phased migration path. Every recommendation is grounded in the actual Tracker codebase and the real dotpowers pipelines.
+This plan proposes a concrete syntax (two candidates evaluated), a canonical IR, a composition model, tooling strategy, and phased migration path. Every recommendation is grounded in the actual runtime codebase and the real dotpowers pipelines.
 
 ---
 
-## 2. What Tracker Actually Does Today
+## 2. What the Runtime Actually Does Today
 
 ### The execution model in one paragraph
 
-Tracker parses a DOT file into a `Graph` of `Node` and `Edge` structs. Each node's DOT shape maps to a handler name (`box` → `codergen`, `hexagon` → `wait.human`, etc.). The engine walks the graph from `Mdiamond` (start) to `Msquare` (exit), executing each node's handler. Handlers return an `Outcome` with status (`success`/`fail`/`retry`), context updates (key-value strings), and edge routing hints (`PreferredLabel`, `SuggestedNextNodes`). The engine selects the next edge via a priority cascade: condition match → preferred label → suggested nodes → weight → lexical. Context is a shared `map[string]string` threaded through all nodes. Checkpoints serialize the full state after each step.
+The runtime parses a DOT file into a `Graph` of `Node` and `Edge` structs. Each node's DOT shape maps to a handler name (`box` → `codergen`, `hexagon` → `wait.human`, etc.). The engine walks the graph from `Mdiamond` (start) to `Msquare` (exit), executing each node's handler. Handlers return an `Outcome` with status (`success`/`fail`/`retry`), context updates (key-value strings), and edge routing hints (`PreferredLabel`, `SuggestedNextNodes`). The engine selects the next edge via a priority cascade: condition match → preferred label → suggested nodes → weight → lexical. Context is a shared `map[string]string` threaded through all nodes. Checkpoints serialize the full state after each step.
 
-### Key data structures (actual code)
+### Key data structures (actual runtime code)
 
 ```go
 // Graph: flat collection, not hierarchical
@@ -206,7 +206,7 @@ This is one of the most implementation-critical behaviors and must be brutally e
 
 6. **Checkpoint behavior**: After clearing downstream, the engine saves a checkpoint at the new current position. If the process crashes during restart, it resumes from the restart point, not the original edge source.
 
-7. **Subgraph interaction (current Tracker behavior)**: In the current engine, subgraph engines have their own `RestartCount`, independent from the parent. **In Dippin v1**, subgraphs are expanded inline at compile time (see §12), so there are no runtime subgraph boundaries. Restart counters are global within the expanded workflow. If runtime subgraph isolation becomes a real need post-v1, it can be added as an execution mode later.
+7. **Subgraph interaction (current runtime behavior)**: In the current engine, subgraph engines have their own `RestartCount`, independent from the parent. **In Dippin v1**, subgraphs are expanded inline at compile time (see §12), so there are no runtime subgraph boundaries. Restart counters are global within the expanded workflow. If runtime subgraph isolation becomes a real need post-v1, it can be added as an execution mode later.
 
 8. **Stats**: Node-local `SessionStats` (turns, tool calls, etc.) are NOT preserved across restarts. Each re-execution of a node produces fresh stats. The trace accumulates entries for every execution (including re-executions).
 
@@ -1103,7 +1103,7 @@ Deterministic: `dippin fmt` is idempotent. Running it twice produces identical o
 | Comments/sections | Lost (DOT has no comment attachment) |
 | `reads:`/`writes:` contracts | Not represented |
 | `route` sugar (post-v1) | Would expand to conditional edges; not in v1 |
-| Restart edge annotation | Exported as custom attribute `restart=true` on the edge (e.g., `A -> B [restart=true]`). Old Tracker ignores unknown attrs, but the exported DOT preserves the semantic for round-tripping. |
+| Restart edge annotation | Exported as custom attribute `restart=true` on the edge (e.g., `A -> B [restart=true]`). The runtime ignores unknown attrs, but the exported DOT preserves the semantic for round-tripping. |
 | Variable namespaces | Stripped back to flat names |
 
 ### Intentionally omitted
@@ -1173,12 +1173,12 @@ Build `dippin validate-migration <old.dot> <new.dip>`:
 
 ### Migration order (by risk)
 
-1. `tracker/pipeline/testdata/*.dot` — smallest, good for validating the tool
-2. `tracker/examples/vulnerability_analyzer.dot` — smallest real pipeline (48 lines)
-3. `tracker/examples/semport.dot` — small, tests tool nodes and conditions
-4. `tracker/examples/consensus_task.dot` — tests parallel patterns
-5. `tracker/examples/ask_and_execute.dot` — tests full lifecycle
-6. `tracker/examples/megaplan.dot` — tests complex parallel + cross-critique
+1. `pipeline/testdata/*.dot` — smallest, good for validating the tool
+2. `examples/vulnerability_analyzer.dot` — smallest real pipeline (48 lines)
+3. `examples/semport.dot` — small, tests tool nodes and conditions
+4. `examples/consensus_task.dot` — tests parallel patterns
+5. `examples/ask_and_execute.dot` — tests full lifecycle
+6. `examples/megaplan.dot` — tests complex parallel + cross-critique
 7. `dotpowers/dotpowers-simple.dot` — first large migration
 8. `dotpowers/dotpowers.dot` — the big one (1,199 lines)
 
@@ -1186,9 +1186,9 @@ Build `dippin validate-migration <old.dot> <new.dip>`:
 
 ## 17. Bootstrap / Self-Hosting Strategy
 
-Tracker can help build Dippin, but Tracker should not define Dippin.
+The runtime can help build Dippin, but the runtime should not define Dippin.
 
-### What Tracker should build
+### What the runtime should build
 
 **Pipeline: `analyze_dot.dot`** — Analyze existing DOT files
 - Agent reads each DOT file
@@ -1214,7 +1214,7 @@ Tracker can help build Dippin, but Tracker should not define Dippin.
   - Parse Dippin to IR
   - Assert IR equality
 
-### What Tracker should NOT build
+### What the runtime should NOT build
 
 - The Dippin spec itself (must be human-reviewed markdown)
 - The parser (must be hand-written Go for diagnostic quality)
@@ -1223,7 +1223,7 @@ Tracker can help build Dippin, but Tracker should not define Dippin.
 
 ### Guard rail
 
-All Tracker-generated Dippin output goes through the same validator pipeline that human-authored Dippin does. No special paths.
+All runtime-generated Dippin output goes through the same validator pipeline that human-authored Dippin does. No special paths.
 
 ---
 
@@ -1277,7 +1277,7 @@ All Tracker-generated Dippin output goes through the same validator pipeline tha
 
 ### Phase 6: Engine Integration (2 weeks)
 
-- [ ] Add `.dip` file detection in `cmd/tracker/main.go`
+- [ ] Add `.dip` file detection in the runtime CLI entry point
 - [ ] Wire Dippin parser → IR → engine (via `IRToGraph()` adapter initially)
 - [ ] Incrementally migrate engine to accept IR directly
 - [ ] Verify all existing tests pass with both paths
@@ -1422,7 +1422,7 @@ All Tracker-generated Dippin output goes through the same validator pipeline tha
 
 ### Week 4
 
-15. **Wire into `cmd/tracker`** — accept `.dip` files via `IRToGraph()` adapter
+15. **Wire into the runtime CLI** — accept `.dip` files via `IRToGraph()` adapter
 16. **Migrate remaining examples**
 17. **Write user-facing docs**
 18. **Begin adding `reads:`/`writes:` annotations** to migrated pipelines
@@ -1507,6 +1507,6 @@ Indentation-based nesting (LLMs handle this well), keyword-first lines (`agent`,
 
 File/line/column ranges, error codes (DIP001-DIP999), human explanations, suggested fixes with concrete text replacements, JSON output mode for tooling, severity levels (error/warning/info/hint), multi-error recovery at top-level declarations, tiered variable validation (always-known → declared → dynamic).
 
-**9. How should Tracker be used to bootstrap without trapping us?**
+**9. How should the runtime be used to bootstrap without trapping us?**
 
-Tracker pipelines can analyze DOT files, generate candidate Dippin, and produce test fixtures. But the spec is a human-reviewed document, the parser is hand-written Go, and all generated Dippin goes through the same validator as hand-written Dippin. Tracker is the factory floor, not the blueprint.
+Runtime pipelines can analyze DOT files, generate candidate Dippin, and produce test fixtures. But the spec is a human-reviewed document, the parser is hand-written Go, and all generated Dippin goes through the same validator as hand-written Dippin. The runtime is the factory floor, not the blueprint.

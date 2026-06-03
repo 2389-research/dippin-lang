@@ -366,7 +366,7 @@ func TestExportDOT_AgentToolAccess(t *testing.T) {
 }
 
 // TestExportDOT_AgentToolAccess_WithoutPrompts verifies that the runtime
-// safety field survives a minimal (IncludePrompts: false) export. Tracker
+// safety field survives a minimal (IncludePrompts: false) export. The runtime
 // reads tool_access from each node's DOT attrs regardless of prompt
 // inclusion; if the field were prompt-gated, a minimal export would
 // silently drop it and the safety primitive wouldn't bind at runtime.

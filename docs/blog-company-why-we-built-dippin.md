@@ -18,12 +18,12 @@ Nothing exotic. But inside a DOT attribute, every newline becomes
 `\n`, every tab becomes `\\t`, every quote becomes `\"`. The script
 is there, but you can't read it. You can't edit it with confidence.
 
-We build Tracker, an AI pipeline orchestration system. Tracker runs
-multi-step workflows where LLM agents, tool calls, and human
-reviewers collaborate on complex tasks: code review, sprint
-execution, API design. These pipelines are directed graphs — nodes
-with prompts and models, edges with conditions, retry loops,
-parallel branches. We defined them in Graphviz DOT.
+We build AI pipeline workflows — multi-step processes where LLM
+agents, tool calls, and human reviewers collaborate on complex
+tasks: code review, sprint execution, API design. These pipelines
+are directed graphs — nodes with prompts and models, edges with
+conditions, retry loops, parallel branches. We defined them in
+Graphviz DOT.
 
 DOT worked when our pipelines were small. Five nodes, simple edges,
 short prompts. But our pipelines grew. Twenty-node workflows with
@@ -188,14 +188,14 @@ a walkthrough. When someone pushes a change, CI validates structure,
 checks semantics, and estimates the cost delta. The change either
 passes or it doesn't — no ambiguity.
 
-The feedback loop between Tracker and the language is tight. Last
-week, Tracker needed to force LLM APIs to return structured JSON —
+The feedback loop between the runtime and the language is tight. Last
+week, the runtime needed to force LLM APIs to return structured JSON —
 a feature that all three providers support, but that requires
 specific API parameters to activate. In DOT, adding this would have
 meant inventing an attribute convention, documenting it somewhere,
 and hoping people used it correctly. In Dippin, we added
 `response_format` and `response_schema` as first-class fields with
-four lint rules to catch mistakes. The Tracker adapter picked them
+four lint rules to catch mistakes. The runtime adapter picked them
 up automatically. Request to production in a day.
 
 Because everything reads the same typed model, adding

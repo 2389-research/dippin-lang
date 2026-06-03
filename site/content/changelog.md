@@ -7,15 +7,15 @@ layout: "changelog"
 ## [v0.35.0] — 2026-06-02
 
 ### Added
-- `writable_paths:` — a comma-separated glob list on agent nodes and parallel branches that bounds where an agent's tools may write (e.g. `writable_paths: workspace/**, .ai/sprints/**`) ([#75](https://github.com/2389-research/dippin-lang/issues/75)). Absent = unbounded; a per-branch empty value inherits the target agent's (never resets to unbounded). dippin **carries + lints**; tracker **enforces** an fs-level write jail on the `native` backend (covering `Write`/`Edit`/`ApplyPatch`, **`Bash` and any process Bash spawns**), resolved against an immutable session root. Distinct from the advisory `writes:` field (context keys). Carried through parse → IR → format → DOT export → migrate.
+- `writable_paths:` — a comma-separated glob list on agent nodes and parallel branches that bounds where an agent's tools may write (e.g. `writable_paths: workspace/**, .ai/sprints/**`) ([#75](https://github.com/2389-research/dippin-lang/issues/75)). Absent = unbounded; a per-branch empty value inherits the target agent's (never resets to unbounded). dippin **carries + lints**; the runtime **enforces** an fs-level write jail on the `native` backend (covering `Write`/`Edit`/`ApplyPatch`, **`Bash` and any process Bash spawns**), resolved against an immutable session root. Distinct from the advisory `writes:` field (context keys). Carried through parse → IR → format → DOT export → migrate.
 - `DIP141` — `writable_paths` nullified by `tool_access: none` (dead config; nothing left to bound).
 - `DIP142` — unsafe `writable_paths` entry (absolute / `~` / Windows-drive / `..`-escape / brace mis-split). Author-clarity lint; the runtime fs-jail is the real boundary.
 - `examples/agent_writable_paths.dip` demonstrating the five motivating failure/recovery-recorder shapes.
 
-### Tracker pairing (requires tracker `>= v0.35.0`)
-- Enforcement ships in tracker [v0.35.0](https://github.com/2389-research/tracker/releases/tag/v0.35.0) ([tracker#275](https://github.com/2389-research/tracker/pull/275)): native fs-jail incl. Bash children, runtime symlink-chain resolution, immutable session-root anchor (`working_dir`/`Params` cannot relocate it), `Params`/`working_dir` bypass defense, and a single-turn red-team suite.
-- **Fail-closed.** A present-but-empty or comma-only `writable_paths:` is rejected by `dippin validate`/`pack` (parse error). A malformed or **tracker-unrecognized** value → tracker denies all writes or refuses to start, never unbounded. On `claude-code`/`acp`, tracker **refuses to start** when `writable_paths` is set (native-only enforcement) — never a prompt-level pretend-jail.
-- **Version-skew is a safety requirement, not a suggestion:** a tracker `< v0.35.0` does not enforce `writable_paths` and would run those agents **unbounded**. Pin `requires tracker >= v0.35.0`; never `@latest`.
+### Runtime pairing (requires an enforcing runtime)
+- Enforcement ships in a coordinated runtime release: native fs-jail incl. Bash children, runtime symlink-chain resolution, immutable session-root anchor (`working_dir`/`Params` cannot relocate it), `Params`/`working_dir` bypass defense, and a single-turn red-team suite.
+- **Fail-closed.** A present-but-empty or comma-only `writable_paths:` is rejected by `dippin validate`/`pack` (parse error). A malformed or **runtime-unrecognized** value → the runtime denies all writes or refuses to start, never unbounded. On `claude-code`/`acp`, the runtime **refuses to start** when `writable_paths` is set (native-only enforcement) — never a prompt-level pretend-jail.
+- **Version-skew is a safety requirement, not a suggestion:** a runtime that does not enforce `writable_paths` must refuse to start rather than run unbounded. Pin an enforcing runtime, never `@latest`.
 
 ### Notes
 - The primitive bounds write *location*, not network (`curl`/`cargo fetch`), reads/exfil-by-read, or *content* within an allowed path (a `workspace/**` grant can still poison `workspace/Cargo.toml`). Chain laundering is tracked in [#56](https://github.com/2389-research/dippin-lang/issues/56).
@@ -25,7 +25,7 @@ layout: "changelog"
 ## [v0.34.0] — 2026-05-28
 
 ### Added
-- `prompt_file: <path>` and `system_prompt_file: <path>` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`; same path-relative-to-`.dip` rules and security cap. `dippin pack` inlines the content, so no tracker coordination is required.
+- `prompt_file: <path>` and `system_prompt_file: <path>` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`; same path-relative-to-`.dip` rules and security cap. `dippin pack` inlines the content, so no runtime coordination is required.
 - `examples/external_prompts.dip` demonstrating both directives.
 
 ### Fixed
@@ -38,7 +38,7 @@ layout: "changelog"
 
 ## [v0.33.0] — 2026-05-27
 
-New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long tracker workflows. Dippin-only release — no tracker coordination required (tracker reads inlined `Command` from `.dipx` bundles unchanged).
+New `command_file:` directive on tool nodes replaces inline `command:` heredocs with external file references. Solves the heredoc-bloat pattern seen in long runtime workflows. Dippin-only release — no runtime coordination required (the runtime reads inlined `Command` from `.dipx` bundles unchanged).
 
 ### Added
 - `command_file: <path>` directive on tool nodes. Path is relative to the `.dip` source directory.
@@ -49,11 +49,11 @@ New `command_file:` directive on tool nodes replaces inline `command:` heredocs 
 
 ### Notes
 - LSP and `cmd/wasm` (playground) skip the resolver. They see `cfg.CommandFile != "" && cfg.Command == ""`, which is the correct unresolved-IR view.
-- DOT round-trip is lossy for the directive form — pack-then-unpack rewrites `command_file:` to inline `command:`. Tracker reads from `.dipx` bundles where content is already inlined; no current consumer needs the path preserved through DOT. Deferred to a follow-up issue ([#69](https://github.com/2389-research/dippin-lang/issues/69)).
+- DOT round-trip is lossy for the directive form — pack-then-unpack rewrites `command_file:` to inline `command:`. The runtime reads from `.dipx` bundles where content is already inlined; no current consumer needs the path preserved through DOT. Deferred to a follow-up issue ([#69](https://github.com/2389-research/dippin-lang/issues/69)).
 
 ## [v0.32.0] — 2026-05-27
 
-New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Joint release with tracker `v0.31.0` — the dippin field is meaningless without tracker enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
+New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalog. Coordinated runtime release — the dippin field is meaningless without runtime enforcement, so they ship together (see [#41](https://github.com/2389-research/dippin-lang/issues/41) for context, including the v0.28.2 runaway-agent incident this bounds).
 
 ### Added
 
@@ -63,9 +63,9 @@ New agent-node safety primitive: `tool_access: none` strips an LLM's tool catalo
 
 ### Runtime requirement
 
-- Requires tracker `v0.31.0`. Without tracker enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the joint release prevents this).
+- Requires an enforcing runtime. Without runtime enforcement the `tool_access:` field is a no-op (parking decision: lint-validated runtime-no-op safety fields ship as worse-than-nothing — the coordinated release prevents this).
 
-### Tracker-side (linked to tracker tag `v0.31.0`)
+### Runtime-side
 
 - Tool registry returns empty when `tool_access: none` is set.
 - Anthropic translator strips the `tools` array via `tool_choice: none`.
@@ -80,12 +80,12 @@ Two small dippin-internal fixes. Closes [#45](https://github.com/2389-research/d
 
 ### Fixed
 
-- `mode: yes_no` on `human` nodes no longer trips DIP127. The tracker runtime supports `yes_no` as a documented mode; dippin's validator now accepts it alongside `choice`, `freeform`, and `interview`. The four-mode list is cascaded through the validator help text, the DIP127 explanation, `docs/validation.md`, `docs/nodes.md`, `docs/llm-reference.md`, the hosted skill (`site/static/skill.md`), the LSP completion tooltip, the integration guide, and the IR field comment.
+- `mode: yes_no` on `human` nodes no longer trips DIP127. The runtime supports `yes_no` as a documented mode; dippin's validator now accepts it alongside `choice`, `freeform`, and `interview`. The four-mode list is cascaded through the validator help text, the DIP127 explanation, `docs/validation.md`, `docs/nodes.md`, `docs/llm-reference.md`, the hosted skill (`site/static/skill.md`), the LSP completion tooltip, the integration guide, and the IR field comment.
 - Tool nodes used as the workflow's `start:` node no longer collapse to `AgentConfig` after a `.dip → DOT → .dip` round-trip. `migrate.resolveStartExitKind` now recovers `NodeTool` from the start-marker `Mdiamond` shape by sniffing tool-specific DOT attributes (`tool_command`, `marker_grep`, `outputs`, `route_required`, `output_limit`).
 
 ### Runtime requirement
 
-None. Both fixes are dippin-internal; tracker is unaffected.
+None. Both fixes are dippin-internal; the runtime is unaffected.
 
 ## [v0.30.0] — 2026-05-21
 
@@ -107,12 +107,12 @@ Three follow-ups to v0.28.0's tool-routing surface. Closes [#42](https://github.
 
 ### Changed
 
-- `DIP101` / `DIP102` no longer fire on tool nodes that declare `marker_grep:`. Those nodes route via the typed `ctx.tool_marker` channel — outgoing conditional edges on them are intentional routing, not unsafe reachability. Removes the false-positive coverage hit that tracker's `TRK101` option (d) guidance triggered.
+- `DIP101` / `DIP102` no longer fire on tool nodes that declare `marker_grep:`. Those nodes route via the typed `ctx.tool_marker` channel — outgoing conditional edges on them are intentional routing, not unsafe reachability. Removes the false-positive coverage hit that the runtime's `TRK101` option (d) guidance triggered.
 - Parser bool fields (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) now accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively via a new shared `parseBoolAttr` helper. Anything else now produces a parse diagnostic instead of silently coercing to `false`. The migrate (DOT-input) path keeps strict equality since DOT attrs are machine-emitted.
 
 ### Runtime requirement
 
-None. All changes are dippin-internal; tracker is unaffected.
+None. All changes are dippin-internal; the runtime is unaffected.
 
 ### Docs
 
@@ -122,7 +122,7 @@ None. All changes are dippin-internal; tracker is unaffected.
 
 ## [v0.28.0] — 2026-05-19
 
-Tool-node routing fields land in the parser and IR. Authors following tracker's `TRK101` recommendation can now declare `marker_grep`, `route_required`, and `output_limit` directly in `.dip` source. Closes [#39](https://github.com/2389-research/dippin-lang/issues/39).
+Tool-node routing fields land in the parser and IR. Authors following the runtime's `TRK101` recommendation can now declare `marker_grep`, `route_required`, and `output_limit` directly in `.dip` source. Closes [#39](https://github.com/2389-research/dippin-lang/issues/39).
 
 ### Added
 
@@ -137,7 +137,7 @@ Tool-node routing fields land in the parser and IR. Authors following tracker's 
 
 ### Runtime requirement
 
-These fields pass through DOT export to tracker. Routing semantics require tracker to ship the matching `extractToolAttrs` change; see issue [#39](https://github.com/2389-research/dippin-lang/issues/39) for details.
+These fields pass through DOT export to the runtime. Routing semantics require the runtime to ship the matching `extractToolAttrs` change; see issue [#39](https://github.com/2389-research/dippin-lang/issues/39) for details.
 
 ### Docs
 
@@ -203,13 +203,13 @@ Inline comments in `cost/pricing.go` flag values held pending re-verification:
 
 ### Added
 
-- **Workflow header `requires:` keyword.** New optional workflow-header field for declaring workflow-level prerequisites (e.g., tools, MCP servers, env vars) as a comma-separated identifier list. Advisory in v1 — parsed, round-tripped by the formatter, and exposed as `ir.Workflow.Requires []string`, but not yet validated by lint. Mirrors the shape of node-level `reads:` / `writes:`. Filed from [tracker's git-preflight design](https://github.com/2389-research/tracker/blob/main/docs/superpowers/specs/2026-05-15-tracker-git-preflight-design.md) to unblock the `--git=` preflight mechanism. Canonical formatter order is `goal → requires → start → exit`. Editor support (tree-sitter, VS Code, Zed) and the hosted skill (`site/static/skill.md`) updated.
+- **Workflow header `requires:` keyword.** New optional workflow-header field for declaring workflow-level prerequisites (e.g., tools, MCP servers, env vars) as a comma-separated identifier list. Advisory in v1 — parsed, round-tripped by the formatter, and exposed as `ir.Workflow.Requires []string`, but not yet validated by lint. Mirrors the shape of node-level `reads:` / `writes:`. Filed to unblock the `--git=` preflight mechanism in the runtime. Canonical formatter order is `goal → requires → start → exit`. Editor support (tree-sitter, VS Code, Zed) and the hosted skill (`site/static/skill.md`) updated.
 
 ## [v0.25.0] — 2026-05-11
 
 `.dipx` format v1.1. The spec at `docs/superpowers/specs/2026-05-06-dipx-bundle-format-design.md` is the canonical contract; this release closes ambiguities in it (Bundle 6), brings the implementation in line with the documented contract, and adds genuine cancellation through Pack/Open hot paths.
 
-**Breaking changes for downstream consumers (Tracker, etc.):**
+**Breaking changes for downstream consumers:**
 
 - `Source.Workflow` now takes `context.Context` as its first argument. Bump your `dippin-lang` import via `go install ...@v0.25.0` (or `@latest`) and update call sites.
 - `dippin inspect --format=json` `status` field is now an object, not a bare `"VALID"` string. If you parse the JSON in scripts, decode `status` as an object with `valid`, `verify_skipped`, `file_count`, `byte_total`, `format_version`.
@@ -222,7 +222,7 @@ Inline comments in `cost/pricing.go` flag values held pending re-verification:
 - **`Pack` subgraph parse failures attribute to `ErrSubgraphParse`.** Previously every parse failure surfaced as `ErrEntryParse` regardless of which workflow failed; subgraph failures now correctly classify as `ErrSubgraphParse` with the subgraph's filesystem path. (Bundle 5 / P10.9.)
 - **`dippin inspect` emits a structured `status` object.** JSON output's `status` was previously a bare string `"VALID"`; it is now an object with `valid`, `verify_skipped`, `file_count`, `byte_total`, `format_version` per spec § "CLI / inspect command". Text footer now includes the byte total. **Breaking** for JSON consumers parsing `status` as a string. (Bundle 2 / Phase 8 M4, L1, L2.)
 - **`dippin inspect --no-verify` actually skips hash verification.** Previously a no-op (warning printed, full verification still ran). Now routes through a new `dipx.OpenManifest` API that performs only structural-admission steps; tampered bundles can be inspected without integrity errors firing. (Bundle 2 / Phase 10 P10.4.)
-- **`Source.Workflow` now takes `context.Context` as its first argument.** `dirSource.Workflow` checks ctx before disk I/O; `Bundle.Workflow` checks ctx at entry for interface consistency. **Breaking** for external callers (Tracker) — bump your dippin-lang import to pick up the new signature. (Bundle 1 / Phase 6 L4.)
+- **`Source.Workflow` now takes `context.Context` as its first argument.** `dirSource.Workflow` checks ctx before disk I/O; `Bundle.Workflow` checks ctx at entry for interface consistency. **Breaking** for external callers (the runtime) — bump your dippin-lang import to pick up the new signature. (Bundle 1 / Phase 6 L4.)
 - **`Open` and `Pack` are cancellable mid-loop.** `verifyAllHashes`, `walkSourceTree`, and `writeBundle` now check `ctx.Err()` between each entry/iteration. A long Open against a many-entry bundle or a long Pack against a deep source tree can be canceled within one entry's processing time instead of running to completion. (Bundle 1 / Phase 10 P10.2, P10.7, P10.10.)
 
 ### Spec
@@ -235,13 +235,13 @@ Seven `.dipx` bundle-format spec clarifications (no behavior change beyond the t
 - **Cycle detection scope** documented: spec § "Open ordering" step 8 now specifies "every manifest-listed workflow," matching `parseAllWorkflows`.
 - **Integrity-failure sentinel set** for CLI exit code 2 expanded from 5 to all 12 spec-enumerated sentinels.
 - **`inspect --format=json` status object schema** documented with a concrete JSON example (`valid`, `verify_skipped`, `file_count`, `byte_total`, `format_version`).
-- **Tracker integration migration example** updated: `Source.Workflow(ctx, sub.Ref, parentPath)` (was missing `ctx`). Bundle 1 will land the matching Go signature change.
+- **Runtime integration migration example** updated: `Source.Workflow(ctx, sub.Ref, parentPath)` (was missing `ctx`). Bundle 1 will land the matching Go signature change.
 
 ## [v0.24.0] — 2026-05-08
 
 ### Added
 
-- **`.dipx` bundle format** — deterministic, content-addressed ZIP that packages a `.dip` entry workflow plus every transitively-reachable subgraph into a single integrity-verified artifact. Bundles carry a SHA-256-per-file manifest and a workflow-tree identity hash; integrity is verified on every Open. New package `dipx/` exposes `Open`, `OpenLax`, `OpenReader`, `Pack`, `Extract`, `Validate`, and `Load`, plus the `Source` interface (`Entry`, `Workflow`) for runtime consumers like Tracker.
+- **`.dipx` bundle format** — deterministic, content-addressed ZIP that packages a `.dip` entry workflow plus every transitively-reachable subgraph into a single integrity-verified artifact. Bundles carry a SHA-256-per-file manifest and a workflow-tree identity hash; integrity is verified on every Open. New package `dipx/` exposes `Open`, `OpenLax`, `OpenReader`, `Pack`, `Extract`, `Validate`, and `Load`, plus the `Source` interface (`Entry`, `Workflow`) for runtime consumers.
 - **New CLI commands**: `dippin pack <entry.dip>` (build a bundle, with `-o`, `--dry-run`); `dippin unpack <bundle.dipx>` (atomic extract via staging + rename, with `-o`, `--force`); `dippin inspect <bundle.dipx>` (print manifest, identity hash, file list; `--format text|json`).
 - **Existing commands accept `.dipx`** — `validate`, `lint`, `doctor`, `parse`, `cost`, `coverage`, `simulate`, `optimize`, `unused`, `graph`, `diff`, `check`, `explain`, `export-dot` now transparently load a `.dipx` via `dipx.Load`, hash-verify it, and analyze the entry workflow.
 - **Distinct exit codes for bundle commands**: `0` (ok), `1` (user error), `2` (integrity error), `3` (I/O error), `4` (cancelled).
@@ -261,16 +261,16 @@ Seven `.dipx` bundle-format spec clarifications (no behavior change beyond the t
 ## [v0.23.0] — 2026-04-22
 
 ### Added
-- **`WorkflowDefaults` tool-safety fields** (tracker#164 / tracker#169): `tool_commands_allow` (glob allowlist for tool-node shell commands) and `tool_denylist_add` (globs appended to tracker's default denylist). Both round-trip through parser → formatter → DOT export → migrate. Values pass through verbatim — tracker owns split and glob semantics. ([#28](https://github.com/2389-research/dippin-lang/issues/28))
+- **`WorkflowDefaults` tool-safety fields**: `tool_commands_allow` (glob allowlist for tool-node shell commands) and `tool_denylist_add` (globs appended to the runtime's default denylist). Both round-trip through parser → formatter → DOT export → migrate. Values pass through verbatim — the runtime owns split and glob semantics. ([#28](https://github.com/2389-research/dippin-lang/issues/28))
 
 ### Changed
 - **DOT export header format** — `ExportDOT` now emits graph-level attributes (`rankdir`, tool-safety defaults, workflow vars) as a single `graph [key=val, ...];` block instead of separate bare statements (`rankdir=TB;`). This is the form the migrate DOT parser accepts, enabling true `.dip` → DOT → `.dip` round-trips. The output remains valid DOT; consumers that only render via Graphviz are unaffected.
-- **`tool_commands_allow` / `tool_denylist_add` in `vars:` no longer emitted** — before this release, these keys weren't reserved, so a workflow that smuggled them through `vars:` would have them emitted as graph attributes. They are now reserved in favor of the dedicated `defaults:` fields. Any workflow that previously set either key via `vars:` should move it into `defaults:`; otherwise the value is silently dropped from DOT output (tracker would see no allowlist). This path was never documented — issue #28 filed specifically because `defaults:` rejected the keys — so the affected population is expected to be zero, but calling it out explicitly for anyone who found the workaround.
+- **`tool_commands_allow` / `tool_denylist_add` in `vars:` no longer emitted** — before this release, these keys weren't reserved, so a workflow that smuggled them through `vars:` would have them emitted as graph attributes. They are now reserved in favor of the dedicated `defaults:` fields. Any workflow that previously set either key via `vars:` should move it into `defaults:`; otherwise the value is silently dropped from DOT output (the runtime would see no allowlist). This path was never documented — issue #28 filed specifically because `defaults:` rejected the keys — so the affected population is expected to be zero, but calling it out explicitly for anyone who found the workaround.
 
 ## [v0.22.0] — 2026-04-22
 
 ### Added
-- **`manager_loop` node kind** for supervising a child sub-pipeline with polling and mid-run context steering. Maps to Tracker's `stack.manager_loop` and DOT `shape=house`. Fields: `subgraph_ref`, `poll_interval`, `max_cycles`, `stop_condition`, `steer_condition`, `steer_context` (inline `k=v,k=v` or block form). Round-trips losslessly through parser → formatter → DOT export → migrate. Requires the parallel Tracker adapter update in tracker#162. ([#26](https://github.com/2389-research/dippin-lang/issues/26), [#27](https://github.com/2389-research/dippin-lang/pull/27))
+- **`manager_loop` node kind** for supervising a child sub-pipeline with polling and mid-run context steering. Maps to the runtime's `stack.manager_loop` and DOT `shape=house`. Fields: `subgraph_ref`, `poll_interval`, `max_cycles`, `stop_condition`, `steer_condition`, `steer_context` (inline `k=v,k=v` or block form). Round-trips losslessly through parser → formatter → DOT export → migrate. Requires the parallel runtime adapter update. ([#26](https://github.com/2389-research/dippin-lang/issues/26), [#27](https://github.com/2389-research/dippin-lang/pull/27))
 - **DIP135-137** lint codes for `manager_loop` validation: missing/nonexistent `subgraph_ref` (DIP135), invalid control field — negative `poll_interval` or `max_cycles` (DIP136), unbounded supervision with no `stop_condition` and no `max_cycles` (DIP137 — the manager_loop analog of DIP104).
 - **`stack.*` namespace** recognized by DIP120 so `stop_condition` and `steer_condition` can reference `stack.child.cycles`, `stack.child.outcome`, `stack.child.status` without namespace warnings.
 - **`dippin scaffold manager_loop`** template emits a starter supervisor workflow.
@@ -283,9 +283,9 @@ Seven `.dipx` bundle-format spec clarifications (no behavior change beyond the t
 ## [v0.21.0] — 2026-04-20
 
 ### Added
-- **`HumanConfig.Timeout` / `TimeoutAction`** on human nodes (tracker#112). Pairs with edge labels like `when: timeout` for auto-advance semantics. Round-trips through parser, formatter, DOT export, and migrate. ([#22](https://github.com/2389-research/dippin-lang/pull/22))
-- **`WorkflowDefaults` budget fields** (tracker#67): `max_total_tokens`, `max_cost_cents`, `max_wall_time`. Allow workflows to declare global budget caps consumed by the runtime. ([#22](https://github.com/2389-research/dippin-lang/pull/22))
-- **Scoped context reads** — `ctx.node.<id>.*` now validates as a legitimate read pattern in DIP121/DIP122, eliminating lint false-positives for cross-node state access (tracker#75). ([#23](https://github.com/2389-research/dippin-lang/pull/23))
+- **`HumanConfig.Timeout` / `TimeoutAction`** on human nodes. Pairs with edge labels like `when: timeout` for auto-advance semantics. Round-trips through parser, formatter, DOT export, and migrate. ([#22](https://github.com/2389-research/dippin-lang/pull/22))
+- **`WorkflowDefaults` budget fields**: `max_total_tokens`, `max_cost_cents`, `max_wall_time`. Allow workflows to declare global budget caps consumed by the runtime. ([#22](https://github.com/2389-research/dippin-lang/pull/22))
+- **Scoped context reads** — `ctx.node.<id>.*` now validates as a legitimate read pattern in DIP121/DIP122, eliminating lint false-positives for cross-node state access. ([#23](https://github.com/2389-research/dippin-lang/pull/23))
 - **Agent-readiness discovery endpoints** on the docs site: `.well-known/agent-skills/index.json`, `.well-known/mcp/server-card.json`, `.well-known/api-catalog`, `robots.txt`, and hosted `skill.md`. Lets coding agents auto-discover dippin-lang tooling. ([#24](https://github.com/2389-research/dippin-lang/pull/24))
 - **`reasoning_effort` expansion** — DIP119 now accepts `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max` to cover Opus 4.7 and GPT-5.4.
 - **Model catalog update** (verified 2026-04-17): `claude-opus-4-7` (Anthropic, $5/$25), `mistral-small-2603` (Mistral Small 4), `command-a-03-2025` (Cohere flagship, $2.50/$10).
@@ -302,7 +302,7 @@ Seven `.dipx` bundle-format spec clarifications (no behavior change beyond the t
 - **Release invariant checks** (`releasecheck/`) — validates the embedded spec is tracked, current, and buildable from a source tree without `.git`.
 
 ### Fixed
-- **DIP125 false positives on shell variable assignments** (tracker#87). Replaced regex-based binary extraction with proper shell AST parsing via `mvdan.cc/sh/v3`. Variable assignments, command substitutions, and `command -v` checks are now correctly identified. Preamble commands (`mkdir`) are skipped to find the real tool binary.
+- **DIP125 false positives on shell variable assignments**. Replaced regex-based binary extraction with proper shell AST parsing via `mvdan.cc/sh/v3`. Variable assignments, command substitutions, and `command -v` checks are now correctly identified. Preamble commands (`mkdir`) are skipped to find the real tool binary.
 - **`go install ...@latest` broken** — `cmd/dippin/generated-spec.md` is now checked into the repo so the `go:embed` directive resolves from module proxy downloads.
 - **Pre-commit hook and `just check` now mirror CI exactly** — spec freshness, release checks, complexity exclusions all aligned.
 
@@ -409,7 +409,7 @@ Seven `.dipx` bundle-format spec clarifications (no behavior change beyond the t
 - Playground now has the floating dots background matching all other pages.
 - Homepage "See all 25 posts" corrected to "All posts".
 - Section spacing tightened (6rem → 4.5rem padding).
-- Tracker team field report response written (`.tracker/field-report-response-2026-03-27.md`).
+- Downstream consumer field report response written (`.tracker/field-report-response-2026-03-27.md`).
 
 ## [v0.12.0] — 2026-03-27
 

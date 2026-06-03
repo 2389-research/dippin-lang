@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `tool_commands_allow` and `tool_denylist_add` as first-class fields in `.dip` `defaults:` blocks, wire them through parser, DOT export, and DOT → dip migrate so authors no longer have to drop to raw DOT to use tracker's tool-safety features.
+**Goal:** Add `tool_commands_allow` and `tool_denylist_add` as first-class fields in `.dip` `defaults:` blocks, wire them through parser, DOT export, and DOT → dip migrate so authors no longer have to drop to raw DOT to use the runtime's tool-safety features.
 
-**Architecture:** Two string fields on `ir.WorkflowDefaults`. Parser accepts the keys in `defaults:`; DOT export emits them as graph attributes; migrate routes them back into `defaults:` on reverse conversion. No validation — strings pass through verbatim to tracker.
+**Architecture:** Two string fields on `ir.WorkflowDefaults`. Parser accepts the keys in `defaults:`; DOT export emits them as graph attributes; migrate routes them back into `defaults:` on reverse conversion. No validation — strings pass through verbatim to the runtime.
 
 **Tech Stack:** Go. Tests use the existing `parseFixture` / `readTestdata` helpers in `parser/`, plain string-contains assertions in `export/dot_test.go`, and direct `Migrate(dot)` calls in `migrate/migrate_test.go`. Build via `just`, never raw `go` commands.
 
@@ -57,7 +57,7 @@ type WorkflowDefaults struct {
 	MaxCostCents      int           // Hard ceiling on cost in cents (USD)
 	MaxWallTime       time.Duration // Hard ceiling on wall time
 	ToolCommandsAllow string        // Comma-separated glob allowlist for tool shell commands
-	ToolDenylistAdd   string        // Comma-separated globs appended to tracker's default denylist
+	ToolDenylistAdd   string        // Comma-separated globs appended to the runtime's default denylist
 }
 ```
 
@@ -72,7 +72,7 @@ Expected: builds cleanly. No test target here yet — fields are unused so far.
 git add ir/ir.go
 git commit -m "feat(ir): add ToolCommandsAllow and ToolDenylistAdd to WorkflowDefaults
 
-Fields for tool-safety defaults consumed by tracker's runtime via
+Fields for tool-safety defaults consumed by the runtime via
 graph.Attrs. Refs #28."
 ```
 
@@ -148,7 +148,7 @@ In `parser/parse_defaults.go`, add a new function directly after `applyDefaultEx
 
 ```go
 // applyDefaultToolField handles tool-safety defaults: tool_commands_allow and
-// tool_denylist_add. Values are stored verbatim; tracker owns split/glob semantics.
+// tool_denylist_add. Values are stored verbatim; the runtime owns split/glob semantics.
 func applyDefaultToolField(d *ir.WorkflowDefaults, key, val string) bool {
 	switch key {
 	case "tool_commands_allow":
@@ -667,10 +667,10 @@ workflow ToolSafety
 
   defaults
     model: claude-sonnet-4-6
-    # Restrict tool nodes to a glob allowlist. Tracker parses the comma-separated
+    # Restrict tool nodes to a glob allowlist. The runtime parses the comma-separated
     # list at runtime and rejects commands that don't match any pattern.
     tool_commands_allow: "git *,make *,npm test,npm run *"
-    # Patterns appended to tracker's default denylist, in addition to its
+    # Patterns appended to the runtime's default denylist, in addition to its
     # built-in blocks on destructive commands.
     tool_denylist_add: "rm -rf /,dd if=*"
 
@@ -730,7 +730,7 @@ Open `CHANGELOG.md` and add a new entry at the top, above `## [v0.22.0]`:
 ## [Unreleased]
 
 ### Added
-- **`WorkflowDefaults` tool-safety fields** (tracker#164 / tracker#169): `tool_commands_allow` (glob allowlist for tool-node shell commands) and `tool_denylist_add` (globs appended to tracker's default denylist). Both round-trip through parser → formatter → DOT export → migrate. Values pass through verbatim — tracker owns split and glob semantics. ([#28](https://github.com/2389-research/dippin-lang/issues/28))
+- **`WorkflowDefaults` tool-safety fields**: `tool_commands_allow` (glob allowlist for tool-node shell commands) and `tool_denylist_add` (globs appended to the runtime's default denylist). Both round-trip through parser → formatter → DOT export → migrate. Values pass through verbatim — the runtime owns split and glob semantics. ([#28](https://github.com/2389-research/dippin-lang/issues/28))
 ```
 
 - [ ] **Step 2: Update `QUICK_REFERENCE.md`**
@@ -738,8 +738,8 @@ Open `CHANGELOG.md` and add a new entry at the top, above `## [v0.22.0]`:
 Run: `grep -n "max_total_tokens\|max_cost_cents\|max_wall_time\|defaults" QUICK_REFERENCE.md | head -20`
 Expected: shows the section listing `defaults:` fields. Add two rows beneath the budget fields with brief one-line descriptions:
 
-- `tool_commands_allow: "git *,make *"` — glob allowlist for tool-node shell commands (consumed by tracker runtime)
-- `tool_denylist_add: "rm -rf /,dd *"` — glob patterns appended to tracker's default denylist
+- `tool_commands_allow: "git *,make *"` — glob allowlist for tool-node shell commands (consumed by the runtime)
+- `tool_denylist_add: "rm -rf /,dd *"` — glob patterns appended to the runtime's default denylist
 
 Match the exact row format the existing entries use (table cells, bulleted fields, whatever QUICK_REFERENCE.md is using — don't change the style).
 
@@ -751,10 +751,10 @@ Expected: locate the defaults reference section. Add a new subsection "Tool safe
 ```markdown
 ### Tool safety
 
-Tool nodes that shell out can be constrained by two defaults consumed by the tracker runtime:
+Tool nodes that shell out can be constrained by two defaults consumed by the runtime:
 
-- `tool_commands_allow` — comma-separated glob allowlist. When set, tracker rejects tool-node commands that do not match any pattern.
-- `tool_denylist_add` — comma-separated globs appended to tracker's default denylist (on top of tracker's built-in blocks).
+- `tool_commands_allow` — comma-separated glob allowlist. When set, the runtime rejects tool-node commands that do not match any pattern.
+- `tool_denylist_add` — comma-separated globs appended to the runtime's default denylist (on top of the runtime's built-in blocks).
 
 ```dippin
 workflow Safe
@@ -769,7 +769,7 @@ workflow Safe
   # ...
 ```
 
-Values pass through to tracker verbatim; dippin-lang does not validate glob syntax.
+Values pass through to the runtime verbatim; dippin-lang does not validate glob syntax.
 ```
 
 - [ ] **Step 4: Update `site/static/skill.md`**
@@ -778,7 +778,7 @@ Run: `grep -n "max_total_tokens\|defaults" site/static/skill.md | head -10`
 Expected: locate the defaults reference within the hosted skill. Add both keys to whatever field list it uses, with one-line descriptions, matching the existing style:
 
 - `tool_commands_allow` — glob allowlist for tool-node shell commands (string, comma-separated; optional)
-- `tool_denylist_add` — glob patterns appended to tracker's default denylist (string, comma-separated; optional)
+- `tool_denylist_add` — glob patterns appended to the runtime's default denylist (string, comma-separated; optional)
 
 - [ ] **Step 5: Commit**
 
@@ -815,7 +815,7 @@ When the PR merges, the issue closes automatically via the `Refs #28` commit tra
 
 ## Out of scope (explicit non-goals)
 
-- Validating glob pattern syntax on either field. Tracker owns runtime semantics.
+- Validating glob pattern syntax on either field. The runtime owns these semantics.
 - Emitting any other `WorkflowDefaults` fields (`Model`, `Provider`, `MaxRetries`, …) as DOT graph attrs. Pre-existing gap.
 - Lint rules (DIP codes) for the new keys. Add a follow-up issue if misuse becomes real.
 - Blog post — operational plumbing, not an authoring-visible feature.

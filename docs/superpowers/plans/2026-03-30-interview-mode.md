@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `mode: interview` to human nodes so tracker can parse upstream agent questions into individual huh form fields with suggested options + freeform escape hatch.
+**Goal:** Add `mode: interview` to human nodes so the runtime can parse upstream agent questions into individual huh form fields with suggested options + freeform escape hatch.
 
-**Architecture:** Minimal DSL change — add `"interview"` as a valid mode plus two optional context key fields (`questions_key`, `answers_key`) to `HumanConfig`. Three new lint rules (DIP127-DIP129) catch misconfiguration. Simulator handles interview like multi-line freeform. All heuristic/rendering logic stays in tracker.
+**Architecture:** Minimal DSL change — add `"interview"` as a valid mode plus two optional context key fields (`questions_key`, `answers_key`) to `HumanConfig`. Three new lint rules (DIP127-DIP129) catch misconfiguration. Simulator handles interview like multi-line freeform. All heuristic/rendering logic stays in the runtime.
 
 **Tech Stack:** Go, dippin-lang IR/parser/validator/formatter/simulator
 
@@ -893,7 +893,7 @@ case ir.HumanConfig:
 After the type switch section, add a subsection:
 
 ```markdown
-### Interview Mode (Tracker Integration)
+### Interview Mode (Runtime Integration)
 
 When `cfg.Mode == "interview"`, the runtime is expected to:
 
@@ -932,7 +932,7 @@ When `cfg.Mode == "interview"`, the runtime is expected to:
 
 ```bash
 git add docs/integration.md
-git commit -m "docs: interview mode integration guidance for tracker"
+git commit -m "docs: interview mode integration guidance for the runtime"
 ```
 
 ---
@@ -995,7 +995,7 @@ Prepend to `CHANGELOG.md` after the header:
 - **DIP127**: lint warning for invalid human node mode values.
 - **DIP128**: lint warning when interview mode has a meaningless `default` value.
 - **DIP129**: lint warning when interview mode has conflicting choice-style labeled edges.
-- **Integration guide** updated with interview mode implementation guidance and recommended answer JSON schema for tracker and other runtimes.
+- **Integration guide** updated with interview mode implementation guidance and recommended answer JSON schema for downstream consumers.
 - `api_design.dip` example updated to use interview mode for Q&A collection.
 
 ### Changed

@@ -1,7 +1,7 @@
 ---
 title: "What's New in Dippin v0.28"
 date: "2026-05-19"
-description: "Typed tool routing — marker_grep, route_required, and output_limit close a parser/runtime parity gap with tracker's TRK101."
+description: "Typed tool routing — marker_grep, route_required, and output_limit close a parser/runtime parity gap with the runtime's TRK101."
 tagStyle: "release"
 tagLabel: "RELEASE"
 category: "Releases"
@@ -15,7 +15,7 @@ related:
     summary: "The workflow `requires:` keyword — declare environmental dependencies so runtimes can preflight."
 ---
 
-Issue [#39](https://github.com/2389-research/dippin-lang/issues/39) closes a parser gap. Tracker's runtime already supported `marker_grep`, `route_required`, and `output_limit` for stdout-driven routing, but `.dip` source couldn't reach them — authors following tracker's TRK101 lint recommendation hit `unrecognized tool field "marker_grep"` from dippin instead of a cleaner pipeline.
+Issue [#39](https://github.com/2389-research/dippin-lang/issues/39) closes a parser gap. The runtime already supported `marker_grep`, `route_required`, and `output_limit` for stdout-driven routing, but `.dip` source couldn't reach them — authors following the runtime's TRK101 lint recommendation hit `unrecognized tool field "marker_grep"` from dippin instead of a cleaner pipeline.
 
 ## Three new tool-node fields
 
@@ -35,11 +35,11 @@ tool RunTests
 
 ## Why it matters
 
-Without these fields, authors working around tracker's TRK101 truncation foot-gun had to enumerate every possible stdout marker as a conditional edge. That made `dippin coverage` flag false-positive non-exhaustive routing on nodes that were actually fully covered. Typed `marker_grep` is the canonical fix; now dippin accepts it.
+Without these fields, authors working around the runtime's TRK101 truncation foot-gun had to enumerate every possible stdout marker as a conditional edge. That made `dippin coverage` flag false-positive non-exhaustive routing on nodes that were actually fully covered. Typed `marker_grep` is the canonical fix; now dippin accepts it.
 
 ## Runtime requirement
 
-These fields forward through DOT export to tracker. Routing semantics require the matching `extractToolAttrs` change in tracker; the dippin v0.28 release pairs with a tracker version that pins `dippin-lang@v0.28.0`. Older tracker versions silently ignore the new attrs.
+These fields forward through DOT export to the runtime. Routing semantics require the matching `extractToolAttrs` change in the runtime; older runtime versions silently ignore the new attrs.
 
 ## Coming next
 

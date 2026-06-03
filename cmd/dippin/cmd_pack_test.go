@@ -244,8 +244,8 @@ func TestRunPack_InlinesCommandFile(t *testing.T) {
 // extension (v0.34 / #65) walks agent nodes too: a workflow referencing prompts
 // via prompt_file: / system_prompt_file: produces a self-contained bundle whose
 // inline prompt: / system_prompt: blocks carry the file contents and whose
-// *_file: directives are absent. Without the agent-walk extension, tracker would
-// receive .dipx bundles that still carry prompt_file: / system_prompt_file:
+// *_file: directives are absent. Without the agent-walk extension, a runtime
+// would receive .dipx bundles that still carry prompt_file: / system_prompt_file:
 // directives — exactly the failure mode the pack-shadow machinery exists to
 // prevent.
 func TestRunPack_InlinesPromptFiles(t *testing.T) {

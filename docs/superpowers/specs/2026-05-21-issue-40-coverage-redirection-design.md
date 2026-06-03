@@ -136,7 +136,7 @@ Integration coverage: add `examples/coverage_redirection.dip` exercising the bug
 - Heredoc / `cat <<EOF` support — extractor remains echo/printf only.
 - Variable expansion analysis (`echo "$VAR"` → no extraction; current behavior preserved by the literal-only `extractWordLiteral`).
 - Improving `printf` format-specifier coverage beyond the existing `%s` / `%s\n` cases.
-- Tracker-side changes. No runtime coupling; this is a pure dippin-internal lint-correctness fix.
+- Runtime-side changes. No runtime coupling; this is a pure dippin-internal lint-correctness fix.
 
 ## Backwards compatibility
 

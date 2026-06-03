@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `marker_grep`, `route_required`, `output_limit` to `tool` nodes so authors following tracker's TRK101 advice stop hitting `unrecognized tool field` parse errors. Strings pass through verbatim to tracker via DOT.
+**Goal:** Add `marker_grep`, `route_required`, `output_limit` to `tool` nodes so authors following the runtime's TRK101 advice stop hitting `unrecognized tool field` parse errors. Strings pass through verbatim to the runtime via DOT.
 
-**Architecture:** Extend `ir.ToolConfig` with three exported fields. Mirror the existing `apply{Agent,Human}{String,Bool,Parsed}Field` split in the tool parser to stay under the cyclomatic-5 budget. Formatter and DOT exporter use the same "emit when non-default" contract so `.dip ⇄ DOT` round-trips are idempotent. Migrate reads attrs back. Tests, docs, hosted skill, blog, CHANGELOG. Single PR; tag v0.28.0; tracker bumps the dep separately.
+**Architecture:** Extend `ir.ToolConfig` with three exported fields. Mirror the existing `apply{Agent,Human}{String,Bool,Parsed}Field` split in the tool parser to stay under the cyclomatic-5 budget. Formatter and DOT exporter use the same "emit when non-default" contract so `.dip ⇄ DOT` round-trips are idempotent. Migrate reads attrs back. Tests, docs, hosted skill, blog, CHANGELOG. Single PR; tag v0.28.0; downstream consumers bump their dep separately.
 
 **Tech Stack:** Go 1.25, `just` task runner, no new deps. Hugo for site. Tree-sitter / Zed unaffected (generic `field_name` rule already).
 
@@ -42,14 +42,14 @@ Skim these before starting — they establish the patterns this plan mirrors:
 
 | Decision | Value | Why |
 |---|---|---|
-| Field names | `marker_grep`, `route_required`, `output_limit` | Match tracker attr keys verbatim — tracker reads `n.Attrs["marker_grep"]` etc. |
+| Field names | `marker_grep`, `route_required`, `output_limit` | Match the runtime's attr keys verbatim — the runtime reads `n.Attrs["marker_grep"]` etc. |
 | Bool parsing | Strict `val == "true"` | Matches existing `goal_gate`/`auto_status`/`cache_tools`; #43 normalizes later. |
 | `output_limit` units | Raw bytes (int) | Spec defers SI suffixes to a future issue. |
 | Zero/empty handling | Parse stores; formatter / DOT omit when default | Matches existing convention. Authors writing `output_limit: 0` see it disappear on `dippin fmt`; documented in `docs/nodes.md`. |
-| Regex validation | None at parse time | Pass-through — tracker owns runtime semantics (DIP28 precedent). |
+| Regex validation | None at parse time | Pass-through — the runtime owns these semantics (DIP28 precedent). |
 | Field ordering in formatter | `outputs → marker_grep → route_required → output_limit → timeout → reads → writes → command` | Routing-shape fields cluster, then execution, then IO, then command. |
 | Migrate parity | Extend to all `ToolConfig` fields | Backfills pre-existing `Timeout`/`Outputs` gap while in the area. |
-| Tracker repo | Out of scope | Separate follow-up PR pins `dippin-lang@v0.28.0` and updates `extractToolAttrs`. |
+| Runtime repo | Out of scope | Separate follow-up PR pins `dippin-lang@v0.28.0` and updates `extractToolAttrs`. |
 
 ---
 
@@ -113,7 +113,7 @@ git add ir/ir.go
 git commit -m "ir: add MarkerGrep/RouteRequired/OutputLimit to ToolConfig
 
 Wires three new exported fields onto tool-node config to support
-tracker's stdout-routing primitives. Parser/formatter/DOT updates
+the runtime's stdout-routing primitives. Parser/formatter/DOT updates
 land in follow-on commits.
 
 Refs #39"
@@ -306,7 +306,7 @@ func TestParseToolMarkerGrepUnquoted(t *testing.T) {
 }
 
 func TestParseToolMarkerGrepRegexMetachars(t *testing.T) {
-	// Stored verbatim — dippin does not validate the regex (tracker does).
+	// Stored verbatim — dippin does not validate the regex (the runtime does).
 	cfg, diags := parseToolFixture(t, `    marker_grep: '^\[(PASS|FAIL)\]\s+\d+$'`)
 	if len(diags) != 0 {
 		t.Fatalf("unexpected diagnostics: %v", diags)
@@ -328,7 +328,7 @@ Expected: all pass.
 git add parser/parse_nodes.go parser/parse_tool_test.go
 git commit -m "parser: accept marker_grep on tool nodes
 
-Stores the regex string verbatim; tracker validates and applies it
+Stores the regex string verbatim; the runtime validates and applies it
 at runtime. Tests cover quoted/unquoted forms and regex metachars.
 
 Refs #39"
@@ -792,7 +792,7 @@ git commit -m "export: emit tool routing attrs in DOT semantic export
 
 Adds marker_grep / route_required / output_limit to applyToolSemanticAttrs
 with the same emission contract as the formatter (non-default only).
-Tracker reads these via n.Attrs[...].
+The runtime reads these via n.Attrs[...].
 
 Refs #39"
 ```
@@ -1314,7 +1314,7 @@ Refs #39"
 After the `outputs` row:
 
 ```markdown
-| `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. Tracker validates and applies the regex at runtime. |
+| `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. The runtime validates and applies the regex at runtime. |
 | `route_required` | Boolean | false | When true, the node fails if the command's stdout contains no `_TRACKER_ROUTE=<value>` sentinel line. The matched value populates `ctx.tool_route`. |
 | `output_limit` | Integer | — | Per-node override for the engine's captured-stdout byte cap. Positive integer; omit (or set 0) to use the engine default. |
 ```
@@ -1371,7 +1371,7 @@ to:
 - [ ] **Step 2: Add a row to the common-mistakes table (after row 8)**
 
 ```markdown
-| 9 | Hand-parsing tool stdout for routing | Use `marker_grep: '<regex>'` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Mirrors tracker's TRK101 recommendation; populates `ctx.tool_marker` directly. |
+| 9 | Hand-parsing tool stdout for routing | Use `marker_grep: '<regex>'` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Mirrors the runtime's TRK101 recommendation; populates `ctx.tool_marker` directly. |
 ```
 
 - [ ] **Step 3: Add `ctx.tool_marker` and `ctx.tool_route` to context.md, edges.md, validation.md**
@@ -1481,12 +1481,12 @@ title: "What's new in v0.28: typed tool routing"
 date: "2026-MM-DD"
 publishDate: "2026-MM-DD"
 draft: false
-description: "Tool nodes can now declare marker_grep, route_required, and output_limit — typed routing primitives that close the parity gap with tracker's runtime."
+description: "Tool nodes can now declare marker_grep, route_required, and output_limit — typed routing primitives that close the parity gap with the runtime."
 ---
 
 ## Three new tool-node fields
 
-Issue #39 closes a parser gap: tracker's runtime already supported `marker_grep`, `route_required`, and `output_limit`, but `.dip` source couldn't reach them. Authors following tracker's `TRK101` lint recommendation hit `unrecognized tool field "marker_grep"` from dippin instead of cleaner routing.
+Issue #39 closes a parser gap: the runtime already supported `marker_grep`, `route_required`, and `output_limit`, but `.dip` source couldn't reach them. Authors following the runtime's `TRK101` lint recommendation hit `unrecognized tool field "marker_grep"` from dippin instead of cleaner routing.
 
 ```dippin
   tool RunTests
@@ -1506,11 +1506,11 @@ Issue #39 closes a parser gap: tracker's runtime already supported `marker_grep`
 
 ### Why it matters
 
-Without these, authors hit tracker's TRK101 truncation foot-gun and worked around it by enumerating every possible stdout marker as a conditional edge — which made `dippin coverage` flag false-positive non-exhaustive routing. Typed `marker_grep` is the canonical fix; now dippin accepts it.
+Without these, authors hit the runtime's TRK101 truncation foot-gun and worked around it by enumerating every possible stdout marker as a conditional edge — which made `dippin coverage` flag false-positive non-exhaustive routing. Typed `marker_grep` is the canonical fix; now dippin accepts it.
 
 ### Runtime requirement
 
-These fields forward to tracker via DOT export. Routing semantics require **tracker >= v0.<x>.<y>** (the version that ships the matching `extractToolAttrs` change). Older tracker silently ignores the new attrs.
+These fields forward to the runtime via DOT export. Routing semantics require an enforcing runtime (the version that ships the matching `extractToolAttrs` change). Earlier runtime versions silently ignore the new attrs.
 
 ### Coming next
 
@@ -1547,7 +1547,7 @@ Insert before the `## [v0.27.0]` heading:
 ```markdown
 ## [v0.28.0] — 2026-MM-DD
 
-Tool-node routing fields land in the parser and IR. Authors following tracker's `TRK101` recommendation can now declare `marker_grep`, `route_required`, and `output_limit` directly in `.dip` source. Closes #39.
+Tool-node routing fields land in the parser and IR. Authors following the runtime's `TRK101` recommendation can now declare `marker_grep`, `route_required`, and `output_limit` directly in `.dip` source. Closes #39.
 
 ### Added
 
@@ -1562,7 +1562,7 @@ Tool-node routing fields land in the parser and IR. Authors following tracker's 
 
 ### Runtime requirement
 
-These fields pass through DOT export to tracker. Routing semantics require tracker to ship the matching `extractToolAttrs` change; see issue #39 for details.
+These fields pass through DOT export to the runtime. Routing semantics require the runtime to ship the matching `extractToolAttrs` change; see issue #39 for details.
 
 ### Docs
 
@@ -1616,9 +1616,9 @@ git push origin v0.28.0
 
 Check `gh run list --workflow=release.yml --limit 3` for the tag-triggered run; confirm it completes and the Homebrew tap updates.
 
-- [ ] **Step 6: Open tracker follow-up PR**
+- [ ] **Step 6: Open runtime follow-up PR**
 
-Separately in the tracker repo: bump `dippin-lang` dep to `v0.28.0`, update `tracker/pipeline/dippin_adapter.go` `extractToolAttrs` to forward the three new fields (sketch in spec out-of-scope section).
+Separately in the runtime repo: bump `dippin-lang` dep to `v0.28.0`, update the runtime's pipeline adapter layer's `extractToolAttrs` to forward the three new fields (sketch in spec out-of-scope section).
 
 ---
 

@@ -54,7 +54,7 @@ func TestLint_DIP140_Severity(t *testing.T) {
 
 func TestLint_DIP140_NoToolAccess_NoFire(t *testing.T) {
 	// Without tool_access set, allowed_tools is a legitimate backend:
-	// claude-code knob — tracker honors it, so no bypass and no warning.
+	// claude-code knob — the runtime honors it, so no bypass and no warning.
 	w := &ir.Workflow{
 		Name:  "dip140_no_access",
 		Start: "A",

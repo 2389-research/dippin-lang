@@ -4,7 +4,7 @@
 
 **Goal:** Ship `prompt_file:` and `system_prompt_file:` directives on agent nodes — symmetric extension of v0.33.0's `command_file:` — and fix the latent bug where `formatter` silently drops inline `system_prompt:` on round-trip.
 
-**Architecture:** Reuses every mechanism introduced by #52. `AgentConfig` gains two new `*File` fields. The existing `parser.ResolveFileDirectives` dispatcher grows an agent branch alongside its tool branch, calling the unchanged `loadDirectiveFile` (same 4-MiB cap, same 4 security checks, same user-path-only error messages). The pack-shadow tree's clear-directives helper is renamed and extended to walk agent nodes too. Formatter gains two conditional `*File:` / inline-content branches, replacing the existing single `Prompt`-only trailing block. No new architecture, no new abstractions. Dippin-only release — no tracker coordination required.
+**Architecture:** Reuses every mechanism introduced by #52. `AgentConfig` gains two new `*File` fields. The existing `parser.ResolveFileDirectives` dispatcher grows an agent branch alongside its tool branch, calling the unchanged `loadDirectiveFile` (same 4-MiB cap, same 4 security checks, same user-path-only error messages). The pack-shadow tree's clear-directives helper is renamed and extended to walk agent nodes too. Formatter gains two conditional `*File:` / inline-content branches, replacing the existing single `Prompt`-only trailing block. No new architecture, no new abstractions. Dippin-only release — no runtime coordination required.
 
 **Tech Stack:** Go, gofmt, golangci-lint, gocyclo (≤5), gocognit (≤7), just recipes.
 
@@ -50,15 +50,15 @@ gh issue create --repo 2389-research/dippin-lang \
 Filed per v0.34.0 spec § Non-goals #2.
 See: https://github.com/2389-research/dippin-lang/blob/main/docs/superpowers/specs/2026-05-27-issue-65-prompt-file-design.md
 
-Currently \`dippin pack\` inlines file contents from \`command_file:\` / \`prompt_file:\` / \`system_prompt_file:\` directives into the bundled \`.dip\` text via the shadow-tree machinery (\`cmd/dippin/pack_shadow.go\`). An alternative model would package the referenced scripts/prompts as separate files inside the \`.dipx\`, preserving their relative paths, and have tracker (or any other dipx consumer) call \`parser.ResolveFileDirectives\` against the unpacked bundle dir.
+Currently \`dippin pack\` inlines file contents from \`command_file:\` / \`prompt_file:\` / \`system_prompt_file:\` directives into the bundled \`.dip\` text via the shadow-tree machinery (\`cmd/dippin/pack_shadow.go\`). An alternative model would package the referenced scripts/prompts as separate files inside the \`.dipx\`, preserving their relative paths, and have the runtime (or any other dipx consumer) call \`parser.ResolveFileDirectives\` against the unpacked bundle dir.
 
 **Wins:**
-- Tracker logs / error messages can reference original file paths (\`scripts/setup.sh:15\`) instead of inline-heredoc line numbers
+- Runtime logs / error messages can reference original file paths (\`scripts/setup.sh:15\`) instead of inline-heredoc line numbers
 - \`.dipx\` debug inspection shows author intent — file boundaries preserved
 - Author's repo layout reflected end-to-end through the bundle
 
 **Costs:**
-- Tracker coordination required (joint release, dipx version bump in tracker's go.mod, new \`ResolveFileDirectives\` call after unpack)
+- Runtime coordination required (coordinated runtime release, dipx version bump in the runtime's go.mod, new \`ResolveFileDirectives\` call after unpack)
 - \`.dipx\` format version bumps — old bundles built by v0.33/v0.34 have inlined content; new format would have separate files. Need a cutover plan
 - The shadow-tree machinery (\`cmd/dippin/pack_shadow.go\`) becomes obsolete and would be removed
 - CLAUDE.md allows dipx to import \`parser\` (loader-tier exemption), so the architecture rule still holds — we just didn't lean on it in #52
@@ -1263,7 +1263,7 @@ Open `CHANGELOG.md`. Add a new `## [v0.34.0] — UNRELEASED` section above the m
 ## [v0.34.0] — UNRELEASED
 
 ### Added
-- `prompt_file:` and `system_prompt_file:` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`. Reuses the parser-pure resolver pass — pack-time inlining via the shadow tree carries the resolved content into `.dipx` bundles, so no tracker coordination is required.
+- `prompt_file:` and `system_prompt_file:` directives on agent nodes ([#65](https://github.com/2389-research/dippin-lang/issues/65)). Symmetric extension of v0.33.0's `command_file:`. Reuses the parser-pure resolver pass — pack-time inlining via the shadow tree carries the resolved content into `.dipx` bundles, so no runtime coordination is required.
 - `parser.ResolveFileDirectives` now walks agent nodes in addition to tool nodes. `loadDirectiveFile` and the 4-layer security model (absolute reject, parent-tree escape reject, symlink reject, 4-MiB cap) are shared across all three directives.
 - `examples/external_prompts.dip` demonstrating both prompt directives.
 
@@ -1333,7 +1333,7 @@ Path resolution and security are identical to `command_file:` above:
 
 The two slots are independent — an agent may use any combination of inline `prompt:`, `prompt_file:`, inline `system_prompt:`, `system_prompt_file:`. Only same-slot conflict (`prompt:` + `prompt_file:`) is a parser-time error.
 
-**Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. Tracker reads inline prompts; no separate file lookup at runtime.
+**Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. The runtime reads inline prompts; no separate file lookup at runtime.
 
 **Non-goals:** defaults-block file-form support and bundled-files `.dipx` redesign are tracked as follow-up issues.
 ```
@@ -1425,7 +1425,7 @@ Symmetric extension of v0.33.0's `command_file:` to agent-node prompts. Two new 
 
 **Adjacent bug fix in scope:** `dippin fmt` previously silently dropped inline `system_prompt:` on agent nodes (pre-existing bug). Fixed.
 
-**No tracker coordination required** — `.dipx` bundles carry inlined prompt content, same as commands.
+**No runtime coordination required** — `.dipx` bundles carry inlined prompt content, same as commands.
 
 ## Test plan
 

@@ -791,7 +791,7 @@ vars
 ```
 
 - Stored as `Workflow.Vars map[string]string` in the IR
-- Exports as DOT graph-level attributes (what Tracker reads via `graph.Attrs`)
+- Exports as DOT graph-level attributes (what the runtime reads via `graph.Attrs`)
 - DOT migration captures unknown graph attributes into Vars
 - Parser detects duplicate var keys
 - Formatter emits sorted keys between defaults and nodes

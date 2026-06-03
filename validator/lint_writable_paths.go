@@ -10,7 +10,7 @@ import (
 
 // lintWritablePaths fires DIP141 (writable_paths nullified by tool_access: none)
 // and DIP142 (unsafe writable_paths entry) on agent nodes and per-branch overrides.
-// dippin carries + lints the field; the tracker enforces the fs-level write jail.
+// dippin carries + lints the field; the runtime enforces the fs-level write jail.
 func lintWritablePaths(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
@@ -70,7 +70,7 @@ func dip141Diagnostic(n *ir.Node, branch string) Diagnostic {
 
 // unsafeEntryKind classifies a writable_paths entry that will not bound writes as
 // the author expects. Returns "" for a safe relative glob. This is a lexical
-// clarity check, not the security boundary — the tracker fs-jail is authoritative.
+// clarity check, not the security boundary — the runtime fs-jail is authoritative.
 func unsafeEntryKind(entry string) string {
 	e := strings.TrimSpace(entry)
 	if e == "" {
@@ -135,5 +135,5 @@ func writablePathReason(kind string) string {
 	if kind == "brace" {
 		return "is malformed (brace expansion is split on commas — enumerate entries instead)"
 	}
-	return "escapes the workspace (absolute / ~ / parent path) — the tracker write-jail will not honor it"
+	return "escapes the workspace (absolute / ~ / parent path) — the runtime write-jail will not honor it"
 }

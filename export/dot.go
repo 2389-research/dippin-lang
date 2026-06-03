@@ -232,7 +232,7 @@ func applyGoalGateHighlight(attrs map[string]string, n *ir.Node) {
 
 // applySemanticConfigAttrs adds non-prompt runtime attributes unconditionally.
 // These carry runtime semantics (timeout, mode, tool_access, etc.) and must
-// always be exported — tracker reads them from each node's DOT attrs
+// always be exported — the runtime reads them from each node's DOT attrs
 // regardless of whether prompts are included.
 func applySemanticConfigAttrs(attrs map[string]string, cfg interface{}) {
 	if !applySemanticNodeAttrs(attrs, cfg) {
@@ -509,7 +509,7 @@ func addEdgeConditionAttrs(attrs map[string]string, e *ir.Edge) {
 		return
 	}
 	// Lower namespaced variables to DOT-compatible format:
-	// ctx.outcome → outcome (Tracker resolves bare keys from context)
+	// ctx.outcome → outcome (the runtime resolves bare keys from context)
 	condStr = lowerConditionNamespaces(condStr)
 	// If there's no separate label, use the condition text as the edge label.
 	if e.Label == "" {
@@ -646,7 +646,7 @@ func escapeNewlines(s string) string {
 }
 
 // lowerConditionNamespaces strips the ctx. prefix from condition variables
-// for DOT-compatible output. Tracker's condition evaluator resolves bare
+// for DOT-compatible output. The runtime's condition evaluator resolves bare
 // variable names (e.g., "outcome") from the pipeline context, so the
 // Dippin namespace prefix must be removed.
 func lowerConditionNamespaces(cond string) string {

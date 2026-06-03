@@ -21,7 +21,7 @@ Pick the best during implementation:
 
 Start with a concrete moment: someone editing a 20-line system prompt inside a DOT file. Escaped quotes, `\n` everywhere, a JSON block requiring `\"` on every key. A one-character mistake silently breaks the pipeline at runtime — no validation, no error, just wrong output.
 
-Step back: We build Tracker, an AI pipeline orchestration system. Pipelines are directed graphs — nodes, edges, prompts, models, conditions. For two years, DOT was the authoring format. It worked until it didn't.
+Step back: We build an AI pipeline orchestration system. Pipelines are directed graphs — nodes, edges, prompts, models, conditions. For two years, DOT was the authoring format. It worked until it didn't.
 
 Thesis: "When your pipeline definitions get complex enough — multi-model consensus, human gates, retry loops, tool nodes with shell scripts — the authoring format becomes either an accelerator or a bottleneck. DOT had become our bottleneck."
 
@@ -51,7 +51,7 @@ Introduce Dippin — "a domain-specific language purpose-built for AI pipeline w
 
 **The toolchain**: Quick hits — LSP server, WASM playground, `dippin watch`, tree-sitter grammar, semantic diff, DOT migration tool. Once you have a proper language, tooling follows naturally.
 
-**Structured output**: "Last week the Tracker team needed to force LLM APIs to return JSON instead of prose. In DOT, this would have required a new attribute convention, no validation, and hope. In Dippin, we added `response_format` and `response_schema` as first-class fields with four lint rules — and the Tracker adapter picked them up with zero changes." The payoff moment: the language makes the whole system more capable.
+**Structured output**: "Last week downstream consumers needed to force LLM APIs to return JSON instead of prose. In DOT, this would have required a new attribute convention, no validation, and hope. In Dippin, we added `response_format` and `response_schema` as first-class fields with four lint rules — and the runtime adapter picked them up with zero changes." The payoff moment: the language makes the whole system more capable.
 
 ## Section 4: The DX Payoff (~300 words)
 
@@ -61,7 +61,7 @@ Zoom out from features to impact.
 
 **Confidence**: From "deploy and pray" to 39 diagnostics, scenario testing with edge coverage, and cost estimation. Changes land validated, sound, and within budget.
 
-**The feedback loop**: Tracker team files a request. We add a field. Parser, formatter, linter handle it. Adapter picks it up. Turnaround from "we need this" to "it's in production" went from weeks to days. Structured output is the concrete example.
+**The feedback loop**: Downstream consumers file a request. We add a field. Parser, formatter, linter handle it. Adapter picks it up. Turnaround from "we need this" to "it's in production" went from weeks to days. Structured output is the concrete example.
 
 **Open source**: Dippin is open source. Link to repo, playground, docs. "We built this for ourselves, but the problem isn't unique to us. Anyone building multi-step LLM pipelines is dealing with some version of the same authoring pain."
 
@@ -78,7 +78,7 @@ Zoom out from features to impact.
 
 ## What NOT to Include
 
-- Deep Tracker architecture (keep it "our AI pipeline orchestration system")
+- Deep runtime architecture (keep it "our AI pipeline orchestration system")
 - Implementation details of the parser/formatter/IR (no one cares about the Go code)
 - Feature catalog style listing (weave into narrative)
 - Pricing details of LLM providers

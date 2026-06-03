@@ -1,18 +1,18 @@
 # Structured Output Support — Design Spec
 
-**From:** Tracker team feature request (2026-03-31)
+**From:** Downstream consumer feature request (2026-03-31)
 **Priority:** High — blocking production use of interview mode
 
 ## Summary
 
-Add `response_format`, `response_schema`, and a generic `Params` map to `AgentConfig` in the dippin-lang IR. This lets `.dip` files express structured JSON output requirements that tracker threads through to LLM APIs (Anthropic, OpenAI, Gemini). The typed fields give immediate validation and discoverability; the generic params map prevents this same blocking pattern for future runtime features.
+Add `response_format`, `response_schema`, and a generic `Params` map to `AgentConfig` in the dippin-lang IR. This lets `.dip` files express structured JSON output requirements that the runtime threads through to LLM APIs (Anthropic, OpenAI, Gemini). The typed fields give immediate validation and discoverability; the generic params map prevents this same blocking pattern for future runtime features.
 
 ## Approach: Typed Fields with Params Fallthrough
 
 - `response_format` and `response_schema` are first-class `AgentConfig` fields with dedicated lint rules
 - `Params map[string]string` is a generic pass-through for future runtime features
 - Lint hint (DIP133) warns when a params key shadows a first-class field
-- Tracker adapter reads typed fields first, falls back to params — dippin-lang stores both independently, no merge/override logic
+- The runtime adapter reads typed fields first, falls back to params — dippin-lang stores both independently, no merge/override logic
 
 ---
 

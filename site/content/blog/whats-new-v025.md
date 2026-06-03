@@ -15,11 +15,11 @@ related:
     summary: "The `.dipx` bundle format — pack a workflow tree into one verifiable file you can ship anywhere."
 ---
 
-`v0.24.0` introduced `.dipx` — a deterministic, hash-verified bundle format for shipping workflows. The shape was right. The implementation was mostly right. But shipping a format means it leaves your machine and starts getting opened, packed, and inspected by *other* code — Tracker, CI scripts, forensic tools — and that's where the gaps showed up.
+`v0.24.0` introduced `.dipx` — a deterministic, hash-verified bundle format for shipping workflows. The shape was right. The implementation was mostly right. But shipping a format means it leaves your machine and starts getting opened, packed, and inspected by *other* code — runtimes, CI scripts, forensic tools — and that's where the gaps showed up.
 
 `v0.25.0` is the follow-up release that closes them. The format itself (v1.1 in the spec) is unchanged in any way that affects bundles you've already packed. What changes is the contract between the library and its callers: cancellation works end-to-end, `inspect` actually does what its flags claim, error sentinels match the spec, and the exit codes you script against are the ones the spec promises.
 
-If you're a downstream consumer (Tracker, anything importing `github.com/2389-research/dippin-lang/dipx`), there are two breaking changes — both small, both worth taking. Migration is at the bottom.
+If you're a downstream consumer (anything importing `github.com/2389-research/dippin-lang/dipx`), there are two breaking changes — both small, both worth taking. Migration is at the bottom.
 
 ## Cancellation that actually cancels
 
@@ -45,7 +45,7 @@ wf, err := source.Workflow(ref, parent)
 wf, err := source.Workflow(ctx, ref, parent)
 ```
 
-Both `dirSource.Workflow` (on-disk) and `Bundle.Workflow` (bundled) check the context at entry, so subgraph resolution can be canceled even mid-walk through a deep ref graph. If you're a Tracker integrator or otherwise call `Source.Workflow` directly, this is the one place you'll need to touch.
+Both `dirSource.Workflow` (on-disk) and `Bundle.Workflow` (bundled) check the context at entry, so subgraph resolution can be canceled even mid-walk through a deep ref graph. If you're a runtime integrator or otherwise call `Source.Workflow` directly, this is the one place you'll need to touch.
 
 ## Inspect actually inspects
 
@@ -129,7 +129,7 @@ Bundle 6 closed seven ambiguities in the `.dipx` spec. None change observable be
 - **Cycle detection scope** documented: "every manifest-listed workflow," matching `parseAllWorkflows`.
 - **Integrity-failure sentinel set** for CLI exit code 2 expanded from 5 to all 12 spec-enumerated sentinels.
 - **`inspect --format=json` status object schema** documented with a concrete example.
-- **Tracker integration migration example** updated to include `ctx` in `Source.Workflow` calls.
+- **Runtime integration migration example** updated to include `ctx` in `Source.Workflow` calls.
 
 Specs are easier to read when there's one obvious answer for each question. These commits make seven previously-ambiguous questions obvious.
 
@@ -141,7 +141,7 @@ If you don't import `github.com/2389-research/dippin-lang/dipx` directly and you
 go install github.com/2389-research/dippin-lang/cmd/dippin@latest
 ```
 
-If you *do* import the library — Tracker, custom analyzers, anything that goes deeper than the CLI:
+If you *do* import the library — custom analyzers, runtimes, anything that goes deeper than the CLI:
 
 1. `go get github.com/2389-research/dippin-lang@v0.25.0` (or `@latest`).
 2. Update any call to `source.Workflow(ref, parent)` to `source.Workflow(ctx, ref, parent)`. The compiler will tell you exactly where.

@@ -1,24 +1,24 @@
 # Dippin Language Evolution Report
-## Analysis of Tracker Integration and Future Improvements
+## Analysis of Runtime Integration and Future Improvements
 
 **Date**: March 20, 2025  
 **Status**: Post-Migration Analysis  
-**Context**: Following successful verification of Dippin migration tooling against Tracker's vulnerability_analyzer.dot pipeline
+**Context**: Following successful verification of Dippin migration tooling against the runtime's vulnerability_analyzer.dot pipeline
 
 ---
 
 ## Executive Summary
 
-This report analyzes the integration between Dippin (the declarative pipeline language) and Tracker (the execution engine), identifying what works well and proposing concrete evolution paths. The analysis reveals that **Dippin's core design is sound**, but several runtime features used by Tracker cannot yet be expressed in Dippin IR. The priority recommendations focus on bridging these gaps while preserving the clean separation between language (Dippin) and runtime (Tracker).
+This report analyzes the integration between Dippin (the declarative pipeline language) and the runtime (the execution engine), identifying what works well and proposing concrete evolution paths. The analysis reveals that **Dippin's core design is sound**, but several runtime features cannot yet be expressed in Dippin IR. The priority recommendations focus on bridging these gaps while preserving the clean separation between language (Dippin) and the runtime.
 
-**Key Finding**: Tracker has evolved sophisticated runtime behaviors (stylesheets, fidelity modes, retry policies, event models, composition) that should inform Dippin v1.5+, but the v1 design correctly deferred these to avoid complexity. The migration tooling proves that topology and basic node configuration can be expressed cleanly.
+**Key Finding**: The runtime has evolved sophisticated runtime behaviors (stylesheets, fidelity modes, retry policies, event models, composition) that should inform Dippin v1.5+, but the v1 design correctly deferred these to avoid complexity. The migration tooling proves that topology and basic node configuration can be expressed cleanly.
 
 ---
 
 ## 1. What Dippin Gets Right
 
 ### 1.1 Explicit Start/Exit Nodes
-**Tracker Reality**: The engine uses `StartNode` and `ExitNode` fields explicitly. The old DOT convention of inferring start from `Mdiamond` shape was fragile.
+**Runtime Reality**: The engine uses `StartNode` and `ExitNode` fields explicitly. The old DOT convention of inferring start from `Mdiamond` shape was fragile.
 
 **Dippin Design**: `start: node_id` and `exit: node_id` are required top-level fields.
 
@@ -27,7 +27,7 @@ This report analyzes the integration between Dippin (the declarative pipeline la
 ---
 
 ### 1.2 Multiline Content Without Escaping
-**Tracker Reality**: DOT files use `\n` escaping for prompts and shell commands, which breaks syntax highlighting and readability. The migration tool correctly un-escapes these.
+**Runtime Reality**: DOT files use `\n` escaping for prompts and shell commands, which breaks syntax highlighting and readability. The migration tool correctly un-escapes these.
 
 **Dippin Design**: Indentation-based multiline blocks preserve literal content.
 
@@ -36,16 +36,16 @@ This report analyzes the integration between Dippin (the declarative pipeline la
 ---
 
 ### 1.3 Typed Node Configurations
-**Tracker Reality**: The engine dispatches to different handlers based on `node.Handler` (string), then type-casts `node.Attrs` (map[string]string) to extract typed config.
+**Runtime Reality**: The engine dispatches to different handlers based on `node.Handler` (string), then type-casts `node.Attrs` (map[string]string) to extract typed config.
 
 **Dippin Design**: `NodeConfig` is a sealed union of typed structs (`AgentConfig`, `ToolConfig`, etc.). Each node kind has its own field set.
 
-**Verdict**: ✅ **Structurally superior**. This makes invalid states unrepresentable (e.g., a tool node with a `prompt` field) and enables parse-time schema validation. Tracker's runtime type-checking becomes unnecessary.
+**Verdict**: ✅ **Structurally superior**. This makes invalid states unrepresentable (e.g., a tool node with a `prompt` field) and enables parse-time schema validation. The runtime's type-checking becomes unnecessary.
 
 ---
 
 ### 1.4 Condition AST in IR
-**Tracker Reality**: Conditions are stored as raw strings (`edge.Condition`) and parsed at evaluation time in `condition.go`. Syntax errors only surface during execution.
+**Runtime Reality**: Conditions are stored as raw strings (`edge.Condition`) and parsed at evaluation time in `condition.go`. Syntax errors only surface during execution.
 
 **Dippin Design**: Conditions are parsed into an AST (`ConditionExpr`) during Dippin parsing. The IR stores both raw source and parsed AST.
 
@@ -54,7 +54,7 @@ This report analyzes the integration between Dippin (the declarative pipeline la
 ---
 
 ### 1.5 Validation Code Registry (DIP001–DIP112)
-**Tracker Reality**: Validation errors in `validate.go` return ad-hoc strings. Error recovery is limited.
+**Runtime Reality**: Validation errors in `validate.go` return ad-hoc strings. Error recovery is limited.
 
 **Dippin Design**: Every validation rule has a unique code (DIP001 = missing start, DIP002 = missing exit, etc.). Diagnostics include severity, location, message, and help text.
 
@@ -63,7 +63,7 @@ This report analyzes the integration between Dippin (the declarative pipeline la
 ---
 
 ### 1.6 IR as Engine Input (Future)
-**Tracker Reality**: The engine operates on `pipeline.Graph`, which is DOT-shaped.
+**Runtime Reality**: The engine operates on `pipeline.Graph`, which is DOT-shaped.
 
 **Dippin Design**: The IR (`ir.Workflow`) is the canonical representation. An adapter (`IRToGraph()`) bridges the transition, but the long-term plan is for the engine to consume IR directly.
 
@@ -71,11 +71,11 @@ This report analyzes the integration between Dippin (the declarative pipeline la
 
 ---
 
-## 2. Gaps Between Dippin IR and Tracker Runtime
+## 2. Gaps Between Dippin IR and the Runtime
 
 ### 2.1 **Missing: Retry Policy Names and Backoff Strategies**
 
-**Tracker Has**:
+**Runtime Has**:
 - Named retry policies (`standard`, `aggressive`, `patient`, `linear`, `none`) defined in `retry_policy.go`
 - Each policy specifies `MaxRetries`, `BaseDelay`, and a `BackoffFn` (exponential or linear)
 - Resolution hierarchy: node attr `retry_policy` → graph attr `default_retry_policy` → fallback to `standard`
@@ -136,7 +136,7 @@ This adds complexity but gives Dippin full control over retry mechanics. **Not r
 
 ### 2.2 **Missing: Fidelity Modes and Context Compaction**
 
-**Tracker Has** (`fidelity.go`):
+**Runtime Has** (`fidelity.go`):
 - Six fidelity levels controlling context verbosity:
   - `full`: complete context (default first execution)
   - `summary:high`: all keys + trimmed artifacts (2000 chars)
@@ -193,7 +193,7 @@ type FidelityConfig struct {
 
 ### 2.3 **Missing: Stylesheet System**
 
-**Tracker Has** (`stylesheet.go`):
+**Runtime Has** (`stylesheet.go`):
 - CSS-like syntax for per-node LLM config via selectors:
   ```
   * { model: gpt-4; provider: openai; }
@@ -206,7 +206,7 @@ type FidelityConfig struct {
 
 **Dippin IR Has**: Nothing. Stylesheets were deferred to post-v1.
 
-**Gap**: Tracker pipelines can use stylesheets to avoid repeating `model: o1` on every agent node. Migrated Dippin files must inline all stylesheet-resolved values.
+**Gap**: Runtime pipelines can use stylesheets to avoid repeating `model: o1` on every agent node. Migrated Dippin files must inline all stylesheet-resolved values.
 
 **Proposed Solution** (v1.5):
 
@@ -259,7 +259,7 @@ type Workflow struct {
 
 ### 2.4 **Missing: Parallel Branch Configuration**
 
-**Tracker Has**:
+**Runtime Has**:
 - `parallel` handler fans out to multiple child pipelines, each with an isolated context snapshot
 - Branch results are JSON-encoded and stored in `parallel.results` context key
 - `fan_in` handler waits for all branches to complete
@@ -271,7 +271,7 @@ type ParallelConfig struct {
 }
 ```
 
-**Gap**: No way to specify branch-specific parameters or how results are aggregated. The IR assumes targets are node IDs in the same graph, but Tracker's `parallel` handler can execute independent subgraphs.
+**Gap**: No way to specify branch-specific parameters or how results are aggregated. The IR assumes targets are node IDs in the same graph, but the runtime's `parallel` handler can execute independent subgraphs.
 
 **Proposed Solution** (v1.5):
 
@@ -306,7 +306,7 @@ parallel analyze:
 
 ### 2.5 **Missing: Subgraph Parameters**
 
-**Tracker Has** (`subgraph.go`):
+**Runtime Has** (`subgraph.go`):
 - `SubgraphHandler` passes parent context to child via `WithInitialContext(pctx.Snapshot())`
 - No explicit parameter declaration or namespace isolation
 
@@ -359,7 +359,7 @@ type Workflow struct {
 
 ### 2.6 **Missing: Goal Gate Semantics**
 
-**Tracker Has** (`engine.go:goalGateRetryTarget`):
+**Runtime Has** (`engine.go:goalGateRetryTarget`):
 - Nodes with `goal_gate: true` force pipeline failure if they complete with `outcome != success` or `partial_success`
 - At exit, engine checks all completed goal gates and triggers retry/fallback if any failed
 - Used for critical validation nodes that must succeed for the pipeline to be valid
@@ -387,7 +387,7 @@ type AgentConfig struct {
 
 ### 2.7 **Missing: Restart Semantics**
 
-**Tracker Has** (`engine.go`):
+**Runtime Has** (`engine.go`):
 - When an edge targets an already-completed node, triggers "restart loop" handling:
   - Increments global `RestartCount`
   - Checks `max_restarts` (default 5, from graph attr)
@@ -434,7 +434,7 @@ type WorkflowDefaults struct {
 
 ## 3. Condition Language Alignment
 
-### Tracker's Condition Evaluator (`condition.go`)
+### The Runtime's Condition Evaluator (`condition.go`)
 
 **Operators Supported**:
 - Comparison: `=`, `!=`
@@ -479,7 +479,7 @@ CondAnd{
 
 ### Alignment Analysis
 
-| Feature | Tracker | Dippin IR | Status |
+| Feature | Runtime | Dippin IR | Status |
 |---------|---------|-----------|--------|
 | `=` / `==` | Both work as equality | Both supported | ✅ Aligned |
 | `!=` | Supported | Supported | ✅ Aligned |
@@ -496,7 +496,7 @@ CondAnd{
 
 ### **Issue: Namespace Requirement Mismatch**
 
-**Tracker**: Accepts `outcome=success` (no prefix)  
+**Runtime**: Accepts `outcome=success` (no prefix)  
 **Dippin IR**: Requires `ctx.outcome=success` (mandatory namespace)
 
 **Impact**: Migrated DOT files would have conditions like `outcome=success` which don't parse in strict Dippin.
@@ -513,7 +513,7 @@ CondAnd{
 - Disadvantage: Hides namespace semantics, harder to teach
 
 **C. Dippin Spec Allows Bare Variables**:
-- Revert to Tracker's behavior: bare variables default to `ctx.`
+- Revert to the runtime's behavior: bare variables default to `ctx.`
 - Add validation warning if variable doesn't exist in known context keys
 - Disadvantage: Less explicit, harder to distinguish `ctx` vs `graph` keys
 
@@ -523,7 +523,7 @@ CondAnd{
 
 ### Operator Syntax Recommendation
 
-**Keep Tracker's word-based operators** (`contains`, `startswith`, `endswith`, `in`) in Dippin syntax. They're more readable than symbol alternatives (`~=`, `^=`, `$=`, `∈`) and already widely used in existing pipelines.
+**Keep the runtime's word-based operators** (`contains`, `startswith`, `endswith`, `in`) in Dippin syntax. They're more readable than symbol alternatives (`~=`, `^=`, `$=`, `∈`) and already widely used in existing pipelines.
 
 **No changes needed** — Dippin's operator set is a perfect match.
 
@@ -531,7 +531,7 @@ CondAnd{
 
 ## 4. Stylesheet / Theming
 
-### Tracker's Implementation (`stylesheet.go`)
+### The Runtime's Implementation (`stylesheet.go`)
 
 **Syntax**: CSS-like rules in `model_stylesheet` graph attribute (string):
 ```
@@ -550,7 +550,7 @@ agent { temperature: 0.7; }
 **Specificity**: `*` < `shape` < `.class` < `#id`  
 **Resolution**: Apply rules in specificity order (low→high). Explicit node attributes override all stylesheet rules.
 
-**Current Status in Dippin**: Deferred to post-v1 per `DIPPIN_DESIGN_PLAN.md`.
+**Current Status in Dippin**: Deferred to post-v1 per `docs/DIPPIN_DESIGN_PLAN.md`.
 
 ---
 
@@ -687,7 +687,7 @@ Resolved config:
 
 ### Current State
 
-**Tracker** (`fidelity.go`):
+**Runtime** (`fidelity.go`):
 - Six fidelity levels: `full`, `summary:high`, `summary:medium`, `summary:low`, `compact`, `truncate`
 - Degradation chain on resume: `full` → `summary:high` → `summary:medium` → `summary:low` → `compact` → `truncate`
 - Compaction logic:
@@ -775,7 +775,7 @@ Help: valid values are: full, summary:high, summary:medium, summary:low, compact
 
 #### 5.4 Defer Compaction Threshold to v2
 
-The `compaction_threshold` field (intended for token-budget-based compaction) is not implemented in Tracker yet. Mark it as **experimental** in Dippin spec and ignore it in v1 validation.
+The `compaction_threshold` field (intended for token-budget-based compaction) is not yet implemented in the runtime. Mark it as **experimental** in Dippin spec and ignore it in v1 validation.
 
 **Future semantics** (v2+):
 ```
@@ -789,7 +789,7 @@ agent analyze:
 
 ## 6. Event Model
 
-### Tracker's Event System (`events.go`)
+### The Runtime's Event System (`events.go`)
 
 **Event Types**:
 - Pipeline lifecycle: `pipeline_started`, `pipeline_completed`, `pipeline_failed`
@@ -827,7 +827,7 @@ type PipelineEvent struct {
 1. **Runtime concern**: Events are execution-time artifacts, not workflow structure
 2. **Separation of concerns**: Observability should be configured at the engine level, not per-workflow
 3. **Complexity**: Adding event semantics to IR bloats the language without clear authoring value
-4. **Tracker already handles it**: The engine emits events; the TUI/handlers consume them; workflows don't need to know
+4. **The runtime already handles it**: The engine emits events; the TUI/handlers consume them; workflows don't need to know
 
 ---
 
@@ -853,7 +853,7 @@ This would be syntactic sugar for configuring the engine's event handler, not a 
 
 ### Current State
 
-**Tracker** (`validate.go`, `validate_semantic.go`):
+**Runtime** (`validate.go`, `validate_semantic.go`):
 - `Validate(g *Graph)`: Structural checks (start/exit exist, no cycles, all edges reference real nodes, reachability)
 - `ValidateSemantic(g *Graph, registry *HandlerRegistry)`: Handler registration, condition syntax, attribute types
 - Returns `ValidationError` with separate `Errors` and `Warnings` lists
@@ -870,17 +870,17 @@ This would be syntactic sugar for configuring the engine's event handler, not a 
 
 ### Validation Coverage Comparison
 
-| Check | Tracker | Dippin | Code | Notes |
+| Check | Runtime | Dippin | Code | Notes |
 |-------|---------|--------|------|-------|
 | Start node exists | ✅ | ✅ | DIP001 | Aligned |
 | Exit node exists | ✅ | ✅ | DIP002 | Aligned |
 | Edge endpoints valid | ✅ | ✅ | DIP003 | Dippin adds "did you mean?" |
 | All nodes reachable | ✅ | ✅ | DIP004 | Aligned |
-| No unconditional cycles | ✅ | ✅ | DIP005 | Tracker excludes conditional edges; Dippin excludes `restart: true` |
+| No unconditional cycles | ✅ | ✅ | DIP005 | The runtime excludes conditional edges; Dippin excludes `restart: true` |
 | No duplicate edges | ✅ | ✅ | DIP006 | Aligned |
 | Exit has no outgoing edges | ✅ | ✅ | DIP007 | Aligned |
-| No duplicate node IDs | ❌ | ✅ | DIP008 | **Tracker missing** |
-| Parallel/fan_in pairing | ❌ | ✅ | DIP009 | **Tracker missing** |
+| No duplicate node IDs | ❌ | ✅ | DIP008 | **Runtime missing** |
+| Parallel/fan_in pairing | ❌ | ✅ | DIP009 | **Runtime missing** |
 | Handler registration | ✅ | ❌ | — | **Dippin missing** (needs registry input) |
 | Condition syntax | ✅ | ❌ | — | **Dippin missing** (parser validates during parse, not in validator) |
 | Attribute types | ✅ | ❌ | — | **Dippin missing** (should be DIP-new codes) |
@@ -891,19 +891,19 @@ This would be syntactic sugar for configuring the engine's event handler, not a 
 
 ### Convergence Recommendations
 
-#### 7.1 **Tracker Should Delegate Structural Validation to Dippin**
+#### 7.1 **The Runtime Should Delegate Structural Validation to Dippin**
 
-**Why**: Dippin's validator is more rigorous (error codes, location tracking, multi-diagnostic) and catches issues Tracker misses (duplicate nodes, parallel/fan_in pairing).
+**Why**: Dippin's validator is more rigorous (error codes, location tracking, multi-diagnostic) and catches issues the runtime misses (duplicate nodes, parallel/fan_in pairing).
 
 **How**:
-1. Add `dippin/validator.Validate(ir.Workflow)` call in `cmd/tracker` before converting IR to Graph
+1. Add `dippin/validator.Validate(ir.Workflow)` call in the runtime CLI before converting IR to Graph
 2. If validation fails, print diagnostics and exit
 3. Remove redundant checks from `pipeline/validate.go` (keep only Graph-specific runtime checks if any)
 
 **Benefits**:
 - Single source of truth for validation rules
 - Better error messages for users
-- No drift between Dippin and Tracker validation
+- No drift between Dippin and runtime validation
 
 ---
 
@@ -918,7 +918,7 @@ Severity: Error
 Message: node "analyze" references unregistered handler "codergen"
 Help: ensure the handler is registered in the engine's HandlerRegistry before execution
 ```
-**Implementation**: `ValidateSemantic(w *Workflow, registry *HandlerRegistry)` function (mirrors Tracker's)
+**Implementation**: `ValidateSemantic(w *Workflow, registry *HandlerRegistry)` function (mirrors the runtime's)
 
 **DIP111: Invalid Attribute Types** (semantic)
 ```
@@ -980,7 +980,7 @@ Organize validation into tiers:
 
 #### 7.4 **Autofix Recommendation**
 
-Tracker has `AutoFix(g *Graph)` which adds self-loop retry edges to conditional nodes missing fail edges.
+The runtime has `AutoFix(g *Graph)` which adds self-loop retry edges to conditional nodes missing fail edges.
 
 **Dippin should add similar capability**:
 ```bash
@@ -1004,7 +1004,7 @@ Applied 3 fixes:
 
 ## 8. Composition Model
 
-### Tracker's Subgraph Handling (`subgraph.go`)
+### The Runtime's Subgraph Handling (`subgraph.go`)
 
 **Current Implementation**:
 - `SubgraphHandler` looks up referenced graph by name from a pre-loaded map
@@ -1029,7 +1029,7 @@ type SubgraphConfig struct {
 }
 ```
 
-**Improvements over Tracker**:
+**Improvements over the runtime**:
 - `Ref` can be a file path (e.g., `./security_scan.dip`)
 - `Params` allows passing values to child workflow
 
@@ -1149,7 +1149,7 @@ agent analyze_results:
 - Pro: No runtime file I/O, easier debugging
 - Con: Large workflows blow up IR size
 
-**B. Runtime Dispatch** (current Tracker behavior):
+**B. Runtime Dispatch** (current runtime behavior):
 - `SubgraphConfig.Ref` is resolved at runtime
 - Engine loads child graph when node executes
 - Pro: Smaller IR, supports dynamic subgraphs
@@ -1212,7 +1212,7 @@ Help: change the value to a valid integer
 | # | Recommendation | Impact | Effort | Priority | Target |
 |---|----------------|--------|--------|----------|--------|
 | **1** | **Add Retry Policy Documentation** | High | Low | **P0** | v1.1 |
-| **2** | **Converge Validation (Tracker → Dippin)** | High | Medium | **P0** | v1.2 |
+| **2** | **Converge Validation (Runtime → Dippin)** | High | Medium | **P0** | v1.2 |
 | **3** | **Add Fidelity Enum + Validation** | Medium | Low | **P1** | v1.2 |
 | **4** | **Implement Stylesheet System** | High | High | **P1** | v1.5 |
 | **5** | **Add Subgraph Parameter System** | High | High | **P1** | v1.5 |
@@ -1220,7 +1220,7 @@ Help: change the value to a valid integer
 ---
 
 ### 1. Add Retry Policy Documentation
-**Impact**: Closes a critical spec gap. Tracker relies on five named policies but Dippin doesn't document them.
+**Impact**: Closes a critical spec gap. The runtime relies on five named policies but Dippin doesn't document them.
 
 **Effort**: Low — just documentation + validation.
 
@@ -1233,18 +1233,18 @@ Help: change the value to a valid integer
 
 ---
 
-### 2. Converge Validation (Tracker → Dippin)
+### 2. Converge Validation (Runtime → Dippin)
 **Impact**: Eliminates dual maintenance, improves error messages, catches bugs earlier.
 
-**Effort**: Medium — requires refactoring `cmd/tracker` to call Dippin validator first.
+**Effort**: Medium — requires refactoring the runtime CLI to call Dippin validator first.
 
 **Changes**:
 - Add `ValidateSemantic(w *Workflow, registry *HandlerRegistry)` to Dippin
 - Add DIP110–DIP114 codes (handler registration, attribute types, warnings)
-- Wire Dippin validator into Tracker CLI before `IRToGraph()`
+- Wire Dippin validator into the runtime CLI before `IRToGraph()`
 - Deprecate `pipeline/validate.go` checks that overlap with Dippin
 
-**Why P0**: Validation is currently split between two codebases. Consolidating it reduces bugs and improves UX.
+**Why P0**: Validation is currently split between two codebases. Consolidating it in Dippin reduces bugs and improves UX.
 
 ---
 
@@ -1319,19 +1319,19 @@ Dippin's v1 design is **structurally sound**:
 
 ### What's Missing
 
-Tracker has evolved **runtime features** that should inform Dippin v1.5+:
+The runtime has evolved **runtime features** that should inform Dippin v1.5+:
 - **Retry policies**: Need documented enum + `base_delay` field
 - **Fidelity modes**: Need spec docs + validation + degradation policy
 - **Stylesheets**: Need first-class syntax block (not string-in-attribute)
 - **Subgraph params**: Need contracts, namespace isolation, import resolution
-- **Validation convergence**: Need to consolidate Tracker + Dippin validators
+- **Validation convergence**: Need to consolidate runtime and Dippin validators
 
 ### Next Steps
 
 **Immediate** (v1.1–v1.2):
 1. Document retry policies and fidelity levels in Dippin spec
 2. Add validation codes DIP110–DIP114 (semantic checks)
-3. Wire Dippin validator into Tracker CLI
+3. Wire Dippin validator into the runtime CLI
 4. Add namespace auto-prefixing in migration tool for conditions
 
 **Near-term** (v1.5):
@@ -1348,4 +1348,4 @@ Tracker has evolved **runtime features** that should inform Dippin v1.5+:
 
 **Report compiled on**: March 20, 2025  
 **Dippin version analyzed**: v1.0 (post-migration verification)  
-**Tracker commit**: Latest (includes stylesheets, fidelity, retry policies)
+**Runtime version analyzed**: Latest (includes stylesheets, fidelity, retry policies)

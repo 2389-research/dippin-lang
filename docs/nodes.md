@@ -112,7 +112,7 @@ Agent nodes invoke an LLM. They are the most configurable node kind.
 | `backend` | String | runtime default | Per-node backend override (e.g., `native`, `claude-code`, `acp`). |
 | `working_dir` | String | — | Per-node working directory override for isolated execution. |
 | `tool_access` | String | — (full catalog) | LLM tool-catalog gate. Set to `none` to strip the model's tool registry on this agent. Bounds the v0.28.2 single-agent multi-tool-call vector (DIP139 warns on unknown values; runtime fail-closes). |
-| `writable_paths` | CSV (globs) | — (unbounded) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`), resolved against the session root. Absent = unbounded. A present-but-empty `writable_paths:` is rejected by `dippin validate`/`pack` (parse error — list at least one glob or omit the field). Malformed values fail **closed** at the tracker (deny-all / refuse-to-start). Enforced on the **native backend** only; `claude-code`/`acp` refuse to start. No brace-expansion globs: `writable_paths` is comma-split, so `*.{md,yaml}` is torn into `*.{md` and `yaml}` — enumerate entries instead (DIP142). Distinct from `writes:` (advisory context keys produced) — `writable_paths:` bounds enforced file-write paths. Requires tracker `>= v0.35.0`. |
+| `writable_paths` | CSV (globs) | — (unbounded) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`), resolved against the session root. Absent = unbounded. A present-but-empty `writable_paths:` is rejected by `dippin validate`/`pack` (parse error — list at least one glob or omit the field). Malformed values fail **closed** at the runtime (deny-all / refuse-to-start). Enforced on the **native backend** only; `claude-code`/`acp` refuse to start. No brace-expansion globs: `writable_paths` is comma-split, so `*.{md,yaml}` is torn into `*.{md` and `yaml}` — enumerate entries instead (DIP142). Distinct from `writes:` (advisory context keys produced) — `writable_paths:` bounds enforced file-write paths. Enforced by the runtime (not by dippin). |
 | `max_turns` | Integer | 1 | Maximum conversation turns in an agentic loop. A turn is one request-response cycle. Set higher for multi-step tool-using agents. |
 | `cmd_timeout` | Duration | — | Command execution timeout for the agent's agentic loop (e.g., `30s`, `5m`). Applies to tool/command calls made within the agent, not to the LLM API call itself. |
 | `cache_tools` | Boolean | workflow default | Whether to cache tool call results for this agent. Useful for expensive, deterministic tools. |
@@ -268,7 +268,7 @@ Tool nodes execute shell commands and capture their output.
 | `command_file` | String | — | Path (relative to the `.dip` source directory) to an external file whose contents replace inline `command:`. Mutually exclusive with `command`. Loaded at CLI entry points (`dippin lint`, `pack`, `validate`); LSP and playground see the path unresolved. Security: absolute paths rejected, parent-tree escape rejected, symlinks rejected, 4 MiB size cap. |
 | `timeout` | Duration | — | Maximum execution time (e.g., `"30s"`, `"2m"`, `"1m30s"`). If the command exceeds this duration, it is killed. **Recommended** — the linter warns (DIP111) if omitted. |
 | `outputs` | CSV | — | Declared possible stdout values (comma-separated). Used by `dippin coverage` to check whether outgoing edge conditions cover all tool outputs. Advisory — not enforced at runtime. |
-| `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. Tracker validates and applies the regex at runtime. |
+| `marker_grep` | String | — | Regex matched line-by-line against captured stdout. The last match populates `ctx.tool_marker`. The runtime validates and applies the regex at runtime. |
 | `route_required` | Boolean | false | When true, the node fails if the command's stdout contains no `_TRACKER_ROUTE=<value>` sentinel line. The matched value populates `ctx.tool_route`. |
 | `output_limit` | Integer | — | Per-node override for the engine's captured-stdout byte cap. Non-negative integer; 0 (or omitted) uses the engine default. `dippin fmt` omits the field when the value is zero. |
 
@@ -328,7 +328,7 @@ The same pattern applies to any tool whose output drives routing — build comma
       [ $? -eq 0 ] && printf 'tests_pass\n' || printf 'tests_fail\n'
 ```
 
-When `marker_grep` is declared, the runtime populates `ctx.tool_marker` and routing edges can reference it instead of `ctx.tool_stdout`. `route_required: true` makes the absence of any match a hard failure. `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
+When `marker_grep` is declared, the runtime populates `ctx.tool_marker` and routing edges can reference it instead of `ctx.tool_stdout`. `route_required: true` makes the absence of any match a hard failure (the runtime fails the node if no `_TRACKER_ROUTE=` sentinel appears). `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
 
 **Lint:** A tool node that declares `marker_grep:` is treated as a "safe routing source" — outgoing conditional edges that test `ctx.tool_marker` no longer trip `DIP101` (unreachable target) or `DIP102` (no default edge), even with a single conditional edge. The declaration is an explicit author signal that routing is typed.
 
@@ -509,7 +509,7 @@ The subgraph handles the full interview lifecycle: generating questions with sug
 
 ## Manager Loop Nodes
 
-Manager loop nodes supervise a child sub-pipeline, polling it on a cadence and optionally steering it by injecting context during execution. They map to Tracker's `stack.manager_loop` and DOT `shape=house`.
+Manager loop nodes supervise a child sub-pipeline, polling it on a cadence and optionally steering it by injecting context during execution. They map to `stack.manager_loop` in the runtime and DOT `shape=house`.
 
 ```dippin
   manager_loop QualityGate

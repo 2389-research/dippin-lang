@@ -31,7 +31,7 @@ func isUnboundedRetry(r ir.RetryConfig) bool {
 	return hasRetryConfig && r.MaxRetries == 0 && r.FallbackTarget == ""
 }
 
-// validRetryPolicies is the set of retry policy names recognized by Tracker's engine.
+// validRetryPolicies is the set of retry policy names recognized by the runtime engine.
 var validRetryPolicies = map[string]bool{
 	"standard":   true,
 	"aggressive": true,

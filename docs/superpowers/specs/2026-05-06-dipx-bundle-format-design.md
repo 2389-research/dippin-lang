@@ -2,7 +2,7 @@
 
 **Status:** Design v3 — revised 2026-05-07 after second-round multi-reviewer pass (DoS, ops, crypto discipline, PAL)
 **Primary use case:** Distribution / portability — share a self-contained pipeline by file, URL, or registry; recipient runs it without needing the original repo.
-**Library-first:** A `dipx` Go package both the dippin CLI and downstream Tracker import directly.
+**Library-first:** A `dipx` Go package both the dippin CLI and downstream consumers import directly.
 
 ## Conventions
 
@@ -19,7 +19,7 @@ To share a multi-file pipeline today, you ship a directory tree and hope the rec
 - single artifact to email, host, or version
 - integrity check on the bundle
 - guarantee that a recipient won't unwittingly execute a workflow whose subgraph escaped the source root
-- shared loading contract between `dippin` (authoring) and Tracker (execution)
+- shared loading contract between `dippin` (authoring) and the runtime (execution)
 
 `.dipx` is that artifact.
 
@@ -32,7 +32,7 @@ In scope (v1):
 - Hermetic invariant: refs inside the bundle resolve only to manifest-listed, hash-verified files.
 - Library API in package `dipx`: `Pack`, `Open`, `OpenReader`, `OpenLax`, `Validate`, `Extract`, `Load`, plus a `Source` interface and `Bundle` type — all I/O operations accept `context.Context`.
 - CLI: new `dippin pack` / `unpack` / `inspect`; existing analysis commands transparently accept `.dipx`. CLI uses atomic file-write patterns (write-temp + rename) for both Pack output and Extract output.
-- Tracker integration: two call-site changes; identical execution semantics.
+- Runtime integration: two call-site changes; identical execution semantics.
 - Errors: typed `*BundleError` plus Go error sentinels in `dipx`; no DIP codes for bundle errors.
 - Reproducible Pack: same source tree → byte-identical bundle.
 - Bundle identity defined as SHA-256 of manifest bytes (forward-compatible with v2 detached signatures).
@@ -266,7 +266,7 @@ Implementations MUST NOT fully buffer an entry into a `[]byte` and then check si
 
 **Consumer deployment limits** — a conformant reader MUST accept any bundle within the conformance limits AND MAY enforce stricter limits configured for its deployment context. When stricter limits trip, the reader MUST emit `ErrCapExceeded` with the cap name and observed value.
 
-The conformance limits are intentionally generous to support today's production workflows. **Operators SHOULD configure stricter consumer-side limits for production deployments** (e.g., 10 MB total for memory-constrained Tracker pods). The 100 MB conformance maximum is *not* a deployment recommendation.
+The conformance limits are intentionally generous to support today's production workflows. **Operators SHOULD configure stricter consumer-side limits for production deployments** (e.g., 10 MB total for memory-constrained runtime pods). The 100 MB conformance maximum is *not* a deployment recommendation.
 
 ### Cancellation and timeouts
 
@@ -691,7 +691,7 @@ Signature is over the bytes-as-stored of `manifest.json` (which is reproducible 
 
 Returned `*ir.Workflow` values MUST be treated as read-only by callers. Any consumer mutating IR MUST clone the workflow first. `Condition.Parsed` is a derived view of `Condition.Raw`; it MUST NOT be serialized into any persistent cache (parse-version skew between `simulate` versions could otherwise serve stale ASTs).
 
-## Tracker integration contract
+## Runtime integration contract
 
 ### Behavioral contract
 
@@ -699,13 +699,13 @@ Workflow execution semantics, params propagation, retry policies, fidelity, fan-
 
 Hermeticity applies to **ref resolution only**, not to runtime data flow. `manager_loop` `SteerContext` injection, agent `Params` propagation, and any runtime-injected context are out of scope of the hermetic invariant.
 
-**Bundle vs disk**: A `*Bundle` is fully in memory; replacing the underlying `.dipx` file on disk does NOT propagate to in-flight executions. Operators deploying via "drop new bundle into place" MUST restart Tracker workers (or use Tracker's reload mechanism, if any) to pick up the new bundle. Tracker MAY implement reload by calling `Open` on the new path and atomically swapping the in-flight `Source`.
+**Bundle vs disk**: A `*Bundle` is fully in memory; replacing the underlying `.dipx` file on disk does NOT propagate to in-flight executions. Operators deploying via "drop new bundle into place" MUST restart runtime workers (or use the runtime's reload mechanism, if any) to pick up the new bundle. The runtime MAY implement reload by calling `Open` on the new path and atomically swapping the in-flight `Source`.
 
-**Failure isolation**: Each `Bundle` is independent; a failed `Open` of bundle B does not affect in-flight executions of bundle A. Cap enforcement is **per-bundle**, not per-process. Operators running long-lived Tracker processes with many concurrent bundles SHOULD configure consumer-deployment limits (see *Soft caps*) appropriate for their resource budget.
+**Failure isolation**: Each `Bundle` is independent; a failed `Open` of bundle B does not affect in-flight executions of bundle A. Cap enforcement is **per-bundle**, not per-process. Operators running long-lived runtime processes with many concurrent bundles SHOULD configure consumer-deployment limits (see *Soft caps*) appropriate for their resource budget.
 
 ### Migration: two call sites
 
-Tracker's existing code:
+The runtime's existing code:
 
 ```go
 p := parser.NewParser(input, "foo.dip")
@@ -729,13 +729,13 @@ child, err := src.Workflow(ctx, sub.Ref, parentPath)
 `parentPath` semantics:
 
 - For `.dipx`: `parentPath` is bundle-relative (e.g., `workflows/api_design.dip`).
-- For `.dip`: `parentPath` is the filesystem path Tracker tracks today.
+- For `.dip`: `parentPath` is the filesystem path the runtime tracks today.
 
 The `ctx` passed to `Load` SHOULD carry a deadline appropriate to the bundle's source; for HTTP fetch, set a hard timeout (e.g., 30 s) to bound CPU on adversarial input.
 
 ### Format version skew
 
-A `.dipx` with unsupported `format_version` returns `*BundleError{Sentinel: ErrUnsupportedFormatVersion, Detail: "got N; supports [1]"}`. Tracker SHOULD surface to operators with a remediation hint such as "upgrade Tracker to a build supporting format_version N."
+A `.dipx` with unsupported `format_version` returns `*BundleError{Sentinel: ErrUnsupportedFormatVersion, Detail: "got N; supports [1]"}`. The runtime SHOULD surface to operators with a remediation hint such as "upgrade the runtime to a build supporting format_version N."
 
 ### Distribution surface
 
@@ -757,11 +757,11 @@ The `dipx` package emits no log output of its own. All observability MUST be via
 1. Returned `*BundleError` values (with structured fields for `errors.As`).
 2. (Future v1.1) Optional tracer hooks injected via `context.Context` or functional options.
 
-This makes `dipx` quiet by default and lets host applications (Tracker, dippin CLI) own log formatting and routing.
+This makes `dipx` quiet by default and lets host applications (the runtime, dippin CLI) own log formatting and routing.
 
-### Recommended Tracker logging
+### Recommended runtime logging
 
-Tracker SHOULD log bundle errors at `error` level with a stable structured field `error_class: bundle_integrity` plus the `BundleError` fields (`sentinel`, `path`, `detail`). Recommended user-facing message templates per sentinel are documented in `dipx/errors.go` doc comments and SHOULD be adopted for cross-deployment consistency.
+The runtime SHOULD log bundle errors at `error` level with a stable structured field `error_class: bundle_integrity` plus the `BundleError` fields (`sentinel`, `path`, `detail`). Recommended user-facing message templates per sentinel are documented in `dipx/errors.go` doc comments and SHOULD be adopted for cross-deployment consistency.
 
 ### Diagnostic mode
 
@@ -781,12 +781,12 @@ Two bundles are *identity-equal* if `b1.Identity() == b2.Identity()` — i.e., t
 The following are known design trade-offs and intended follow-ups:
 
 1. **No cryptographic signatures.** Authenticity over untrusted channels is unaddressed in v1. Sketch in *Versioning*; v2 work.
-2. **No bundle-level budget aggregation.** Per-workflow budgets remain. Operators wanting a run-level cap need a separate Tracker feature.
+2. **No bundle-level budget aggregation.** Per-workflow budgets remain. Operators wanting a run-level cap need a separate runtime feature.
 3. **No cross-language conformance suite.** This spec is normative for the Go reference implementation. A Rust/Python re-implementation would need a v2 conformance suite.
 4. **No hash algorithm agility.** SHA-256 is locked. Migrating to SHA-3 or BLAKE3 requires `format_version` bump and is a deliberate one-way door.
 5. **No external asset bundling.** Only `.dip` files are bundled. Asset-reference syntax in the language → corresponding `.dipx` extension.
 6. **No streaming Open.** All workflow bytes are read into memory at Open time. Practical limit: 100 MB total uncompressed (the cap).
-7. **No `OpenLite` mode that drops file bytes.** `Bundle.ReadFile` requires bytes to be retained. Tracker uses ~2× workflow bytes (raw + parsed IR) per open bundle. Memory profile of long-running Tracker processes SHOULD be measured before scale deployment.
+7. **No `OpenLite` mode that drops file bytes.** `Bundle.ReadFile` requires bytes to be retained. The runtime uses ~2× workflow bytes (raw + parsed IR) per open bundle. Memory profile of long-running runtime processes SHOULD be measured before scale deployment.
 8. **No process-wide memory accountant.** Each `Bundle` enforces per-bundle caps; the host is responsible for limiting concurrent open bundles. v1.1 may add a `WithMaxTotalBytes` hook.
 9. **No parallel hash verification.** Step 6 of Open ordering is serial in v1. Future versions MAY parallelize across files; this is an implementation choice, not a wire-format change.
 10. **Hash comparison is not constant-time.** This is deliberate: the threat model is integrity, not authentication. Constant-time would obscure the model.

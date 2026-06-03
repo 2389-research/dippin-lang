@@ -52,7 +52,7 @@ type WorkflowDefaults struct {
 	MaxCostCents      int           // Hard ceiling on cost in cents (USD)
 	MaxWallTime       time.Duration // Hard ceiling on wall time
 	ToolCommandsAllow string        // Comma-separated glob allowlist for tool shell commands
-	ToolDenylistAdd   string        // Comma-separated globs appended to tracker's default denylist
+	ToolDenylistAdd   string        // Comma-separated globs appended to the runtime's default denylist
 }
 
 // Node represents a single step in the workflow.
@@ -112,8 +112,8 @@ type AgentConfig struct {
 	// WritablePaths bounds the file paths this agent's tools may write, as
 	// author-chosen globs (e.g. "workspace/**", ".ai/sprints/**") resolved against
 	// the session root. Empty/absent = unbounded. A present-but-empty or malformed
-	// value fails CLOSED at the tracker (deny-all / refuse-to-start), never
-	// unbounded. dippin carries + lints; tracker enforces an fs-level write jail on
+	// value fails CLOSED at the runtime (deny-all / refuse-to-start), never
+	// unbounded. dippin carries + lints; the runtime enforces an fs-level write jail on
 	// the native backend (Bash + its children included); claude-code/acp refuse to
 	// start. See issue #75.
 	WritablePaths []string
@@ -166,14 +166,14 @@ type BranchConfig struct {
 	// Recognized values mirror AgentConfig.ToolAccess: "" (inherit) and "none"
 	// (strip tools); other values lint as DIP139 and fail closed at runtime.
 	// Empty INHERITS the target agent's tool_access (never resets to the full
-	// catalog) — tracker resolves effective = branch if non-empty else agent.
-	// dippin carries + lints this field; tracker enforces the override, exactly
+	// catalog) — the runtime resolves effective = branch if non-empty else agent.
+	// dippin carries + lints this field; the runtime enforces the override, exactly
 	// as it does for Model/Provider/Fidelity.
 	ToolAccess string
 	// WritablePaths is a per-branch override of the target agent's writable_paths.
 	// Empty INHERITS the target agent's writable_paths (never resets to unbounded) —
-	// tracker resolves effective = branch if non-empty else agent. dippin carries +
-	// lints; tracker enforces. See issue #75.
+	// the runtime resolves effective = branch if non-empty else agent. dippin carries +
+	// lints; the runtime enforces. See issue #75.
 	WritablePaths []string
 }
 

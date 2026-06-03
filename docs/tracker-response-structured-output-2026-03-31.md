@@ -1,7 +1,7 @@
 # Response: Structured Output Support in Dippin-Lang IR
 
 **From:** Dippin-lang team
-**To:** Tracker team
+**To:** Downstream consumers
 **Date:** 2026-03-31
 **Re:** Feature Request — Structured Output Support (2026-03-31)
 **Status:** Implemented, ready for integration
@@ -10,7 +10,7 @@
 
 ## Summary
 
-All requested changes are implemented and passing CI. The tracker team can begin integration immediately.
+All requested changes are implemented and passing CI. Downstream consumers can begin integration immediately.
 
 **Version:** v0.16.0 (not yet tagged — pending your confirmation)
 **Commits:** 13 commits on `main` since v0.15.0
@@ -101,7 +101,7 @@ Same syntax and semantics as the existing `SubgraphConfig.Params`. Keys are sort
 
 ---
 
-## Tracker Integration Notes
+## Runtime Integration Notes
 
 ### What the adapter needs to do
 
@@ -218,5 +218,5 @@ All documentation updated:
 ## Next Steps
 
 1. Tag v0.16.0 and push (waiting for your go-ahead)
-2. Tracker adapter update (your side — should be minimal given the plumbing is already merged on `feat/interview-mode`)
+2. Runtime adapter update (your side — should be minimal given the plumbing is already merged on `feat/interview-mode`)
 3. Integration test: `.dip` → IR → adapter → node attrs → codergen → agent session → LLM request

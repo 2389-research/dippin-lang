@@ -3,9 +3,9 @@
 **Date:** 2026-05-29
 **Issue:** [#75](https://github.com/2389-research/dippin-lang/issues/75) (write-scope tier, deferred from #41 follow-ups)
 **Related roadmap:** #55 (tool-name allowlists), #53 (defaults cascade), #54 (read-only tier), #58 (per-branch override), #56 (chain-attack mitigation), #67/#77 (symlink-escape rejection)
-**Target version:** dippin **v0.35.0** (repo is at v0.34.0); joint with a new tracker tag.
+**Target version:** dippin **v0.35.0** (repo is at v0.34.0); coordinated runtime release.
 **Status:** Design — revised after 5-reviewer expert panel (DSL, security, round-trip, lint, release). See § Design journey.
-**Tracker dependency:** Joint release. The pinned tracker SHA is recorded here before dippin merges (mirrors #41).
+**Runtime enforcement:** Coordinated release. The pinned runtime SHA is recorded here before dippin merges (mirrors #41).
 
 > **Revision note (rev 2).** The first draft used the name `write_paths`, claimed an
 > "fs-jail covering Bash" as a delivered contract, failed *open* on empty values, and
@@ -14,7 +14,7 @@
 > to **`writable_paths`** (the existing advisory `writes:` field made `write_paths:` a
 > silent-no-op footgun), makes empty/malformed **fail closed**, scopes enforcement to
 > the **native backend** (others refuse-to-start), and reframes the jail as the
-> *required tracker contract with enumerated residual-escape classes* rather than a
+> *required runtime enforcement contract with enumerated residual-escape classes* rather than a
 > delivered guarantee.
 
 ## Problem
@@ -71,7 +71,7 @@ that is a deliberate fail-closed posture, not a silent no-op.
 
 ## Design
 
-One new field. A glob list. Same "dippin carries + lints; tracker enforces" contract as
+One new field. A glob list. Same "dippin carries + lints; the runtime enforces" contract as
 #41/#58.
 
 ```dip
@@ -83,8 +83,8 @@ agent RecoveryManager
 `writable_paths` is a comma-separated glob list on `AgentConfig` and `BranchConfig`.
 
 - **Absent** → unbounded writes (current behavior).
-- **Non-empty** → tracker bounds all file mutations to the listed globs (native backend).
-- **Present-but-empty / malformed / unrecognized** → **fail closed**: tracker denies all
+- **Non-empty** → the runtime bounds all file mutations to the listed globs (native backend).
+- **Present-but-empty / malformed / unrecognized** → **fail closed**: the runtime denies all
   writes (or refuses to start). Never falls through to unbounded. See § Fail-closed.
 
 ### Why `writable_paths`, not `write_paths`
@@ -101,21 +101,21 @@ style of `working_dir`, and removes the prefix collision.
 
 Three shapes were considered (issue #75 sketches them):
 
-1. **Named tier** (`tool_access: workspace_only`, tracker-defined glob). Cannot express
+1. **Named tier** (`tool_access: workspace_only`, runtime-defined glob). Cannot express
    `RecoveryManager`'s `.ai/` paths. **Rejected** (fails acceptance).
 2. **Overloaded `tool_access`** (`tool_access: { ... }`). The structured-`tool_access`
    design #41 explicitly rejected after three review rounds; a breaking type change to a
-   field tracker already consumes as a string. **Rejected.**
+   field the runtime already consumes as a string. **Rejected.**
 3. **Separate `writable_paths` list field**, orthogonal to the `tool_access` scalar.
    Composition handled by lints, not field entanglement. **Chosen.**
 
 `tool_access` stays a dumb scalar. `writable_paths` is a dumb glob list. dippin does not
 resolve, coerce, or canonicalize globs (lint-time escape *detection* is read-only and
-not written back to IR — § Lints). Tracker owns runtime semantics, as #41 established.
+not written back to IR — § Lints). The runtime owns runtime semantics, as #41 established.
 
 ### Semantic model (normative)
 
-- **Effective resolution (tracker-side):** `writable_paths` bounds the set of paths any
+- **Effective resolution (runtime-side):** `writable_paths` bounds the set of paths any
   file-mutating tool may write, **resolved against an immutable session root** (§ Anchor).
 - **Branch inherit-on-empty** (mirrors #58's `ToolAccess` rule): an empty branch
   `writable_paths` **inherits the target agent's**; it never resets to unbounded.
@@ -142,25 +142,25 @@ advisory list fields.
   must either list at least one glob or omit the field entirely (omission = unbounded,
   which is the explicit current-behavior choice). The parser still uses `splitCommaNoEmpty`
   for non-empty values so that stray blank entries within a real list are dropped cleanly.
-- **Tracker side (normative):** Tracker MUST treat a `writable_paths` that is malformed
+- **Runtime side (normative):** The runtime MUST treat a `writable_paths` that is malformed
   (unparseable glob, brace-expansion mis-split — § Known limitations), or **unrecognized
-  by an older tracker that predates this field** as **deny-all-writes or refuse-to-start**
+  by an older runtime that predates this field** as **deny-all-writes or refuse-to-start**
   — never as unbounded. The present-but-empty case is now caught by dippin at validate/pack
-  time, but tracker still MUST fail-closed on any value it cannot compile to a valid path
+  time, but the runtime still MUST fail-closed on any value it cannot compile to a valid path
   set. The version-skew case (§ Release coordination) is the most dangerous: an old
-  tracker that silently ignores the field is the PR#25 incident in disguise.
+  runtime that silently ignores the field is the PR#25 incident in disguise.
 
-## Threat model & dippin/tracker split
+## Threat model & dippin/runtime split
 
-**dippin CARRIES + LINTS; tracker ENFORCES.** dippin stores the raw glob list,
+**dippin CARRIES + LINTS; the runtime ENFORCES.** dippin stores the raw glob list,
 round-trips it (parse → IR → format → DOT export → migrate), and lints it for obvious
-unsafe *shapes*. dippin cannot enforce path bounding — it emits IR/`.dipx`; tracker
+unsafe *shapes*. dippin cannot enforce path bounding — it emits IR/`.dipx`; the runtime
 resolves and enforces.
 
-### Required tracker enforcement contract (normative)
+### Required runtime enforcement contract (normative)
 
-This section is the contract the joint tracker PR must satisfy. It is written as
-*requirements*, not as a delivered guarantee — the dippin reviewer verifies the tracker
+This section is the contract the coordinated runtime PR must satisfy. It is written as
+*requirements*, not as a delivered guarantee — the dippin reviewer verifies the runtime
 PR against it.
 
 1. **Write containment.** On the native backend, every file mutation performed by any
@@ -178,13 +178,13 @@ PR against it.
 3. **Immutable anchor (§ Anchor).** Globs resolve against a fixed session root.
    `working_dir` and any `Params` key MUST NOT relocate the anchor.
 4. **Fail-closed (§ Fail-closed).** Empty/malformed/unrecognized → deny-all or refuse.
-5. **Bypass defense.** When `writable_paths` is set, tracker MUST NOT honor a `Params`
+5. **Bypass defense.** When `writable_paths` is set, the runtime MUST NOT honor a `Params`
    key (or the first-class `working_dir` field) that widens or relocates the write
    surface. Mirrors #41's `Params` bypass defense, extended to the `working_dir` field.
 
 #### Anchor
 
-`writable_paths` globs resolve against an **immutable session root** chosen by tracker at
+`writable_paths` globs resolve against an **immutable session root** chosen by the runtime at
 session creation. `working_dir` is a first-class `AgentConfig` field (`ir/ir.go`), not a
 `Params` key; if globs resolved relative to `working_dir`, then `working_dir` would be a
 jail-relocation primitive. The contract: the anchor is fixed at session start and neither
@@ -208,14 +208,14 @@ The primitive bounds *where file writes land*. It does **not** bound:
 - **Hardlinks / inherited FDs / `/proc` re-entry.** A perfect path jail must also resist
   hardlinks to outside inodes, writes through file descriptors inherited from the parent
   process (no path syscall to intercept), and `/proc/self/...` re-entry. These are
-  tracker enforcement-mechanism concerns; the contract requires them to be addressed (or
-  the residual risk documented) in the tracker PR. The dippin spec names them so the
-  reviewer checks the tracker red-team covers them, rather than letting "fs jail" imply
+  runtime enforcement-mechanism concerns; the contract requires them to be addressed (or
+  the residual risk documented) in the runtime PR. The dippin spec names them so the
+  reviewer checks the runtime red-team covers them, rather than letting "fs jail" imply
   they are handled.
 
 ### Backends
 
-v1 enforces on the **native** backend only. On `claude-code` and `acp`, where tracker
+v1 enforces on the **native** backend only. On `claude-code` and `acp`, where the runtime
 does not control the child process's sandbox, an fs-level jail over `Bash` may be
 infeasible — and reaching for the backend's *prompt-level* `--allowedTools`/permission
 flags is **not** enforcement (that is the prompt-discipline failure PR#25 demonstrates).
@@ -224,10 +224,10 @@ jail, **session creation refuses to start** with an error pointing to this issue
 authors get a hard failure, never a silent unbounded run or a prompt-level pretend-jail.
 
 **Late-failure caveat (carried from #41).** Runtime refusal can land deep in a long
-pipeline — the motivating sites are terminal nodes (`:195`/`:328`/`:455`/`:741`). The
-implementation plan records, against the pinned tracker SHA, which backends are
+pipeline — the motivating sites are terminal nodes. The
+implementation plan records, against the pinned runtime SHA, which backends are
 jail-capable, so the dippin reviewer can sanity-check coverage. A dippin pre-flight lint
-is *not* added in v1 (dippin doesn't know tracker's per-backend capability); if late
+is *not* added in v1 (dippin doesn't know the runtime's per-backend capability); if late
 failures prove painful, a follow-up adds one.
 
 ### Chain caveat (#56)
@@ -247,8 +247,8 @@ unbounded agent — or into a later **tool node** / CI step that executes the al
 // WritablePaths bounds the file paths this agent's tools may write, as author-chosen
 // globs (e.g. "workspace/**", ".ai/sprints/**") resolved against the session root.
 // Empty/absent = unbounded. A present-but-empty or malformed value fails CLOSED at
-// the tracker (deny-all / refuse-to-start), never unbounded. dippin carries + lints;
-// tracker enforces an fs-level write jail on the native backend (Bash + its children
+// the runtime (deny-all / refuse-to-start), never unbounded. dippin carries + lints;
+// the runtime enforces an fs-level write jail on the native backend (Bash + its children
 // included); claude-code/acp refuse to start. See issue #75.
 WritablePaths []string
 ```
@@ -373,11 +373,11 @@ Help: `remove writable_paths (no tools to bound) or drop tool_access: none to gr
 Fires per-entry when an entry will not bound writes the way the jail expects. **This is an
 author-clarity lint, not an escape control** — the fs-jail is the real boundary; the help
 text says so. The empty-list case is **not** a dippin lint (it is unobservable post-
-`splitCommaNoEmpty`; the tracker fail-closes on it — § Fail-closed). Predicate set
+`splitCommaNoEmpty`; the runtime fail-closes on it — § Fail-closed). Predicate set
 (reuse `parser/resolve.go` helpers for the escape check rather than reimplementing):
 
 - **Absolute** — leading `/`, OR Windows shape `^[A-Za-z]:` / `^\\` (checked
-  build-OS-independently, since tracker may run a different OS), OR leading `~` (home
+  build-OS-independently, since the runtime may run a different OS), OR leading `~` (home
   expansion escapes the workspace too).
 - **Parent escape** — `hasParentRef(filepath.Clean(e))` (the `parser/resolve.go`
   predicate), catching `../x` and `foo/../../bar`; NOT a naive `..` substring (which
@@ -387,7 +387,7 @@ text says so. The empty-list case is **not** a dippin lint (it is unobservable p
   comma-split tore apart — § Known limitations).
 
 Warning. Scans agent + branch.
-Message: `node %q writable_paths entry %q escapes the workspace (absolute / ~ / parent path) — the tracker write-jail will not honor it` (brace variant: `… is malformed (brace expansion is split on commas)`).
+Message: `node %q writable_paths entry %q escapes the workspace (absolute / ~ / parent path) — the runtime write-jail will not honor it` (brace variant: `… is malformed (brace expansion is split on commas)`).
 Help: `use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, and ..-escaping entries are rejected by the fs jail (it bounds writes to the session root); this lint catches obvious lexical cases only — the runtime jail is the real boundary. See #67/#77.`
 
 > DIP141 and DIP142 may both fire on one object (e.g. `writable_paths: /etc/**` +
@@ -428,7 +428,7 @@ Help: `use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, and ..-e
 7. **Example lint assertion** (dedicated test — **not** `TestLintExamples`, which only
    checks DIP108): lint `examples/agent_writable_paths.dip` and assert zero DIP141/DIP142.
 
-### Tracker-side tests (specified for cross-repo verification; restore #41 rigor)
+### Runtime-side tests (specified for cross-repo verification; restore #41 rigor)
 
 - **Red-team (single-turn, PR#25/v0.28.2 shape):** agent with
   `writable_paths: workspace/**`; mock LLM emits, **in one response/turn**, multiple tool
@@ -440,7 +440,7 @@ Help: `use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, and ..-e
 - **`working_dir` relocation:** `writable_paths: workspace/**` + `working_dir: /` (or `..`)
   → still bounded to the original session-root anchor.
 - **Fail-closed:** present-but-empty `writable_paths:`, a malformed/uncompilable glob, and
-  (version-skew) a tracker that doesn't recognize the field → deny-all / refuse, never
+  (version-skew) a runtime that doesn't recognize the field → deny-all / refuse, never
   unbounded.
 - **Bypass:** `Params` working-dir / permission override ignored.
 - **Branch inherit:** agent `writable_paths: workspace/**` fanned out through a branch with
@@ -460,9 +460,9 @@ agent bounded to `.ai/sprints/**` + `.ai/managers/recovery-journal.md`). Mirrors
   into `*.{md` and `yaml}` — not merely "not expressible" but actively mis-split. DIP142's
   brace check flags the unbalanced fragments at lint time; at runtime the fragments match
   nothing and fail closed. Authors enumerate entries instead. Documented in `docs/nodes.md`.
-- **Glob dialect is tracker's.** dippin does not interpret glob match semantics (`**`
+- **Glob dialect is the runtime's.** dippin does not interpret glob match semantics (`**`
   depth, character classes); it lints only obvious unsafe lexical shapes (§ DIP142). The
-  exact match semantics are the tracker contract.
+  exact match semantics are the runtime's contract.
 - **Bounds location, not content or network** — see § Residual escape classes.
 
 ## Decomposition & sequencing
@@ -472,7 +472,7 @@ implementation plan's **task #0** files/records #55/#53/#56 follow-ups as number
 and updates skill.md cross-references — restoring the #41 discipline DIP28 dropped):
 
 1. **#75 (now)** — the `writable_paths` primitive. Agent + per-branch, native-backend
-   enforcement, joint tracker release, DIP141/DIP142.
+   enforcement, coordinated runtime release, DIP141/DIP142.
 2. **#55 (next)** — `allowed_tools` / `disallowed_tools`. With enforcement at the fs layer,
    tool-name scoping is a genuinely *orthogonal* axis (which tool names exist), not a
    prerequisite. Composes with #75 (dropping `Bash` shrinks the jail's attack surface and
@@ -494,8 +494,8 @@ Each is its own spec → plan → PR.
 - `site/static/skill.md` — `writable_paths` in the agent-node section: the glob-list shape,
   the **native-backend** enforcement + fail-closed + immutable-anchor contract, the
   residual-escape scope (network/content/reads out of scope), the chain caveat and
-  cross-node non-goals with links to #55/#53/#56, and the **`requires tracker ≥ <tag>`
-  safety requirement** (§ Release coordination). One sentence that it is settable per-branch.
+  cross-node non-goals with links to #55/#53/#56, and the **requires an enforcing runtime**
+  safety requirement (§ Release coordination). One sentence that it is settable per-branch.
 - `docs/validation.md` — DIP141 + DIP142 entries (Trigger / Fix / Example).
 - **Count updates:** `CLAUDE.md` (line ~85, "49 … DIP101-DIP140") and
   `docs/llm-reference.md` (line ~188, "49 diagnostic codes") → 51 / DIP101-DIP142.
@@ -505,41 +505,41 @@ Each is its own spec → plan → PR.
 ## Release coordination
 
 **Module-dependency direction (corrected from the first draft):** dippin has **no** Go
-dependency on tracker — tracker imports dippin's `ir`/`dipx`. So there is no dippin-side
-`go.mod` pin to tracker. Cross-repo integration tests live in the **tracker** repo, which
+dependency on the runtime — the runtime imports dippin's `ir`/`dipx`. So there is no dippin-side
+`go.mod` pin to the runtime. Cross-repo integration tests live in the **runtime** repo, which
 pins a dippin commit SHA in *its* `go.mod` during the window. The dippin PR carries the
-field + lints + round-trip tests, which need no tracker dependency.
+field + lints + round-trip tests, which need no runtime dependency.
 
-1. **Tracker PR opens first:** native fs-jail enforcement (Bash + children + symlink-chain
+1. **Runtime PR opens first:** native fs-jail enforcement (Bash + children + symlink-chain
    + immutable anchor), `claude-code`/`acp` refuse-to-start, fail-closed on
    empty/malformed/unrecognized, `Params`/`working_dir` bypass defense, and the full
-   red-team suite above. Lands on tracker `main`, untagged; tracker `go.mod` pins the
+   red-team suite above. Lands on the runtime's main branch, untagged; the runtime's `go.mod` pins the
    dippin PR SHA for its integration tests.
-2. **Dippin PR opens in parallel** (no tracker dep): field, lints, round-trip/parity
+2. **Dippin PR opens in parallel** (no runtime dep): field, lints, round-trip/parity
    tests, example, docs.
-3. **Spec records the pinned tracker SHA** here before dippin merges.
+3. **Spec records the pinned runtime SHA** here before dippin merges.
 4. **Version-skew safety statement** goes in skill.md and (at tag time) CHANGELOG, naming
-   the failure mode explicitly: *without a tracker ≥ the paired tag, `writable_paths` is
-   not enforced; the paired tracker fail-closes on the field, so an unpinned/older tracker
+   the failure mode explicitly: *without an enforcing runtime at the paired tag, `writable_paths` is
+   not enforced; the paired runtime fail-closes on the field, so an unpinned/older runtime
    must refuse rather than run unbounded.* This mirrors v0.32.0's "lint-validated runtime-
    no-op safety fields ship as worse-than-nothing" language.
-5. **Tracker tag first, then dippin tag (v0.35.0)** immediately after, `go.mod` bumped on
-   the tracker side, CHANGELOG updated at tag time. Tracker takes a minor bump (new
+5. **Runtime tag first, then dippin tag (v0.35.0)** immediately after, `go.mod` bumped on
+   the runtime side, CHANGELOG updated at tag time. The runtime takes a minor bump (new
    `SessionConfig` semantics).
 
 PR body: **Fixes #75**; references #55/#53/#56 as sequenced follow-ups.
 
 ## Design journey
 
-Brainstormed (shape, sequencing, threat model, dippin/tracker split) → drafted →
+Brainstormed (shape, sequencing, threat model, dippin/runtime split) → drafted →
 5-reviewer expert panel (DSL-design, security, round-trip, lint, release). The panel
 found, and this revision folds in: the `splitComma("")→[""]` empty-handling bug (4
-reviewers) → `splitCommaNoEmpty` + tracker fail-closed; the non-compiling
+reviewers) → `splitCommaNoEmpty` + runtime fail-closed; the non-compiling
 `BranchConfig`-slice parity change → field-by-field comparator; the over-claimed
 "fs-jail covering Bash" → required-contract framing with enumerated residual escapes and
 native-only scope; the `working_dir` relocation bypass → immutable anchor; the
-version-skew silent-unbounded → fail-closed + `requires tracker ≥ tag`; the backwards
-`go.mod` pin direction → tracker-pins-dippin; the `writes:`/`write_paths:` collision →
+version-skew silent-unbounded → fail-closed + requires an enforcing runtime; the backwards
+`go.mod` pin direction → runtime-pins-dippin; the `writes:`/`write_paths:` collision →
 `writable_paths`; plus complexity budgeting (4 near-cap functions), the lint helper
 ladder, restored #41 red-team rigor, and the DIP-count/touch-site corrections. The
 branch-encoder comma "risk" the draft flagged was verified a non-issue (percent-encoding).

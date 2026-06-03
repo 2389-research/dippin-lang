@@ -73,10 +73,10 @@ The optional `defaults` block sets graph-level configuration that applies to all
 
 ### Tool safety
 
-Tool nodes that shell out can be constrained by two defaults consumed by the tracker runtime:
+Tool nodes that shell out can be constrained by two defaults consumed by the runtime:
 
-- `tool_commands_allow` — comma-separated glob allowlist. When set, tracker rejects tool-node commands that do not match any pattern.
-- `tool_denylist_add` — comma-separated globs appended to tracker's default denylist (on top of tracker's built-in blocks).
+- `tool_commands_allow` — comma-separated glob allowlist. When set, the runtime rejects tool-node commands that do not match any pattern.
+- `tool_denylist_add` — comma-separated globs appended to the runtime's default denylist (on top of the runtime's built-in blocks).
 
 ```dippin
 workflow Safe
@@ -91,7 +91,7 @@ workflow Safe
   # ...
 ```
 
-Values pass through to tracker verbatim; dippin-lang does not validate glob syntax.
+Values pass through to the runtime verbatim; dippin-lang does not validate glob syntax.
 
 ## Vars Block
 
@@ -186,7 +186,7 @@ Tool nodes execute shell commands. The command's stdout is captured as `ctx.tool
       pytest --tb=short
 ```
 
-Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes a missing `_TRACKER_ROUTE=` sentinel fail the node; `output_limit` overrides the captured-stdout byte cap.
+Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes a missing `_TRACKER_ROUTE=` sentinel fail the node at the runtime; `output_limit` overrides the captured-stdout byte cap.
 
 ### parallel
 
@@ -218,7 +218,7 @@ Subgraph nodes embed another workflow as a single step. Parameters are passed vi
 
 ### manager_loop
 
-Manager loop nodes supervise a child sub-pipeline: they spawn it, poll it on a configurable cadence, and can steer it by injecting additional context during execution. They map to Tracker's `stack.manager_loop` construct and export as DOT shape `house`.
+Manager loop nodes supervise a child sub-pipeline: they spawn it, poll it on a configurable cadence, and can steer it by injecting additional context during execution. They map to `stack.manager_loop` in the runtime and export as DOT shape `house`.
 
 ```dippin
   manager_loop QualityGate

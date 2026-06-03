@@ -15,7 +15,7 @@ related:
     summary: "tool_commands_allow / tool_denylist_add defaults plus a cleaner DOT header."
 ---
 
-You've spent a week stitching together a workflow. It's six `.dip` files: an entry pipeline, three reusable subgraphs, two interview loops your teammate built and you finally got around to wiring in. It runs locally. Now you need to ship it to Tracker.
+You've spent a week stitching together a workflow. It's six `.dip` files: an entry pipeline, three reusable subgraphs, two interview loops your teammate built and you finally got around to wiring in. It runs locally. Now you need to ship it to the runtime.
 
 Today, that means tarring up the directory, scp'ing it, and hoping nobody renames a file in transit. There's no way to ask "is this the same workflow tree I packaged on Friday?" without diffing source files by hand. And if your CI runner unpacks the tarball into a directory that contains a leftover `phases/old_review.dip` from yesterday's build, your pipeline runs against the wrong subgraph and you don't notice until the bill arrives.
 
@@ -30,11 +30,11 @@ subgraph S
   ref: phases/review.dip
 ```
 
-That `ref:` is a relative filesystem path. At runtime, Tracker (or `dippin simulate`, or any other consumer) walks the directory and opens the referenced file. Works perfectly when you control the filesystem.
+That `ref:` is a relative filesystem path. At runtime, the executor (`dippin simulate` or any other consumer) walks the directory and opens the referenced file. Works perfectly when you control the filesystem.
 
 It stops working as soon as the workflow needs to leave your machine. Four scenarios where this bites:
 
-- **Shipping to a runtime.** Tracker has to know how to find every file before it can run the entry. A directory tree is fine; a single artifact is better.
+- **Shipping to a runtime.** The runtime has to know how to find every file before it can run the entry. A directory tree is fine; a single artifact is better.
 - **Pinning a version in CI.** "We deployed workflow `v3.7.2` last Tuesday" should mean exactly the bytes that ran. A directory is hard to pin; a hash is easy.
 - **Verifying nothing changed in transit.** Did the workflow you built in CI match the one that hit production? With a directory, you compare files by hand. With one file and a hash, you compare the hash.
 - **Caching by content.** A runtime that opens the same workflow twenty times shouldn't re-parse it twenty times. A content-addressed id makes the cache trivial.
@@ -99,15 +99,15 @@ src, err := dipx.Load(ctx, "pipeline.dipx")  // also accepts pipeline.dip
 entry := src.Entry()                          // *ir.Workflow
 ```
 
-For Tracker integration, the contract is the `dipx.Source` interface. A `dipx.Bundle` satisfies it. So does the on-disk `dirSource`. Tracker can swap its directory-walking loader for `dipx.Load` and get content-addressed bundle support without touching anything downstream.
+For runtime integration, the contract is the `dipx.Source` interface. A `dipx.Bundle` satisfies it. So does the on-disk `dirSource`. Any runtime can swap its directory-walking loader for `dipx.Load` and get content-addressed bundle support without touching anything downstream.
 
-The intended rhythm: author your workflow as `.dip` files in your editor, with all the linting and the LSP. When you're ready to ship — to Tracker, to a teammate, to your future self — `dippin pack` it. The bundle is what travels.
+The intended rhythm: author your workflow as `.dip` files in your editor, with all the linting and the LSP. When you're ready to ship — to the runtime, to a teammate, to your future self — `dippin pack` it. The bundle is what travels.
 
 ## What "content-addressed" buys you
 
 `Bundle.Identity()` returns the SHA-256 of the manifest bytes exactly as they appear in the archive. Two byte-identical bundles have the same identity. Two bundles that contain the same workflows but were packed five minutes apart with different entry ordering would *not* have the same identity — and that's the point. The identity verifies bytes, not intent.
 
-You can use it as a cache key. You can use it as a deployment id. You can put it in a deploy log and answer "is the workflow Tracker is running right now the one that came out of CI on Tuesday?" with a single string comparison.
+You can use it as a cache key. You can use it as a deployment id. You can put it in a deploy log and answer "is the workflow the runtime is running right now the one that came out of CI on Tuesday?" with a single string comparison.
 
 This is the thing the directory-of-files setup couldn't give you. A directory has no canonical hash. You'd have to invent one (which directories? which file order? what about ignored files?), and then everyone would have to agree. A `.dipx` has one identity, one definition, no debate.
 
@@ -128,6 +128,6 @@ What v1 *does* take seriously is the producer side. `dippin pack` refuses symlin
 
 ## What's next
 
-Full notes in [CHANGELOG.md](https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md). The Tracker side of this — swapping the loader for `dipx.Load` so workflows can be deployed as bundles — is its own conversation. Ping us if you want to follow along, or if you have a use case for `.dipx` we haven't thought about.
+Full notes in [CHANGELOG.md](https://github.com/2389-research/dippin-lang/blob/main/CHANGELOG.md). The runtime side of this — swapping the loader for `dipx.Load` so workflows can be deployed as bundles — is its own conversation. Ping us if you want to follow along, or if you have a use case for `.dipx` we haven't thought about.
 
 For now: `dippin pack pipeline.dip`, ship the `.dipx`, sleep better.

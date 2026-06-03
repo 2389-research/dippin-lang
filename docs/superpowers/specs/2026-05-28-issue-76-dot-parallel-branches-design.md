@@ -41,7 +41,7 @@ The `.dip → .dip` path is fine (formatter `writeParallelBlock` + simulate read
 
 ## Decision: full round-trip via an encoded `branches=` node attribute
 
-DOT here is dippin's own dialect (tracker consumes inlined `.dipx`, not DOT), so
+DOT here is dippin's own dialect (the runtime consumes inlined `.dipx`, not DOT), so
 the migrate parser can read back any encoding we choose. We mirror the existing
 `steer_context` precedent (`manager_loop`), which flattens a structured value into
 a percent-encoded string for a lossless DOT round-trip.
