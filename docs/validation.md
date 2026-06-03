@@ -3,7 +3,7 @@
 Dippin documents 46 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP142): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP143): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP009<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP142<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP143<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -224,7 +224,7 @@ error[DIP009]: duplicate edge
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP142)
+## Semantic Lint Warnings (DIP101–DIP143)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -953,6 +953,35 @@ This is a lexical clarity check, not the security boundary — the runtime fs-ja
 
 ---
 
+### DIP143: Referenced Subgraph Does Not Inherit `tool_access`
+
+**Severity**: Hint
+
+A `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) node references a child `.dip` file, and this workflow declares `tool_access` on at least one agent or parallel branch. `tool_access` is a per-node primitive and does not cross a file boundary — the child subgraph's agents are governed entirely by their own file, so the parent's restriction does not propagate into it.
+
+```text
+hint[DIP143]: manager_loop "Supervise" references subgraph "child.dip", defined in its own file; this workflow's tool_access restrictions do not extend across the subgraph boundary
+  --> pipeline.dip:9:3
+  = help: audit the agents in "child.dip" for their own tool_access — restrictions declared in this workflow do not propagate into a referenced subgraph. Cross-file enforcement is tracked as #89.
+```
+
+**What triggers it**: All of the following hold:
+- A node references an external subgraph — `manager_loop` via `subgraph_ref`, or `subgraph` via `ref` (non-empty).
+- The workflow declares `tool_access` (any non-empty value — a fail-closed typo still expresses restriction) on some agent or parallel branch.
+
+This is a Hint, not a Warning: the referencing node has no defect. The check is **file-level** — it does not verify that the restricted node and the subgraph node are related, and it does **not** read the child file (the validator cannot parse it). It bounds the child's *tool catalog* concern, not information flow across the supervisory boundary (`steer_context` / `stack.child.*` — see [#56](https://github.com/2389-research/dippin-lang/issues/56)). Real cross-file effective-access enforcement is deferred to [#89](https://github.com/2389-research/dippin-lang/issues/89).
+
+**How to fix**: Open the referenced `.dip` and give its agents their own `tool_access`:
+
+```dippin
+  agent Summarize
+    tool_access: none
+  manager_loop Supervise
+    subgraph_ref: child.dip   # DIP143: child.dip's agents must set their own tool_access
+```
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -969,7 +998,7 @@ Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP009 errors and DIP101–DIP142 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP009 errors and DIP101–DIP143 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

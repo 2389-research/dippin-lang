@@ -396,7 +396,7 @@ func nodeValidationExplanations() map[string]Explanation {
 	}
 }
 
-// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP142).
+// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP143).
 func safetyExplanations() map[string]Explanation {
 	return map[string]Explanation{
 		DIP138: {
@@ -433,6 +433,13 @@ func safetyExplanations() map[string]Explanation {
 			Trigger: "A writable_paths entry is an absolute path, starts with ~ or a Windows drive, escapes its base via .., or is a brace-expansion fragment torn apart by comma-splitting. Such an entry will not bound writes to the workspace the way the author expects.",
 			Fix:     "Use workspace-relative globs (e.g. .ai/sprints/**). Absolute, ~, Windows-drive, and ..-escaping entries are rejected by the runtime fs jail; brace expansion (*.{md,yaml}) is split on commas — enumerate entries instead. This lint catches obvious lexical cases only; the runtime jail is the real boundary.",
 			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths: /etc/**   // DIP142: absolute path escapes the workspace jail",
+		},
+		DIP143: {
+			Code:    DIP143,
+			Summary: "referenced subgraph does not inherit this workflow's tool_access restrictions",
+			Trigger: "A manager_loop (subgraph_ref) or subgraph (ref) node references a child .dip file, and this workflow declares tool_access on at least one agent or parallel branch. tool_access is per-node and does not cross a file boundary, so the child's agents are governed entirely by their own file — the parent's restriction does not propagate. This is a Hint: the referencing node has no defect; the check is file-level and does not verify the restricted node and the subgraph node are related, nor does it read the child (the validator cannot parse it). Cross-file effective-access enforcement is deferred (#89).",
+			Fix:     "Open the referenced .dip and give its agents their own tool_access (e.g. tool_access: none on summarizers). Restrictions declared in the parent do not flow into a referenced subgraph. Note this bounds the child's tool catalog, not information flow across the supervisory boundary (steer_context / stack.child.* — see #56).",
+			Example: "agent Summarize\n  tool_access: none\nmanager_loop Supervise\n  subgraph_ref: child.dip   // DIP143: child.dip's agents must set their own tool_access",
 		},
 	}
 }
