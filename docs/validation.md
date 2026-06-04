@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin documents 47 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
+Dippin documents 48 diagnostic codes split into two categories (the linter additionally registers a few internal codes that don't have dedicated sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP143): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP144): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP009<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP143<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP144<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -224,7 +224,7 @@ error[DIP009]: duplicate edge
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP143)
+## Semantic Lint Warnings (DIP101–DIP144)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -984,6 +984,52 @@ This is a Hint, not a Warning: the referencing node has no defect. The check is 
 
 ---
 
+### DIP144: Agent Node Has No Failure Route
+
+**Severity**: Warning
+
+An agent node has no declared failure route at any level. If the node fails at runtime, the pipeline has nowhere to go and will halt.
+
+```
+warning[DIP144]: agent node "Build" has no failure route (no fail edge, no fallback_target, no graph on_failure)
+  --> pipeline.dip:12:3
+  = help: add `-> <node> when ctx.outcome = fail`, set fallback_target:, or declare a workflow-level on_failure:
+```
+
+**What triggers it**: An `agent` node that has none of:
+- An outgoing edge with `when ctx.outcome = fail` (or `failure`)
+- A `fallback_target` field
+- A `retry_target` + `max_retries` bounded retry
+- A `defaults.on_failure` declared on the workflow
+
+**Does not fire on**: `human`, `tool`, `parallel`, `fan_in`, `conditional`, `subgraph`, or `manager_loop` nodes.
+
+**How to fix**: Add any one of the four suppression routes:
+
+```dippin
+  # Option 1: explicit fail edge
+  edges
+    Build -> Escalate when ctx.outcome = fail
+
+  # Option 2: node fallback_target
+  agent Build
+    fallback_target: Escalate
+
+  # Option 3: bounded retry
+  agent Build
+    retry_target: Build
+    max_retries: 3
+    fallback_target: Escalate
+
+  # Option 4: graph-level catch-all
+  defaults
+    on_failure: Escalate
+```
+
+See [edges.md](edges.md) — Failure Handling for the full five-level precedence cascade.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1000,7 +1046,7 @@ Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP009 errors and DIP101–DIP143 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP009 errors and DIP101–DIP144 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

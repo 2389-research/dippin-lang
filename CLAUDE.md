@@ -82,7 +82,7 @@ Supported providers: Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistr
 
 ## Lint Rules
 
-52 diagnostic codes: DIP001-DIP009 (structural errors), DIP101-DIP143 (semantic warnings). DIP101/DIP102 suppress automatically when source node conditions are exhaustive (success/fail pairs, contains/not-contains complementary pairs). DIP121/DIP122 only fire when source nodes declare writes/outputs (advisory metadata).
+53 diagnostic codes: DIP001-DIP009 (structural errors), DIP101-DIP144 (semantic warnings). DIP101/DIP102 suppress automatically when source node conditions are exhaustive (success/fail pairs, contains/not-contains complementary pairs). DIP121/DIP122 only fire when source nodes declare writes/outputs (advisory metadata).
 
 ## Testing
 

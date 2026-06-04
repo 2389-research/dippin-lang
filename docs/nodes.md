@@ -53,7 +53,7 @@ These fields are available on **all** block-style node kinds (agent, human, tool
 | `max_retries` | Integer | No | Maximum retry attempts before giving up. Overrides the workflow default. |
 | `base_delay` | Duration | No | Override the retry policy's default base delay (e.g. `500ms`, `2s`, `1m`). |
 | `retry_target` | String | No | Node ID to jump to when retrying (instead of re-executing the current node). |
-| `fallback_target` | String | No | Node ID to jump to if all retries are exhausted. |
+| `fallback_target` | String | No | Node ID to jump to if all retries are exhausted. A graph-level catch-all can also be declared via `defaults.on_failure` (see [edges.md](edges.md) — Failure Handling). |
 
 ### reads and writes
 

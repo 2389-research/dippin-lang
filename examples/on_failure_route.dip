@@ -1,0 +1,31 @@
+workflow OnFailureDemo
+  goal: "Demonstrate a graph-level on_failure recovery route"
+  start: Plan
+  exit: Done
+
+  defaults
+    on_failure: Escalate
+
+  agent Plan
+    prompt: "Draft a plan."
+    model: claude-sonnet-4-6
+    provider: anthropic
+
+  agent Build
+    prompt: "Execute the plan."
+    model: claude-sonnet-4-6
+    provider: anthropic
+
+  human Escalate
+    mode: freeform
+    prompt: "An automated step failed — please intervene."
+
+  agent Done
+    prompt: "Summarize the result."
+    model: claude-sonnet-4-6
+    provider: anthropic
+
+  edges
+    Plan -> Build
+    Build -> Done
+    Escalate -> Done
