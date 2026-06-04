@@ -13,9 +13,10 @@ import (
 // cleanMinimalWorkflow returns a minimal valid workflow with no lint warnings.
 func cleanMinimalWorkflow() *ir.Workflow {
 	return &ir.Workflow{
-		Name:  "clean",
-		Start: "Begin",
-		Exit:  "End",
+		Name:     "clean",
+		Start:    "Begin",
+		Exit:     "End",
+		Defaults: ir.WorkflowDefaults{OnFailure: "End"}, // suppresses DIP144 for all agents
 		Nodes: []*ir.Node{
 			{ID: "Begin", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "Hello."}},
 			{ID: "End", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "Done."}},
@@ -33,8 +34,9 @@ func cleanComplexWorkflow() *ir.Workflow {
 		Start: "Ask",
 		Exit:  "Done",
 		Defaults: ir.WorkflowDefaults{
-			Model:    "claude-opus-4-6",
-			Provider: "anthropic",
+			Model:     "claude-opus-4-6",
+			Provider:  "anthropic",
+			OnFailure: "Done", // suppresses DIP144 for all agents
 		},
 		Nodes: []*ir.Node{
 			{ID: "Ask", Kind: ir.NodeHuman, Config: ir.HumanConfig{Mode: "freeform"},
@@ -111,9 +113,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: source has unconditional edge, conditional branch is safe",
 			workflow: &ir.Workflow{
-				Name:  "cond_only",
-				Start: "A",
-				Exit:  "C",
+				Name:     "cond_only",
+				Start:    "A",
+				Exit:     "C",
+				Defaults: ir.WorkflowDefaults{OnFailure: "C"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
@@ -134,9 +137,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: node with unconditional incoming edge is fine",
 			workflow: &ir.Workflow{
-				Name:  "uncond_ok",
-				Start: "A",
-				Exit:  "B",
+				Name:     "uncond_ok",
+				Start:    "A",
+				Exit:     "B",
+				Defaults: ir.WorkflowDefaults{OnFailure: "B"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
@@ -174,9 +178,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP102: mixed conditional + unconditional is fine",
 			workflow: &ir.Workflow{
-				Name:  "with_default",
-				Start: "A",
-				Exit:  "C",
+				Name:     "with_default",
+				Start:    "A",
+				Exit:     "C",
+				Defaults: ir.WorkflowDefaults{OnFailure: "C"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
@@ -223,9 +228,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP103: different conditions from same node is fine for overlap",
 			workflow: &ir.Workflow{
-				Name:  "no_overlap",
-				Start: "A",
-				Exit:  "C",
+				Name:     "no_overlap",
+				Start:    "A",
+				Exit:     "C",
+				Defaults: ir.WorkflowDefaults{OnFailure: "C"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
@@ -249,9 +255,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: exhaustive conditions from raw text (not pre-parsed)",
 			workflow: &ir.Workflow{
-				Name:  "raw_exhaustive",
-				Start: "A",
-				Exit:  "C",
+				Name:     "raw_exhaustive",
+				Start:    "A",
+				Exit:     "C",
+				Defaults: ir.WorkflowDefaults{OnFailure: "C"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
@@ -269,9 +276,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: exhaustive conditions + unconditional fallback (pattern 1)",
 			workflow: &ir.Workflow{
-				Name:  "exhaustive_with_fallback",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "exhaustive_with_fallback",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Gate", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "gate"}},
@@ -297,9 +305,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: exhaustive conditions + extra variable conditions (pattern 2)",
 			workflow: &ir.Workflow{
-				Name:  "exhaustive_with_extra_conds",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "exhaustive_with_extra_conds",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Gate", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "gate"}},
@@ -327,9 +336,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: complementary contains/not contains pair (pattern 3)",
 			workflow: &ir.Workflow{
-				Name:  "complementary_pair",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "complementary_pair",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Pick", Kind: ir.NodeTool, Config: ir.ToolConfig{Command: "echo done", Timeout: 60 * 1e9}},
@@ -351,9 +361,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: custom binary partition on tool_stdout (done/more_questions)",
 			workflow: &ir.Workflow{
-				Name:  "custom_partition",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "custom_partition",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Check", Kind: ir.NodeTool, Config: ir.ToolConfig{Command: "echo done", Timeout: 30e9}},
@@ -375,9 +386,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: custom partition with 3 values (tasks_remain/in_progress/all_done)",
 			workflow: &ir.Workflow{
-				Name:  "ternary_partition",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "ternary_partition",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Check", Kind: ir.NodeTool, Config: ir.ToolConfig{Command: "echo status", Timeout: 30e9}},
@@ -422,9 +434,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: mixed unconditional + conditional from same source (pattern 3)",
 			workflow: &ir.Workflow{
-				Name:  "mixed_routing",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "mixed_routing",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Impl", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "impl"}},
@@ -446,9 +459,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP101: conditional edge with labeled fallback from source (pattern 4)",
 			workflow: &ir.Workflow{
-				Name:  "labeled_fallback",
-				Start: "Start",
-				Exit:  "Done",
+				Name:     "labeled_fallback",
+				Start:    "Start",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
 					{ID: "Gate", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "gate"}},
@@ -559,9 +573,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP105: forward path exists even with restart edges",
 			workflow: &ir.Workflow{
-				Name:  "has_path",
-				Start: "A",
-				Exit:  "C",
+				Name:     "has_path",
+				Start:    "A",
+				Exit:     "C",
+				Defaults: ir.WorkflowDefaults{OnFailure: "C"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
@@ -608,9 +623,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP106: ctx.node.<existingNode>.* is valid — no DIP106",
 			workflow: &ir.Workflow{
-				Name:  "node_scoped_ref_valid",
-				Start: "Planner",
-				Exit:  "Builder",
+				Name:     "node_scoped_ref_valid",
+				Start:    "Planner",
+				Exit:     "Builder",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Builder"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Planner", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "plan"}},
 					{ID: "Builder", Kind: ir.NodeAgent, Config: ir.AgentConfig{
@@ -652,9 +668,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP106: bare node.<existingNode>.* is valid — no DIP106",
 			workflow: &ir.Workflow{
-				Name:  "bare_node_ref_valid",
-				Start: "Planner",
-				Exit:  "Builder",
+				Name:     "bare_node_ref_valid",
+				Start:    "Planner",
+				Exit:     "Builder",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Builder"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Planner", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "plan"}},
 					{ID: "Builder", Kind: ir.NodeAgent, Config: ir.AgentConfig{
@@ -703,9 +720,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP107: writes key that is read downstream is fine",
 			workflow: &ir.Workflow{
-				Name:  "used_write",
-				Start: "A",
-				Exit:  "B",
+				Name:     "used_write",
+				Start:    "A",
+				Exit:     "B",
+				Defaults: ir.WorkflowDefaults{OnFailure: "B"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
 						IO: ir.NodeIO{Writes: []string{"data"}}},
@@ -847,9 +865,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP110: start/exit lifecycle nodes exempt from empty prompt",
 			workflow: &ir.Workflow{
-				Name:  "lifecycle_exempt",
-				Start: "Init",
-				Exit:  "Done",
+				Name:     "lifecycle_exempt",
+				Start:    "Init",
+				Exit:     "Done",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Done"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Init", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: ""}},
 					{ID: "Done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: ""}},
@@ -923,9 +942,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP112: reads key with upstream writer is fine",
 			workflow: &ir.Workflow{
-				Name:  "has_writer",
-				Start: "A",
-				Exit:  "B",
+				Name:     "has_writer",
+				Start:    "A",
+				Exit:     "B",
+				Defaults: ir.WorkflowDefaults{OnFailure: "B"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
 						IO: ir.NodeIO{Writes: []string{"data"}}},
@@ -941,9 +961,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP112: node.<existingNode>.* in reads is valid — no DIP112",
 			workflow: &ir.Workflow{
-				Name:  "node_scoped_read_valid",
-				Start: "Planner",
-				Exit:  "Builder",
+				Name:     "node_scoped_read_valid",
+				Start:    "Planner",
+				Exit:     "Builder",
+				Defaults: ir.WorkflowDefaults{OnFailure: "Builder"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "Planner", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "plan"}},
 					{ID: "Builder", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "build"},
@@ -1030,9 +1051,10 @@ func TestLint(t *testing.T) {
 		{
 			name: "DIP112: transitive writes propagation",
 			workflow: &ir.Workflow{
-				Name:  "transitive",
-				Start: "A",
-				Exit:  "C",
+				Name:     "transitive",
+				Start:    "A",
+				Exit:     "C",
+				Defaults: ir.WorkflowDefaults{OnFailure: "C"}, // suppresses DIP144
 				Nodes: []*ir.Node{
 					{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
 						IO: ir.NodeIO{Writes: []string{"key1"}}},

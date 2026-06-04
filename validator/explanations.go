@@ -138,6 +138,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Ensure at least one success path connects start to exit.",
 			Example: "Start -> A [failure]\nA -> End  // no success path",
 		},
+		DIP144: {
+			Code:    DIP144,
+			Summary: "agent node has no failure route",
+			Trigger: "An agent node can fail at runtime but has no fail edge, fallback_target, bounded retry, or graph-level on_failure.",
+			Fix:     "Add a `-> <node> when ctx.outcome = fail` edge, set fallback_target, add retry_target with max_retries, or declare a workflow-level on_failure.",
+			Example: "agent Implement\n  prompt: \"build it\"\nImplement -> Test  // DIP144: no route if Implement fails",
+		},
 	}
 }
 

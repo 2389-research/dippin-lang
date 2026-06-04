@@ -288,6 +288,7 @@ func TestDiagnose_GradeCDWorkflow(t *testing.T) {
 	// Score in 60-79 range via warnings (4-6 warnings).
 	w := &ir.Workflow{
 		Name: "test", Start: "A", Exit: "G",
+		Defaults: ir.WorkflowDefaults{OnFailure: "G"}, // suppresses DIP144 so score stays in C/D range
 		Nodes: []*ir.Node{
 			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: ""}},
 			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: ""}},
