@@ -28,8 +28,8 @@ var Explanations = map[string]Explanation{
 	DIP003: {
 		Code:    DIP003,
 		Summary: CodeDescription[DIP003],
-		Trigger: "An edge references a node ID that does not exist in the workflow.",
-		Fix:     "Correct the node name in the edge, or add the missing node.",
+		Trigger: "An edge or on_failure target references a node ID that does not exist in the workflow.",
+		Fix:     "Correct the node name in the edge or on_failure field, or add the missing node.",
 		Example: "Start -> Analize  // typo: \"Analize\" not defined",
 	},
 	DIP004: {

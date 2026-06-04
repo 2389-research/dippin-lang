@@ -730,3 +730,29 @@ func TestDIP006MultipleOutgoing(t *testing.T) {
 		t.Errorf("expected 2 DIP006 diagnostics for two outgoing edges from exit, got %d", count)
 	}
 }
+
+func TestOnFailureUnknownNode(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "t", Start: "A", Exit: "A",
+		Defaults: ir.WorkflowDefaults{OnFailure: "Nope"},
+		Nodes:    []*ir.Node{{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}}},
+	}
+	res := Validate(w)
+	if !hasCode(res.Diagnostics, DIP003) {
+		t.Fatalf("expected DIP003 for unknown on_failure target, got %+v", res.Diagnostics)
+	}
+}
+
+func TestOnFailureKnownNode(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "t", Start: "A", Exit: "A",
+		Defaults: ir.WorkflowDefaults{OnFailure: "A"},
+		Nodes:    []*ir.Node{{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}}},
+	}
+	res := Validate(w)
+	for _, d := range res.Diagnostics {
+		if d.Code == DIP003 {
+			t.Fatalf("unexpected DIP003 for valid on_failure target: %+v", d)
+		}
+	}
+}

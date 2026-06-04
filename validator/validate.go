@@ -20,6 +20,7 @@ func Validate(w *ir.Workflow) Result {
 	diags = append(diags, checkStartExists(w)...)
 	diags = append(diags, checkExitExists(w)...)
 	diags = append(diags, checkEdgeEndpoints(w)...)
+	diags = append(diags, checkOnFailureTarget(w)...)
 	diags = append(diags, checkExitNoOutgoing(w)...)
 	diags = append(diags, checkNoDuplicateEdges(w)...)
 	diags = append(diags, checkReachability(w)...)
@@ -102,6 +103,27 @@ func checkEndpoint(w *ir.Workflow, nodeSet map[string]bool, e *ir.Edge, endpoint
 		d.Help = fmt.Sprintf("did you mean %q?", suggestion)
 	} else {
 		d.Help = fmt.Sprintf("declare a node with ID %q or fix the edge %s", endpoint, role)
+	}
+	return []Diagnostic{d}
+}
+
+// checkOnFailureTarget verifies DIP003: the graph-level on_failure route, if set,
+// references an existing node. on_failure is a node reference like an edge endpoint,
+// so it reuses the DIP003 code.
+func checkOnFailureTarget(w *ir.Workflow) []Diagnostic {
+	target := w.Defaults.OnFailure
+	if target == "" || w.Node(target) != nil {
+		return nil
+	}
+	d := Diagnostic{
+		Code:     DIP003,
+		Severity: SeverityError,
+		Message:  fmt.Sprintf("on_failure references unknown node %q", target),
+	}
+	if suggestion := closestNodeID(w, target); suggestion != "" {
+		d.Help = fmt.Sprintf("did you mean %q?", suggestion)
+	} else {
+		d.Help = fmt.Sprintf("declare a node with ID %q or fix the on_failure target", target)
 	}
 	return []Diagnostic{d}
 }
