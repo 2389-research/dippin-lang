@@ -880,6 +880,9 @@ func TestParseDefaultsComplex(t *testing.T) {
 	if d.RestartTarget != "A" {
 		t.Errorf("restart_target = %q, want A", d.RestartTarget)
 	}
+	if d.OnFailure != "A" {
+		t.Errorf("on_failure = %q, want A", d.OnFailure)
+	}
 }
 
 func TestParseHumanAndAgentFields(t *testing.T) {

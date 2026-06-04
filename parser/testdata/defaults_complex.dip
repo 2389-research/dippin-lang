@@ -11,6 +11,7 @@ workflow DefaultsComplex
     cache_tools: true
     retry_policy: standard
     restart_target: A
+    on_failure: A
 
   agent A
     prompt: "Do it."

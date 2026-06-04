@@ -45,6 +45,7 @@ type WorkflowDefaults struct {
 	Fidelity          string        // Default fidelity level
 	MaxRestarts       int           // Max loop restarts (default 5)
 	RestartTarget     string        // Where to restart on loop
+	OnFailure         string        // Default failure route (node to jump to on failure)
 	CacheTools        bool          // Cache tool results
 	Compaction        string        // Context compaction mode
 	OnResume          string        // Fidelity behavior on resume: "preserve" or "degrade"
