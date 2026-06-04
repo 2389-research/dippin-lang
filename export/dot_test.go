@@ -1442,6 +1442,18 @@ func TestExportToolSafetyVarsCollision(t *testing.T) {
 	}
 }
 
+func TestExportOnFailureDefault(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "t", Start: "A", Exit: "A",
+		Defaults: ir.WorkflowDefaults{OnFailure: "Escalate"},
+		Nodes:    []*ir.Node{{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}}},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	if !strings.Contains(out, `on_failure="Escalate"`) {
+		t.Errorf("expected on_failure graph attr, got:\n%s", out)
+	}
+}
+
 func TestExportDOTToolRoutingFields(t *testing.T) {
 	wf := &ir.Workflow{
 		Name:  "tool_routing_test",
