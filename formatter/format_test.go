@@ -1022,6 +1022,22 @@ func TestFormatDefaultsRestartTarget(t *testing.T) {
 	assertContains(t, output, "    restart_target: Begin")
 }
 
+func TestFormatDefaultsOnFailure(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "test",
+		Start: "A",
+		Exit:  "A",
+		Defaults: ir.WorkflowDefaults{
+			OnFailure: "Escalate",
+		},
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go."}},
+		},
+	}
+	output := Format(w)
+	assertContains(t, output, "    on_failure: Escalate")
+}
+
 func TestFormatSubgraphNoParams(t *testing.T) {
 	w := &ir.Workflow{
 		Name:  "sub",

@@ -1644,6 +1644,21 @@ func TestParseDefaultsBudgetRoundTrip(t *testing.T) {
 	}
 }
 
+func TestParseDefaultsOnFailureRoundTrip(t *testing.T) {
+	w1 := parseFixture(t, "defaults_complex.dip")
+	if w1.Defaults.OnFailure != "A" {
+		t.Fatalf("precondition: on_failure = %q, want A", w1.Defaults.OnFailure)
+	}
+	formatted := formatter.Format(w1)
+	w2, err := NewParser(formatted, "roundtrip").Parse()
+	if err != nil {
+		t.Fatalf("re-parse error: %v\nformatted:\n%s", err, formatted)
+	}
+	if w2.Defaults.OnFailure != "A" {
+		t.Errorf("round-trip: on_failure = %q, want A", w2.Defaults.OnFailure)
+	}
+}
+
 func TestParseManagerLoopNode(t *testing.T) {
 	src := `workflow W
   start: M
