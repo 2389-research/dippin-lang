@@ -756,3 +756,25 @@ func TestOnFailureKnownNode(t *testing.T) {
 		}
 	}
 }
+
+func TestOnFailureTargetIsReachable(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "t", Start: "A", Exit: "Done",
+		Defaults: ir.WorkflowDefaults{OnFailure: "Rescue"},
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
+			{ID: "Rescue", Kind: ir.NodeHuman, Config: ir.HumanConfig{Mode: "freeform"}},
+			{ID: "Done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "end"}},
+		},
+		Edges: []*ir.Edge{
+			{From: "A", To: "Done"},
+			{From: "Rescue", To: "Done"},
+		},
+	}
+	res := Validate(w)
+	for _, d := range res.Diagnostics {
+		if d.Code == DIP004 {
+			t.Fatalf("Rescue should be reachable via on_failure, got DIP004: %+v", d)
+		}
+	}
+}

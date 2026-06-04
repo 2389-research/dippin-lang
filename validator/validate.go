@@ -129,14 +129,25 @@ func checkOnFailureTarget(w *ir.Workflow) []Diagnostic {
 }
 
 // buildAllEdgeAdjacency builds an adjacency map including all edges (including restart).
-// It also includes implicit parallel/fan_in edges.
+// It also includes implicit parallel/fan_in edges and the graph-level on_failure route,
+// so a recovery node reachable only via on_failure is not falsely flagged DIP004.
 func buildAllEdgeAdjacency(w *ir.Workflow) map[string][]string {
 	adj := make(map[string][]string)
 	for _, e := range w.Edges {
 		adj[e.From] = append(adj[e.From], e.To)
 	}
 	addParallelFanInEdges(adj, w)
+	addOnFailureEdge(adj, w)
 	return adj
+}
+
+// addOnFailureEdge adds the graph-level on_failure target as reachable from start.
+// One path suffices for reachability; on_failure is conceptually reachable from any
+// failing node, and start is always reachable.
+func addOnFailureEdge(adj map[string][]string, w *ir.Workflow) {
+	if w.Defaults.OnFailure != "" {
+		adj[w.Start] = append(adj[w.Start], w.Defaults.OnFailure)
+	}
 }
 
 // buildNonRestartAdjacency builds an adjacency map excluding restart edges.
