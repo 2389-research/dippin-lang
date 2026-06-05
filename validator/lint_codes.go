@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP145).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP146).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -47,6 +47,10 @@ const (
 	DIP143 = "DIP143" // referenced subgraph does not inherit this workflow's tool_access restrictions
 	DIP144 = "DIP144" // agent node has no failure route
 	DIP145 = "DIP145" // graph budget default is negative
+	// DIP146 is emitted by the CLI's native cross-file pass (cmd/dippin), NOT by
+	// validator.Lint() — the validator cannot read the child .dip. Registered here
+	// only so it appears in the catalog / `dippin explain` / docs.
+	DIP146 = "DIP146" // child subgraph re-grants tools the parent restricted (cross-file)
 )
 
 func init() {
@@ -96,4 +100,5 @@ func init() {
 	CodeDescription[DIP143] = "referenced subgraph does not inherit this workflow's tool_access restrictions"
 	CodeDescription[DIP144] = "agent node has no failure route"
 	CodeDescription[DIP145] = "graph budget default is negative"
+	CodeDescription[DIP146] = "child subgraph re-grants tools the parent restricted (cross-file)"
 }

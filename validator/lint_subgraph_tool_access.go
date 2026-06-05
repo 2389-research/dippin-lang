@@ -84,7 +84,7 @@ func checkSubgraphBoundary(n *ir.Node) *Diagnostic {
 			kind, n.ID, ref),
 		Location: n.Source,
 		Help: fmt.Sprintf(
-			"audit the agents in %q for their own tool_access — restrictions declared in this workflow do not propagate into a referenced subgraph. Cross-file enforcement is tracked as #89.",
+			"audit the agents in %q for their own tool_access — restrictions declared in this workflow do not propagate into a referenced subgraph. Native `dippin lint` resolves the child (DIP146); this advisory is the filesystem-free check or the fallback when the child cannot be resolved.",
 			ref),
 	}
 }
