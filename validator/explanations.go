@@ -253,6 +253,13 @@ func configExplanations() map[string]Explanation {
 			Fix:     "Use a valid reasoning_effort: none, minimal, low, medium, high, xhigh, or max.",
 			Example: "node A { reasoning_effort extreme }  // invalid value",
 		},
+		DIP145: {
+			Code:    DIP145,
+			Summary: "graph budget default is negative",
+			Trigger: "A workflow budget default (max_total_tokens, max_cost_cents, max_wall_time, or stall_timeout) is set to a negative value.",
+			Fix:     "Use a positive cap, or omit the field / set 0 to mean no limit.",
+			Example: "defaults\n  max_cost_cents: -5    // DIP145: negative; use a positive cap or 0 for no limit",
+		},
 	}
 }
 
