@@ -11,8 +11,9 @@ import (
 )
 
 // crossFileMaxDepth bounds subgraph-ref recursion (mirrors dipx's
-// maxManifestDepth). Deeper chains stop silently: the boundary stays
-// unresolved, so its DIP143 advisory is retained.
+// maxManifestDepth). On hitting the cap the pass stops recursing further;
+// boundaries deeper than the cap are never visited (neither classified nor
+// flagged). A backstop against pathological depth, not a real-workflow limit.
 const crossFileMaxDepth = 32
 
 // childPosture classifies a referenced child workflow's tool_access stance.

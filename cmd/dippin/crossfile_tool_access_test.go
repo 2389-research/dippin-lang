@@ -382,10 +382,11 @@ func TestCrossFile_SelfReferenceTerminates(t *testing.T) {
 }
 
 func TestCrossFile_DepthCapStopsTraversal(t *testing.T) {
-	// A chain of DISTINCT files longer than crossFileMaxDepth. The visited set alone
-	// would let all of them through (they're distinct) — the depth cap is what bounds
-	// traversal, so far fewer than the full chain get classified.
-	const chain = crossFileMaxDepth + 8
+	// A FULLY-RESOLVABLE chain longer than crossFileMaxDepth, ending in a real leaf
+	// with no boundary. The visited set alone would let every distinct file through,
+	// and nothing is unresolvable — so the ONLY thing that can stop traversal short
+	// of the leaf is the depth cap, which bounds classified to ~crossFileMaxDepth.
+	const chain = crossFileMaxDepth + 10
 	files := map[string]string{
 		"entry.dip": `workflow Entry
   start: Lock
@@ -420,10 +421,13 @@ func TestCrossFile_DepthCapStopsTraversal(t *testing.T) {
     Go -> Sup
 `
 	}
+	// Resolvable terminal with no boundary: without the cap, traversal would reach
+	// it and classify the full chain; with the cap it never gets here.
+	files[fmt.Sprintf("f%d.dip", chain)] = childAgentless
 	dir := writeWorkflows(t, files)
 	_, classified := crossDiags(t, dir, "entry.dip")
-	if n := len(classified); n == 0 || n >= chain {
-		t.Fatalf("depth cap did not bound traversal: classified %d of %d boundaries", n, chain)
+	if n := len(classified); n == 0 || n > crossFileMaxDepth+2 {
+		t.Fatalf("depth cap did not bound traversal: classified %d (cap %d, chain %d)", n, crossFileMaxDepth, chain)
 	}
 }
 
