@@ -50,14 +50,15 @@ func (c *CLI) CmdCheck(args []string) ExitCode {
 		return ExitError
 	}
 
-	return runCheckPipeline(c.Stdout, *formatStr, w)
+	return runCheckPipeline(c.Stdout, *formatStr, w, path)
 }
 
 // runCheckPipeline validates, lints, and renders the check result.
-func runCheckPipeline(stdout io.Writer, formatStr string, w *ir.Workflow) ExitCode {
+func runCheckPipeline(stdout io.Writer, formatStr string, w *ir.Workflow, path string) ExitCode {
 	valRes := validator.Validate(w)
 	lintRes := validator.Lint(w)
 	allDiags := append(valRes.Diagnostics, lintRes.Diagnostics...)
+	allDiags = applyCrossFileToolAccess(allDiags, w, path)
 
 	if formatStr == "json" {
 		renderCheckJSON(stdout, !valRes.HasErrors(), allDiags, "")

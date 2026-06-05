@@ -210,10 +210,14 @@ audited children), not louder severity. If a suppression mechanism ever lands,
 
 ### Where it runs
 
-`dippin lint` only — DIP143's home, where authors already see the boundary advisory.
-`validate` stays structural-only (DIP001–DIP009) per its contract. `pack` already rejects ref
-cycles and could host DIP146 later, but its pre-pack gate is structural-errors-only today;
-adding a Hint-level cross-file pass there is out of scope for v1.
+`dippin lint`, `dippin check`, and `dippin watch` — every command that renders
+per-line DIP143 from a file path applies the cross-file pass + supersession, so
+they stay consistent (the LLM-facing `check` especially). `validate` stays
+structural-only (DIP001–DIP009) — it never runs `Lint()`, so no DIP143/DIP146.
+`doctor` composes `validator.Lint` inside the `doctor` package and surfaces only
+hint counts, so the CLI-layer cross-file pass isn't applied there (documented
+limitation; minor — a DIP143/DIP146 hint counts the same). `pack` already rejects
+ref cycles and could host DIP146 later; out of scope for v1.
 
 ### Message, help & `explain` discipline
 
