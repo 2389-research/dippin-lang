@@ -148,7 +148,7 @@ Nodes are defined with `<kind> <ID>` followed by an indented block of fields.
       Review the request carefully.
 ```
 
-There are **6 node kinds**: `agent`, `human`, `tool`, `parallel`, `fan_in`, `subgraph`. Each has its own set of valid fields. See [nodes.md](nodes.md) for full details.
+There are **8 node kinds**: `agent`, `human`, `tool`, `parallel`, `fan_in`, `conditional`, `subgraph`, `manager_loop`. Each has its own set of valid fields. See [nodes.md](nodes.md) for full details.
 
 ### Agent node: tool_access and writable_paths
 
@@ -158,12 +158,13 @@ Two security-scoped fields are available on `agent` nodes:
 
 - **`writable_paths: <glob,glob>`** — bounds where the agent's tools may write, as a comma-separated list of globs resolved against the session root (e.g. `workspace/**,.ai/sprints/**`). Absent means unbounded. A present-but-empty value is a parse error. Malformed values fail closed at the runtime (deny-all / refuse-to-start).
 
+The two fields address different axes — `tool_access` controls *whether* the agent has tools, `writable_paths` controls *where* its tools may write. Setting both `tool_access: none` and `writable_paths` on the same agent (or branch) is dead config and lints as DIP141: with no tools, there is nothing left to bound.
+
 ```dippin
   agent Coder
-    tool_access: none
     writable_paths: workspace/**,tmp/**
     prompt:
-      Implement the feature.
+      Implement the feature, writing only under workspace/ and tmp/.
 ```
 
 See [nodes.md](nodes.md) for full field details including DIP codes, backend notes, and brace-expansion caveats.
@@ -188,10 +189,12 @@ When branches need different configuration, use the block form. Each `branch:` l
     branch: fast
       model: claude-haiku-4-5
       tool_access: none
-      writable_paths: workspace/**
     branch: accurate
       model: claude-opus-4-7
+      writable_paths: workspace/**
 ```
+
+Here the `fast` branch overrides `tool_access` to strip tools, while the `accurate` branch keeps its tools but bounds their writes via `writable_paths`. (Don't set both on one branch — see the DIP141 note above.)
 
 The fan-in node still lists the same target IDs as usual:
 
@@ -314,7 +317,7 @@ Tool commands work the same way:
 
 ### File directives (`*_file`)
 
-Instead of an inline multiline block, you can reference an external file. The file's contents are loaded at parse time (by CLI entry points; LSP and WASM consumers retain the unresolved directive).
+Instead of an inline multiline block, you can reference an external file. The parser itself stays pure and does **not** read the file; the contents are loaded in a separate post-parse step (`parser.ResolveFileDirectives`) that CLI entry points run after parsing. LSP and WASM consumers skip that step and retain the unresolved directive (the `*_file` field set, content empty).
 
 | Directive | Node kind | Replaces |
 |-----------|-----------|---------|

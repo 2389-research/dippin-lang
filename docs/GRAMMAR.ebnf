@@ -54,7 +54,9 @@ defaults_field   = "model"            ":" field_value
                  | "max_total_tokens" ":" INTEGER       (* hard token budget ceiling *)
                  | "max_cost_cents"   ":" INTEGER       (* hard cost ceiling in USD cents *)
                  | "max_wall_time"    ":" DURATION      (* hard wall-clock ceiling *)
-                 | "stall_timeout"    ":" DURATION ;    (* abort/route after no-progress span; 0 = disabled *)
+                 | "stall_timeout"    ":" DURATION      (* abort/route after no-progress span; 0 = disabled *)
+                 | "tool_commands_allow" ":" field_value (* comma-separated glob allowlist for tool-node commands *)
+                 | "tool_denylist_add"   ":" field_value ; (* comma-separated globs appended to runtime denylist *)
 
 (* ═══════════════════════════════════════════════════════════ *)
 (* Vars Section                                               *)
@@ -87,7 +89,7 @@ agent_field     = "prompt"              ":" field_value
                 | "backend"           ":" field_value
                 | "working_dir"       ":" field_value
                 | "tool_access"       ":" field_value
-                | "writable_paths"    ":" identifier_list (* comma-separated path globs; non-empty required *)
+                | "writable_paths"    ":" field_value    (* comma-separated path globs, e.g. workspace/**; non-empty required *)
                 | "max_turns"         ":" INTEGER
                 | "cmd_timeout"       ":" DURATION
                 | "goal_gate"         ":" BOOLEAN
@@ -106,8 +108,13 @@ agent_field     = "prompt"              ":" field_value
 human_node      = "human" IDENTIFIER NEWLINE
                   INDENT { human_field | common_field } OUTDENT ;
 
-human_field     = "mode"    ":" field_value       (* "freeform" | "choice" | "interview" | "yes_no" *)
-                | "default" ":" field_value ;
+human_field     = "mode"           ":" field_value (* "freeform" | "choice" | "interview" | "yes_no" *)
+                | "default"        ":" field_value
+                | "prompt"         ":" field_value (* instructions shown to the human *)
+                | "questions_key"  ":" IDENTIFIER  (* context key read for questions (interview mode) *)
+                | "answers_key"    ":" IDENTIFIER  (* context key written with answers (interview mode) *)
+                | "timeout"        ":" DURATION    (* per-gate timeout; 0 = none *)
+                | "timeout_action" ":" field_value ; (* "fail" | "default" *)
 
 (* --- Tool Node -------------------------------------------- *)
 
@@ -173,7 +180,7 @@ branch_field    = "model"          ":" field_value
                 | "provider"       ":" field_value
                 | "fidelity"       ":" field_value
                 | "tool_access"    ":" field_value       (* "" = inherit agent's; "none" = strip tools *)
-                | "writable_paths" ":" identifier_list ; (* per-branch override; "" inherits agent's *)
+                | "writable_paths" ":" field_value ;     (* per-branch override of path globs; "" inherits agent's *)
 
 fan_in_node     = "fan_in" IDENTIFIER "<-" identifier_list NEWLINE ;
 

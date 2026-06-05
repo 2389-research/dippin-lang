@@ -1,6 +1,6 @@
 # Validation and Linting Reference
 
-Dippin registers 54 diagnostic codes split into two categories; this page documents 53 of them in dedicated sections (DIP138 is reserved with no firing logic; the remaining codes are documented inline at the contexts where they fire):
+Dippin registers 54 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (53 documented sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP145): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
@@ -881,7 +881,7 @@ hint[DIP133]: node "Analyze" params key "model" shadows the first-class field mo
 
 A `manager_loop` node either has no `subgraph_ref` field set, or the referenced file cannot be found on disk.
 
-```
+```text
 warning[DIP135]: manager_loop node "Supervise" has no subgraph_ref or the file does not exist
   --> pipeline.dip:12:3
   = help: set subgraph_ref to the path of an existing .dip file that defines the child pipeline
@@ -903,7 +903,7 @@ warning[DIP135]: manager_loop node "Supervise" has no subgraph_ref or the file d
 
 A `manager_loop` node has a `poll_interval` or `max_cycles` value that is negative.
 
-```
+```text
 warning[DIP136]: manager_loop node "Supervise" poll_interval is negative
   --> pipeline.dip:12:3
   = help: use non-negative values for poll_interval and max_cycles
@@ -927,7 +927,7 @@ warning[DIP136]: manager_loop node "Supervise" poll_interval is negative
 
 A `manager_loop` node has neither a `stop_condition` nor a `max_cycles` cap, so supervision can run forever.
 
-```
+```text
 warning[DIP137]: manager_loop node "Supervise" is unbounded: no stop_condition and no max_cycles
   --> pipeline.dip:12:3
   = help: set stop_condition (e.g., stack.child.outcome = success) or max_cycles to bound supervision
@@ -973,7 +973,7 @@ warning[DIP139]: node "ReportFinalStatus" has tool_access "nono" which is not re
 
 An agent node sets `tool_access` (any non-empty value) and also sets a `params` key that would re-grant tools: `allowed_tools`, `disallowed_tools`, `tool_choice`, or `permission_mode`. When `tool_access` is set, the runtime ignores these `params` keys (fail-closed), so the override is silently neutralized — a likely bypass attempt or dead config.
 
-```
+```text
 warning[DIP140]: node "Summarize" sets tool_access but params key "allowed_tools" re-enables tools — tool_access wins (fail-closed)
   --> pipeline.dip:12:3
   = help: remove the params key; tool_access governs the tool catalog. To grant tools instead, omit tool_access.

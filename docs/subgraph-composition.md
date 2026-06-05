@@ -88,8 +88,13 @@ instead of `ref:`:
 manager_loop Supervise
   subgraph_ref: quality_loop.dip
   poll_interval: 30s
-  stop_condition: "quality_score >= 0.9"
+  stop_condition: stack.child.outcome = success
 ```
+
+`stop_condition` and `steer_condition` are evaluated over the child's
+runtime state in the `stack.child.*` namespace (`stack.child.outcome`,
+`stack.child.cycles`, `stack.child.status`) — see [nodes.md](nodes.md)
+for the full supervisor variable contract.
 
 The same file-boundary rules apply. `quality_loop.dip` is a separate,
 independently lintable `.dip` file — the parent treats it as an opaque

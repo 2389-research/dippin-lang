@@ -50,7 +50,7 @@ Every row below is a feature that landed in the audit window and that docs must 
 | N | DIP138 reserved (no firing logic) + overall code count is now **54** (DIP001–009, DIP101–145) | `validator` DIP138; `grep -rhoE 'DIP[0-9]{3}' validator/*.go \| sort -u \| wc -l` → 54 | validation.md |
 
 **Cross-cutting truth checks** (any doc may need these):
-- DIP-code total is **54**; `validation.md` line 3 must read "54 … documents 49 …" (verify the second number against how many have dedicated sections).
+- DIP-code total is **54**; `validation.md` line 3 must report 54 codes and the count of dedicated sections (53 — every code except reserved `DIP138`). Verify the section count against the file.
 - `tool_access` is **node-scoped** — it constrains a single node's executor and does **not** taint downstream nodes (resolves #57 by doc, not lint). Any doc describing `tool_access` propagation is wrong.
 - `*_file` directives are inlined by `dippin pack`; the **parser stays pure** (no FS I/O). LSP/WASM see the *unresolved* IR view (`*File` set, content empty). `command_file:` is **lossy through DOT round-trip** (rewrites to inline `command:`).
 
@@ -62,7 +62,7 @@ Every row below is a feature that landed in the audit window and that docs must 
 
 Dispatch a single `general-purpose` subagent (read-only) with this prompt:
 
-```
+```text
 You are verifying a documentation-audit Feature Inventory against the actual dippin
 codebase on the CURRENT branch. Working dir is the repo root. Do NOT edit anything.
 
@@ -96,7 +96,7 @@ If no discrepancies: proceed to Phase 1.
 
 Dispatch all of these **in one batch** (they are read-only and independent). Each subagent uses this **shared prompt skeleton**, with the per-file `TARGET`, `ANGLE`, and `CHECKLIST` substituted from the task blocks below:
 
-```
+```text
 You are auditing ONE documentation file for coverage gaps against the current dippin
 codebase. Working dir is the repo root. You are READ-ONLY: do not edit any file.
 
@@ -126,7 +126,7 @@ Do NOT edit the file. Return only the report.
 
 ### Task 1.1 — `docs/GRAMMAR.ebnf`
 - [ ] **Angle:** *Canonical grammar completeness* — every new keyword/field has an EBNF production and appears in the right rule.
-- **CHECKLIST:** A (`requires`), B (`marker_grep`/`route_required`/`output_limit`), D (`yes_no` in human mode enum), E (`tool_access`), F (`command_file`), G (`prompt_file`/`system_prompt_file`), H (`writable_paths`), I (per-branch overrides in block-form parallel rule), K (`on_failure` in defaults + node), L (`stall_timeout`/`max_turns`/budget attrs in defaults). Confirm the header comment block still accurately describes lexer behavior.
+- **CHECKLIST:** A (`requires`), B (`marker_grep`/`route_required`/`output_limit`), D (`yes_no` in human mode enum), E (`tool_access`), F (`command_file`), G (`prompt_file`/`system_prompt_file`), H (`writable_paths`), I (per-branch overrides in block-form parallel rule), K (`on_failure` in defaults only — no per-node field), L (`stall_timeout`/`max_turns`/budget attrs in defaults). Confirm the header comment block still accurately describes lexer behavior.
 
 ### Task 1.2 — `docs/llm-reference.md`
 - [ ] **Angle:** *Compact BNF card + field tables (feeds `generated-spec.md`)* — every new field present in the simplified BNF and any field tables; nothing runtime-only leaking in.
@@ -138,7 +138,7 @@ Do NOT edit the file. Return only the report.
 
 ### Task 1.4 — `docs/syntax.md`
 - [ ] **Angle:** *Full syntax reference — top-level + defaults + per-node fields.*
-- **CHECKLIST:** A (header), E, F, G, H (agent fields), I (parallel block overrides), K (`on_failure` in both defaults and node), L (budget attrs in `defaults`), M (`*_file` directive security caps & path-relative-to-`.dip` rule). Confirm the `defaults` block field list is complete.
+- **CHECKLIST:** A (header), E, F, G, H (agent fields), I (parallel block overrides), K (`on_failure` in defaults only — no per-node field), L (budget attrs in `defaults`), M (`*_file` directive security caps & path-relative-to-`.dip` rule). Confirm the `defaults` block field list is complete.
 
 ### Task 1.5 — `docs/nodes.md`
 - [ ] **Angle:** *Per-node-kind field coverage* — each node kind's section lists its current fields with correct semantics.
@@ -194,7 +194,7 @@ For each file the Phase-1 punch-list flags `GAPS FOUND`, dispatch one fix subage
 
 - [ ] **Step 1: Dispatch fix subagents** — one per gapped file, each with this prompt:
 
-```
+```text
 Apply documentation fixes to EXACTLY ONE file. Working dir is repo root.
 Touch ONLY this file: <TARGET>. Do not edit any other file.
 
