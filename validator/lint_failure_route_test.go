@@ -155,6 +155,24 @@ func TestDIP144SuppressedByGraphOnFailure(t *testing.T) {
 	}
 }
 
+func TestDIP144FiresWhenOnFailureTargetMissing(t *testing.T) {
+	src := `workflow W
+  start: A
+  exit: Done
+  defaults
+    on_failure: Ghost
+  agent A
+    prompt: "go"
+  agent Done
+    prompt: "end"
+  edges
+    A -> Done
+`
+	if !hasCode(lintSrc(t, src), DIP144) {
+		t.Fatal("DIP144 should fire when on_failure points to a nonexistent node (not a real route)")
+	}
+}
+
 func TestDIP144FiresWithDIP115OnRoutelessGoalGate(t *testing.T) {
 	src := `workflow W
   start: G

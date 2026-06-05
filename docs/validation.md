@@ -991,9 +991,9 @@ This is a Hint, not a Warning: the referencing node has no defect. The check is 
 An agent node has no declared failure route at any level. If the node fails at runtime, the pipeline has nowhere to go and will halt.
 
 ```
-warning[DIP144]: agent node "Build" has no failure route (no fail edge, no fallback_target, no graph on_failure)
+warning[DIP144]: agent node "Build" has no failure route (no fail edge, no fallback_target, no bounded retry, no graph on_failure)
   --> pipeline.dip:12:3
-  = help: add `-> <node> when ctx.outcome = fail`, set fallback_target:, or declare a workflow-level on_failure:
+  = help: add `-> <node> when ctx.outcome = fail`, set fallback_target:, add retry_target with max_retries, or declare a workflow-level on_failure:
 ```
 
 **What triggers it**: An `agent` node that has none of:

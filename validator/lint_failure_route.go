@@ -18,9 +18,9 @@ func lintAgentFailureRoute(w *ir.Workflow) []Diagnostic {
 			diags = append(diags, Diagnostic{
 				Code:     DIP144,
 				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("agent node %q has no failure route (no fail edge, no fallback_target, no graph on_failure)", n.ID),
+				Message:  fmt.Sprintf("agent node %q has no failure route (no fail edge, no fallback_target, no bounded retry, no graph on_failure)", n.ID),
 				Location: n.Source,
-				Help:     "add `-> <node> when ctx.outcome = fail`, set fallback_target:, or declare a workflow-level on_failure:",
+				Help:     "add `-> <node> when ctx.outcome = fail`, set fallback_target:, add retry_target with max_retries, or declare a workflow-level on_failure:",
 			})
 		}
 	}
@@ -44,7 +44,7 @@ func needsFailureRoute(w *ir.Workflow, n *ir.Node) bool {
 
 // hasFailureRoute reports whether the node has any failure-handling route.
 func hasFailureRoute(w *ir.Workflow, n *ir.Node, outgoing []*ir.Edge) bool {
-	if w.Defaults.OnFailure != "" {
+	if w.Defaults.OnFailure != "" && w.Node(w.Defaults.OnFailure) != nil {
 		return true
 	}
 	if hasBoundedFailureTarget(n.Retry) {
