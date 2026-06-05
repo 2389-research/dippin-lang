@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/2389-research/dippin-lang/export"
 	"github.com/2389-research/dippin-lang/ir"
@@ -507,5 +508,87 @@ func TestMigrateAgentWritablePaths(t *testing.T) {
 	cfg := got.Node("A").Config.(ir.AgentConfig)
 	if len(cfg.WritablePaths) != 2 || cfg.WritablePaths[0] != "workspace/**" || cfg.WritablePaths[1] != ".ai/**" {
 		t.Errorf("WritablePaths after migrate = %v, want [workspace/** .ai/**]", cfg.WritablePaths)
+	}
+}
+
+// TestRoundTripBudgetDefaults verifies all four budget defaults round-trip
+// losslessly through parse -> ExportDOT -> Migrate. Asserts Duration equality,
+// never source-string equality (90s normalizes to 1m30s).
+func TestRoundTripBudgetDefaults(t *testing.T) {
+	src := `workflow Budget
+  goal: "round trip"
+  start: A
+  exit: A
+
+  defaults
+    max_total_tokens: 500000
+    max_cost_cents: 1000
+    max_wall_time: 30m
+    stall_timeout: 90s
+
+  agent A
+    prompt: "Do it."
+
+  edges
+    A -> A
+`
+	w1, err := dipparser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	dot := export.ExportDOT(w1, export.ExportOptions{})
+	w2, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v\nDOT:\n%s", err, dot)
+	}
+	d := w2.Defaults
+	if d.MaxTotalTokens != 500000 {
+		t.Errorf("max_total_tokens = %d, want 500000; DOT:\n%s", d.MaxTotalTokens, dot)
+	}
+	if d.MaxCostCents != 1000 {
+		t.Errorf("max_cost_cents = %d, want 1000; DOT:\n%s", d.MaxCostCents, dot)
+	}
+	if d.MaxWallTime != 30*time.Minute {
+		t.Errorf("max_wall_time = %v, want 30m0s; DOT:\n%s", d.MaxWallTime, dot)
+	}
+	if d.StallTimeout != 90*time.Second {
+		t.Errorf("stall_timeout = %v, want 1m30s; DOT:\n%s", d.StallTimeout, dot)
+	}
+}
+
+// TestRoundTripStallTimeoutVarsCollision verifies a vars entry named
+// stall_timeout is treated as reserved (not double-emitted / not migrated to Vars).
+func TestRoundTripStallTimeoutVarsCollision(t *testing.T) {
+	src := `workflow Collide
+  goal: "round trip"
+  start: A
+  exit: A
+
+  defaults
+    stall_timeout: 5m
+
+  agent A
+    prompt: "Do it."
+
+  edges
+    A -> A
+`
+	w1, err := dipparser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	dot := export.ExportDOT(w1, export.ExportOptions{})
+	if strings.Count(dot, "stall_timeout") != 1 {
+		t.Errorf("stall_timeout should appear exactly once in DOT, got:\n%s", dot)
+	}
+	w2, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if w2.Defaults.StallTimeout != 5*time.Minute {
+		t.Errorf("stall_timeout = %v, want 5m0s", w2.Defaults.StallTimeout)
+	}
+	if _, ok := w2.Vars["stall_timeout"]; ok {
+		t.Errorf("stall_timeout leaked into Vars: %v", w2.Vars)
 	}
 }
