@@ -1677,6 +1677,9 @@ func TestParseDefaultsBudgetRoundTrip(t *testing.T) {
 	if d.MaxWallTime != 30*time.Minute {
 		t.Errorf("round-trip: max_wall_time = %v, want 30m0s", d.MaxWallTime)
 	}
+	if d.StallTimeout != 5*time.Minute {
+		t.Errorf("round-trip: stall_timeout = %v, want 5m0s", d.StallTimeout)
+	}
 }
 
 func TestParseDefaultsOnFailureRoundTrip(t *testing.T) {

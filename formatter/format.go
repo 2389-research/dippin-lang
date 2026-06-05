@@ -200,6 +200,9 @@ func writeDefaultsBudgetFields(wr *writer, d ir.WorkflowDefaults) {
 	if d.MaxWallTime != 0 {
 		wr.line("max_wall_time: %s", formatDuration(d.MaxWallTime))
 	}
+	if d.StallTimeout != 0 {
+		wr.line("stall_timeout: %s", formatDuration(d.StallTimeout))
+	}
 	writeDefaultsToolSafetyFields(wr, d)
 }
 
