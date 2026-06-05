@@ -63,6 +63,7 @@ var reservedGraphAttrs = map[string]bool{
 	"fidelity": true, "default_fidelity": true,
 	"max_retries": true, "default_max_retry": true, "max_restarts": true,
 	"max_total_tokens": true, "max_cost_cents": true, "max_wall_time": true,
+	"stall_timeout":       true,
 	"tool_commands_allow": true, "tool_denylist_add": true,
 	"on_failure": true,
 }
@@ -102,11 +103,31 @@ func buildGraphAttrs(w *ir.Workflow, rankDir string) []string {
 	if w.Defaults.OnFailure != "" {
 		attrs = append(attrs, fmt.Sprintf("on_failure=%s", dotQuote(w.Defaults.OnFailure)))
 	}
+	appendBudgetGraphAttrs(&attrs, w.Defaults)
 
 	// Add workflow vars (excluding reserved graph attributes)
 	addGraphVarsAttrs(&attrs, w.Vars)
 
 	return attrs
+}
+
+// appendBudgetGraphAttrs emits the workflow budget defaults as DOT graph
+// attributes. Each is omitted when unset (0) so absence round-trips. Durations
+// use formatDuration (the compact Go-duration literal the migrate path parses
+// back with time.ParseDuration), NOT time.Duration.String().
+func appendBudgetGraphAttrs(attrs *[]string, d ir.WorkflowDefaults) {
+	if d.MaxTotalTokens != 0 {
+		*attrs = append(*attrs, fmt.Sprintf("max_total_tokens=%s", dotQuote(fmt.Sprintf("%d", d.MaxTotalTokens))))
+	}
+	if d.MaxCostCents != 0 {
+		*attrs = append(*attrs, fmt.Sprintf("max_cost_cents=%s", dotQuote(fmt.Sprintf("%d", d.MaxCostCents))))
+	}
+	if d.MaxWallTime != 0 {
+		*attrs = append(*attrs, fmt.Sprintf("max_wall_time=%s", dotQuote(formatDuration(d.MaxWallTime))))
+	}
+	if d.StallTimeout != 0 {
+		*attrs = append(*attrs, fmt.Sprintf("stall_timeout=%s", dotQuote(formatDuration(d.StallTimeout))))
+	}
 }
 
 // addGraphVarsAttrs adds workflow vars as graph attributes, excluding reserved keys.

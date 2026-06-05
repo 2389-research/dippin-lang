@@ -1567,6 +1567,43 @@ func TestExportDOTToolRoutingOmitWhenZero(t *testing.T) {
 	}
 }
 
+func TestExportBudgetDefaults(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "B", Start: "A", Exit: "A",
+		Defaults: ir.WorkflowDefaults{
+			MaxTotalTokens: 500000,
+			MaxCostCents:   1000,
+			MaxWallTime:    30 * time.Minute,
+			StallTimeout:   5 * time.Minute,
+		},
+		Nodes: []*ir.Node{{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "x"}}},
+		Edges: []*ir.Edge{{From: "A", To: "A"}},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	for _, want := range []string{
+		`max_total_tokens="500000"`,
+		`max_cost_cents="1000"`,
+		`max_wall_time="30m"`,
+		`stall_timeout="5m"`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("expected %s in DOT, got:\n%s", want, out)
+		}
+	}
+}
+
+func TestExportBudgetDefaultsOmitEmpty(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "B", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "x"}}},
+		Edges: []*ir.Edge{{From: "A", To: "A"}},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	if strings.Contains(out, "stall_timeout") || strings.Contains(out, "max_total_tokens") {
+		t.Errorf("unset budget fields must not be emitted, got:\n%s", out)
+	}
+}
+
 func TestExportAgentWritablePaths(t *testing.T) {
 	w := &ir.Workflow{
 		Name: "T", Start: "A", Exit: "A",
