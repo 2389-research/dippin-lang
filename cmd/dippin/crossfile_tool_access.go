@@ -77,7 +77,7 @@ func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, visited m
 // before recursing (pre-order) so cycles terminate.
 func maybeRecurse(child *ir.Workflow, childPath string, intentSeen bool, depth int, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	key := canonicalKey(childPath)
-	if key == "" || visited[key] || depth+1 >= crossFileMaxDepth {
+	if key == "" || visited[key] || depth+1 > crossFileMaxDepth {
 		return
 	}
 	visited[key] = true

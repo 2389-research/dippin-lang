@@ -350,9 +350,12 @@ func TestCrossFile_CycleTerminates(t *testing.T) {
 		"a.dip": a,
 		"b.dip": b,
 	})
-	// Completing at all proves termination (no hang/stack overflow).
+	// Completing at all proves termination (no hang/stack overflow). A restricts
+	// tools, so on the B->A edge A classifies as full-restrict — no DIP146.
 	diags, _ := crossDiags(t, dir, "a.dip")
-	_ = diags
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 on cycle (A is full-restrict), got %d", got)
+	}
 }
 
 func TestCrossFile_SelfReferenceTerminates(t *testing.T) {

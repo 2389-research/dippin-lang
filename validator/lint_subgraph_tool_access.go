@@ -13,7 +13,9 @@ import (
 // not inherit this workflow's tool_access restrictions. It fires only when the
 // workflow shows containment intent (some node declares tool_access), and never
 // parses the child file — the validator may not import the parser (layering
-// rule). Real cross-file effective-access enforcement is tracked as #89.
+// rule). Native `dippin lint` now resolves the child cross-file (DIP146); this
+// per-file check is the wasm/playground advisory and the fallback when the child
+// cannot be resolved (#89).
 func lintSubgraphToolAccess(w *ir.Workflow) []Diagnostic {
 	if !WorkflowDeclaresToolAccess(w) {
 		return nil

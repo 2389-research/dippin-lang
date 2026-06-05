@@ -294,7 +294,7 @@ predicate — all pure IR/data, no `os` imports) compile for wasm trivially. Ver
 
 ## Architecture summary
 
-```
+```text
 validator/lint_subgraph_tool_access.go
   └─ EXPORT WorkflowDeclaresToolAccess(*ir.Workflow) bool  (+ a node/branch predicate)
        so DIP146's gate + child-classification reuse DIP143's EXACT intent logic
