@@ -73,17 +73,29 @@ func applyDefaultCoreField(d *ir.WorkflowDefaults, key, val string) bool {
 	return true
 }
 
-// applyDefaultExtraField handles fidelity, restart_target, compaction, on_resume defaults.
+// applyDefaultExtraField handles fidelity, compaction, and on_resume defaults,
+// delegating restart_target and on_failure to applyDefaultRoutingField.
 func applyDefaultExtraField(d *ir.WorkflowDefaults, key, val string) bool {
 	switch key {
 	case "fidelity":
 		d.Fidelity = val
-	case "restart_target":
-		d.RestartTarget = val
 	case "compaction":
 		d.Compaction = val
 	case "on_resume":
 		d.OnResume = val
+	default:
+		return applyDefaultRoutingField(d, key, val)
+	}
+	return true
+}
+
+// applyDefaultRoutingField handles restart_target and on_failure defaults.
+func applyDefaultRoutingField(d *ir.WorkflowDefaults, key, val string) bool {
+	switch key {
+	case "restart_target":
+		d.RestartTarget = val
+	case "on_failure":
+		d.OnFailure = val
 	default:
 		return false
 	}

@@ -120,6 +120,7 @@ var graphDefaultsHandlers = map[string]func(string, *ir.Workflow){
 	"provider":            func(v string, w *ir.Workflow) { w.Defaults.Provider = v },
 	"tool_commands_allow": func(v string, w *ir.Workflow) { w.Defaults.ToolCommandsAllow = v },
 	"tool_denylist_add":   func(v string, w *ir.Workflow) { w.Defaults.ToolDenylistAdd = v },
+	"on_failure":          func(v string, w *ir.Workflow) { w.Defaults.OnFailure = v },
 }
 
 // extractGraphDefaults populates workflow-level fields from DOT graph attributes.

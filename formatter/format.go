@@ -169,6 +169,9 @@ func writeDefaultsRestartFields(wr *writer, d ir.WorkflowDefaults) {
 	if d.RestartTarget != "" {
 		wr.line("restart_target: %s", d.RestartTarget)
 	}
+	if d.OnFailure != "" {
+		wr.line("on_failure: %s", d.OnFailure)
+	}
 	writeDefaultsCompactionFields(wr, d)
 }
 

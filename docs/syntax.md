@@ -121,6 +121,7 @@ The optional `defaults` block sets graph-level configuration that applies to all
 | `restart_target` | String | Node ID to jump to on restart loops |
 | `cache_tools` | Boolean | Whether to cache tool call results |
 | `compaction` | String | Context compaction mode for long pipelines |
+| `on_failure` | String | Graph-level default failure route — node to jump to when an agent has no other failure route (see [edges.md](edges.md) for the full precedence cascade) |
 
 ---
 

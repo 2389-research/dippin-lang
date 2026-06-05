@@ -64,6 +64,7 @@ var reservedGraphAttrs = map[string]bool{
 	"max_retries": true, "default_max_retry": true, "max_restarts": true,
 	"max_total_tokens": true, "max_cost_cents": true, "max_wall_time": true,
 	"tool_commands_allow": true, "tool_denylist_add": true,
+	"on_failure": true,
 }
 
 // writeDOTHeader writes the digraph opening and global attributes.
@@ -97,6 +98,9 @@ func buildGraphAttrs(w *ir.Workflow, rankDir string) []string {
 	}
 	if w.Defaults.ToolDenylistAdd != "" {
 		attrs = append(attrs, fmt.Sprintf("tool_denylist_add=%s", dotQuote(w.Defaults.ToolDenylistAdd)))
+	}
+	if w.Defaults.OnFailure != "" {
+		attrs = append(attrs, fmt.Sprintf("on_failure=%s", dotQuote(w.Defaults.OnFailure)))
 	}
 
 	// Add workflow vars (excluding reserved graph attributes)

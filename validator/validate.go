@@ -20,6 +20,7 @@ func Validate(w *ir.Workflow) Result {
 	diags = append(diags, checkStartExists(w)...)
 	diags = append(diags, checkExitExists(w)...)
 	diags = append(diags, checkEdgeEndpoints(w)...)
+	diags = append(diags, checkOnFailureTarget(w)...)
 	diags = append(diags, checkExitNoOutgoing(w)...)
 	diags = append(diags, checkNoDuplicateEdges(w)...)
 	diags = append(diags, checkReachability(w)...)
@@ -106,15 +107,47 @@ func checkEndpoint(w *ir.Workflow, nodeSet map[string]bool, e *ir.Edge, endpoint
 	return []Diagnostic{d}
 }
 
+// checkOnFailureTarget verifies DIP003: the graph-level on_failure route, if set,
+// references an existing node. on_failure is a node reference like an edge endpoint,
+// so it reuses the DIP003 code.
+func checkOnFailureTarget(w *ir.Workflow) []Diagnostic {
+	target := w.Defaults.OnFailure
+	if target == "" || w.Node(target) != nil {
+		return nil
+	}
+	d := Diagnostic{
+		Code:     DIP003,
+		Severity: SeverityError,
+		Message:  fmt.Sprintf("on_failure references unknown node %q", target),
+	}
+	if suggestion := closestNodeID(w, target); suggestion != "" {
+		d.Help = fmt.Sprintf("did you mean %q?", suggestion)
+	} else {
+		d.Help = fmt.Sprintf("declare a node with ID %q or fix the on_failure target", target)
+	}
+	return []Diagnostic{d}
+}
+
 // buildAllEdgeAdjacency builds an adjacency map including all edges (including restart).
-// It also includes implicit parallel/fan_in edges.
+// It also includes implicit parallel/fan_in edges and the graph-level on_failure route,
+// so a recovery node reachable only via on_failure is not falsely flagged DIP004.
 func buildAllEdgeAdjacency(w *ir.Workflow) map[string][]string {
 	adj := make(map[string][]string)
 	for _, e := range w.Edges {
 		adj[e.From] = append(adj[e.From], e.To)
 	}
 	addParallelFanInEdges(adj, w)
+	addOnFailureEdge(adj, w)
 	return adj
+}
+
+// addOnFailureEdge adds the graph-level on_failure target as reachable from start.
+// One path suffices for reachability; on_failure is conceptually reachable from any
+// failing node, and start is always reachable.
+func addOnFailureEdge(adj map[string][]string, w *ir.Workflow) {
+	if w.Defaults.OnFailure != "" {
+		adj[w.Start] = append(adj[w.Start], w.Defaults.OnFailure)
+	}
 }
 
 // buildNonRestartAdjacency builds an adjacency map excluding restart edges.

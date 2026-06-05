@@ -183,6 +183,38 @@ func TestRoundtripPreservesToolOutputs(t *testing.T) {
 	}
 }
 
+// TestRoundTripOnFailureDefault verifies on_failure round-trips losslessly
+// through parse → ExportDOT → Migrate.
+func TestRoundTripOnFailureDefault(t *testing.T) {
+	src := `workflow OnFailure
+  goal: "round trip"
+  start: A
+  exit: A
+
+  defaults
+    on_failure: A
+
+  agent A
+    prompt: "Do it."
+
+  edges
+    A -> A
+`
+	w1, err := dipparser.NewParser(src, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	dot := export.ExportDOT(w1, export.ExportOptions{})
+	w2, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v\nDOT:\n%s", err, dot)
+	}
+	if w2.Defaults.OnFailure != "A" {
+		t.Errorf("on_failure after round-trip = %q, want %q; DOT:\n%s",
+			w2.Defaults.OnFailure, "A", dot)
+	}
+}
+
 // TestRoundTripToolSafetyDefaults verifies that tool-safety defaults
 // round-trip losslessly through parse → ExportDOT → Migrate.
 func TestRoundTripToolSafetyDefaults(t *testing.T) {

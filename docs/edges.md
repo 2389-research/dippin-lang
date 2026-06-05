@@ -122,6 +122,24 @@ This means conditions always take precedence over labels, and labels over weight
 
 ---
 
+## Failure Handling
+
+When an agent node finishes with outcome `fail` or errors, the runtime resolves a failure route using the following precedence (first match wins):
+
+| Priority | Mechanism | Description |
+|----------|-----------|-------------|
+| 1 | **Explicit fail edge** | An outgoing edge with `when ctx.outcome = fail` (or `failure`) on the node |
+| 2 | **Bounded node retry** | `retry_target` + `max_retries` — node retries before propagating failure |
+| 3 | **Node fallback_target** | The node's own `fallback_target` field — used when retries are exhausted |
+| 4 | **Graph on_failure** | The workflow's `defaults.on_failure` node ID — catch-all for any agent without a more specific route |
+| 5 | **Halt** | No route found — the pipeline stops |
+
+A restart-edge (`restart: true`) tagged with `when ctx.outcome = fail` falls under priority 1 and carries its own `max_restarts` budget rather than `max_retries`.
+
+**Separation of concerns:** dippin validates that the `on_failure` target node exists (DIP003) and is reachable (DIP004); the runtime owns the evaluation ordering shown above. DIP144 warns when an agent node has no failure route at any level of this cascade; any of priorities 1–4 suppresses the warning.
+
+---
+
 ## Condition Expressions
 
 ### Comparison Operators
