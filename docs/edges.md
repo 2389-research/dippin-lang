@@ -124,6 +124,10 @@ This means conditions always take precedence over labels, and labels over weight
 
 ## Failure Handling
 
+A node enters the failure cascade when it errors, fails a `goal_gate`, **exhausts
+`max_turns`**, or trips the graph **`stall_timeout`**. All route through the same
+priority order below.
+
 When an agent node finishes with outcome `fail` or errors, the runtime resolves a failure route using the following precedence (first match wins):
 
 | Priority | Mechanism | Description |
