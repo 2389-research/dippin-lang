@@ -2227,3 +2227,16 @@ func TestFormatAgentWritablePathsRoundTrips(t *testing.T) {
 		t.Errorf("WritablePaths after format round-trip = %v, want [workspace/** .ai/sprints/**]", got)
 	}
 }
+
+func TestFormatDurationNegativeRoundTrips(t *testing.T) {
+	for _, d := range []time.Duration{-5 * time.Minute, -30 * time.Second} {
+		s := formatDuration(d)
+		got, err := time.ParseDuration(s)
+		if err != nil {
+			t.Fatalf("formatDuration(%v) = %q, not re-parseable: %v", d, s, err)
+		}
+		if got != d {
+			t.Errorf("round-trip: formatDuration(%v) = %q -> %v, want %v", d, s, got, d)
+		}
+	}
+}

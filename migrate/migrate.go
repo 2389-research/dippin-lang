@@ -190,6 +190,8 @@ func applyIntBudgetDefault(k, v string, w *ir.Workflow) bool {
 		return tryApplyIntDefault(v, &w.Defaults.MaxCostCents)
 	case "max_wall_time":
 		return tryApplyDurationDefault(v, &w.Defaults.MaxWallTime)
+	case "stall_timeout":
+		return tryApplyDurationDefault(v, &w.Defaults.StallTimeout)
 	default:
 		return false
 	}

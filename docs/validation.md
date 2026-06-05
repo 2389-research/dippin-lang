@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 53 diagnostic codes split into two categories; this page documents 48 of them in dedicated sections (the linter registers a few additional internal codes without dedicated sections):
+Dippin registers 54 diagnostic codes split into two categories; this page documents 49 of them in dedicated sections (the linter registers a few additional internal codes without dedicated sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP144): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP145): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP009<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP144<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP145<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -224,7 +224,7 @@ error[DIP009]: duplicate edge
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP144)
+## Semantic Lint Warnings (DIP101–DIP145)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -996,6 +996,10 @@ warning[DIP144]: agent node "Build" has no failure route (no fail edge, no fallb
   = help: add `-> <node> when ctx.outcome = fail`, set fallback_target:, add retry_target with max_retries, or declare a workflow-level on_failure:
 ```
 
+This warning is especially important for agents with a bounded `max_turns`: turn
+exhaustion ends the node as `fail`, so without a failure route the run halts on
+exhaustion.
+
 **What triggers it**: An `agent` node that has none of:
 - An outgoing edge with `when ctx.outcome = fail` (or `failure`)
 - A `fallback_target` field
@@ -1030,6 +1034,23 @@ See [edges.md](edges.md) — Failure Handling for the full five-level precedence
 
 ---
 
+### DIP145: Negative Graph Budget Default
+
+A workflow budget default is set to a negative value. Budgets are non-negative;
+`0` (or unset) means **no limit**.
+
+```text
+warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be negative
+```
+
+**Trigger:** `max_total_tokens`, `max_cost_cents`, `max_wall_time`, or
+`stall_timeout` in the `defaults` block is negative.
+
+**Fix:** Use a positive cap, or omit the field / set `0` for no limit. Note `0`
+means *unlimited*, not "zero budget."
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1046,7 +1067,7 @@ Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP009 errors and DIP101–DIP144 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP009 errors and DIP101–DIP145 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

@@ -1,0 +1,33 @@
+workflow BudgetGuards
+  goal: "Research and draft with a cost ceiling and a stall guard"
+  start: Research
+  exit: Done
+
+  defaults
+    model: claude-sonnet-4-6
+    provider: anthropic
+    max_total_tokens: 500000
+    max_cost_cents: 2000
+    max_wall_time: 30m
+    stall_timeout: 5m
+    on_failure: Escalate
+
+  agent Research
+    prompt: "Research the topic and gather sources."
+    max_turns: 8
+
+  agent Draft
+    prompt: "Draft the document from the research."
+    max_turns: 12
+
+  human Escalate
+    mode: freeform
+    prompt: "The run hit a budget/stall/turn limit. How should we proceed?"
+
+  agent Done
+    prompt: "Finalize."
+
+  edges
+    Research -> Draft
+    Draft -> Done
+    Escalate -> Done

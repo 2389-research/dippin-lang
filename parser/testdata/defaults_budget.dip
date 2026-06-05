@@ -8,6 +8,7 @@ workflow DefaultsBudget
     max_total_tokens: 500000
     max_cost_cents: 1000
     max_wall_time: 30m
+    stall_timeout: 5m
 
   agent A
     prompt: "Do it."

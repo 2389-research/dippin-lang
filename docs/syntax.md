@@ -122,6 +122,14 @@ The optional `defaults` block sets graph-level configuration that applies to all
 | `cache_tools` | Boolean | Whether to cache tool call results |
 | `compaction` | String | Context compaction mode for long pipelines |
 | `on_failure` | String | Graph-level default failure route — node to jump to when an agent has no other failure route (see [edges.md](edges.md) for the full precedence cascade) |
+| `max_total_tokens` | Integer | Hard ceiling on total tokens across the run. `0`/unset = no limit. |
+| `max_cost_cents` | Integer | Hard ceiling on total cost, in **US cents** (e.g. `1000` = $10.00). `0`/unset = no limit. |
+| `max_wall_time` | Duration | Hard ceiling on **wall-clock** run time (e.g. `30m`, `2h`). `0`/unset = no limit. |
+| `stall_timeout` | Duration | **Wall-clock** span with no forward progress before the run aborts and routes through `on_failure` (e.g. `5m`, `90s`). Elapsed time, **not** a turn count. `0`/unset = disabled. |
+
+All budget fields use `0` (or unset) to mean **no limit** — `0` does not mean
+"zero budget." The three `max_*` fields bound *totals* (monotonic ceilings);
+`stall_timeout` bounds *inactivity* (a sliding timer).
 
 ---
 

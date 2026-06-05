@@ -189,7 +189,8 @@ func writeDefaultsCompactionFields(wr *writer, d ir.WorkflowDefaults) {
 	writeDefaultsBudgetFields(wr, d)
 }
 
-// writeDefaultsBudgetFields writes max_total_tokens, max_cost_cents, and max_wall_time.
+// writeDefaultsBudgetFields writes max_total_tokens, max_cost_cents, max_wall_time,
+// and stall_timeout, then delegates to writeDefaultsToolSafetyFields.
 func writeDefaultsBudgetFields(wr *writer, d ir.WorkflowDefaults) {
 	if d.MaxTotalTokens != 0 {
 		wr.line("max_total_tokens: %d", d.MaxTotalTokens)
@@ -199,6 +200,9 @@ func writeDefaultsBudgetFields(wr *writer, d ir.WorkflowDefaults) {
 	}
 	if d.MaxWallTime != 0 {
 		wr.line("max_wall_time: %s", formatDuration(d.MaxWallTime))
+	}
+	if d.StallTimeout != 0 {
+		wr.line("stall_timeout: %s", formatDuration(d.StallTimeout))
 	}
 	writeDefaultsToolSafetyFields(wr, d)
 }
