@@ -103,7 +103,7 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 
 `tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
 
-**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the rejected in-file graph-topology lint ([#57](https://github.com/2389-research/dippin-lang/issues/57)): it concerns the cross-*file* boundary, and cross-file enforcement is tracked as [#89](https://github.com/2389-research/dippin-lang/issues/89).
+**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the rejected in-file graph-topology lint ([#57](https://github.com/2389-research/dippin-lang/issues/57)): it concerns the cross-*file* boundary. Native `dippin lint` now resolves the child across that boundary: [DIP146](https://2389-research.github.io/dippin-lang/validation.html#dip146) (Hint) fires when a resolved child restricts no agent's `tool_access` while a workflow on the path does, superseding DIP143 for boundaries it can resolve ([#89](https://github.com/2389-research/dippin-lang/issues/89)). DIP143 remains the filesystem-free advisory (e.g. the wasm playground) and the fallback when the child can't be resolved.
 
 **Writable Paths (`writable_paths:`)** — *added v0.35.0; an enforcing runtime is required.*
 
@@ -509,6 +509,7 @@ The primary loop for authoring .dip files:
 | DIP143 | Workflow uses `tool_access` but references a subgraph — child agents unguarded | Open the referenced `.dip` and set `tool_access` on its agents directly; parent restrictions do not cross the file boundary |
 | DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail`, set `fallback_target`, add `retry_target` with `max_retries`, or declare `on_failure:` in defaults |
 | DIP145 | Graph budget default is negative | Use a positive cap, or omit the field / set `0` to mean no limit |
+| DIP146 | Referenced subgraph child restricts no agent's `tool_access` while a workflow on the path does (cross-file) | Set `tool_access` on the child's agents; native `dippin lint` resolves the child and supersedes DIP143 |
 
 ## Best Practices
 
