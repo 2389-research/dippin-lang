@@ -149,14 +149,22 @@ func countAgents(child *ir.Workflow) (agents, restricted int) {
 }
 
 // canonicalKey returns a symlink-resolved absolute key for the visited set, so a
-// file reached via different paths (or a symlink cycle) maps to one key.
+// file reached via different (possibly relative) spellings — or a symlink cycle —
+// maps to one key. EvalSymlinks may return a relative path for relative input, so
+// the result is always run through absOrClean to keep keys comparable.
 func canonicalKey(path string) string {
 	if path == "" {
 		return ""
 	}
 	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved
+		return absOrClean(resolved)
 	}
+	return absOrClean(path)
+}
+
+// absOrClean returns the absolute form of path, falling back to a lexical clean
+// when the working directory is unavailable.
+func absOrClean(path string) string {
 	if abs, err := filepath.Abs(path); err == nil {
 		return abs
 	}

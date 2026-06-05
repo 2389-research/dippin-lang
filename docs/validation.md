@@ -1072,8 +1072,11 @@ wasm/playground linter.
 **Fix:** Give the child's agents their own `tool_access` (e.g. `tool_access:
 none`). Restrictions in a parent do not flow into a referenced subgraph.
 
-**What DIP146 does NOT check:** partial-audit or unparseable children more than
-one hop deep (the DIP143 fallback covers only the entry's direct boundaries);
+**What DIP146 does NOT check:** DIP146 *does* traverse transitively — a
+zero-intent grandchild is flagged. The limitation is narrower: a **partial-audit
+or unparseable** child deeper than the entry's direct boundaries gets no
+*additional* advisory, because the DIP143 fallback is only emitted for the linted
+file itself. Also out of scope:
 information flow across the supervisory boundary (`steer_context` /
 `stack.child.*` — see [#56](https://github.com/2389-research/dippin-lang/issues/56));
 runtime enforcement (the tracker runtime enforces; dippin detects). A clean
