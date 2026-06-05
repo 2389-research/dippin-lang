@@ -1571,6 +1571,41 @@ func TestParseDefaultsBudget(t *testing.T) {
 	}
 }
 
+func TestParseDefaultsStallTimeout(t *testing.T) {
+	w := parseFixture(t, "defaults_budget.dip")
+	if w.Defaults.StallTimeout != 5*time.Minute {
+		t.Errorf("stall_timeout = %v, want 5m0s", w.Defaults.StallTimeout)
+	}
+}
+
+func TestParseDefaultsNegativeBudgetNoStructuralError(t *testing.T) {
+	src := `workflow Neg
+  goal: "g"
+  start: A
+  exit: A
+
+  defaults
+    max_cost_cents: -5
+    stall_timeout: -5m
+
+  agent A
+    prompt: "Do it."
+
+  edges
+    A -> A
+`
+	w, err := NewParser(src, "neg.dip").Parse()
+	if err != nil {
+		t.Fatalf("negative budget must parse without a structural error, got: %v", err)
+	}
+	if w.Defaults.MaxCostCents != -5 {
+		t.Errorf("max_cost_cents = %d, want -5", w.Defaults.MaxCostCents)
+	}
+	if w.Defaults.StallTimeout != -5*time.Minute {
+		t.Errorf("stall_timeout = %v, want -5m0s", w.Defaults.StallTimeout)
+	}
+}
+
 func TestParseHumanTimeout(t *testing.T) {
 	w := parseFixture(t, "human_timeout.dip")
 	gate := findNode(t, w, "Gate")

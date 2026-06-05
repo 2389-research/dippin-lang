@@ -52,6 +52,7 @@ type WorkflowDefaults struct {
 	MaxTotalTokens    int           // Hard ceiling on total tokens
 	MaxCostCents      int           // Hard ceiling on cost in cents (USD)
 	MaxWallTime       time.Duration // Hard ceiling on wall time
+	StallTimeout      time.Duration // Abort/route when no progress for this wall-clock span (0 = disabled)
 	ToolCommandsAllow string        // Comma-separated glob allowlist for tool shell commands
 	ToolDenylistAdd   string        // Comma-separated globs appended to the runtime's default denylist
 }

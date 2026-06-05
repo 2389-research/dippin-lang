@@ -139,6 +139,8 @@ func (p *Parser) applyDefaultBudgetField(key, val string, loc ir.SourceLocation)
 		p.workflow.Defaults.MaxCostCents = p.parseInt(val, key, loc)
 	case "max_wall_time":
 		p.workflow.Defaults.MaxWallTime = p.parseDuration(val, key, loc)
+	case "stall_timeout":
+		p.workflow.Defaults.StallTimeout = p.parseDuration(val, key, loc)
 	default:
 		p.diagnostics = append(p.diagnostics,
 			fmt.Sprintf("unknown defaults field %q at %d:%d", key, loc.Line, loc.Column))
