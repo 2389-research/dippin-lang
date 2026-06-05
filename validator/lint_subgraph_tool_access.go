@@ -15,7 +15,7 @@ import (
 // parses the child file — the validator may not import the parser (layering
 // rule). Real cross-file effective-access enforcement is tracked as #89.
 func lintSubgraphToolAccess(w *ir.Workflow) []Diagnostic {
-	if !workflowDeclaresToolAccess(w) {
+	if !WorkflowDeclaresToolAccess(w) {
 		return nil
 	}
 	var diags []Diagnostic
@@ -27,20 +27,22 @@ func lintSubgraphToolAccess(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
-// workflowDeclaresToolAccess reports whether any node expresses tool_access
-// containment intent.
-func workflowDeclaresToolAccess(w *ir.Workflow) bool {
+// WorkflowDeclaresToolAccess reports whether any node in w expresses tool_access
+// containment intent (an agent or parallel branch with a non-empty tool_access).
+// Exported so the CLI's cross-file pass (DIP146) reuses DIP143's exact intent
+// logic — wasm-safe, pure IR.
+func WorkflowDeclaresToolAccess(w *ir.Workflow) bool {
 	for _, n := range w.Nodes {
-		if nodeDeclaresToolAccess(n) {
+		if NodeDeclaresToolAccess(n) {
 			return true
 		}
 	}
 	return false
 }
 
-// nodeDeclaresToolAccess reports whether an agent (or any parallel branch)
+// NodeDeclaresToolAccess reports whether an agent (or any parallel branch)
 // declares a non-empty tool_access value.
-func nodeDeclaresToolAccess(n *ir.Node) bool {
+func NodeDeclaresToolAccess(n *ir.Node) bool {
 	switch cfg := n.Config.(type) {
 	case ir.AgentConfig:
 		return toolAccessSet(cfg.ToolAccess)
