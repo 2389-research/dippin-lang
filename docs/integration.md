@@ -77,6 +77,24 @@ fmt.Println(workflow.Start)  // "AskUser"
 fmt.Println(workflow.Exit)   // "Done"
 ```
 
+**Unresolved-IR view and `ResolveFileDirectives`.** `parser.NewParser().Parse()` is intentionally pure — it does **not** read files referenced by `command_file:`, `prompt_file:`, or `system_prompt_file:`. Nodes that use these directives arrive with the `*File` field set (e.g., `AgentConfig.PromptFile`) and the content field (`Prompt`, `SystemPrompt`, `Command`) empty. This is the correct *unresolved view* for LSP, WASM, and most consumers.
+
+A Go consumer that needs inlined content (e.g., a runtime that will execute the node) must call `parser.ResolveFileDirectives` after `Parse()`:
+
+```go
+import "path/filepath"
+
+if err := parser.ResolveFileDirectives(workflow, filepath.Dir(path)); err != nil {
+    return err // names only the user-written path, never the resolved absolute path
+}
+```
+
+The CLI commands `lint`, `validate`, and `pack` call this automatically. Direct `Parse()` callers — including adapters, LSP servers, and WASM hosts — do not need to call it unless they require the inlined content.
+
+**`*_file` security constraints.** `ResolveFileDirectives` enforces: relative paths only (absolute paths are rejected), no `..`-based or symlink-based parent escape, leaf symlinks rejected atomically on Unix via `O_NOFOLLOW`, and a 4 MiB per-file cap. Error messages name only the user-written path, never the resolved absolute path.
+
+**DOT round-trip lossiness.** `export.ExportDOT` inlines the resolved command text as `tool_command=` in DOT output (`applyToolPromptAttrs` in `export/dot.go`). As a result, export-to-DOT then `dippin migrate` back yields `command:` (inline form), not `command_file:`. The `*_file` directive is not preserved through a DOT round-trip.
+
 ### Validating a Workflow
 
 ```go
@@ -93,7 +111,7 @@ if result.HasErrors() {
     }
 }
 
-// Semantic lint (DIP101–DIP133) — warnings
+// Semantic lint (DIP101–DIP145) — warnings
 lintResult := validator.Lint(workflow)
 for _, d := range lintResult.Diagnostics {
     fmt.Println(d.String())
@@ -380,6 +398,27 @@ func FromDippinIR(w *ir.Workflow) *Graph {
             }
             if cfg.Fidelity != "" {
                 node.Attrs["fidelity"] = cfg.Fidelity
+            }
+            // tool_access: enforce fail-closed at the runtime.
+            // "" means no restriction; "none" strips all tools.
+            // Any unrecognized value must also fail closed (no tools) —
+            // dippin lints DIP139 for unrecognized values but does not enforce.
+            // tool_access is node-scoped; per-branch parallel overrides (BranchConfig.ToolAccess)
+            // inherit the agent's value when empty and never re-grant tools.
+            if cfg.ToolAccess != "" {
+                node.Attrs["tool_access"] = cfg.ToolAccess
+            }
+            // writable_paths: the runtime MUST enforce as a write-jail (fs-level).
+            // Fail-closed rules (safety requirement):
+            //   - present-but-empty or comma-only is a parse error → deny all writes
+            //   - malformed or runtime-unrecognized → deny all writes or refuse to start
+            //   - native backend: enforce fs-level write jail (Bash and children included)
+            //   - claude-code/acp backends: refuse to start when writable_paths is set
+            //   - VERSION SKEW: a runtime that does not enforce writable_paths MUST refuse
+            //     to start; consumers must pin an enforcing runtime, never @latest
+            // dippin carries and lints (DIP141, DIP142); the runtime enforces.
+            if len(cfg.WritablePaths) > 0 {
+                node.Attrs["writable_paths"] = strings.Join(cfg.WritablePaths, ",")
             }
         case ir.HumanConfig:
             if cfg.Mode != "" {
@@ -767,5 +806,7 @@ Dippin is a **language and toolchain**, not a runtime. It does not:
 - Call LLM APIs
 - Handle human interaction UI
 - Run shell commands
+- Enforce `tool_access` restrictions — `ToolAccess` is a hint that the runtime must enforce; without an enforcing runtime, `tool_access: none` is a no-op
+- Enforce `writable_paths` as a write-jail — dippin carries and lints these fields (DIP141, DIP142); the runtime is responsible for the fs-level jail; a runtime that does not enforce `writable_paths` **must refuse to start** (version skew is a safety requirement)
 
 These responsibilities stay in the consuming project (e.g., the runtime's engine, handler registry, and UI). Dippin's job is to parse, validate, format, and export — the consuming project does everything else.
