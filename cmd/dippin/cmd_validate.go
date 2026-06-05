@@ -70,8 +70,10 @@ func (c *CLI) CmdLint(args []string) ExitCode {
 	valRes := validator.Validate(w)
 	lintRes := validator.Lint(w)
 
-	// Merge all diagnostics.
+	// Merge all diagnostics, then apply the native cross-file tool_access pass
+	// (DIP146) — it supersedes DIP143 for boundaries whose child it resolved.
 	allDiags := append(valRes.Diagnostics, lintRes.Diagnostics...)
+	allDiags = applyCrossFileToolAccess(allDiags, w, path)
 	c.renderDiagnostics(allDiags)
 
 	// Exit 1 only if there are errors; warnings alone pass.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/validator"
@@ -187,4 +188,32 @@ func boundaryDiag(n *ir.Node, ref string) validator.Diagnostic {
 		Location: n.Source,
 		Help:     "give the referenced .dip's agents their own tool_access (e.g. tool_access: none); this bounds the child's tool catalog, not information flow across the supervisory boundary (see #56). Multiple boundaries referencing the same child each get a hint; one tool_access edit clears them all.",
 	}
+}
+
+// applyCrossFileToolAccess runs the native cross-file pass, drops the per-file
+// DIP143 advisory for boundaries it conclusively resolved (zero-intent,
+// full-restrict, or agent-less), and appends the DIP146 findings. Skipped for
+// .dipx bundles, whose child refs are in-bundle paths, not on disk. The map
+// lookup yields postureUnresolved (the zero value) for any DIP143 not classified
+// here, which supersedes() treats as "retain".
+func applyCrossFileToolAccess(diags []validator.Diagnostic, w *ir.Workflow, path string) []validator.Diagnostic {
+	if strings.HasSuffix(strings.ToLower(path), ".dipx") {
+		return diags
+	}
+	cross, classified := crossFileToolAccess(w, path)
+	var kept []validator.Diagnostic
+	for _, d := range diags {
+		if d.Code == validator.DIP143 && supersedes(classified[d.Location]) {
+			continue
+		}
+		kept = append(kept, d)
+	}
+	return append(kept, cross...)
+}
+
+// supersedes reports whether a resolved child posture makes the per-file DIP143
+// advisory redundant: zero-intent is replaced by DIP146; full-restrict and
+// agent-less are confirmed safe. Partial-audit and unresolved retain DIP143.
+func supersedes(p childPosture) bool {
+	return p == postureZeroIntent || p == postureFullRestrict || p == postureAgentless
 }
