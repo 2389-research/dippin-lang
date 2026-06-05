@@ -125,8 +125,15 @@ func classifyChild(child *ir.Workflow) childPosture {
 }
 
 // countAgents returns the number of agent nodes and how many declare a tool_access
-// restriction. Branches can only restrict (never grant more than their target
-// agent), so the agent census is the right basis for full-restrict detection.
+// restriction. The census is intentionally AgentConfig-only. A parallel branch's
+// tool_access is a PATH-LOCAL override (effective = branch if non-empty else agent),
+// so a branch "none" does NOT guarantee its target agent never runs unrestricted via
+// a direct edge. Counting a branch as restricting its agent would let classifyChild
+// return postureFullRestrict and drop DIP143 for a child whose agent can still run
+// with full tools — the false assurance this feature exists to prevent. Branch intent
+// IS still honored by validator.WorkflowDeclaresToolAccess, which keeps such a child
+// out of postureZeroIntent — so it classifies as posturePartial (DIP143 retained, no
+// DIP146), the correct conservative outcome. Do not "simplify" this to count branches.
 func countAgents(child *ir.Workflow) (agents, restricted int) {
 	for _, n := range child.Nodes {
 		if _, ok := n.Config.(ir.AgentConfig); !ok {

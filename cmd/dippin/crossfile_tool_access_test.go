@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -269,7 +270,9 @@ func TestCrossFile_Transitive(t *testing.T) {
 }
 
 func TestCrossFile_DiamondTwoFindings(t *testing.T) {
-	// P1 and P2 both reference the same zero-intent child => 2 DIP146 (one per edge).
+	// entry has no intent; P1 and P2 each restrict tools and both reference the same
+	// zero-intent child. The path intent comes from P1/P2 (OR-threaded down the DFS),
+	// so each P->child boundary fires its own DIP146 => 2 findings (one per edge).
 	parent := func(name, ref string) string {
 		return `workflow ` + name + `
   start: Lock
@@ -372,6 +375,52 @@ func TestCrossFile_SelfReferenceTerminates(t *testing.T) {
 	diags, _ := crossDiags(t, dir, "a.dip")
 	if got := countCode(diags, validator.DIP146); got != 0 {
 		t.Fatalf("want 0 DIP146 on self-reference, got %d", got)
+	}
+}
+
+func TestCrossFile_DepthCapStopsTraversal(t *testing.T) {
+	// A chain of DISTINCT files longer than crossFileMaxDepth. The visited set alone
+	// would let all of them through (they're distinct) — the depth cap is what bounds
+	// traversal, so far fewer than the full chain get classified.
+	const chain = crossFileMaxDepth + 8
+	files := map[string]string{
+		"entry.dip": `workflow Entry
+  start: Lock
+  exit: Sup
+
+  agent Lock
+    prompt: "x"
+    tool_access: none
+
+  manager_loop Sup
+    subgraph_ref: f1.dip
+    max_cycles: 3
+
+  edges
+    Lock -> Sup
+`,
+	}
+	for i := 1; i < chain; i++ {
+		next := fmt.Sprintf("f%d.dip", i+1)
+		files[fmt.Sprintf("f%d.dip", i)] = `workflow F
+  start: Go
+  exit: Sup
+
+  human Go
+    mode: freeform
+
+  manager_loop Sup
+    subgraph_ref: ` + next + `
+    max_cycles: 3
+
+  edges
+    Go -> Sup
+`
+	}
+	dir := writeWorkflows(t, files)
+	_, classified := crossDiags(t, dir, "entry.dip")
+	if n := len(classified); n == 0 || n >= chain {
+		t.Fatalf("depth cap did not bound traversal: classified %d of %d boundaries", n, chain)
 	}
 }
 
