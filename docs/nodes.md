@@ -2,6 +2,8 @@
 
 Nodes are the building blocks of a Dippin workflow. Each node represents a single step in the pipeline — an LLM call, a human decision, a shell command, or a control-flow construct.
 
+See also: [docs/syntax.md](syntax.md) — Workflow Header (`goal`, `requires`, `start`, `exit`).
+
 ---
 
 ## Node Kinds
@@ -514,6 +516,10 @@ The `interview_loop.dip` example is a pre-built subgraph that collects structure
 
 The subgraph handles the full interview lifecycle: generating questions with suggested options, collecting structured answers via `huh` forms, assessing completeness, and looping until requirements are clear. See `examples/interview_loop.dip` for the full source.
 
+### Lint Checks
+
+- **DIP143** (Hint) — the workflow declares `tool_access` on one or more agents or parallel branches, but this node references a child `.dip` file. `tool_access` is per-node and file-bounded; the child workflow does **not** inherit the parent's restrictions. Audit the agents inside the referenced file and give them their own `tool_access`. (A node referencing its own source file is not flagged; the lint never reads the child file.)
+
 ---
 
 ## Manager Loop Nodes
@@ -559,6 +565,7 @@ Use these in `stop_condition` and `steer_condition` expressions.
 - **DIP135** — `subgraph_ref` missing or points to a nonexistent file
 - **DIP136** — invalid control field (negative `poll_interval` or `max_cycles`)
 - **DIP137** — unbounded supervisor (no `stop_condition` and no `max_cycles`)
+- **DIP143** (Hint) — the workflow declares `tool_access` but the child `.dip` referenced by `subgraph_ref` is a separate file; `tool_access` restrictions do not extend into it. Audit the child's agents for their own `tool_access`.
 
 See `examples/manager_loop_demo.dip` for a complete working example.
 

@@ -1510,3 +1510,34 @@ File/line/column ranges, error codes (DIP001-DIP999), human explanations, sugges
 **9. How should the runtime be used to bootstrap without trapping us?**
 
 Runtime pipelines can analyze DOT files, generate candidate Dippin, and produce test fixtures. But the spec is a human-reviewed document, the parser is hand-written Go, and all generated Dippin goes through the same validator as hand-written Dippin. The runtime is the factory floor, not the blueprint.
+
+---
+
+## Addendum: Implementation Status as of 2026-06
+
+This section is appended after initial delivery and does not alter the original checklists above.
+
+### Shipped (Phase 0–6 complete)
+
+All Phase 0–6 implementation items have shipped:
+
+- **Parser** — hand-written Go in `parser/`; error recovery at top-level declarations.
+- **Validator / Linter** — `dippin validate` and `dippin lint` ship; structural codes DIP001–DIP009 and semantic codes DIP101–DIP145 are implemented in `validator/` (`lint_codes.go` defines the semantic range as DIP101–DIP145).
+- **Formatter** — `dippin fmt` / `dippin fmt --check` ship in `formatter/`.
+- **DOT exporter** — `dippin export-dot` ships in `export/dot.go`.
+- **Migration tool** — `dippin migrate` ships in `migrate/migrate.go`.
+- **LSP** — `dippin lsp` (`cmd/dippin/cmd_lsp.go`) provides real-time diagnostics, hover, go-to-definition, autocomplete, and document symbols over stdio JSON-RPC 2.0.
+- **Scaffolding** — `dippin new` ships (`cmd/dippin/cmd_new.go`).
+- **Stylesheet system** — the CSS-like `stylesheet` block (selectors over node kind / `.class` / `#id`) shipped (`parser/parse_stylesheet.go`, `ir.Workflow.Stylesheet`, lint codes DIP117/DIP118). This was listed as a near-term/deferred item in the original plan; it is implemented.
+
+### Diagnostic range growth
+
+The design plan (§14) anticipated a DIP101–DIP112 range for semantic warnings. As of 2026-06 the range has grown to DIP101–DIP145, covering retry/fidelity validation, model/provider catalog checks, manager_loop validation, tool-routing fields, `tool_access`, `writable_paths`, subgraph tool-access boundaries, on-failure routing, and budget ceilings.
+
+### Genuinely deferred (as of 2026-06)
+
+- **Full composition** — `import` with typed parameter contracts and child-context namespace prefixing beyond bare `ref:`/`subgraph_ref:` subgraph references (untyped `params` pass-through exists; typed `WorkflowParam` declarations and namespace isolation do not).
+- **`compaction_threshold` enforcement** — the field exists in the IR but the engine does not implement token-budget-based compaction.
+- **`on_event:` hooks** — no pipeline-observability event model.
+- **SARIF output** — only human and JSON diagnostic output modes exist.
+- **Visual editor / GUI** — no graphical authoring tool.

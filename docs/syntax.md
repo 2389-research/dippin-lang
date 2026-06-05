@@ -126,6 +126,9 @@ The optional `defaults` block sets graph-level configuration that applies to all
 | `max_cost_cents` | Integer | Hard ceiling on total cost, in **US cents** (e.g. `1000` = $10.00). `0`/unset = no limit. |
 | `max_wall_time` | Duration | Hard ceiling on **wall-clock** run time (e.g. `30m`, `2h`). `0`/unset = no limit. |
 | `stall_timeout` | Duration | **Wall-clock** span with no forward progress before the run aborts and routes through `on_failure` (e.g. `5m`, `90s`). Elapsed time, **not** a turn count. `0`/unset = disabled. |
+| `on_resume` | String | Fidelity behavior when a run resumes: `preserve` (keep the checkpoint fidelity level) or `degrade` (downgrade on resume). Only meaningful when `fidelity` is also set. |
+| `tool_commands_allow` | String | Comma-separated glob allowlist for `tool` node shell commands (e.g. `git *,make *`). The runtime rejects any tool command not matched by at least one glob. |
+| `tool_denylist_add` | String | Comma-separated globs appended to the runtime's default denylist (e.g. `rm -rf *`). Matched commands are refused regardless of `tool_commands_allow`. |
 
 All budget fields use `0` (or unset) to mean **no limit** — `0` does not mean
 "zero budget." The three `max_*` fields bound *totals* (monotonic ceilings);
@@ -145,7 +148,26 @@ Nodes are defined with `<kind> <ID>` followed by an indented block of fields.
       Review the request carefully.
 ```
 
-There are **6 node kinds**: `agent`, `human`, `tool`, `parallel`, `fan_in`, `subgraph`. Each has its own set of valid fields. See [nodes.md](nodes.md) for full details.
+There are **8 node kinds**: `agent`, `human`, `tool`, `parallel`, `fan_in`, `conditional`, `subgraph`, `manager_loop`. Each has its own set of valid fields. See [nodes.md](nodes.md) for full details.
+
+### Agent node: tool_access and writable_paths
+
+Two security-scoped fields are available on `agent` nodes:
+
+- **`tool_access: none`** — strips the LLM's tool catalog for that node. The agent sees no tools and cannot make tool calls. Scoped to the node only; no downstream taint. Other values are linted as DIP139 and fail closed at the runtime.
+
+- **`writable_paths: <glob,glob>`** — bounds where the agent's tools may write, as a comma-separated list of globs resolved against the session root (e.g. `workspace/**,.ai/sprints/**`). Absent means unbounded. A present-but-empty value is a parse error. Malformed values fail closed at the runtime (deny-all / refuse-to-start).
+
+The two fields address different axes — `tool_access` controls *whether* the agent has tools, `writable_paths` controls *where* its tools may write. Setting both `tool_access: none` and `writable_paths` on the same agent (or branch) is dead config and lints as DIP141: with no tools, there is nothing left to bound.
+
+```dippin
+  agent Coder
+    writable_paths: workspace/**,tmp/**
+    prompt:
+      Implement the feature, writing only under workspace/ and tmp/.
+```
+
+See [nodes.md](nodes.md) for full field details including DIP codes, backend notes, and brace-expansion caveats.
 
 ### Parallel and Fan-In shorthand
 
@@ -157,6 +179,40 @@ Parallel and fan-in nodes use a compact inline syntax instead of a block:
 ```
 
 The `->` and `<-` operators define the fan-out targets and fan-in sources respectively.
+
+### Block form parallel with per-branch overrides
+
+When branches need different configuration, use the block form. Each `branch:` line names a target node and opens an indented block of per-branch overrides:
+
+```dippin
+  parallel FanOut
+    branch: fast
+      model: claude-haiku-4-5
+      tool_access: none
+    branch: accurate
+      model: claude-opus-4-7
+      writable_paths: workspace/**
+```
+
+Here the `fast` branch overrides `tool_access` to strip tools, while the `accurate` branch keeps its tools but bounds their writes via `writable_paths`. (Don't set both on one branch — see the DIP141 note above.)
+
+The fan-in node still lists the same target IDs as usual:
+
+```dippin
+  fan_in Join <- fast, accurate
+```
+
+Per-branch overridable fields:
+
+| Field | Description |
+|-------|-------------|
+| `model` | LLM model for this branch's target agent |
+| `provider` | LLM provider for this branch's target agent |
+| `fidelity` | Checkpoint fidelity for this branch |
+| `tool_access` | Tool-catalog gate (`none` to strip; omit to inherit the target agent's setting) |
+| `writable_paths` | Write-scope globs; omit to inherit the target agent's setting — empty never resets to unbounded |
+
+An omitted field inherits the target agent's value. An inline-form parallel (`->`) and a block-form parallel are mutually exclusive on the same node.
 
 ---
 
@@ -258,6 +314,34 @@ Tool commands work the same way:
         exit 1
       fi
 ```
+
+### File directives (`*_file`)
+
+Instead of an inline multiline block, you can reference an external file. The parser itself stays pure and does **not** read the file; the contents are loaded in a separate post-parse step (`parser.ResolveFileDirectives`) that CLI entry points run after parsing. LSP and WASM consumers skip that step and retain the unresolved directive (the `*_file` field set, content empty).
+
+| Directive | Node kind | Replaces |
+|-----------|-----------|---------|
+| `prompt_file: <path>` | `agent` | inline `prompt:` block |
+| `system_prompt_file: <path>` | `agent` | inline `system_prompt:` block |
+| `command_file: <path>` | `tool` | inline `command:` block |
+
+```dippin
+  agent Analyze
+    prompt_file: prompts/analyze.txt
+    system_prompt_file: prompts/system.txt
+
+  tool RunTests
+    command_file: scripts/run_tests.sh
+```
+
+**Security rules** (enforced by the parser at load time):
+
+- Path is relative to the `.dip` source directory — resolved against its parent directory.
+- Absolute paths are rejected (`/etc/passwd` → parse error).
+- Parent-tree escape via `..` is rejected lexically (`../secrets` → parse error).
+- Symlinks at the final path component are rejected (`O_NOFOLLOW`; atomic on Unix, advisory on other platforms).
+- Files larger than **4 MiB** are rejected.
+- Specifying both an inline block and a `*_file` directive on the same node is a parse error.
 
 ---
 
