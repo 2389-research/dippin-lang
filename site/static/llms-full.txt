@@ -11,13 +11,24 @@ Generate from template: `dippin new minimal`, `dippin new parallel`, `dippin new
 ```
 workflow <Name>
   goal: "<text>"
-  [requires: <id1>, <id2>, ...]
+  [requires: <dep1>, <dep2>, ...]
   start: <NodeID>
   exit: <NodeID>
 
   [defaults
     model: <string>
     provider: <string>
+    max_total_tokens: <int>
+    max_cost_cents: <int>
+    max_wall_time: <duration>
+    stall_timeout: <duration>
+    on_failure: <NodeID>
+    tool_commands_allow: "<glob>,<glob>"
+    tool_denylist_add: "<glob>,<glob>"
+    ...]
+
+  [vars
+    <key>: <value>
     ...]
 
   <kind> <NodeID>
@@ -38,9 +49,9 @@ workflow <Name>
 
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| `agent` | `prompt` | `model`, `provider`, `backend`, `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `system_prompt` |
-| `human` | `mode` (freeform\|choice) | `default` |
-| `tool` | `command` | `timeout` (e.g. 30s, 5m) |
+| `agent` | `prompt` (or `prompt_file`) | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `prompt_file` (external file for `prompt`; mutually exclusive with `prompt:`), `system_prompt`, `system_prompt_file` (external file for `system_prompt`; mutually exclusive with `system_prompt:`), `writable_paths` (CSV glob list bounding where this agent's tools may write, e.g. `workspace/**, .ai/**`; absent = unbounded; empty/malformed = deny-all at runtime) |
+| `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
+| `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
@@ -75,6 +86,10 @@ when not <expr>
 | 5 | Agent node with empty prompt | Every `agent` node should have a `prompt:` field with content (except start/exit lifecycle nodes). |
 | 6 | Missing tool timeout | Add `timeout: 60s` (or appropriate duration) to every `tool` node. |
 | 7 | Exhaustive conditions flagged | `ctx.outcome = success` + `ctx.outcome = fail` is exhaustive — DIP101/DIP102 are auto-suppressed. No need to add a fallback edge. |
+| 8 | Verbose output sharing stdout with routing marker | When a tool's stdout drives routing, redirect verbose output to a sibling file and `printf` only the marker. Otherwise large output (test logs, stack traces) can crowd out the marker under runtime stdout caps. See `nodes.md` → Tool Nodes → Markers and Verbose Output. |
+| 9 | Hand-parsing tool stdout for routing | Use `marker_grep: "<regex>"` (and optionally `route_required: true`) instead of regexing `ctx.tool_stdout` in edge conditions. Populates `ctx.tool_marker` directly — typed routing is more reliable than substring matching on raw stdout. |
+| 10 | DIP101/DIP102 flagged on marker-routed tool node | If the tool already declares `marker_grep:`, the validator treats it as a safe routing source and suppresses both warnings. If you're still seeing them, the source node isn't a `tool`, or `marker_grep` is empty. |
+| 11 | Boolean field rejected as invalid | Boolean fields (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off`, case-insensitive. Anything else is a parse error — pre-v0.29 silently coerced unknown values to `false`. |
 
 ---
 
@@ -84,6 +99,8 @@ When outgoing edges from a node cover all possible values, DIP101 and DIP102 war
 
 - `ctx.outcome`: `{success, fail}` or `{success, failure}`
 - `outcome`: `{success, fail}` or `{success, failure}`
+
+Tool nodes that declare `marker_grep:` are also treated as exhaustive (typed routing via `ctx.tool_marker`).
 
 This means the common pattern below is valid with zero warnings:
 
@@ -158,12 +175,24 @@ Use `valid` to decide whether to retry generation. Use `diagnostics` to feed err
 
 ---
 
+## Bundles (`.dipx`)
+
+A `.dipx` is a deterministic ZIP that packages a `.dip` entry plus every transitively-reachable subgraph as one integrity-verified artifact. Every analysis command (`validate`, `lint`, `doctor`, `check`, `parse`, `cost`, `coverage`, `simulate`, `optimize`, `unused`, `graph`, `diff`, `explain`, `export-dot`) accepts either `.dip` or `.dipx` as input.
+
+- **Build a bundle**: `dippin pack pipeline.dip` → `pipeline.dipx`
+- **Inspect**: `dippin inspect pipeline.dipx` (prints manifest, sha256 identity, file list)
+- **Extract**: `dippin unpack pipeline.dipx -o ./out` (atomic via staging dir + rename)
+
+Workflow: author and lint as `.dip`; package with `dippin pack` for distribution to the runtime. `dippin check pipeline.dipx` validates the bundled entry workflow exactly as if it were on disk. Bundle commands return distinct exit codes (`0` ok, `1` user error, `2` integrity error, `3` I/O error, `4` cancelled) so tooling can disambiguate failures that the analysis-command `0/1/2` ladder collapses.
+
+---
+
 ## Diagnostic Code Summary
 
-39 diagnostic codes across two categories:
+54 diagnostic codes across two categories:
 
 - **DIP001–DIP009** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch
-- **DIP101–DIP133** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation
+- **DIP101–DIP145** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults
 
 ---
 
@@ -172,7 +201,7 @@ Use `valid` to decide whether to retry generation. Use `diagnostics` to feed err
 ```
 workflow <Name>
   goal: "<description>"
-  requires: <id1>, <id2>   # optional, comma-separated prerequisites (tools, MCP servers, env vars)
+  requires: <dep1>, <dep2>   # optional; environmental deps surfaced to runtimes
   start: <NodeID>
   exit: <NodeID>
 
@@ -186,7 +215,7 @@ workflow <Name>
     <edge declarations>
 ```
 
-Four sections in order: **header** (workflow name, goal, optional requires, start, exit) → **defaults** (optional) → **nodes** (any order) → **edges** (optional). `defaults` and `edges` are bare keywords — no colon after them. `requires:` is advisory metadata, comma-separated identifiers — same shape as node-level `reads:` / `writes:`.
+Four sections in order: **header** (workflow name, goal, optional `requires`, start, exit) → **defaults** (optional) → **nodes** (any order) → **edges** (optional). `defaults` and `edges` are bare keywords — no colon after them. `requires:` is a comma-separated list of environmental dependencies (e.g. `git, docker, jq`); semantics live in downstream consumers and unknown entries are accepted without a parser diagnostic.
 
 Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blocks).
 
@@ -210,17 +239,22 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | Field | Type | Notes |
 |-------|------|-------|
 | `prompt` | multiline | Required (DIP110 if empty, start/exit exempt) |
+| `prompt_file` | string | Path (relative to `.dip` source directory) to an external file whose contents become the agent's `prompt`. Mutually exclusive with `prompt:`. See "Prompt File Directives" below. |
 | `system_prompt` | multiline | System message |
+| `system_prompt_file` | string | Path (relative to `.dip` source directory) to an external file whose contents become the agent's `system_prompt`. Mutually exclusive with `system_prompt:`. See "Prompt File Directives" below. |
 | `model` | string | Must be valid model ID (DIP108) |
 | `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
+| `working_dir` | string | Per-node working directory override for isolated execution. |
+| `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. An enforcing runtime is required. See "Agent Tool Access" below. |
+| `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded. An enforcing runtime is required. See "Writable Paths" below. |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
 | `goal_gate` | bool | Pipeline fails if gate fails. Add `retry_target` or `fallback_target` (DIP115) |
 | `response_format` | string | `json_object` or `json_schema` (DIP130) |
 | `response_schema` | multiline JSON | Must be valid JSON (DIP132). Requires `response_format: json_schema` (DIP131) |
-| `reasoning_effort` | string | `low`, `medium`, `high` (DIP119) |
+| `reasoning_effort` | string | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` (DIP119) |
 | `fidelity` | string | `full`, `summary:high`, `summary:medium`, `summary:low`, `compact`, `truncate` (DIP114) |
 | `cache_tools` | bool | Cache tool results |
 | `compaction` | string | Context compaction strategy |
@@ -228,6 +262,45 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `params` | key: value | Custom parameters. Keys must not shadow field names (DIP133) |
 | `reads` | CSV | Context keys read (advisory) |
 | `writes` | CSV | Context keys written (advisory) |
+
+**Agent Tool Access (`tool_access:`)** — *added v0.32.0; an enforcing runtime is required.*
+
+A node-level gate on the LLM tool catalog. One explicit value:
+
+- `tool_access: none` — The runtime returns an empty tool registry to the model, strips the `tools` array from the request (e.g., Anthropic `tool_choice: none`), and scrubs tool-naming text from the system prompt. `Params` keys (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`) are ignored when the gate is set — Params cannot reopen it.
+- *omitted* — Full catalog (current behavior, unchanged).
+
+Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by [DIP139](https://2389-research.github.io/dippin-lang/validation.html#dip139). Bad spelling reduces capability, never expands it.
+
+**Threat model bounded:** the v0.28.2 single-agent, multi-tool-call vector — an LLM emitting multiple tool calls in a single response to bypass per-call gating. Set `tool_access: none` on summarizer / reporter / status-only agents that should never execute tools.
+
+**Scope is per node, not per pipeline.** `tool_access: none` constrains the executor of *this one node* — it does not taint or restrict what downstream nodes do with this node's output. A bounded summarizer feeding a tool-capable agent is a normal, intended pattern: the restriction is fully intact (this node still cannot call tools), it simply does not extend across edges. Pipeline-level information-flow control is a separate, runtime-layer concern (see [#56](https://github.com/2389-research/dippin-lang/issues/56)).
+
+**Non-goals (deferred):** cross-node propagation / cascade ([#53](https://github.com/2389-research/dippin-lang/issues/53)), chain attacks between agents ([#56](https://github.com/2389-research/dippin-lang/issues/56)). A cross-node static lint for this ([#57](https://github.com/2389-research/dippin-lang/issues/57)) was evaluated and rejected: because `tool_access` is node-scoped (above), a graph-topology lint would misframe the semantics and would have to assume a runtime-specific data-flow model — so the per-node scope note replaces it. The v1 field bounds a single-agent vector; defense-in-depth for graph-level flows is future work.
+
+**Scope vs. tool-node safety:** `tool_access` gates *LLM-driven* tool calls on agent nodes. It is unrelated to `tool` nodes (shell commands authored directly in `.dip`), whose allowlist/denylist is controlled by the v0.28.x defaults `tool_commands_allow` and `tool_denylist_add`.
+
+`tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
+
+**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the rejected in-file graph-topology lint ([#57](https://github.com/2389-research/dippin-lang/issues/57)): it concerns the cross-*file* boundary, and cross-file enforcement is tracked as [#89](https://github.com/2389-research/dippin-lang/issues/89).
+
+**Writable Paths (`writable_paths:`)** — *added v0.35.0; an enforcing runtime is required.*
+
+A node-level glob list bounding where the agent's tools may write. Shape: comma-separated globs (e.g. `workspace/**, .ai/sprints/**`).
+
+- `writable_paths: workspace/**, .ai/sprints/**` — the runtime confines all file mutations (Write, Edit, ApplyPatch, Bash, and any process Bash spawns) to paths matching these globs, resolved against an **immutable session root**. `working_dir` and `Params` keys cannot relocate the anchor.
+- *omitted* — unbounded writes (current behavior, unchanged).
+- **Fail-closed:** A present-but-empty `writable_paths:` is rejected by `dippin validate`/`pack` (parse error — list at least one glob or omit the field). A `writable_paths` that is malformed or **unrecognized by a runtime that does not enforce this field** → the runtime must deny all writes or refuse to start. Never falls through to unbounded. **A runtime that does not enforce `writable_paths` must refuse to start rather than run unbounded — this is a safety requirement, not a suggestion.**
+
+**Enforcement scope (native backend only):** `writable_paths` is enforced on the `native` backend. On `claude-code` and `acp`, session creation **refuses to start** when `writable_paths` is set — fail-closed, never a silent no-op.
+
+**Residual escape classes (out of scope):** `writable_paths` bounds *where writes land*; it does **not** bound network (e.g. `curl`, `cargo fetch`), reads / read-based exfiltration, or *content* within an allowed path (an agent with `writable_paths: workspace/**` can still poison `workspace/Cargo.toml`). Chain laundering (writing an allowed file that a downstream unbounded agent reads) is tracked in [#56](https://github.com/2389-research/dippin-lang/issues/56).
+
+**Non-goals (deferred):** cross-node propagation / defaults cascade ([#53](https://github.com/2389-research/dippin-lang/issues/53)), tool-name allowlists ([#55](https://github.com/2389-research/dippin-lang/issues/55)), chain-attack mitigation ([#56](https://github.com/2389-research/dippin-lang/issues/56)).
+
+**Lint:** DIP141 fires when `writable_paths` is set alongside `tool_access: none` on the same object (dead config — no tools to bound). DIP142 fires on unsafe entries: absolute paths, `~`, Windows drive letters, `..` escapes, or brace-expansion fragments (`*.{md` from `*.{md,yaml}` being comma-split). Use workspace-relative globs (e.g. `.ai/sprints/**`).
+
+`writable_paths` may also be set per-branch on a block-form `parallel` node; an omitted branch value **inherits the target agent's** setting — it never resets to unbounded.
 
 ### human — user decision gate
 
@@ -238,11 +311,13 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `mode` | string | **Required.** `choice`, `freeform`, or `interview` (DIP127) |
+| `mode` | string | **Required.** `choice`, `freeform`, `interview`, or `yes_no` (DIP127) |
 | `default` | string | Default choice (meaningless in interview mode — DIP128) |
 | `prompt` | multiline | Prompt text |
 | `questions_key` | string | Context key for interview questions |
 | `answers_key` | string | Context key for interview answers |
+| `timeout` | duration | e.g. `5m`, `1h`. How long to wait for human response. |
+| `timeout_action` | string | `fail` or `default`. Action on timeout (default: `fail`). |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
@@ -250,6 +325,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 - `choice`: Outgoing edge labels become buttons. Human selects one.
 - `freeform`: Open text input → `ctx.human_response`
 - `interview`: Structured Q&A from upstream agent output. Don't combine with choice-style edges (DIP129).
+- `yes_no`: Binary Y/N prompt — two outgoing edges labeled `[Y]` and `[N]`.
 
 ### tool — shell command
 
@@ -263,13 +339,60 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `command` | multiline | Shell command. Supports pipes, here-docs, case/esac. |
+| `command` | multiline | Shell command. Supports pipes, here-docs, case/esac. Required unless `command_file` is set. |
+| `command_file` | string | Path (relative to the `.dip` source directory) to an external script whose contents replace inline `command:`. Mutually exclusive with `command`. See "Tool Command File" below. |
 | `timeout` | duration | **Required** (DIP111). e.g. `30s`, `5m` |
 | `outputs` | CSV | Possible stdout values for condition checks |
+| `marker_grep` | string | Regex matched against stdout; sets `ctx.tool_marker`. The runtime validates and applies the regex. |
+| `route_required` | bool | When true, fails the node if the command emits no routing signal recognized by the runtime (the runtime defines the routing-signal format). |
+| `output_limit` | int | Per-node stdout byte cap (non-negative integer); 0 (or omitted) uses the engine default. |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
 Do NOT use `${ctx.*}` in commands — they expand to empty at parse time (DIP124). Output is captured as `ctx.tool_stdout` and `ctx.tool_stderr`.
+
+**Tool Command File (`command_file:`)** — *added v0.33.0.*
+
+Reference an external file for a tool node's command instead of inlining a heredoc:
+
+```dip
+tool Setup
+  command_file: scripts/setup.sh
+```
+
+Path resolution: relative to the `.dip` source directory. Absolute paths rejected. Symlinks rejected. Parent-tree escape (`../../etc/passwd`) rejected. 4 MiB size cap.
+
+Mutually exclusive with `command:` — specifying both is a parse error.
+
+Loading: CLI entry points (`dippin lint`, `dippin pack`, `dippin validate`, `dippin doctor`) load the file contents into the IR after parse. The LSP and the playground skip loading; they show the path unresolved. The runtime reads `.dipx` bundles where content is already inlined, so it sees no difference from inline `command:`.
+
+Non-goals (deferred): configurable size cap ([#66](https://github.com/2389-research/dippin-lang/issues/66)), full-chain symlink resolution ([#67](https://github.com/2389-research/dippin-lang/issues/67)), glob expansion ([#68](https://github.com/2389-research/dippin-lang/issues/68)), DOT round-trip preservation of the directive form ([#69](https://github.com/2389-research/dippin-lang/issues/69)), graceful LSP/WASM not-loaded signal ([#70](https://github.com/2389-research/dippin-lang/issues/70)). See issue [#52](https://github.com/2389-research/dippin-lang/issues/52).
+
+**Prompt File Directives (`prompt_file:` and `system_prompt_file:`)** — *added v0.34.0.*
+
+Reference external prompt files from agent nodes:
+
+```dip
+agent Reviewer
+  model: claude-sonnet-4-6
+  system_prompt_file: prompts/persona.md
+  prompt_file: prompts/task.md
+```
+
+Convention: keep prompt files in a `prompts/` directory alongside your `.dip`.
+
+Path resolution and security are identical to `command_file:` above:
+- Paths resolved relative to the `.dip` source directory
+- Absolute paths rejected
+- Parent-tree escapes (`..`) rejected
+- Symlinks rejected
+- 4 MiB size cap
+
+The two slots are independent — an agent may use any combination of inline `prompt:`, `prompt_file:`, inline `system_prompt:`, `system_prompt_file:`. Only same-slot conflicts (`prompt:` + `prompt_file:`, or `system_prompt:` + `system_prompt_file:`) are parser-time errors. Cross-slot mixes (e.g. `prompt:` + `system_prompt_file:`) are fine.
+
+**Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. The runtime reads inline prompts from the bundle; no separate file lookup at runtime.
+
+**Non-goals:** defaults-block file-form support ([#72](https://github.com/2389-research/dippin-lang/issues/72)) and bundled-files `.dipx` redesign ([#73](https://github.com/2389-research/dippin-lang/issues/73)) are tracked as follow-up issues.
 
 ### parallel / fan_in — concurrent execution
 
@@ -298,6 +421,34 @@ Inline syntax only. Every `parallel` must have a matching `fan_in` with identica
 | `params` | key: value | Passed to child via `${params.key}` |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
+
+### manager_loop — supervised child pipeline
+
+Spawns a child `.dip` pipeline, polls it on a cadence, and can steer it by injecting context. Maps to `stack.manager_loop` in the runtime; DOT shape `house`. Full reference: [docs/nodes.md](https://github.com/2389-research/dippin-lang/blob/main/docs/nodes.md).
+
+```dip
+  manager_loop QualityGate
+    label: "Quality Gate Supervisor"
+    subgraph_ref: quality_loop.dip
+    poll_interval: 30s
+    max_cycles: 12
+    stop_condition: stack.child.outcome = success
+    steer_condition: stack.child.cycles = 5
+    steer_context:
+      hint: halfway_through
+      priority: high
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `subgraph_ref` | string | **Required.** Path to child .dip file (DIP135 if missing/not found) |
+| `poll_interval` | duration | Poll cadence (e.g. `30s`). `0` = event-driven |
+| `max_cycles` | int | Max poll cycles. `0` = unbounded → DIP137 |
+| `stop_condition` | condition | Over `stack.child.*`; when true the loop exits |
+| `steer_condition` | condition | When true, inject `steer_context` into child |
+| `steer_context` | map[string]string | Inline `k=v, k=v` or block form. No commas in inline values |
+
+Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`. Lint: DIP135 (bad ref), DIP136 (invalid field), DIP137 (unbounded).
 
 ## Common Fields (all block nodes)
 
@@ -377,9 +528,26 @@ Fields `prompt:`, `system_prompt:`, `command:`, `response_schema:` support inden
     max_restarts: 3
     cache_tools: true
     compaction: auto
+    max_total_tokens: 500000
+    max_cost_cents: 1000
+    max_wall_time: 30m
+    on_failure: Escalate
+    stall_timeout: 5m
+    tool_commands_allow: "git *,make *"
+    tool_denylist_add: "rm -rf /,dd *"
 ```
 
 All defaults are inherited by nodes unless overridden at the node level.
+
+| Default Field | Type | Notes |
+|---------------|------|-------|
+| `max_total_tokens` | int | Budget cap on total tokens consumed. |
+| `max_cost_cents` | int | Budget cap in cents (e.g. 1000 = $10.00). |
+| `max_wall_time` | duration | Maximum wall-clock time for the workflow (e.g. `30m`, `2h`). |
+| `on_failure` | string | Graph-level default failure route — node to jump to when an agent has no explicit failure edge, no fallback_target, and no bounded retry. |
+| `stall_timeout` | duration | Wall-clock span with no forward progress before the run aborts/routes through on_failure (e.g. `5m`, `90s`). 0/unset = disabled. |
+| `tool_commands_allow` | string | Glob allowlist for tool-node shell commands (comma-separated; optional). |
+| `tool_denylist_add` | string | Glob patterns appended to the runtime's default denylist (comma-separated; optional). |
 
 ## CLI Reference
 
@@ -393,7 +561,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP009) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001-DIP133) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP145) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -426,6 +594,22 @@ Use `dippin help` (not `--help`) to see all commands.
 | `dippin test <file>` | Run `.test.json` scenario tests. `--verbose --coverage` for details |
 | `dippin watch <file>` | Watch for changes, re-validate on save |
 | `dippin lsp` | Start LSP server on stdio (for editor integration) |
+
+### Bundles
+
+| Command | Purpose |
+|---------|---------|
+| `dippin pack <entry.dip>` | Build a deterministic `.dipx` bundle from a `.dip` entry. `-o <out>` (default: `<entry>.dipx`; `-` for stdout). `--dry-run` validates without writing. |
+| `dippin unpack <bundle.dipx>` | Atomic extract. `-o <destdir>` (default: bundle name without `.dipx`). `--force` overwrites with rollback-safe backup-aside swap. |
+| `dippin inspect <bundle.dipx>` | Print manifest, identity (sha256 over manifest bytes), and per-file checksums. `--format text\|json`. |
+
+## Bundle Workflow (`.dipx`)
+
+A `.dipx` is a deterministic, content-addressed ZIP packaging a `.dip` entry plus every transitively-reachable subgraph ref. **Every analysis command (validate, lint, doctor, check, parse, cost, coverage, simulate, optimize, unused, graph, diff, explain, export-dot) accepts a `.dipx` argument** — the bundle is opened via `dipx.Load`, hash-verified, and the entry workflow is fed to the analyzer just like a `.dip` would be.
+
+**Recommended workflow:** author and lint as `.dip`, package with `dippin pack` for distribution to the runtime.
+
+**Exit codes for bundle commands** (`pack` / `unpack` / `inspect`) are `0` ok, `1` user error, `2` integrity error, `3` I/O error, `4` cancelled — distinct from the analysis-command standard `0` / `1` / `2` set.
 
 ## Validation Workflow
 
@@ -486,21 +670,30 @@ The primary loop for authoring .dip files:
 | DIP116 | Invalid compaction threshold | Use float 0.0-1.0 |
 | DIP117 | Stylesheet class references undefined class | Fix class name in stylesheet block |
 | DIP118 | Stylesheet ID references unknown node | Fix node ID in stylesheet block |
-| DIP119 | Invalid reasoning_effort | Use: `low`, `medium`, `high` |
+| DIP119 | Invalid reasoning_effort | Use: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` |
 | DIP120 | Condition var missing namespace | Prefix with `ctx.`, `params.`, or `graph.` |
 | DIP123 | Shell syntax error in command | Fix the shell command (checked via `bash -n`) |
 | DIP124 | `${ctx.*}` in tool command | Remove — runtime variables expand to empty at parse time |
 | DIP125 | Command binary not on PATH | Install the binary or fix the command |
 | DIP126 | Subgraph ref file missing | Check `ref:` path |
-| DIP127 | Invalid human mode | Use: `choice`, `freeform`, `interview` |
+| DIP127 | Invalid human mode | Use: `choice`, `freeform`, `interview`, `yes_no` |
 | DIP130 | Invalid response_format | Use: `json_object`, `json_schema` |
 | DIP131 | Schema/format mismatch | `response_schema` requires `response_format: json_schema`, and vice versa — both must be present together |
 | DIP132 | Invalid JSON in response_schema | Fix the JSON syntax |
 | DIP133 | Params key shadows field | Rename the params key |
+| DIP139 | Invalid `tool_access` value | Use `tool_access: none` or omit the field; runtime fail-closes on unknown values |
+| DIP140 | `params` re-enables tools that `tool_access` strips | Remove the `params` key (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`); `tool_access` governs the catalog |
+| DIP141 | `writable_paths` set with `tool_access: none` (dead config) | Remove `writable_paths` — `tool_access: none` already strips all tools, leaving nothing for `writable_paths` to bound |
+| DIP142 | Unsafe `writable_paths` entry (absolute, `..` escape, `~`, brace fragment) | Use workspace-relative globs (e.g. `.ai/sprints/**`); absolute, `~`, Windows-drive, and `..`-escaping entries are rejected by the runtime fs jail |
+| DIP143 | Workflow uses `tool_access` but references a subgraph — child agents unguarded | Open the referenced `.dip` and set `tool_access` on its agents directly; parent restrictions do not cross the file boundary |
+| DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail`, set `fallback_target`, add `retry_target` with `max_retries`, or declare `on_failure:` in defaults |
+| DIP145 | Graph budget default is negative | Use a positive cap, or omit the field / set `0` to mean no limit |
 
 ## Best Practices
 
 - **Always set `timeout`** on tool nodes — no timeout means infinite hang
+- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel.
+- **Boolean fields** (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively. Anything else is a parse diagnostic.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
 - **Mark back-edges `restart: true`** — loops without it trigger DIP005
@@ -554,6 +747,8 @@ The primary loop for authoring .dip files:
 | `ctx.outcome` | `auto_status: true` on agent, or tool exit status |
 | `ctx.human_response` | Freeform human input |
 | `ctx.tool_stdout` | Tool command stdout |
+| `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
+| `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout — populated when the tool emits a routing sentinel the runtime recognizes (format defined by the runtime); `route_required: true` additionally fails the node if none is emitted |
 | `ctx.preferred_label` | Human choice selection (maps to edge label) |
 | `ctx.interview_answers` | Interview mode answers (via `answers_key`) |
 | `params.<key>` | Parent subgraph params |

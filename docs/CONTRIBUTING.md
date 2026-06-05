@@ -18,17 +18,18 @@ Every doc targets a specific persona. Before editing, know who you're writing fo
 | `docs/llm-reference.md` | LLM generating .dip files | Compact reference for system prompts |
 | `docs/architecture.md` | Developer contributing to dippin-lang | Package map, dependency graph, design decisions |
 | `docs/integration.md` | Developer consuming dippin as a Go library | API examples, import paths |
-| `GRAMMAR.ebnf` | Developer understanding the parser | Canonical syntax spec, must match parser exactly |
+| `docs/GRAMMAR.ebnf` | Developer understanding the parser | Canonical syntax spec, must match parser exactly |
+| `docs/testing.md` | Developer writing scenario tests | Scenario testing, `dippin test` command |
 | `CHANGELOG.md` | Developer upgrading versions | What changed, what broke, what to migrate |
 
 ## Pre-Commit Doc Checklist
 
 When changing code that affects observable behavior, check these before committing:
 
-1. **New/changed fields** → update `nodes.md`, `syntax.md`, `README.md` field table, `GRAMMAR.ebnf`
+1. **New/changed fields** → update `nodes.md`, `syntax.md`, `README.md` field table, `docs/GRAMMAR.ebnf`
 2. **New/changed DIP codes** → update `validation.md`, `README.md` diagnostics table, `llm-reference.md`
 3. **New/changed CLI commands** → update `cli.md`, `README.md` commands table
-4. **New/changed operators** → update `syntax.md`, `edges.md`, `llm-reference.md`, `GRAMMAR.ebnf`
+4. **New/changed operators** → update `syntax.md`, `edges.md`, `llm-reference.md`, `docs/GRAMMAR.ebnf`
 5. **New/changed providers or models** → verify against live sources, update `lint_model.go`, `pricing.go`, `llm-reference.md`
 6. **New analysis output** → update `analysis.md` JSON schemas
 7. **Architecture changes** → update `architecture.md` package map and dependency graph
@@ -38,7 +39,7 @@ When changing code that affects observable behavior, check these before committi
 
 When auditing docs for accuracy:
 
-1. **EBNF vs parser**: Every production rule in `GRAMMAR.ebnf` must match the parser implementation. Run: read each EBNF rule, find the corresponding parser code, verify they match.
+1. **EBNF vs parser**: Every production rule in `docs/GRAMMAR.ebnf` must match the parser implementation. Run: read each EBNF rule, find the corresponding parser code, verify they match.
 
 2. **Field tables vs IR**: Every field listed in `nodes.md` and `README.md` must exist in `ir/ir.go` config structs. Every config struct field should be documented.
 

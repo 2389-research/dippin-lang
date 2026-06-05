@@ -138,6 +138,13 @@ When an agent node finishes with outcome `fail` or errors, the runtime resolves 
 | 4 | **Graph on_failure** | The workflow's `defaults.on_failure` node ID — catch-all for any agent without a more specific route |
 | 5 | **Halt** | No route found — the pipeline stops |
 
+Graph-level `on_failure` is declared in the `defaults` block — it is a workflow-wide fallback target, not a per-node field:
+
+```dippin
+  defaults
+    on_failure: Escalate
+```
+
 A restart-edge (`restart: true`) tagged with `when ctx.outcome = fail` falls under priority 1 and carries its own `max_restarts` budget rather than `max_retries`.
 
 **Separation of concerns:** dippin validates that the `on_failure` target node exists (DIP003) and is reachable (DIP004); the runtime owns the evaluation ordering shown above. DIP144 warns when an agent node has no failure route at any level of this cascade; any of priorities 1–4 suppresses the warning.
@@ -304,7 +311,8 @@ graph LR
 
 | Code | Rule | Severity |
 |------|------|----------|
-| DIP003 | Edge endpoints must reference existing nodes | Error |
+| DIP003 | Edge endpoints or on_failure target must reference an existing node | Error |
+| DIP004 | All nodes (including the on_failure target) must be reachable from start | Error |
 | DIP005 | No unconditional cycles (restart edges are exempt) | Error |
 | DIP006 | Exit node must have zero outgoing edges | Error |
 | DIP009 | No duplicate edges (same from, to, and condition) | Error |
@@ -312,5 +320,6 @@ graph LR
 | DIP102 | Node with conditional outgoing edges has no unconditional fallback | Warning |
 | DIP103 | Multiple edges from same node test same variable=value | Warning |
 | DIP105 | No guaranteed path from start to exit | Warning |
+| DIP144 | Agent node has no failure route (no fail edge, no fallback_target, no bounded retry, no graph on_failure) | Warning |
 
 See [validation.md](validation.md) for full details on each code.

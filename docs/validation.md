@@ -1,6 +1,6 @@
 # Validation and Linting Reference
 
-Dippin registers 54 diagnostic codes split into two categories; this page documents 49 of them in dedicated sections (the linter registers a few additional internal codes without dedicated sections):
+Dippin registers 54 diagnostic codes split into two categories; this page documents 53 of them in dedicated sections (DIP138 is reserved with no firing logic; the remaining codes are documented inline at the contexts where they fire):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP145): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
@@ -600,7 +600,7 @@ warning[DIP119]: node "Analyze" has reasoning_effort "max" which is not a recogn
 
 **Valid levels**: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
 
-**How to fix**: Use one of the three recognized levels.
+**How to fix**: Use one of the seven recognized levels.
 
 ---
 
@@ -875,7 +875,76 @@ hint[DIP133]: node "Analyze" params key "model" shadows the first-class field mo
 
 ---
 
-### DIP139: Invalid tool_access Value on Agent Node
+### DIP135: manager_loop subgraph_ref Missing or File Does Not Exist
+
+**Severity**: Warning
+
+A `manager_loop` node either has no `subgraph_ref` field set, or the referenced file cannot be found on disk.
+
+```
+warning[DIP135]: manager_loop node "Supervise" has no subgraph_ref or the file does not exist
+  --> pipeline.dip:12:3
+  = help: set subgraph_ref to the path of an existing .dip file that defines the child pipeline
+```
+
+**What triggers it**: A `manager_loop` node is declared without `subgraph_ref`, or the path in `subgraph_ref` does not resolve to an existing file (resolved relative to the workflow source file's directory).
+
+**How to fix**: Set `subgraph_ref` to the path of an existing `.dip` file that defines the child pipeline:
+```dippin
+  manager_loop Supervise
+    subgraph_ref: quality_loop.dip  # file must exist relative to this workflow
+```
+
+---
+
+### DIP136: manager_loop Control Field Has Invalid Value
+
+**Severity**: Warning
+
+A `manager_loop` node has a `poll_interval` or `max_cycles` value that is negative.
+
+```
+warning[DIP136]: manager_loop node "Supervise" poll_interval is negative
+  --> pipeline.dip:12:3
+  = help: use non-negative values for poll_interval and max_cycles
+```
+
+**What triggers it**: `poll_interval` or `max_cycles` is set to a negative value.
+
+**How to fix**: Use non-negative values for both fields:
+```dippin
+  manager_loop Supervise
+    subgraph_ref: inner.dip
+    poll_interval: 30s    # non-negative duration
+    max_cycles: 10        # non-negative integer
+```
+
+---
+
+### DIP137: Unbounded manager_loop
+
+**Severity**: Warning
+
+A `manager_loop` node has neither a `stop_condition` nor a `max_cycles` cap, so supervision can run forever.
+
+```
+warning[DIP137]: manager_loop node "Supervise" is unbounded: no stop_condition and no max_cycles
+  --> pipeline.dip:12:3
+  = help: set stop_condition (e.g., stack.child.outcome = success) or max_cycles to bound supervision
+```
+
+**What triggers it**: A `manager_loop` node declares neither `stop_condition` nor `max_cycles`.
+
+**How to fix**: Set `stop_condition` or `max_cycles` (or both) to bound the supervision loop:
+```dippin
+  manager_loop Supervise
+    subgraph_ref: inner.dip
+    stop_condition: stack.child.outcome = success  # or: max_cycles: 20
+```
+
+---
+
+### DIP139: Invalid tool_access Value on Agent Node or Parallel Branch
 
 **Severity**: Warning
 
@@ -887,13 +956,39 @@ warning[DIP139]: node "ReportFinalStatus" has tool_access "nono" which is not re
   = help: use `tool_access: none` to disable LLM tools, or omit the field for the full catalog
 ```
 
-**What triggers it**: An agent node declares `tool_access:` with a value other than `none` (case-insensitive) or empty. Invalid values fall back to no-tools at runtime (fail-closed) — the diagnostic surfaces the typo so author intent matches runtime behavior.
+**What triggers it**: An agent node declares `tool_access:` with a value other than `none` (case-insensitive) or empty. Invalid values fall back to no-tools at runtime (fail-closed) — the diagnostic surfaces the typo so author intent matches runtime behavior. Also fires on a per-branch override within a parallel node that sets `tool_access` to an unrecognized value.
 
 **How to fix**: Use `tool_access: none` to disable LLM tools, or omit the field for the full catalog:
 ```dippin
   agent ReportFinalStatus
     prompt: "Summarize the results"
     tool_access: none    # explicit: no LLM tools
+```
+
+---
+
+### DIP140: `params` Re-enables Tools That `tool_access` Strips
+
+**Severity**: Warning
+
+An agent node sets `tool_access` (any non-empty value) and also sets a `params` key that would re-grant tools: `allowed_tools`, `disallowed_tools`, `tool_choice`, or `permission_mode`. When `tool_access` is set, the runtime ignores these `params` keys (fail-closed), so the override is silently neutralized — a likely bypass attempt or dead config.
+
+```
+warning[DIP140]: node "Summarize" sets tool_access but params key "allowed_tools" re-enables tools — tool_access wins (fail-closed)
+  --> pipeline.dip:12:3
+  = help: remove the params key; tool_access governs the tool catalog. To grant tools instead, omit tool_access.
+```
+
+**What triggers it**: An agent node has `tool_access` set (any non-empty value) and its `params` block contains any of: `allowed_tools`, `disallowed_tools`, `tool_choice`, or `permission_mode`.
+
+**How to fix**: Remove the conflicting `params` key. If you want tools available, omit `tool_access` instead:
+```dippin
+  agent Summarize
+    prompt: "Summarize"
+    tool_access: none
+    params:
+      allowed_tools: Bash   # DIP140: the runtime strips this — tool_access wins
+  # Fix: remove the params key, or remove tool_access to grant the tool
 ```
 
 ---

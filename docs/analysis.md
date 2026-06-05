@@ -53,9 +53,10 @@ dippin cost pipeline.dip
 **How costs are estimated:**
 - Prompt length is used to estimate input tokens
 - Output tokens are estimated heuristically per turn
-- `max_turns` determines the turn range (min=1, expected=max_turns/2, max=max_turns)
+- `max_turns` determines the turn range: min=3, expected=max(max_turns/3, 3), max=max_turns (default max_turns=10 when unset)
 - Tool and human nodes cost $0 (no LLM calls)
 - Unknown models are costed at $0 with an assumption note
+- The budget ceiling defaults (`max_total_tokens`, `max_cost_cents`, `max_wall_time`, `stall_timeout`) are parsed from the workflow and forwarded to the runtime, but `dippin cost` does not cross-reference them — no warning is emitted if the estimated cost exceeds `max_cost_cents`
 
 **When to use:** Before deploying a pipeline with expensive models. Compare providers. Identify cost drivers to optimize.
 
@@ -109,7 +110,7 @@ dippin coverage pipeline.dip
 ```
 
 **What it checks:**
-- **Edge coverage** — For tool nodes, extracts possible outputs from `printf`/`echo` patterns in the command, then checks whether outgoing edge conditions cover those outputs. Status: `covered`, `partial`, `no_conditions`, `unknown`.
+- **Edge coverage** — For tool nodes, extracts possible outputs from `printf`/`echo` literals in the command using an AST shell parser (`mvdan.cc/sh/v3/syntax`), then checks whether outgoing edge conditions cover those outputs. Status: `covered`, `partial`, `no_conditions`, `unknown`. Statements that redirect stdout to a file (`>`, `>>`, `&>`, `1>`), pipe into another command (`|`), or appear inside command substitution (`$()`) are excluded — their output never reaches the runtime. The pattern "log to file, `printf` marker on stdout" is therefore covered. If a tool node declares `outputs:`, those values are used directly (populating `declared_outputs` in JSON) and shell extraction is skipped. If a tool node uses `marker_grep:` without declaring `outputs:`, coverage cannot extract routing signals from the grep pattern and the node shows status `unknown`.
 - **Reachability** — BFS from start node to confirm all nodes are reachable.
 - **Termination** — Reverse BFS from exit to confirm all reachable nodes can reach exit.
 
@@ -175,11 +176,11 @@ dippin doctor pipeline.dip
 
 **Scoring:**
 - Starts at 100
-- Each lint error: -15 points
+- Each lint error: -20 points
 - Each lint warning: -5 points
-- Unreachable nodes: -10 per node
-- Non-terminating paths: -20
-- Uncovered tool outputs: -5 per tool
+- Unreachable nodes: -15 per node
+- Non-terminating paths: -15
+- Uncovered tool outputs: -10 per tool
 
 **Grades:** A (90–100), B (80–89), C (70–79), D (60–69), F (<60)
 
@@ -255,6 +256,29 @@ dippin optimize pipeline.dip
   "savings": {"min": 3.21, "expected": 3.59, "max": 14.10}
 }
 ```
+
+---
+
+## simulate
+
+Dry-run a workflow without real side effects, emitting JSONL events to stdout.
+
+```sh
+dippin simulate pipeline.dip
+dippin simulate pipeline.dip --scenario outcome=fail
+dippin simulate pipeline.dip --all-paths
+dippin simulate pipeline.dip --interactive
+```
+
+**What it does:** Walks the IR graph from start to exit, visiting each node and emitting a structured event at each step (agent config logged, tool command logged, human node auto-succeeded or prompted). No LLM calls are made and no shell commands are executed. Edge conditions are evaluated against the injected scenario context to select which path to follow.
+
+- **Default (no flags):** follows the happy path (all conditions succeed), emits JSONL to stdout, prints path summary to stderr.
+- **`--scenario key=val`** (repeatable): injects context values to explore conditional branches (e.g. `--scenario outcome=fail` takes the failure edge).
+- **`--all-paths`**: enumerates every reachable execution path; each path is emitted as a separate JSONL block with a header on stderr.
+- **`--interactive`**: prompts at human nodes via stdin rather than auto-succeeding.
+- **`--format dot`**: renders the walked path as a DOT graph (highlights the executed path).
+
+**When to use:** Verify routing logic before running the real pipeline. Check that a `--scenario` reaches the expected node sequence. Use `--all-paths` to audit every branch.
 
 ---
 

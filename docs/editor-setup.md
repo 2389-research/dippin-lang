@@ -18,7 +18,7 @@ This starts the server on stdio (stdin/stdout), speaking JSON-RPC 2.0 per the LS
 
 | Feature | Description |
 |---------|-------------|
-| **Diagnostics** | Parse errors and lint warnings published on every change (DIP001–DIP125) |
+| **Diagnostics** | Parse errors and lint warnings published on every change (DIP001–DIP009 structural, DIP101–DIP145 semantic) |
 | **Hover** | Tooltip showing node kind, model, provider, prompt preview, and field summary |
 | **Go-to-definition** | Jump from a node reference in an edge to the node's declaration |
 | **Autocomplete** | Node IDs in edges, field names within node blocks, keywords |

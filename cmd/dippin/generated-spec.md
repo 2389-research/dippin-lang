@@ -21,6 +21,8 @@ workflow <Name>
     max_total_tokens: <int>
     max_cost_cents: <int>
     max_wall_time: <duration>
+    stall_timeout: <duration>
+    on_failure: <NodeID>
     tool_commands_allow: "<glob>,<glob>"
     tool_denylist_add: "<glob>,<glob>"
     ...]
@@ -47,7 +49,7 @@ workflow <Name>
 
 | Kind | Required Fields | Optional Fields |
 |------|----------------|-----------------|
-| `agent` | `prompt` (or `prompt_file`) | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `prompt_file` (external file for `prompt`; mutually exclusive with `prompt:`), `system_prompt`, `system_prompt_file` (external file for `system_prompt`; mutually exclusive with `system_prompt:`) |
+| `agent` | `prompt` (or `prompt_file`) | `model`, `provider`, `backend`, `working_dir`, `tool_access` (`none` disables LLM tools; DIP139 warns on unknown), `auto_status`, `goal_gate`, `reasoning_effort`, `fidelity`, `max_turns`, `prompt_file` (external file for `prompt`; mutually exclusive with `prompt:`), `system_prompt`, `system_prompt_file` (external file for `system_prompt`; mutually exclusive with `system_prompt:`), `writable_paths` (CSV glob list bounding where this agent's tools may write, e.g. `workspace/**, .ai/**`; absent = unbounded; empty/malformed = deny-all at runtime) |
 | `human` | `mode` (freeform\|choice\|interview\|yes_no) | `default`, `timeout` (duration, e.g. 5m), `timeout_action` (string: fail\|default) |
 | `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
@@ -529,6 +531,8 @@ Fields `prompt:`, `system_prompt:`, `command:`, `response_schema:` support inden
     max_total_tokens: 500000
     max_cost_cents: 1000
     max_wall_time: 30m
+    on_failure: Escalate
+    stall_timeout: 5m
     tool_commands_allow: "git *,make *"
     tool_denylist_add: "rm -rf /,dd *"
 ```
@@ -540,6 +544,8 @@ All defaults are inherited by nodes unless overridden at the node level.
 | `max_total_tokens` | int | Budget cap on total tokens consumed. |
 | `max_cost_cents` | int | Budget cap in cents (e.g. 1000 = $10.00). |
 | `max_wall_time` | duration | Maximum wall-clock time for the workflow (e.g. `30m`, `2h`). |
+| `on_failure` | string | Graph-level default failure route — node to jump to when an agent has no explicit failure edge, no fallback_target, and no bounded retry. |
+| `stall_timeout` | duration | Wall-clock span with no forward progress before the run aborts/routes through on_failure (e.g. `5m`, `90s`). 0/unset = disabled. |
 | `tool_commands_allow` | string | Glob allowlist for tool-node shell commands (comma-separated; optional). |
 | `tool_denylist_add` | string | Glob patterns appended to the runtime's default denylist (comma-separated; optional). |
 
@@ -555,7 +561,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP009) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001-DIP140) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP145) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -677,6 +683,11 @@ The primary loop for authoring .dip files:
 | DIP133 | Params key shadows field | Rename the params key |
 | DIP139 | Invalid `tool_access` value | Use `tool_access: none` or omit the field; runtime fail-closes on unknown values |
 | DIP140 | `params` re-enables tools that `tool_access` strips | Remove the `params` key (`allowed_tools`, `disallowed_tools`, `tool_choice`, `permission_mode`); `tool_access` governs the catalog |
+| DIP141 | `writable_paths` set with `tool_access: none` (dead config) | Remove `writable_paths` — `tool_access: none` already strips all tools, leaving nothing for `writable_paths` to bound |
+| DIP142 | Unsafe `writable_paths` entry (absolute, `..` escape, `~`, brace fragment) | Use workspace-relative globs (e.g. `.ai/sprints/**`); absolute, `~`, Windows-drive, and `..`-escaping entries are rejected by the runtime fs jail |
+| DIP143 | Workflow uses `tool_access` but references a subgraph — child agents unguarded | Open the referenced `.dip` and set `tool_access` on its agents directly; parent restrictions do not cross the file boundary |
+| DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail`, set `fallback_target`, add `retry_target` with `max_retries`, or declare `on_failure:` in defaults |
+| DIP145 | Graph budget default is negative | Use a positive cap, or omit the field / set `0` to mean no limit |
 
 ## Best Practices
 

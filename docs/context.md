@@ -38,6 +38,7 @@ The primary namespace. Contains handler outputs and reserved keys.
 | Variable | Set By | Description |
 |----------|--------|-------------|
 | `ctx.outcome` | Engine / auto_status | Last node's execution status: `"success"`, `"fail"`, or `"retry"` |
+| `ctx.status` | Engine | Alias/complement to `ctx.outcome`; reserved by the validator so references are never flagged undefined |
 | `ctx.last_response` | Agent nodes | The LLM's most recent response text |
 | `ctx.human_response` | Human nodes | The human's input text |
 | `ctx.tool_stdout` | Tool nodes | Standard output from the shell command |
@@ -46,6 +47,8 @@ The primary namespace. Contains handler outputs and reserved keys.
 | `ctx.tool_route` | Tool nodes | A routing value the runtime extracts from the tool's stdout — populated when the tool emits a routing sentinel the runtime recognizes (format defined by the runtime); `route_required: true` additionally fails the node if none is emitted |
 
 These reserved keys are **always available** — the validator knows about them at parse time and can flag typos.
+
+The `ctx.internal.*` prefix is reserved for engine-internal use. Keys under it are always treated as defined by the validator and should not be authored in workflows.
 
 Custom context keys written by nodes (via the engine's `ContextUpdates`) also live in the `ctx` namespace.
 
@@ -131,6 +134,8 @@ Nodes can declare which context keys they expect and produce. These are **adviso
 - Correct: `reads: human_response`
 - Incorrect: `reads: ctx.human_response`
 
+**`writes` vs `writable_paths`**: `writes` is an advisory declaration of which `ctx` keys a node produces — used by the linter (DIP107/DIP112) but not enforced at runtime. It is entirely distinct from `writable_paths`, which is a filesystem write-location jail applied to agent nodes at the engine level (see [nodes.md](nodes.md) for `writable_paths`). Do not conflate them.
+
 The linter uses these declarations for:
 - **DIP107**: Detecting writes that no downstream node reads
 - **DIP112**: Detecting reads that no upstream node writes
@@ -195,8 +200,8 @@ The validator treats variables differently based on what it can verify at parse 
 
 | Tier | Variables | Validation |
 |------|-----------|------------|
-| **Always known** | `ctx.outcome`, `ctx.last_response`, `ctx.human_response`, `ctx.tool_stdout`, `ctx.tool_stderr`, `ctx.tool_marker`, `ctx.tool_route`, `graph.goal` | Error if misspelled (`ctx.tool_marker` is populated when `marker_grep` is declared; `ctx.tool_route` is populated when the tool emits a routing sentinel the runtime recognizes — `route_required: true` additionally fails the node if none is emitted) |
-| **Declared outputs** | Keys from upstream `writes` declarations | Warning if referenced but not declared (DIP112) |
+| **Always known** | `ctx.outcome`, `ctx.status`, `ctx.tool_stdout`, `ctx.tool_stderr`, `ctx.tool_marker`, `ctx.tool_route`, `ctx.internal.*`, `graph.*`, `params.*` | Never flagged undefined — the validator recognizes these at parse time (`ctx.tool_marker` is populated when `marker_grep` is declared; `ctx.tool_route` is populated when the tool emits a routing sentinel the runtime recognizes — `route_required: true` additionally fails the node if none is emitted) |
+| **Declared outputs** | Keys from upstream `writes` declarations, including well-known-by-convention keys such as `ctx.last_response` (agent nodes) and `ctx.human_response` (human nodes) | Warning if referenced but not declared by any upstream node (DIP112) — a misspelling yields a warning, not an error |
 | **Dynamic** | Everything else | Warning only — never an error (runtime context is open) |
 
 This tiered approach catches typos in common variables while allowing flexibility for custom context keys.

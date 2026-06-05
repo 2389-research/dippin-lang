@@ -1349,3 +1349,51 @@ The runtime has evolved **runtime features** that should inform Dippin v1.5+:
 **Report compiled on**: March 20, 2025  
 **Dippin version analyzed**: v1.0 (post-migration verification)  
 **Runtime version analyzed**: Latest (includes stylesheets, fidelity, retry policies)
+
+---
+
+## Addendum (2026-06): items shipped since this report
+
+The original analysis is preserved above as-is for historical accuracy. This addendum reconciles the "missing / deferred / cannot-express" claims from the March 2025 report with what has shipped as of 2026-06.
+
+### Shipped — items the original report identified as gaps
+
+Verified against `ir/ir.go`, `validator/lint_codes.go`, `CHANGELOG.md`, and source files.
+
+- **Stylesheet system** (`Workflow.Stylesheet []StylesheetRule`, `parser/parse_stylesheet.go`) — first-class syntax block with selector/property parsing, `class:` field on nodes, lint codes DIP117 (undefined class) and DIP118 (unknown node ID). Shipped v0.2.0.
+- **Retry policy + `base_delay`** (`RetryConfig.Policy`, `RetryConfig.BaseDelay`) — named policy field with DIP113 validation; `base_delay` override field. Shipped v0.2.0.
+- **Fidelity enum + validation** (`WorkflowDefaults.Fidelity`, `AgentConfig.Fidelity`) — DIP114 lint for invalid fidelity values. Shipped v0.2.0–v0.3.0.
+- **Restart semantics** (`WorkflowDefaults.MaxRestarts`, `WorkflowDefaults.RestartTarget`) — max restart budget and optional jump target in `WorkflowDefaults`. Shipped v0.2.0.
+- **DIP110–DIP114 semantic lint codes** — all five codes proposed in section 7.2 are implemented (DIP110: empty prompt, DIP111: tool timeout, DIP112: reads key not upstream, DIP113: invalid retry policy, DIP114: invalid fidelity). Shipped v0.1.0–v0.3.0.
+- **Full DIP101–DIP145 lint range** — the report proposed a handful of future codes; 45 semantic codes now exist (DIP101–DIP145). Shipped across v0.1.0–v0.36.0.
+- **Subgraph `ref:` file import** (`SubgraphConfig.Ref` as a file path, DIP126 lint for missing file, `flatten` package for inline expansion) — static file-based subgraph references with parse-time validation. Shipped v0.11.0 (DIP126) and v0.18.0 (flatten/export-dip).
+- **Budget ceiling fields** (`WorkflowDefaults.MaxTotalTokens`, `MaxCostCents`, `MaxWallTime`) — hard limits carried through IR and linted (DIP145 for negative values). Shipped v0.21.0.
+- **`stall_timeout`** (`WorkflowDefaults.StallTimeout`) — abort/route when no progress for a given wall-clock span; 0 disables. Carried through IR. Shipped alongside the budget ceiling fields.
+- **`on_failure` default route** (`WorkflowDefaults.OnFailure`) — workflow-level failure route; DIP144 fires when an agent node has no failure route and no graph-level `on_failure`. Shipped v0.36.0.
+- **`requires:`** (`Workflow.Requires []string`) — workflow-header field for declaring prerequisites (tools, env vars). Advisory; parsed and round-tripped. Shipped v0.26.0.
+- **`command_file:` / `prompt_file:` / `system_prompt_file:`** (`ToolConfig.CommandFile`, `AgentConfig.PromptFile`, `AgentConfig.SystemPromptFile`) — external file directives resolved at CLI entry points via `parser.ResolveFileDirectives`. Shipped v0.33.0 (`command_file:`) and v0.34.0 (`prompt_file:`, `system_prompt_file:`).
+- **`manager_loop` node kind** (`NodeManagerLoop`, `ManagerLoopConfig`) — supervisor node with polling, stop/steer conditions, and DIP135–DIP137 lint. Shipped v0.22.0.
+- **`tool_access: none`** (`AgentConfig.ToolAccess`) — strips LLM tool catalog; DIP139 for invalid values, DIP140 for params bypass attempts. Shipped v0.32.0.
+- **`writable_paths`** (`AgentConfig.WritablePaths`, `BranchConfig.WritablePaths`) — per-agent and per-branch file-write scope bounds; DIP141 (nullified by `tool_access: none`) and DIP142 (unsafe path entry). Shipped v0.35.0.
+- **Block-form parallel per-branch config** (`BranchConfig`) — per-branch `model`, `provider`, `fidelity`, `tool_access`, `writable_paths` overrides on block-form `parallel` nodes. Shipped by v0.35.0.
+
+### Features not in the original report that have since shipped
+
+- **`.dipx` bundle format** — deterministic, content-addressed ZIP packaging entry workflow plus all transitively-reachable subgraphs; SHA-256 manifest; `dippin pack / unpack / inspect` commands. Shipped v0.24.0–v0.25.0.
+- **`vars:` block** — workflow-level user-defined variables (`Workflow.Vars map[string]string`). Shipped v0.20.0.
+- **`conditional` node kind** — pure conditional branching without LLM calls, maps to DOT `diamond`. Shipped v0.17.0.
+- **Scenario test runner** (`dippin test`, `.test.json` suites) — simulation-backed assertions for visited/not-visited nodes, status, path ordering. Shipped v0.7.0.
+- **`tool_access` subgraph hint (DIP143)** — hint when a workflow declares `tool_access` intent and references an external subgraph whose agents are unaffected by the parent restriction. Shipped v0.36.0.
+- **`tool_commands_allow` / `tool_denylist_add`** in `WorkflowDefaults` — glob allowlist and denylist additions for tool shell commands. Shipped v0.23.0.
+- **`backend:` and `working_dir:`** on agent nodes — per-node backend selection and working directory override. Shipped v0.19.0.
+- **Structured output fields** (`response_format`, `response_schema`) with DIP130–DIP132 lint. Shipped v0.16.0.
+- **`@file` directive TOCTOU hardening** — open-once `O_NOFOLLOW` resolver closes the check-to-read race on Unix. Shipped v0.36.0.
+
+### Still deferred (as of 2026-06)
+
+- **`compaction_threshold` engine enforcement** — the field (`AgentConfig.CompactionThreshold`) exists in IR and is range-validated (DIP116), but the runtime does not yet implement token-budget-based compaction. Noted as future in the original report; still unimplemented.
+- **Typed `WorkflowParam` declarations** — the `params:` block on workflow declarations (`WorkflowParam` type with `Name`, `Type`, `Default`) proposed in sections 2.5 and 8.1 has not shipped. The only params support in IR is `SubgraphConfig.Params map[string]string` (untyped key-value pass-through) and `AgentConfig.Params map[string]string` (same). No `[]WorkflowParam` type exists.
+- **Child context namespace isolation** — the context-key prefixing scheme proposed in section 8.3 (`run_scan.ctx.outcome`) has not shipped. Child subgraph context remains unnamespaced.
+- **`on_event:` hooks** — the optional event hook syntax proposed in section 6 has not shipped. Events remain a runtime observability concern only.
+- **Dynamic / interpolated subgraph refs** — subgraph `ref:` is a static string only; the `${workflow_name}.dip` interpolation and `mode: inline | runtime` option proposed in section 8.4 have not shipped.
+- **Cross-file transitive `tool_access` enforcement** — DIP143 fires a hint when a workflow with `tool_access` intent references an external subgraph, but real cross-file enforcement (reading the child file, transitive cycle detection) is explicitly deferred to issue #89. DIP143 documents this boundary in its explanation text.

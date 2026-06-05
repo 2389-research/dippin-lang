@@ -20,10 +20,10 @@ go build -o dippin ./cmd/dippin
 graph LR
     CLI["dippin"] --> |"--format text\|json"| CMD{Command}
     CMD --> A["Authoring<br>parse, validate, lint,<br>check, fmt, new"]
-    CMD --> B["Export / Migration<br>export-dot, migrate,<br>validate-migration"]
+    CMD --> B["Export / Migration<br>export-dot, export-dip,<br>migrate, validate-migration"]
     CMD --> C["Analysis<br>simulate, cost, coverage,<br>doctor, optimize, diff,<br>feedback, unused, graph"]
     CMD --> D["Editor<br>lsp"]
-    CMD --> E["Info / Testing<br>version, help, explain, test"]
+    CMD --> E["Info / Testing<br>version, help, explain, test, spec"]
 ```
 
 ```
@@ -124,7 +124,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 
 ### lint
 
-Run both structural validation and semantic linting (DIP001–DIP009 + DIP101–DIP134).
+Run both structural validation and semantic linting (DIP001–DIP009 + DIP101–DIP145).
 
 ```bash
 dippin lint [--extra-models <spec>] <file>
@@ -132,7 +132,7 @@ dippin lint [--extra-models <spec>] <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: All 40 diagnostic rules. Errors (DIP001–DIP009) cause exit code 1. Warnings (DIP101–DIP134) are reported but don't affect the exit code.
+**Checks**: All 54 diagnostic rules. Errors (DIP001–DIP009) cause exit code 1. Warnings (DIP101–DIP145) are reported but don't affect the exit code.
 
 **Output**: All diagnostics (errors and warnings) to stderr.
 
@@ -320,6 +320,31 @@ dippin export-dot pipeline.dip | dot -Tpng -o pipeline.png
 
 # Left-to-right layout with prompts:
 dippin export-dot --rankdir=LR --prompts pipeline.dip > pipeline.dot
+```
+
+---
+
+### export-dip
+
+Flatten all transitively-reachable subgraph refs into a single canonical `.dip` file and print to stdout.
+
+```bash
+dippin export-dip <file>
+```
+
+**Input**: `.dip` or `.dipx` file.
+
+**What it does**: Resolves every `subgraph` node's referenced `.dip` file recursively, inlines all reachable nodes and edges into a single flat workflow, then formats the result as canonical `.dip` source. The output is suitable for inspection, archival, or passing to tools that don't support multi-file workflows.
+
+**Output**: Canonical `.dip` text to stdout.
+
+**Example**:
+```bash
+# Preview the flattened workflow:
+dippin export-dip pipeline.dip
+
+# Write to file:
+dippin export-dip pipeline.dip > flat_pipeline.dip
 ```
 
 ---
@@ -685,6 +710,30 @@ Display global usage and command list.
 
 ```bash
 dippin help
+```
+
+---
+
+### spec
+
+Print the full embedded language specification to stdout.
+
+```bash
+dippin spec
+```
+
+**Output**: The complete dippin language spec (Markdown) to stdout. The content is generated at build time from the source documentation and embedded in the binary, so it always matches the installed version.
+
+**Example**:
+```bash
+# View the spec:
+dippin spec
+
+# Page through it:
+dippin spec | less
+
+# Save a copy:
+dippin spec > dippin-spec.md
 ```
 
 ---

@@ -48,6 +48,17 @@ nodes reference the same file (DIP109, a namespace collision risk).
 It does not inline or expand the subgraph. The child workflow gets
 its own lint pass when you run `dippin lint` on it directly.
 
+`dippin lint` also emits DIP143 (Hint) when this workflow declares
+`tool_access` on any agent or parallel branch and also references an
+external subgraph. `tool_access` is per-node and file-bounded — it
+does not propagate across a `ref:` or `subgraph_ref:` boundary; the
+child workflow's agents are governed solely by their own file. DIP143
+fires only when the parent shows tool-containment intent (a non-empty
+`tool_access` somewhere in this file) and the reference points at a
+different file — a node that references its own source file is not
+flagged. The lint never reads the child file. Cross-file
+effective-access enforcement is deferred to issue #89.
+
 The simulator treats subgraphs as atomic steps. It records that the
 node was entered and exited, logs the ref path, and moves on to the
 next edge. It doesn't recurse into the child workflow. This is
@@ -64,6 +75,28 @@ workflow's cost is estimated separately when you run `dippin cost`
 on it. This keeps cost reports scoped to one file at a time, which
 matches how teams reason about budgets: "what does this workflow
 cost?" not "what does this workflow plus everything it calls cost?"
+
+## manager_loop and subgraph_ref
+
+`manager_loop` is a supervised variant of the subgraph pattern. Where
+a plain `subgraph` node embeds a child and moves on, a `manager_loop`
+node runs the child repeatedly, polls on an interval, and can steer
+the child by injecting context between cycles. It uses `subgraph_ref:`
+instead of `ref:`:
+
+```dip
+manager_loop Supervise
+  subgraph_ref: quality_loop.dip
+  poll_interval: 30s
+  stop_condition: "quality_score >= 0.9"
+```
+
+The same file-boundary rules apply. `quality_loop.dip` is a separate,
+independently lintable `.dip` file — the parent treats it as an opaque
+step. `manager_loop` nodes are subject to DIP143 for the same reason
+plain `subgraph` nodes are: `tool_access` declared in the parent does
+not reach into the child file. The lint uses `subgraph_ref:` as the
+reference path for the same boundary check.
 
 ## Why not inline?
 
@@ -101,6 +134,12 @@ cfg.Params // {"topic": "API design", "focus": "resources, auth, ..."}
 The adapter reads these fields and hands them to the pipeline
 engine. No special protocol, no registration step. If the file
 exists and parses, it runs.
+
+One thing the IR does not carry across the boundary is `tool_access`.
+Restrictions on nodes in this file do not extend into the referenced
+child file; the child's agents must declare their own `tool_access`.
+DIP143 reminds you when tool-containment intent is present in the
+parent but the child is opaque to this lint pass.
 
 ## A real example
 

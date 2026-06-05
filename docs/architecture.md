@@ -49,11 +49,14 @@ dippin-lang/
 │   ├── parse_edges.go     # Edge and condition parsing
 │   ├── parse_nodes.go     # Node declaration parsing
 │   ├── parse_stylesheet.go # Stylesheet section parsing
-│   └── parse_helpers.go   # Shared utilities
+│   ├── parse_helpers.go   # Shared utilities
+│   ├── resolve.go      # ResolveFileDirectives: post-parse pass loading *_file/@file directives from disk (parser stays pure)
+│   ├── resolve_nofollow_unix.go  # O_NOFOLLOW leaf-symlink rejection (build tag: unix)
+│   └── resolve_nofollow_other.go # oNoFollow=0 fallback (non-unix: js/wasm, Windows)
 │
 ├── validator/          # Graph validation + semantic linting
 │   ├── codes.go        # Error code constants (DIP001–DIP009)
-│   ├── lint_codes.go   # Warning code constants (DIP101–DIP126)
+│   ├── lint_codes.go   # Warning code constants (DIP101–DIP145)
 │   ├── diagnostic.go   # Diagnostic type, Result, Severity
 │   ├── validate.go     # 9 structural checks
 │   ├── lint.go         # Lint orchestration
@@ -62,7 +65,13 @@ dippin-lang/
 │   ├── lint_context.go       # DIP106, DIP107, DIP112
 │   ├── lint_retry.go         # DIP104, DIP115
 │   ├── lint_model.go         # DIP108, DIP119
-│   └── lint_style.go         # DIP109, DIP110, DIP111, DIP113, DIP114, DIP116–DIP118
+│   ├── lint_style.go         # DIP109, DIP110, DIP111, DIP113, DIP114, DIP116–DIP118
+│   ├── lint_manager_loop.go  # DIP135–DIP137 (manager_loop structural checks)
+│   ├── lint_tool_access.go   # DIP139, DIP140 (tool_access value + params bypass)
+│   ├── lint_writable_paths.go # DIP141, DIP142 (writable_paths safety)
+│   ├── lint_subgraph_tool_access.go # DIP143 (subgraph tool_access inheritance)
+│   ├── lint_failure_route.go # DIP144 (agent node missing failure route)
+│   └── lint_budget.go        # DIP145 (negative budget default)
 │
 ├── formatter/          # Canonical .dip source formatter
 │   └── format.go       # IR → canonical .dip text (idempotent)
@@ -209,6 +218,9 @@ graph BT
     lsp["lsp"] --> ir
     lsp --> parser
     lsp --> validator
+    dipx["dipx ①"] --> ir
+    dipx --> parser
+    dipx --> simulate
     cmd["cmd/dippin"] --> parser
     cmd --> formatter
     cmd --> validator
@@ -226,7 +238,10 @@ graph BT
     cmd --> unused
     cmd --> graph
     cmd --> testrunner
+    cmd --> dipx
 ```
+
+① `dipx` is the loader-tier exception: it imports `ir + parser + simulate` to materialize a parsed, condition-normalized workflow from a `.dipx` bundle. It MUST NOT import `validator`, `cost`, `formatter`, or any analysis package.
 
 The `ir` package is a leaf dependency — it imports only `time` from the standard library. Most packages import only `ir`. The analysis packages (`doctor`, `optimize`, `diff`, `feedback`) compose other analysis packages. The LSP server imports `parser` and `validator` for real-time analysis.
 
@@ -244,7 +259,7 @@ The `ir` package is the heart of the system. It defines the data model that ever
 
 **Type-safe**: Each node kind has its own config struct (`AgentConfig`, `HumanConfig`, `ToolConfig`, etc.) implementing the sealed `NodeConfig` interface. Invalid field combinations are structurally impossible — you can't set a `Prompt` on a `ToolConfig`.
 
-**Normalized**: Conditions are parsed ASTs (`ConditionExpr`), not raw strings. Variables are namespace-qualified (`ctx.outcome`, not `outcome`).
+**Normalized**: Conditions are stored as `Condition.Raw` (source text, always populated by the parser) and `Condition.Parsed` (AST, populated lazily by `simulate.EnsureConditionsParsed()`; `Lint()` calls this automatically). Variables are namespace-qualified (`ctx.outcome`, not `outcome`).
 
 **Syntax-independent**: The IR contains no Dippin syntax details and no DOT shapes. It's a pure semantic representation.
 
@@ -300,6 +315,10 @@ The parser (`parser.go`) is a **recursive descent parser** that consumes the tok
 
 **Multiline handling**: For `prompt:` and `command:` fields, the parser collects all indented lines until outdent and joins them as the multiline content.
 
+**Purity**: `NewParser`/`Parse` are pure — no filesystem I/O. File-directive fields (`prompt_file`, `command_file`, `system_prompt_file`) are parsed and stored as-is; the field is set, but the content is left empty. Resolving those directives is a separate post-parse pass (`parser.ResolveFileDirectives`) invoked by CLI entry points after parsing. LSP and WASM contexts skip it intentionally and operate on the unresolved IR (field set, content empty).
+
+**Leaf-symlink hardening**: `ResolveFileDirectives` opens each directive file with O_NOFOLLOW (via `resolve_nofollow_unix.go`, build tag `unix`) so that if the final path component is a symlink, `open()` fails atomically with ELOOP — closing the leaf TOCTOU race that a separate `Lstat`+`ReadFile` pair leaves open. The open, `fstat`, and `read` all operate on the same file descriptor, so nothing is re-resolved by pathname between checks and the read. On non-unix targets (`resolve_nofollow_other.go`: `oNoFollow=0`), the fd-based fstat→read still closes the fstat-to-read race, but atomic leaf-symlink rejection is unix-only.
+
 ---
 
 ## The Validator Package
@@ -330,6 +349,12 @@ Checks semantic quality — patterns that are likely bugs. Decomposed into focus
 - **Retry** (`lint_retry.go`): DIP104, DIP115 — unbounded retries and goal gate recovery
 - **Model** (`lint_model.go`): DIP108, DIP119 — provider/model recognition and reasoning effort
 - **Style** (`lint_style.go`): DIP109–DIP111, DIP113–DIP114, DIP116–DIP118 — content checks, policy/fidelity validation, stylesheet refs
+- **Manager loop** (`lint_manager_loop.go`): DIP135–DIP137 — subgraph_ref existence, control-field validity, unbounded loop detection
+- **Tool access** (`lint_tool_access.go`): DIP139, DIP140 — tool_access value validation and params bypass detection
+- **Writable paths** (`lint_writable_paths.go`): DIP141, DIP142 — dead config and unsafe path entry detection
+- **Subgraph tool access** (`lint_subgraph_tool_access.go`): DIP143 — subgraph does not inherit parent tool_access restrictions
+- **Failure route** (`lint_failure_route.go`): DIP144 — agent node missing failure route
+- **Budget** (`lint_budget.go`): DIP145 — negative graph budget default
 
 ### The Diagnostic Type
 

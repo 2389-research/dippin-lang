@@ -40,16 +40,21 @@ workflow_field  = "goal"     ":" field_value
 
 defaults_section = "defaults" NEWLINE INDENT { defaults_field } OUTDENT ;
 
-defaults_field   = "model"          ":" field_value
-                 | "provider"       ":" field_value
-                 | "retry_policy"   ":" field_value
-                 | "max_retries"    ":" INTEGER
-                 | "fidelity"       ":" field_value
-                 | "max_restarts"   ":" INTEGER
-                 | "restart_target" ":" IDENTIFIER
-                 | "cache_tools"    ":" BOOLEAN
-                 | "compaction"     ":" field_value
-                 | "on_resume"      ":" field_value ;
+defaults_field   = "model"            ":" field_value
+                 | "provider"         ":" field_value
+                 | "retry_policy"     ":" field_value
+                 | "max_retries"      ":" INTEGER
+                 | "fidelity"         ":" field_value
+                 | "max_restarts"     ":" INTEGER
+                 | "restart_target"   ":" IDENTIFIER
+                 | "on_failure"       ":" IDENTIFIER    (* default failure route node *)
+                 | "cache_tools"      ":" BOOLEAN
+                 | "compaction"       ":" field_value
+                 | "on_resume"        ":" field_value
+                 | "max_total_tokens" ":" INTEGER       (* hard token budget ceiling *)
+                 | "max_cost_cents"   ":" INTEGER       (* hard cost ceiling in USD cents *)
+                 | "max_wall_time"    ":" DURATION      (* hard wall-clock ceiling *)
+                 | "stall_timeout"    ":" DURATION ;    (* abort/route after no-progress span; 0 = disabled *)
 
 (* ═══════════════════════════════════════════════════════════ *)
 (* Vars Section                                               *)
@@ -82,6 +87,7 @@ agent_field     = "prompt"              ":" field_value
                 | "backend"           ":" field_value
                 | "working_dir"       ":" field_value
                 | "tool_access"       ":" field_value
+                | "writable_paths"    ":" identifier_list (* comma-separated path globs; non-empty required *)
                 | "max_turns"         ":" INTEGER
                 | "cmd_timeout"       ":" DURATION
                 | "goal_gate"         ":" BOOLEAN
@@ -100,7 +106,7 @@ agent_field     = "prompt"              ":" field_value
 human_node      = "human" IDENTIFIER NEWLINE
                   INDENT { human_field | common_field } OUTDENT ;
 
-human_field     = "mode"    ":" field_value       (* "freeform" | "choice" *)
+human_field     = "mode"    ":" field_value       (* "freeform" | "choice" | "interview" | "yes_no" *)
                 | "default" ":" field_value ;
 
 (* --- Tool Node -------------------------------------------- *)
@@ -108,10 +114,13 @@ human_field     = "mode"    ":" field_value       (* "freeform" | "choice" *)
 tool_node       = "tool" IDENTIFIER NEWLINE
                   INDENT { tool_field | common_field } OUTDENT ;
 
-tool_field      = "command" ":" field_value
-                | "command_file" ":" field_value
-                | "timeout" ":" DURATION
-                | "outputs" ":" identifier_list ;
+tool_field      = "command"        ":" field_value
+                | "command_file"  ":" field_value
+                | "outputs"       ":" identifier_list
+                | "marker_grep"   ":" field_value      (* regex matched line-by-line against stdout *)
+                | "route_required" ":" BOOLEAN          (* fail node if no routing signal emitted *)
+                | "output_limit"  ":" INTEGER           (* byte cap on stdout; >0 overrides engine default *)
+                | "timeout"       ":" DURATION ;
 
 (* --- Subgraph Node ---------------------------------------- *)
 
@@ -160,9 +169,11 @@ parallel_block  = "parallel" IDENTIFIER NEWLINE
 branch_decl     = "branch" ":" IDENTIFIER NEWLINE
                   [ INDENT { branch_field } OUTDENT ] ;
 
-branch_field    = "model"    ":" field_value
-                | "provider" ":" field_value
-                | "fidelity" ":" field_value ;
+branch_field    = "model"          ":" field_value
+                | "provider"       ":" field_value
+                | "fidelity"       ":" field_value
+                | "tool_access"    ":" field_value       (* "" = inherit agent's; "none" = strip tools *)
+                | "writable_paths" ":" identifier_list ; (* per-branch override; "" inherits agent's *)
 
 fan_in_node     = "fan_in" IDENTIFIER "<-" identifier_list NEWLINE ;
 
@@ -324,16 +335,21 @@ digit           = "0" | "1" | ... | "9" ;
 
 (* Workflow header: goal, requires, start, exit               *)
 (* Defaults: model, provider, retry_policy, max_retries,      *)
-(*   fidelity, max_restarts, restart_target, cache_tools,     *)
-(*   compaction                                               *)
+(*   fidelity, max_restarts, restart_target, on_failure,      *)
+(*   cache_tools, compaction, on_resume,                      *)
+(*   max_total_tokens, max_cost_cents, max_wall_time,         *)
+(*   stall_timeout                                            *)
 (* Agent: label, class, model, provider, reasoning_effort,    *)
-(*   fidelity, goal_gate, auto_status, max_turns,             *)
-(*   cmd_timeout, response_format, response_schema, params,   *)
+(*   fidelity, backend, working_dir, tool_access,             *)
+(*   writable_paths, response_format, response_schema,        *)
+(*   goal_gate, auto_status, max_turns, cmd_timeout,          *)
+(*   cache_tools, compaction, compaction_threshold, params,   *)
 (*   retry_policy, max_retries, base_delay, retry_target,     *)
 (*   fallback_target, reads, writes, system_prompt,           *)
 (*   system_prompt_file, prompt, prompt_file                  *)
 (* Human: label, mode, default, reads, writes                 *)
-(* Tool: label, timeout, reads, writes, command               *)
+(* Tool: label, outputs, marker_grep, route_required,         *)
+(*   output_limit, timeout, reads, writes, command            *)
 (* Subgraph: label, ref                                       *)
 (* Manager loop: label, retry, reads, writes, subgraph_ref,   *)
 (*   poll_interval, max_cycles, stop_condition,               *)
