@@ -410,7 +410,7 @@ func nodeValidationExplanations() map[string]Explanation {
 	}
 }
 
-// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP143).
+// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP146).
 func safetyExplanations() map[string]Explanation {
 	return map[string]Explanation{
 		DIP138: {
@@ -451,9 +451,16 @@ func safetyExplanations() map[string]Explanation {
 		DIP143: {
 			Code:    DIP143,
 			Summary: "referenced subgraph does not inherit this workflow's tool_access restrictions",
-			Trigger: "A manager_loop (subgraph_ref) or subgraph (ref) node references a child .dip file, and this workflow declares tool_access on at least one agent or parallel branch. tool_access is per-node and does not cross a file boundary, so the child's agents are governed entirely by their own file — the parent's restriction does not propagate. This is a Hint: the referencing node has no defect; the check is file-level and does not verify the restricted node and the subgraph node are related, nor does it read the child (the validator cannot parse it). Cross-file effective-access enforcement is deferred (#89).",
+			Trigger: "A manager_loop (subgraph_ref) or subgraph (ref) node references a child .dip file, and this workflow declares tool_access on at least one agent or parallel branch. tool_access is per-node and does not cross a file boundary, so the child's agents are governed entirely by their own file — the parent's restriction does not propagate. This is a Hint: the referencing node has no defect; the check is file-level and does not verify the restricted node and the subgraph node are related, nor does it read the child (the validator cannot parse it). Native `dippin lint` resolves the child and may upgrade this to DIP146 (gap) or silence; DIP143 is the filesystem-free advisory (e.g. the wasm playground) or the fallback when the child cannot be resolved.",
 			Fix:     "Open the referenced .dip and give its agents their own tool_access (e.g. tool_access: none on summarizers). Restrictions declared in the parent do not flow into a referenced subgraph. Note this bounds the child's tool catalog, not information flow across the supervisory boundary (steer_context / stack.child.* — see #56).",
 			Example: "agent Summarize\n  tool_access: none\nmanager_loop Supervise\n  subgraph_ref: child.dip   // DIP143: child.dip's agents must set their own tool_access",
+		},
+		DIP146: {
+			Code:    DIP146,
+			Summary: "child subgraph re-grants tools the parent restricted (cross-file)",
+			Trigger: "Surfaced by `dippin lint` (native, cross-file) — not by validator.Lint(), which cannot read the child. A workflow on the path from the linted entry down to a manager_loop (subgraph_ref) or subgraph (ref) boundary declares tool_access on some agent or branch (containment intent), and the resolved child workflow declares NO tool_access restriction on any of its agents or parallel branches. The pass reads and confirms the child (the precision win over DIP143) and traverses transitively, so a zero-intent grandchild is flagged too. A child that restricts every agent is silent; one that restricts some but leaves a tool-bearing agent open keeps the DIP143 advisory instead. Hint, not Warning: a fully-open child may be intentional (a trusted tool worker), and there is no per-diagnostic suppression.",
+			Fix:     "Give the referenced .dip's agents their own tool_access (e.g. tool_access: none on summarizers). Restrictions declared in a parent do not flow into a referenced subgraph. This bounds the child's tool catalog, not information flow across the supervisory boundary (steer_context / stack.child.* — see #56). A clean result means every resolvable child is fully locked down or had no restriction to escape — not that the child's tools are enforced at runtime.",
+			Example: "agent Lock\n  tool_access: none\nmanager_loop Supervise\n  subgraph_ref: worker.dip   // DIP146 if worker.dip restricts no agent's tool_access",
 		},
 	}
 }

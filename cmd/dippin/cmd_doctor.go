@@ -26,6 +26,13 @@ func (c *CLI) CmdDoctor(args []string) ExitCode {
 		return ExitError
 	}
 
+	// Note: doctor's lint summary does NOT apply the cross-file DIP146 pass /
+	// DIP143 supersession. doctor.Diagnose composes validator.Lint inside the
+	// doctor package and surfaces only hint COUNTS, not per-line diagnostics, so
+	// the CLI-layer cross-file pass can't reach it without a layering change. The
+	// effect is minor (a DIP143 vs DIP146 hint is counted the same; only a
+	// fully-restricted child differs by one hint). `dippin lint`/`check`/`watch`
+	// carry the precise DIP146 behavior. (#89)
 	report := doctor.Diagnose(w, cost.DefaultPricing())
 	return c.renderDoctorReport(report)
 }

@@ -13,9 +13,11 @@ import (
 // not inherit this workflow's tool_access restrictions. It fires only when the
 // workflow shows containment intent (some node declares tool_access), and never
 // parses the child file — the validator may not import the parser (layering
-// rule). Real cross-file effective-access enforcement is tracked as #89.
+// rule). Native `dippin lint` now resolves the child cross-file (DIP146); this
+// per-file check is the wasm/playground advisory and the fallback when the child
+// cannot be resolved (#89).
 func lintSubgraphToolAccess(w *ir.Workflow) []Diagnostic {
-	if !workflowDeclaresToolAccess(w) {
+	if !WorkflowDeclaresToolAccess(w) {
 		return nil
 	}
 	var diags []Diagnostic
@@ -27,20 +29,22 @@ func lintSubgraphToolAccess(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
-// workflowDeclaresToolAccess reports whether any node expresses tool_access
-// containment intent.
-func workflowDeclaresToolAccess(w *ir.Workflow) bool {
+// WorkflowDeclaresToolAccess reports whether any node in w expresses tool_access
+// containment intent (an agent or parallel branch with a non-empty tool_access).
+// Exported so the CLI's cross-file pass (DIP146) reuses DIP143's exact intent
+// logic — wasm-safe, pure IR.
+func WorkflowDeclaresToolAccess(w *ir.Workflow) bool {
 	for _, n := range w.Nodes {
-		if nodeDeclaresToolAccess(n) {
+		if NodeDeclaresToolAccess(n) {
 			return true
 		}
 	}
 	return false
 }
 
-// nodeDeclaresToolAccess reports whether an agent (or any parallel branch)
+// NodeDeclaresToolAccess reports whether an agent (or any parallel branch)
 // declares a non-empty tool_access value.
-func nodeDeclaresToolAccess(n *ir.Node) bool {
+func NodeDeclaresToolAccess(n *ir.Node) bool {
 	switch cfg := n.Config.(type) {
 	case ir.AgentConfig:
 		return toolAccessSet(cfg.ToolAccess)
@@ -82,7 +86,7 @@ func checkSubgraphBoundary(n *ir.Node) *Diagnostic {
 			kind, n.ID, ref),
 		Location: n.Source,
 		Help: fmt.Sprintf(
-			"audit the agents in %q for their own tool_access — restrictions declared in this workflow do not propagate into a referenced subgraph. Cross-file enforcement is tracked as #89.",
+			"audit the agents in %q for their own tool_access — restrictions declared in this workflow do not propagate into a referenced subgraph. Native `dippin lint` resolves the child (DIP146); this advisory is the filesystem-free check or the fallback when the child cannot be resolved.",
 			ref),
 	}
 }

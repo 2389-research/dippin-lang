@@ -135,6 +135,7 @@ func (c *CLI) lintAndPrint(path string) {
 	valRes := validator.Validate(w)
 	lintRes := validator.Lint(w)
 	all := append(valRes.Diagnostics, lintRes.Diagnostics...)
+	all = applyCrossFileToolAccess(all, w, path)
 
 	if len(all) == 0 {
 		fmt.Fprintln(c.Stdout, "  \u2714 no issues")

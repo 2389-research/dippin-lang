@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 54 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (53 documented sections):
+Dippin registers 55 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (54 documented sections):
 
 - **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP145): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP146): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP009<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP145<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP146<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -224,7 +224,7 @@ error[DIP009]: duplicate edge
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP145)
+## Semantic Lint Warnings (DIP101–DIP146)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1146,6 +1146,40 @@ means *unlimited*, not "zero budget."
 
 ---
 
+### DIP146: Child Subgraph Re-Grants Restricted Tools (cross-file)
+
+`dippin lint` resolves a `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`)
+child across the file boundary and finds it declares **no** `tool_access`
+restriction on any agent, while a workflow on the path from the linted entry
+restricts tools. Unlike DIP143 (which cannot read the child), DIP146 reads and
+confirms the child, and traverses transitively.
+
+```text
+hint[DIP146]: manager_loop "Supervise" delegates to subgraph "worker.dip", which declares no tool_access restriction on any agent; a workflow on this path restricts tools, but the restriction does not cross the subgraph boundary
+```
+
+**Trigger:** A workflow on the path declares `tool_access` on some agent/branch,
+and a resolved child restricts none of its agents. A child that restricts every
+agent is silent; one that restricts some but leaves a tool-bearing agent open
+keeps the DIP143 advisory instead. Emitted by the CLI only (native), not by the
+wasm/playground linter.
+
+**Fix:** Give the child's agents their own `tool_access` (e.g. `tool_access:
+none`). Restrictions in a parent do not flow into a referenced subgraph.
+
+**What DIP146 does NOT check:** DIP146 *does* traverse transitively — a
+zero-intent grandchild is flagged. The limitation is narrower: a **partial-audit
+or unparseable** child deeper than the entry's direct boundaries gets no
+*additional* advisory, because the DIP143 fallback is only emitted for the linted
+file itself. Also out of scope:
+information flow across the supervisory boundary (`steer_context` /
+`stack.child.*` — see [#56](https://github.com/2389-research/dippin-lang/issues/56));
+runtime enforcement (the tracker runtime enforces; dippin detects). A clean
+result means every resolvable child is fully locked down or had no restriction to
+escape — not that the child's tools are restricted at runtime.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1162,7 +1196,7 @@ Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP009 errors and DIP101–DIP145 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP009 errors and DIP101–DIP146 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 
