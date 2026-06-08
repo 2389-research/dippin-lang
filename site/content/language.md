@@ -58,6 +58,8 @@ The optional `defaults` block sets graph-level configuration that applies to all
     max_restarts: 5
     cache_tools: true
     compaction: summary
+    stall_timeout: 5m
+    on_failure: Escalate
 ```
 
 | Field | Type | Description |
@@ -70,6 +72,8 @@ The optional `defaults` block sets graph-level configuration that applies to all
 | `max_restarts` | Integer | Max loop restarts before pipeline failure (default: 5) |
 | `cache_tools` | Boolean | Whether to cache tool call results |
 | `compaction` | String | Context compaction mode for long pipelines |
+| `stall_timeout` | Duration | Abort/route when no forward progress is made for a wall-clock span (e.g. `30s`, `5m`); `0`/unset = no limit. Enforced by the runtime. |
+| `on_failure` | NodeID | Graph-level catch-all failure route — the runtime sends a failing node here when no more specific route (fail edge → bounded retry → `fallback_target`) matches. Carried + linted by dippin; enforced by the runtime. |
 
 ### Tool safety
 

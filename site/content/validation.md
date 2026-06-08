@@ -99,6 +99,14 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: remove the duplicate edge</pre>
 </div>
 
+<div class="diag-card error">
+  <span class="diag-code">DIP010</span> — Unparseable Edge Condition
+  <p>Every edge <code>when</code> condition must parse into a valid expression. An unparseable condition — an unknown operator, or a tool-node field like <code>marker_grep</code> used in operator position — leaves the edge's routing undefined, so the workflow cannot execute. One diagnostic fires per bad edge; every parseable edge is still checked.</p>
+  <pre>error[DIP010]: edge A -&gt; Z: invalid condition "marker_grep \"^ok\"": unknown operator "^ok"
+  --&gt; pipeline.dip:14:5
+  = help: valid operators: = == != contains startswith endswith in</pre>
+</div>
+
 ## Semantic Warnings (DIP101-DIP146)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
@@ -246,3 +254,46 @@ These flag likely bugs or questionable patterns. Warnings alone exit 0.
 Fires when `max_retries` is set in defaults and the workflow has `restart: true` edges, but `max_restarts` is not set. These are commonly confused: `max_retries` controls per-node LLM retries, while `max_restarts` controls the global loop restart budget.
 
 **Fix:** Set `max_restarts` in defaults to control loop iterations, or add it alongside `max_retries` if both behaviors are intended.
+
+### DIP143 — Referenced subgraph does not inherit `tool_access`
+
+**Severity:** Hint
+
+A `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) node references a child `.dip` while this workflow declares a `tool_access` restriction — and `tool_access` does not cross the file boundary. The lint cannot read the child, so it reminds you to give the child's agents their own `tool_access`. (For the resolved cross-file check that *reads* the child, see DIP146.)
+
+```text
+hint[DIP143]: manager_loop "Supervise" references subgraph "child.dip", defined in its own file; this workflow's tool_access restrictions do not extend across the subgraph boundary
+```
+
+### DIP144 — Agent node has no failure route
+
+**Severity:** Warning
+
+An agent node has no way to handle failure — no `ctx.outcome = fail` edge, no `fallback_target`, no bounded retry (`retry_target` + `max_retries`), and no graph-level `on_failure`. Any one of those suppresses it; an unconditional/success edge does not.
+
+```text
+warning[DIP144]: agent node "Build" has no failure route (no fail edge, no fallback_target, no bounded retry, no graph on_failure)
+  = help: add `-> <node> when ctx.outcome = fail`, set fallback_target:, add retry_target with max_retries, or declare a workflow-level on_failure:
+```
+
+### DIP145 — Negative graph budget default
+
+**Severity:** Warning
+
+A graph budget default (`max_total_tokens`, `max_cost_cents`, `max_wall_time`, or `stall_timeout`) is set to a negative value. Budgets are non-negative; `0` (or unset) means **no limit**.
+
+```text
+warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be negative
+```
+
+### DIP146 — Child subgraph re-grants restricted tools (cross-file)
+
+**Severity:** Hint
+
+`dippin lint` resolves a `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) child across the file boundary and finds it declares **no** `tool_access` restriction on any agent, while a workflow on the path from the linted entry restricts tools. Unlike DIP143 (which cannot read the child), DIP146 reads and confirms the child and traverses transitively. Detection only — dippin flags the gap; runtime enforcement is separate.
+
+```text
+hint[DIP146]: manager_loop "Supervise" delegates to subgraph "worker.dip", which declares no tool_access restriction on any agent; a workflow on this path restricts tools, but the restriction does not cross the subgraph boundary
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP146) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
