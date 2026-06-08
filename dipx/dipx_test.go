@@ -627,3 +627,52 @@ func TestPack_HonorsContextCancellation(t *testing.T) {
 		t.Fatalf("Pack err = %v, want context.Canceled", err)
 	}
 }
+
+// TestReadNoFollowSymlinks pins the contract of the now-exported no-follow read
+// primitive: happy path reads, leaf-symlink refusal, ancestor-symlink refusal,
+// and the not-regular-file branch (the documented fail-soft path for a ref that
+// resolves to a directory, including the root dir itself).
+func TestReadNoFollowSymlinks(t *testing.T) {
+	root := t.TempDir()
+
+	good := filepath.Join(root, "good.dip")
+	if err := os.WriteFile(good, []byte(minimalDipSrc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	data, err := ReadNoFollowSymlinks(good, root)
+	if err != nil {
+		t.Fatalf("happy path: unexpected err %v", err)
+	}
+	if string(data) != minimalDipSrc {
+		t.Fatalf("happy path: content mismatch")
+	}
+
+	// not-regular-file (directory) refused — symlink-independent, so it runs on
+	// every platform even when os.Symlink is unsupported and the cases below skip.
+	if _, err := ReadNoFollowSymlinks(root, root); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("not-regular-file (directory): err = %v, want ErrPathUnsafe", err)
+	}
+
+	link := filepath.Join(root, "link.dip")
+	if err := os.Symlink(good, link); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	if _, err := ReadNoFollowSymlinks(link, root); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("leaf symlink: err = %v, want ErrPathUnsafe", err)
+	}
+
+	realdir := filepath.Join(root, "real")
+	if err := os.Mkdir(realdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(realdir, "f.dip"), []byte(minimalDipSrc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	linkdir := filepath.Join(root, "linkdir")
+	if err := os.Symlink(realdir, linkdir); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	if _, err := ReadNoFollowSymlinks(filepath.Join(linkdir, "f.dip"), root); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("ancestor symlink: err = %v, want ErrPathUnsafe", err)
+	}
+}

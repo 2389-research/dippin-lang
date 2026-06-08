@@ -145,7 +145,7 @@ dippin-lang/
 │   ├── bundle.go       # Bundle (Workflow, Identity, Manifest, ReadFile)
 │   ├── zipio.go        # Constrained zip reader (rejects forbidden features)
 │   ├── resolve.go      # Path canonicalization, Windows reserved names
-│   ├── helpers.go      # Hash verify, parse-and-link, walkSourceTree
+│   ├── helpers.go      # Hash verify, parse-and-link, walkSourceTree, ReadNoFollowSymlinks (shared no-follow read)
 │   └── errors.go       # BundleError sentinels
 │
 ├── scaffold/           # Template scaffolding for `dippin new`

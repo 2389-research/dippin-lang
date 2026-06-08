@@ -314,7 +314,7 @@ func (s *packWalkState) visitNext() error {
 // Enforces the per-file uncompressed cap (maxPerFileBytes) at Pack time so
 // the producer cannot emit a bundle that fails its own round-trip in Open.
 func (s *packWalkState) readAndRecord(cur string) (packedFile, *ir.Workflow, error) {
-	raw, err := readNoFollowSymlinks(cur, s.rootDir)
+	raw, err := ReadNoFollowSymlinks(cur, s.rootDir)
 	if err != nil {
 		return packedFile{}, nil, err
 	}
@@ -382,18 +382,25 @@ func parsePackSource(path string, raw []byte, isEntry bool) (*ir.Workflow, error
 	return wf, nil
 }
 
-// readNoFollowSymlinks reads a file, refusing to follow symlinks at the leaf
-// OR at any intermediate path component between rootDir and path. This closes
-// a parent-component-symlink data-exfil vector in Pack: a source tree
-// containing `workflows/phases -> /etc` would otherwise let Pack embed
-// `/etc/foo.dip` as `workflows/phases/foo.dip` because Lstat on the leaf
-// reports a regular file, not a symlink.
+// ReadNoFollowSymlinks reads a file, refusing to follow symlinks at the leaf OR
+// at any intermediate path component between rootDir and path. Shared by the
+// Pack walker and the cross-file tool_access lint (cmd/dippin) so both refuse
+// symlinks identically. It closes a parent-component-symlink data-exfil vector:
+// a tree containing `sub -> /etc` would otherwise let a leaf `sub/foo.dip` read
+// `/etc/foo.dip`, because Lstat on the leaf reports a regular file, not a symlink.
 //
-// rootDir itself is treated as the trust anchor: it is an absolute path
-// supplied by the CLI, may itself be a user-specified symlink, and is not
-// re-validated. Components strictly between rootDir and path's leaf MUST be
-// directories that are not symlinks.
-func readNoFollowSymlinks(path, rootDir string) ([]byte, error) {
+// It does NOT perform the `..`-escape (containment) check — callers MUST run that
+// separately BEFORE calling this (the pack walker via resolveRefOnDisk, the lint
+// via ensureUnderRoot) and MUST pass a path already proven to be under rootDir.
+// rootDir is only the ancestor-scan boundary here: if path is not under rootDir,
+// filepath.Rel yields `..` components and the ancestor scan would Lstat paths
+// outside rootDir.
+//
+// rootDir itself is treated as the trust anchor: it is an absolute path supplied
+// by the caller, may itself be a user-specified symlink, and is not re-validated.
+// Components strictly between rootDir and path's leaf MUST be directories that are
+// not symlinks.
+func ReadNoFollowSymlinks(path, rootDir string) ([]byte, error) {
 	if err := assertNoSymlinkAncestor(path, rootDir); err != nil {
 		return nil, err
 	}
