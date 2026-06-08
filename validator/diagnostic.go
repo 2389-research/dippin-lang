@@ -5,9 +5,11 @@
 // cycle detection, parallel/fan-in pairing, duplicate detection, and edge
 // condition parseability.
 //
-// The validator is a pure IR consumer — it takes a *ir.Workflow and returns
-// a Result containing all diagnostics found. It always runs all checks and
-// never short-circuits, so a single pass reports everything.
+// The validator takes a *ir.Workflow and returns a Result containing all
+// diagnostics found. It always runs all checks and never short-circuits, so a
+// single pass reports everything. Validate has one documented side effect: it
+// lazily populates edge Condition.Parsed for parseable conditions (idempotent),
+// so callers should not assume the workflow is left unmutated.
 package validator
 
 import (
