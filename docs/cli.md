@@ -103,7 +103,7 @@ dippin validate <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: The 9 structural validation rules that must pass for a workflow to be executable. See [validation.md](validation.md) for details on each code.
+**Checks**: The 10 structural validation rules that must pass for a workflow to be executable. See [validation.md](validation.md) for details on each code.
 
 **Output**:
 - If all checks pass: `"validation passed"` (text mode) or empty JSON array
@@ -124,7 +124,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 
 ### lint
 
-Run both structural validation and semantic linting (DIP001–DIP010 + DIP101–DIP145).
+Run both structural validation and semantic linting (DIP001–DIP010 + DIP101–DIP146).
 
 ```bash
 dippin lint [--extra-models <spec>] <file>
@@ -132,7 +132,7 @@ dippin lint [--extra-models <spec>] <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: All 55 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP145) are reported but don't affect the exit code.
+**Checks**: All 55 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP146) are reported but don't affect the exit code.
 
 **Output**: All diagnostics (errors and warnings) to stderr.
 

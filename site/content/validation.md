@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP134): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP146): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -99,7 +99,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: remove the duplicate edge</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP134)
+## Semantic Warnings (DIP101-DIP146)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
