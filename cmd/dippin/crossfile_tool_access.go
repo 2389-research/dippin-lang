@@ -44,8 +44,11 @@ func crossFileToolAccess(entry *ir.Workflow, entryPath string) ([]validator.Diag
 	intentSeen := validator.WorkflowDeclaresToolAccess(entry)
 	// root is the containment anchor for every child ref, captured ONCE from the
 	// entry's directory and threaded unchanged (never recomputed per-parent — see
-	// spec D2/C2). absOrClean makes it absolute so ensureUnderRoot's filepath.Rel
-	// can compare it against absolute child targets.
+	// spec D2/C2). absOrClean makes it absolute when possible (it falls back to a
+	// lexical Clean only if filepath.Abs fails, e.g. an unavailable cwd) so
+	// ensureUnderRoot's filepath.Rel can compare it against absolute child targets;
+	// in the fallback case a relative root simply fails the Rel check and refuses,
+	// which is the safe (fail-soft) direction.
 	root := filepath.Dir(absOrClean(entryPath))
 	walkBoundaries(entry, intentSeen, 0, root, visited, &diags, classified)
 	return diags, classified

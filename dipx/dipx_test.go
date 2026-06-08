@@ -647,6 +647,12 @@ func TestReadNoFollowSymlinks(t *testing.T) {
 		t.Fatalf("happy path: content mismatch")
 	}
 
+	// not-regular-file (directory) refused — symlink-independent, so it runs on
+	// every platform even when os.Symlink is unsupported and the cases below skip.
+	if _, err := ReadNoFollowSymlinks(root, root); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("not-regular-file (directory): err = %v, want ErrPathUnsafe", err)
+	}
+
 	link := filepath.Join(root, "link.dip")
 	if err := os.Symlink(good, link); err != nil {
 		t.Skip("symlinks not supported on this platform")
@@ -668,9 +674,5 @@ func TestReadNoFollowSymlinks(t *testing.T) {
 	}
 	if _, err := ReadNoFollowSymlinks(filepath.Join(linkdir, "f.dip"), root); !errors.Is(err, ErrPathUnsafe) {
 		t.Fatalf("ancestor symlink: err = %v, want ErrPathUnsafe", err)
-	}
-
-	if _, err := ReadNoFollowSymlinks(realdir, root); !errors.Is(err, ErrPathUnsafe) {
-		t.Fatalf("not-regular-file (directory): err = %v, want ErrPathUnsafe", err)
 	}
 }
