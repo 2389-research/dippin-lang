@@ -61,7 +61,7 @@ Editor / agent integrations:
 ```sh
 dippin parse pipeline.dip          # JSON IR
 dippin validate pipeline.dip       # structural errors (DIP001-DIP010)
-dippin lint pipeline.dip           # semantic warnings (DIP101-DIP146)
+dippin lint pipeline.dip           # validation + semantic warnings (DIP101-DIP146)
 dippin format pipeline.dip         # canonical formatting
 dippin doctor pipeline.dip         # A-F health report
 dippin cost pipeline.dip           # per-run cost estimate
