@@ -233,7 +233,7 @@ condition leaves the edge's routing undefined, so the workflow cannot execute â€
 it fails at `dippin simulate` and at runtime. The most common cause is using a
 tool-node field (like `marker_grep`) or an unknown operator in operator position.
 
-```
+```text
 error[DIP010]: edge A -> Z: invalid condition "marker_grep \"^ok\"": unknown operator "^ok"
   --> pipeline.dip:14:5
   = help: valid operators: = == != contains startswith endswith in (combine with and/or/not)
