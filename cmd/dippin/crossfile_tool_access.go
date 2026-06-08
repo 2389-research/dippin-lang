@@ -66,19 +66,47 @@ func walkBoundaries(w *ir.Workflow, intentSeen bool, depth int, root string, vis
 }
 
 // visitBoundary resolves one boundary's child, records its posture, emits DIP146
-// when the path shows intent and the child is zero-intent, then recurses.
+// when the path shows intent and the child is zero-intent (or a deep DIP143
+// advisory when the child is partial/unresolved — see deepBoundaryDiag), then
+// recurses.
 func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	child, childPath := resolveBoundaryChild(n, ref, root)
-	if child == nil {
-		classified[n.Source] = postureUnresolved
-		return
+	posture := postureUnresolved // resolveBoundaryChild fail-soft: nil child => unresolved
+	if child != nil {
+		posture = classifyChild(child)
 	}
-	posture := classifyChild(child)
 	classified[n.Source] = posture
-	if intentSeen && posture == postureZeroIntent {
-		*diags = append(*diags, boundaryDiag(n, ref))
+	if d := boundaryAdvisory(n, ref, intentSeen, posture, depth); d != nil {
+		*diags = append(*diags, *d)
 	}
-	maybeRecurse(child, childPath, intentSeen, depth, root, visited, diags, classified)
+	if child != nil {
+		maybeRecurse(child, childPath, intentSeen, depth, root, visited, diags, classified)
+	}
+}
+
+// boundaryAdvisory returns the diagnostic a boundary warrants, or nil for silence:
+// DIP146 for a zero-intent child (the precise gap), or the cross-file DIP143 advisory
+// for a partial-audit/unresolvable child at depth >= 1 (see deepAdvisory). Mirrors
+// validator's checkSubgraphBoundary nil-means-silent shape.
+func boundaryAdvisory(n *ir.Node, ref string, intentSeen bool, posture childPosture, depth int) *validator.Diagnostic {
+	switch {
+	case intentSeen && posture == postureZeroIntent:
+		d := boundaryDiag(n, ref)
+		return &d
+	case deepAdvisory(intentSeen, posture, depth):
+		d := deepBoundaryDiag(n, ref, posture)
+		return &d
+	}
+	return nil
+}
+
+// deepAdvisory reports whether a boundary warrants the cross-file DIP143 advisory
+// (#102): the path shows tool_access intent, the resolved child is partial-audit or
+// unresolvable, and the boundary lives below the entry (depth >= 1). The depth guard
+// is load-bearing — entry-file boundaries (depth 0) already get DIP143 from
+// validator.Lint, so emitting here too would double-flag the entry.
+func deepAdvisory(intentSeen bool, posture childPosture, depth int) bool {
+	return intentSeen && depth >= 1 && (posture == posturePartial || posture == postureUnresolved)
 }
 
 // maybeRecurse descends into a child's own boundaries unless it was already
@@ -221,6 +249,46 @@ func boundaryDiag(n *ir.Node, ref string) validator.Diagnostic {
 			kind, n.ID, ref),
 		Location: n.Source,
 		Help:     "give the referenced .dip's agents their own tool_access (e.g. tool_access: none); this bounds the child's tool catalog, not information flow across the supervisory boundary (see #56). Multiple boundaries referencing the same child each get a hint; one tool_access edit clears them all.",
+	}
+}
+
+// deepBoundaryDiag builds the cross-file DIP143 advisory (#102) for a partial-audit
+// or unresolvable child found below the entry file (depth >= 1). The entry-only
+// DIP143 fallback from validator.Lint never sees these deep boundaries, so a
+// partial/unresolved child reached through an already-audited intermediate would
+// otherwise be silent. It reuses DIP143 (not a new code): same posture gap, same Hint
+// severity — only surfaced from the pass that resolved the deep child rather than from
+// the per-file lint. Unlike validator's entry-file DIP143 (which can never read the
+// child), the wording reflects what was found, distinguishing partial-audit from
+// unresolvable. These findings ride in the appended cross results and are never run
+// through supersedes() (partial/unresolved are never superseded).
+func deepBoundaryDiag(n *ir.Node, ref string, posture childPosture) validator.Diagnostic {
+	kind, _ := boundaryKindRef(n)
+	var detail, help string
+	if posture == posturePartial {
+		// "does not restrict every agent" (not "restricts some but not all"):
+		// posturePartial also covers a child whose only intent is a parallel-branch
+		// tool_access while every agent-level tool_access is empty (countAgents'
+		// AgentConfig-only census), where zero agents are restricted. The invariant
+		// that always holds is restricted < agents => >=1 tool-bearing agent open.
+		detail = "does not restrict every agent, leaving at least one tool-bearing agent open to the full tool catalog"
+		help = fmt.Sprintf(
+			"a workflow on this path restricts tools, but subgraph %q leaves at least one agent open to the full tool catalog. Audit that agent and give it its own tool_access (e.g. tool_access: none). Multiple boundaries referencing the same child each get a hint; one tool_access edit clears them all.",
+			ref)
+	} else {
+		detail = "could not be resolved or parsed (missing, unparseable, or refused), so its tool_access posture is unknown"
+		help = fmt.Sprintf(
+			"a workflow on this path restricts tools, but subgraph %q could not be resolved, so its agents' tool_access cannot be verified. Audit it manually. Multiple boundaries referencing the same child each get a hint.",
+			ref)
+	}
+	return validator.Diagnostic{
+		Code:     validator.DIP143,
+		Severity: validator.SeverityHint,
+		Message: fmt.Sprintf(
+			"%s %q references subgraph %q, a nested cross-file child that %s; this workflow's tool_access restrictions do not extend across the subgraph boundary",
+			kind, n.ID, ref, detail),
+		Location: n.Source,
+		Help:     help,
 	}
 }
 

@@ -715,6 +715,198 @@ func TestCrossFile_SymlinkCycleRefused(t *testing.T) {
 	}
 }
 
+// --- #102: deep (depth>=1) partial-audit / unresolvable advisory (reuses DIP143) ---
+
+// TestCrossFile_DeepPartialChildFiresDIP143 is the core #102 case: entry (restricts)
+// -> child (full-restrict, so entry->child is DIP146-silent) -> grandchild (PARTIAL:
+// restricts agent A, leaves tool-bearing B open). The grandchild's partial-audit gap
+// is behind an already-audited intermediate, so validator.Lint (entry-only) never sees
+// it. The cross pass must emit its own DIP143 (Hint) at the child->grandchild boundary.
+func TestCrossFile_DeepPartialChildFiresDIP143(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childWithBoundary("grand.dip"),
+		"grand.dip": childPartial,
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 1 {
+		t.Fatalf("want 1 deep DIP143 on the child->grandchild boundary, got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (grandchild is partial, not zero-intent), got %d", got)
+	}
+	for _, d := range diags {
+		if d.Code == validator.DIP143 && d.Severity != validator.SeverityHint {
+			t.Errorf("deep DIP143 must be Hint, got %v", d.Severity)
+		}
+	}
+}
+
+// TestCrossFile_DeepUnresolvableChildFiresDIP143: entry (restricts) -> child
+// (full-restrict) -> grandchild that does not exist on disk. The grandchild boundary
+// classifies as postureUnresolved at depth 1; the cross pass emits a deep DIP143.
+func TestCrossFile_DeepUnresolvableChildFiresDIP143(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childWithBoundary("missing.dip"), // no missing.dip on disk
+	})
+	diags, classified := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 1 {
+		t.Fatalf("want 1 deep DIP143 on the unresolvable grandchild boundary, got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (unresolvable child), got %d", got)
+	}
+	if !hasPosture(classified, postureUnresolved) {
+		t.Errorf("want the grandchild boundary classified unresolved: %v", classified)
+	}
+}
+
+// TestCrossFile_EntryPartialNoDoubleEmit: an ENTRY-level (depth 0) partial child must
+// yield EXACTLY ONE DIP143 end-to-end — the entry's, from validator.Lint — not two.
+// The cross pass must not also emit a deep advisory for the depth-0 boundary (the
+// depth>=1 guard). This pins the no-double-flag invariant through the real composition.
+func TestCrossFile_EntryPartialNoDoubleEmit(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childPartial,
+	})
+	entryPath := filepath.Join(dir, "entry.dip")
+	w, err := loadWorkflow(entryPath)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	base := validator.Lint(w).Diagnostics
+	if got := countCode(base, validator.DIP143); got != 1 {
+		t.Fatalf("precondition: want 1 entry DIP143 from validator.Lint, got %d", got)
+	}
+	final := applyCrossFileToolAccess(base, w, entryPath)
+	if got := countCode(final, validator.DIP143); got != 1 {
+		t.Fatalf("want exactly 1 DIP143 (entry's; no deep double-emit at depth 0), got %d: %v", got, final)
+	}
+}
+
+// TestCrossFile_DeepPartialSilentWithoutIntent: when NO workflow on the path restricts
+// tools (intentSeen false), a deep partial child gets no advisory — there is no
+// restriction to escape. Matches DIP146's gate.
+func TestCrossFile_DeepPartialSilentWithoutIntent(t *testing.T) {
+	// entry (no intent) -> mid (no intent) -> grandchild (partial).
+	midNoIntent := `workflow Mid
+  start: Go
+  exit: Sup
+
+  human Go
+    mode: freeform
+
+  manager_loop Sup
+    subgraph_ref: grand.dip
+    max_cycles: 3
+
+  edges
+    Go -> Sup
+`
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryNoIntentRefs("mid.dip"),
+		"mid.dip":   midNoIntent,
+		"grand.dip": childPartial,
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 0 {
+		t.Fatalf("want 0 deep DIP143 (no intent on path), got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (no intent on path), got %d", got)
+	}
+}
+
+// TestCrossFile_DeepZeroIntentStillDIP146: a zero-intent deep child still fires DIP146
+// (the precise gap), NOT the new partial/unresolved DIP143 — unchanged by #102.
+func TestCrossFile_DeepZeroIntentStillDIP146(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childWithBoundary("grand.dip"),
+		"grand.dip": childZeroIntent,
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 1 {
+		t.Fatalf("want 1 DIP146 on the deep zero-intent boundary, got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP143); got != 0 {
+		t.Fatalf("want 0 DIP143 (zero-intent is DIP146's job, not the new advisory), got %d", got)
+	}
+}
+
+// TestCrossFile_DeepPartialAtDepth2 pins that the advisory is gated on depth >= 1,
+// not "exactly 1": a partial child three hops down (entry -> child -> grand -> great,
+// the great boundary living at depth 2) still fires exactly one deep DIP143. Guards
+// against a future refactor mis-threading depth past the first hop.
+func TestCrossFile_DeepPartialAtDepth2(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childWithBoundary("grand.dip"), // full-restrict, depth-0 boundary
+		"grand.dip": childWithBoundary("great.dip"), // full-restrict, depth-1 boundary
+		"great.dip": childPartial,                   // partial, classified at the depth-2 boundary
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 1 {
+		t.Fatalf("want 1 deep DIP143 at the depth-2 (grand->great) boundary, got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146, got %d", got)
+	}
+}
+
+// TestCrossFile_DiamondOntoPartialChild pins the per-boundary cardinality for the new
+// code path: two restricting parents (P1, P2) each delegate to the SAME partial child,
+// so each P->child boundary (depth 1) fires its own deep DIP143 => 2 findings. The
+// visited set gates recursion into the shared child, not emission — mirroring the
+// DIP146 diamond (TestCrossFile_DiamondTwoFindings) for the partial/DIP143 case.
+func TestCrossFile_DiamondOntoPartialChild(t *testing.T) {
+	parent := func(name, ref string) string {
+		return `workflow ` + name + `
+  start: Lock
+  exit: Sup
+
+  agent Lock
+    prompt: "x"
+    tool_access: none
+
+  manager_loop Sup
+    subgraph_ref: ` + ref + `
+    max_cycles: 3
+
+  edges
+    Lock -> Sup
+`
+	}
+	entry := `workflow Entry
+  start: P1
+  exit: P2
+
+  subgraph P1
+    ref: p1.dip
+
+  subgraph P2
+    ref: p2.dip
+
+  edges
+    P1 -> P2
+`
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":  entry,
+		"p1.dip":     parent("P1", "shared.dip"),
+		"p2.dip":     parent("P2", "shared.dip"),
+		"shared.dip": childPartial,
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 2 {
+		t.Fatalf("want 2 deep DIP143 (one per parent->shared boundary), got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (shared child is partial), got %d", got)
+	}
+}
+
 // firstDiags runs the pass and returns only the diagnostics (helper for cases that
 // don't inspect the classified map).
 func firstDiags(t *testing.T, dir, entry string) []validator.Diagnostic {

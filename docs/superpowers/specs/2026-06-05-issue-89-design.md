@@ -188,11 +188,13 @@ exactly as today. `validator` still owns DIP143 entirely (unit tests unaffected)
 `CmdLint`'s composition changes — an accepted, test-pinned coupling (the integration test
 guards the location join against a future DIP143 location change).
 
-**Known limitation (documented):** DIP143 is a per-file lint that runs only on the entry, so a
-**partial-audit or unparseable child at depth > 1** (behind an already-audited intermediate)
-is **not** separately flagged — the retained-DIP143 backstop covers the entry's direct
-boundaries only. Deeper boundaries get DIP146 (for zero-intent gaps) but no partial/unresolved
-advisory. Recorded as a follow-up. *(Security I2)*
+**Known limitation (~~documented~~ resolved in [#102](https://github.com/2389-research/dippin-lang/issues/102)):**
+DIP143 is a per-file lint that runs only on the entry, so a **partial-audit or unparseable child
+at depth > 1** (behind an already-audited intermediate) was **not** separately flagged by
+`validator.Lint` — the retained-DIP143 backstop covered the entry's direct boundaries only.
+#102 closes this: the cross-file pass now emits its own DIP143 advisory (Hint, gated by path
+intent) for partial-audit/unresolvable children at depth >= 1, mirroring how it CLI-emits
+DIP146 for deep zero-intent gaps. *(Security I2)*
 
 ### Severity: `Hint` (not Warning)
 
