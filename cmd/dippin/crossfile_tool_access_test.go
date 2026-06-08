@@ -470,3 +470,121 @@ func TestCrossFile_IntentionalOpenWorkerFires(t *testing.T) {
 		t.Fatalf("want 1 DIP146 (known intentional-open FP, Hint-mitigated), got %d", got)
 	}
 }
+
+// childWithBoundary is a full-restrict child that itself delegates to `ref`,
+// so a refusal/resolution can be observed one hop below the entry.
+func childWithBoundary(ref string) string {
+	return `workflow Child
+  start: Lock
+  exit: Sup
+
+  agent Lock
+    prompt: "x"
+    tool_access: none
+
+  manager_loop Sup
+    subgraph_ref: ` + ref + `
+    max_cycles: 3
+
+  edges
+    Lock -> Sup
+`
+}
+
+func hasPosture(classified map[ir.SourceLocation]childPosture, want childPosture) bool {
+	for _, p := range classified {
+		if p == want {
+			return true
+		}
+	}
+	return false
+}
+
+// T1 — a boundary child ref that is a SYMLINK (even to a legitimate in-root .dip)
+// is refused: fail-soft -> postureUnresolved, DIP143 retained (supersedes==false),
+// no DIP146, no error. Also pins the policy that a benign in-root symlink target
+// is still refused unconditionally (do not "fix" into a false-positive exception).
+func TestCrossFile_SymlinkedChildRefused(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":     entryRestrictsRefs("child.dip"),
+		"realchild.dip": childZeroIntent,
+	})
+	if err := os.Symlink(filepath.Join(dir, "realchild.dip"), filepath.Join(dir, "child.dip")); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	diags, classified := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (symlinked child refused), got %d", got)
+	}
+	for _, p := range classified {
+		if p != postureUnresolved {
+			t.Errorf("want postureUnresolved (DIP143 retained), got %v", p)
+		}
+	}
+}
+
+// T2 — a child ref that ESCAPES the entry-file containment root is refused
+// fail-soft. The entry lives in a subdir so its root is dir/sub; `../escape.dip`
+// resolves to dir/escape.dip, outside root but inside the temp tree (so current,
+// unhardened code WOULD read it and fire DIP146 — making this red-first).
+func TestCrossFile_RootEscapingChildRefused(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"sub/entry.dip": entryRestrictsRefs("../escape.dip"),
+		"escape.dip":    childZeroIntent,
+	})
+	diags, classified := crossDiags(t, dir, "sub/entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (root-escaping child refused), got %d", got)
+	}
+	for _, p := range classified {
+		if p != postureUnresolved {
+			t.Errorf("want postureUnresolved (DIP143 retained), got %v", p)
+		}
+	}
+}
+
+// T6 — a child reached through a SYMLINKED ANCESTOR DIRECTORY is refused
+// (the assertNoSymlinkAncestor vector), even though the leaf itself is a real file.
+func TestCrossFile_SymlinkedAncestorRefused(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":         entryRestrictsRefs("linkdir/child.dip"),
+		"realdir/child.dip": childZeroIntent,
+	})
+	if err := os.Symlink(filepath.Join(dir, "realdir"), filepath.Join(dir, "linkdir")); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	diags, classified := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (symlinked ancestor refused), got %d", got)
+	}
+	for _, p := range classified {
+		if p != postureUnresolved {
+			t.Errorf("want postureUnresolved (DIP143 retained), got %v", p)
+		}
+	}
+}
+
+// T11 — refusal at DEPTH: entry -> child (real, full-restrict) -> grandchild via
+// a symlink. The child classifies normally (full-restrict, no DIP146); the
+// grandchild boundary is refused (postureUnresolved); recursion continues without
+// abort. Distinct code path from T1 (refusal mid-recursion).
+func TestCrossFile_SymlinkRefusalAtDepth(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":     entryRestrictsRefs("child.dip"),
+		"child.dip":     childWithBoundary("grandlink.dip"),
+		"realgrand.dip": childZeroIntent,
+	})
+	if err := os.Symlink(filepath.Join(dir, "realgrand.dip"), filepath.Join(dir, "grandlink.dip")); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	diags, classified := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (grandchild symlink refused), got %d: %v", got, diags)
+	}
+	if !hasPosture(classified, postureFullRestrict) {
+		t.Errorf("want the child boundary classified full-restrict: %v", classified)
+	}
+	if !hasPosture(classified, postureUnresolved) {
+		t.Errorf("want the grandchild boundary classified unresolved: %v", classified)
+	}
+}

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/2389-research/dippin-lang/dipx"
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/validator"
 )
@@ -42,25 +42,30 @@ func crossFileToolAccess(entry *ir.Workflow, entryPath string) ([]validator.Diag
 		visited[key] = true
 	}
 	intentSeen := validator.WorkflowDeclaresToolAccess(entry)
-	walkBoundaries(entry, intentSeen, 0, visited, &diags, classified)
+	// root is the containment anchor for every child ref, captured ONCE from the
+	// entry's directory and threaded unchanged (never recomputed per-parent — see
+	// spec D2/C2). absOrClean makes it absolute so ensureUnderRoot's filepath.Rel
+	// can compare it against absolute child targets.
+	root := filepath.Dir(absOrClean(entryPath))
+	walkBoundaries(entry, intentSeen, 0, root, visited, &diags, classified)
 	return diags, classified
 }
 
 // walkBoundaries inspects each subgraph/manager_loop boundary in w.
-func walkBoundaries(w *ir.Workflow, intentSeen bool, depth int, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
+func walkBoundaries(w *ir.Workflow, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	for _, n := range w.Nodes {
 		_, ref := boundaryKindRef(n)
 		if ref == "" || n.Source.File == "" {
 			continue
 		}
-		visitBoundary(n, ref, intentSeen, depth, visited, diags, classified)
+		visitBoundary(n, ref, intentSeen, depth, root, visited, diags, classified)
 	}
 }
 
 // visitBoundary resolves one boundary's child, records its posture, emits DIP146
 // when the path shows intent and the child is zero-intent, then recurses.
-func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
-	child, childPath := resolveBoundaryChild(n, ref)
+func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
+	child, childPath := resolveBoundaryChild(n, ref, root)
 	if child == nil {
 		classified[n.Source] = postureUnresolved
 		return
@@ -70,28 +75,36 @@ func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, visited m
 	if intentSeen && posture == postureZeroIntent {
 		*diags = append(*diags, boundaryDiag(n, ref))
 	}
-	maybeRecurse(child, childPath, intentSeen, depth, visited, diags, classified)
+	maybeRecurse(child, childPath, intentSeen, depth, root, visited, diags, classified)
 }
 
 // maybeRecurse descends into a child's own boundaries unless it was already
 // visited (cycle guard) or the depth cap is reached. The child is marked visited
 // before recursing (pre-order) so cycles terminate.
-func maybeRecurse(child *ir.Workflow, childPath string, intentSeen bool, depth int, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
+func maybeRecurse(child *ir.Workflow, childPath string, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	key := canonicalKey(childPath)
 	if key == "" || visited[key] || depth+1 > crossFileMaxDepth {
 		return
 	}
 	visited[key] = true
 	childIntent := intentSeen || validator.WorkflowDeclaresToolAccess(child)
-	walkBoundaries(child, childIntent, depth+1, visited, diags, classified)
+	walkBoundaries(child, childIntent, depth+1, root, visited, diags, classified)
 }
 
-// resolveBoundaryChild resolves ref relative to the boundary node's source file
-// and parses the child workflow. Fail-soft: any error yields (nil, "").
-// Callers (walkBoundaries) guarantee ref != "" and n.Source.File != "".
-func resolveBoundaryChild(n *ir.Node, ref string) (*ir.Workflow, string) {
-	path := resolveBoundaryRefPath(ref, n.Source.File)
-	data, err := os.ReadFile(path)
+// resolveBoundaryChild resolves ref relative to the boundary node's source file,
+// refusing root-escaping or symlinked targets, then parses the child workflow.
+// Fail-soft: ANY error (escape, symlink, read, parse) yields (nil, ""), routing
+// the boundary to postureUnresolved so the per-file DIP143 advisory is retained.
+// This is detection parity with the pack walker (Lstat-based, not the parser's
+// stronger O_NOFOLLOW open-once — the residual leaf TOCTOU matches pack's; a lint
+// emits only DIP codes, never file content). Callers (walkBoundaries) guarantee
+// ref != "" and n.Source.File != "".
+func resolveBoundaryChild(n *ir.Node, ref, root string) (*ir.Workflow, string) {
+	path, err := resolveChildPath(n.Source.File, ref, root)
+	if err != nil {
+		return nil, ""
+	}
+	data, err := dipx.ReadNoFollowSymlinks(path, root)
 	if err != nil {
 		return nil, ""
 	}
@@ -102,13 +115,22 @@ func resolveBoundaryChild(n *ir.Node, ref string) (*ir.Workflow, string) {
 	return w, path
 }
 
-// resolveBoundaryRefPath resolves a (possibly relative) ref against the parent's
-// source file directory, mirroring DIP135's resolveRefPath.
-func resolveBoundaryRefPath(ref, sourceFile string) string {
-	if filepath.IsAbs(ref) {
-		return ref
+// resolveChildPath joins ref against parentFile's directory and refuses any result
+// that escapes root. Pack-identical (mirrors dipx's resolveRefOnDisk): filepath.Join
+// swallows the leading slash of an absolute ref, so abs refs are RE-ROOTED under
+// root, not read out-of-root. The filepath.Abs is load-bearing — at the entry level
+// parentFile (n.Source.File) may be relative while root is absolute, and
+// ensureUnderRoot's filepath.Rel needs both absolute. Do not simplify it away.
+func resolveChildPath(parentFile, ref, root string) (string, error) {
+	target := filepath.Clean(filepath.Join(filepath.Dir(parentFile), ref))
+	abs, err := filepath.Abs(target)
+	if err != nil {
+		return "", err
 	}
-	return filepath.Join(filepath.Dir(sourceFile), ref)
+	if err := ensureUnderRoot(abs, root); err != nil {
+		return "", err
+	}
+	return abs, nil
 }
 
 // classifyChild determines a child's tool_access posture from its agent nodes.
