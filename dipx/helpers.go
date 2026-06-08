@@ -389,9 +389,12 @@ func parsePackSource(path string, raw []byte, isEntry bool) (*ir.Workflow, error
 // a tree containing `sub -> /etc` would otherwise let a leaf `sub/foo.dip` read
 // `/etc/foo.dip`, because Lstat on the leaf reports a regular file, not a symlink.
 //
-// It does NOT perform the `..`-escape (containment) check — callers must run that
+// It does NOT perform the `..`-escape (containment) check — callers MUST run that
 // separately BEFORE calling this (the pack walker via resolveRefOnDisk, the lint
-// via ensureUnderRoot). rootDir is only the ancestor-scan boundary here.
+// via ensureUnderRoot) and MUST pass a path already proven to be under rootDir.
+// rootDir is only the ancestor-scan boundary here: if path is not under rootDir,
+// filepath.Rel yields `..` components and the ancestor scan would Lstat paths
+// outside rootDir.
 //
 // rootDir itself is treated as the trust anchor: it is an absolute path supplied
 // by the caller, may itself be a user-specified symlink, and is not re-validated.
