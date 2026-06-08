@@ -4,6 +4,31 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.37.0] — 2026-06-08
+
+Mixed release. The cross-file `tool_access` detection + resolver hardening and the DIP010 edge-condition error are **dippin-side detection only** (no paired runtime release required). The graph-level `on_failure` route and the declarable budget guards are an **authoring surface dippin carries + lints while a paired runtime enforces** — inert until the runtime reads them (per `never-gate-dippin-on-tracker`, no dippin behavior is gated on runtime readiness).
+
+### Added
+- `DIP146` (Hint) — cross-file `tool_access` gap: a `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) boundary delegates to a child `.dip` whose agents re-grant tools a parent on the path restricted ([#89](https://github.com/2389-research/dippin-lang/issues/89)). Completes the `DIP143` (#59) arc by resolving and classifying the referenced child instead of only flagging the boundary: zero-intent child → DIP146 (DIP143 superseded); full-restrict or agent-less → silent (confirmed safe); partial-audit or unresolved → DIP143 retained ("unknown" never reads as "checked & safe"). Full transitive DFS with `EvalSymlinks`-keyed cycle termination and a depth cap. Emitted from the native CLI pass — `dippin lint`/`check`/`watch` apply it with DIP143 supersession; `validate` stays structural-only. Detection, not runtime enforcement.
+- `DIP010` (Error) — an edge `when` condition that cannot be parsed (e.g. an unknown operator, or a tool-node field like `marker_grep` used in operator position) ([#98](https://github.com/2389-research/dippin-lang/issues/98)). Previously the parse error was discarded by `Lint()` and `EnsureConditionsParsed` stopped at the first bad edge, so `validate`/`lint`/`check`/`doctor` greenlit a workflow that hard-fails at `dippin simulate` — and every edge after the first bad one silently lost its AST-dependent lints (DIP103/120/121/122). DIP010 is emitted from `validator.Validate()`, so every command path catches it, and parsing now continues past failures (one diagnostic per bad edge; later edges keep getting linted). Edge conditions only; `manager_loop` node conditions are a separate follow-up.
+- `on_failure: <NodeID>` — a graph-level (`defaults:`) catch-all failure route ([#92](https://github.com/2389-research/dippin-lang/issues/92)). Structurally validated (DIP003 existence with a "did you mean?" suggestion; the target is seeded into DIP004 reachability so a recovery node reachable only via the catch-all is not falsely flagged unreachable) and round-tripped through the `.dip` formatter, DOT export, and migrate.
+- `DIP144` (Warning) — an agent node has no failure route ([#93](https://github.com/2389-research/dippin-lang/issues/93)). Suppressed by an explicit `ctx.outcome = fail|failure` edge, `fallback_target`, bounded retry (`retry_target` + `max_retries > 0`), or a graph `on_failure`; an unconditional/success edge does not suppress it.
+- `stall_timeout` (graph `defaults:`, duration) — abort/route when no forward progress is made for a wall-clock span ([#94](https://github.com/2389-research/dippin-lang/issues/94)); `0`/unset = disabled. Round-trips through parser → formatter → DOT export → migrate (this also closed a pre-existing DOT-export bug that silently dropped every budget ceiling). `max_turns` now has defined exhaustion semantics: outcome = `fail`, routed through the failure cascade (docs-only; no new action field).
+- `DIP145` (Warning) — a graph budget default is negative ([#94](https://github.com/2389-research/dippin-lang/issues/94)); `0` = unset = no warning.
+- `examples/on_failure_route.dip` and `examples/budget_guards.dip` demonstrators.
+
+### Hardened
+- The DIP146 cross-file resolver now refuses symlinked and root-escaping child `.dip` refs, reaching parity with the pack walker ([#100](https://github.com/2389-research/dippin-lang/issues/100)). Fail-soft: a refused child is treated as unresolvable (DIP143 retained), so linting never hard-errors or aborts. Reuses dipx's `ReadNoFollowSymlinks` (leaf + ancestor-directory symlink refusal) and a fixed entry-file-directory containment root; absolute refs are re-rooted under that root rather than read out of tree. Lstat-based parity with the pack walker — no `O_NOFOLLOW`/build-tag complexity and no wasm impact. Detection parity, not runtime enforcement.
+
+### Changed
+- `dippin doctor` now exits non-zero when the report contains errors (e.g. DIP010 or any structural DIP001–DIP010), rather than always exiting 0. The report still renders in full; only the exit code changes, so doctor no longer greenlights a workflow that cannot execute.
+
+### Runtime pairing (requires an enforcing runtime)
+- `on_failure`, `stall_timeout`, and `max_turns` exhaustion are carried + linted by dippin but **enforced by the runtime** — inert until a paired runtime reads them. The runtime owns the failure-cascade ordering: matching fail edge → bounded node retry → node `fallback_target` → graph `on_failure` → halt.
+
+### Docs
+- Audited and refreshed all reference docs to the current language surface ([#97](https://github.com/2389-research/dippin-lang/pull/97)).
+
 ## [v0.36.0] — 2026-06-03
 
 Dippin-side only — no paired runtime release required.
