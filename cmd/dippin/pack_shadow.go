@@ -13,17 +13,18 @@ import (
 	"github.com/2389-research/dippin-lang/parser"
 )
 
-// ensureUnderRoot rejects any absolute path that resolves outside rootDir.
-// Guards the shadow-tree writer against a malicious subgraph ref like
-// `subgraph: ../../../escape.dip`, which would otherwise cause
-// writeShadowFile to write outside the temp shadow dir (since
-// filepath.Join(shadowDir, "../../../escape.dip") escapes). dipx.Pack does
-// its own escape check, but it runs AFTER we've built the shadow tree —
-// too late to prevent the out-of-tree write.
+// ensureUnderRoot rejects any absolute path that resolves outside rootDir, via
+// the same lexical `..`-component check the pack walker uses (resolveRefOnDisk).
+// Shared by two CLI subsystems: the pack shadow-tree writer (guarding against a
+// ref like `subgraph: ../../../escape.dip` that would make writeShadowFile write
+// out of the temp dir) and the cross-file tool_access lint (#100), which uses it
+// fail-soft to refuse root-escaping child refs. absPath MUST be absolute (the
+// callers absolutize before calling); a relative rootDir makes filepath.Rel error
+// and is reported as an escape.
 func ensureUnderRoot(absPath, rootDir string) error {
 	rel, err := filepath.Rel(rootDir, absPath)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return fmt.Errorf("pack-inline: ref escapes source root: %s", absPath)
+		return fmt.Errorf("ref escapes source root: %s", absPath)
 	}
 	return nil
 }
