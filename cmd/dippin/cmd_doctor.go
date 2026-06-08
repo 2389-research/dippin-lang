@@ -37,12 +37,21 @@ func (c *CLI) CmdDoctor(args []string) ExitCode {
 	return c.renderDoctorReport(report)
 }
 
-// renderDoctorReport outputs the doctor report in the selected format.
+// renderDoctorReport outputs the doctor report in the selected format and
+// exits non-zero when the report contains errors — a workflow that fails
+// structural validation (e.g. DIP010) cannot execute, so doctor must not
+// greenlight it. Warnings/hints alone still exit OK.
 func (c *CLI) renderDoctorReport(r *doctor.Report) ExitCode {
 	if c.Format == FormatJSON {
-		return c.renderJSON(r)
+		if code := c.renderJSON(r); code != ExitOK {
+			return code
+		}
+	} else {
+		renderDoctorText(c.Stdout, r)
 	}
-	renderDoctorText(c.Stdout, r)
+	if r.Lint.Errors > 0 {
+		return ExitError
+	}
 	return ExitOK
 }
 

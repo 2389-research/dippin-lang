@@ -652,7 +652,7 @@ func TestLevenshtein(t *testing.T) {
 }
 
 func TestCodeDescriptionCoverage(t *testing.T) {
-	codes := []string{DIP001, DIP002, DIP003, DIP004, DIP005, DIP006, DIP007, DIP008, DIP009}
+	codes := []string{DIP001, DIP002, DIP003, DIP004, DIP005, DIP006, DIP007, DIP008, DIP009, DIP010}
 	for _, c := range codes {
 		if desc, ok := CodeDescription[c]; !ok || desc == "" {
 			t.Errorf("CodeDescription[%q] is missing or empty", c)

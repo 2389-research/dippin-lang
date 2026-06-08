@@ -8,7 +8,7 @@ import (
 	"github.com/2389-research/dippin-lang/ir"
 )
 
-// Validate runs all graph-structure checks (DIP001–DIP009) on the workflow
+// Validate runs all graph-structure checks (DIP001–DIP010) on the workflow
 // and returns all diagnostics found. It always runs all checks — never
 // short-circuits — so that a single pass reports everything.
 func Validate(w *ir.Workflow) Result {
@@ -26,6 +26,7 @@ func Validate(w *ir.Workflow) Result {
 	diags = append(diags, checkReachability(w)...)
 	diags = append(diags, checkNoCycles(w)...)
 	diags = append(diags, checkParallelFanIn(w)...)
+	diags = append(diags, checkEdgeConditions(w)...)
 
 	return Result{Diagnostics: diags}
 }

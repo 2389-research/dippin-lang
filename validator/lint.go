@@ -15,8 +15,21 @@ import (
 //	structureResult := validator.Validate(w)
 //	lintResult := validator.Lint(w)
 func Lint(w *ir.Workflow) Result {
-	// Ensure condition ASTs are populated — the parser stores raw text
-	// but lint checks (DIP101, DIP102, DIP103) need parsed ASTs.
+	// Ensure condition ASTs are populated — the AST-dependent lint checks
+	// (DIP103/120/121/122) read edge Condition.Parsed.
+	//
+	// parseEdgeConditions populates every parseable edge accumulate-all, so one
+	// unparseable edge does not mask those lints on later edges (the bug behind
+	// DIP010 / issue #98). Edge parse failures are reported as DIP010 from
+	// Validate; here we only need the population side effect.
+	//
+	// EnsureConditionsParsed then populates manager_loop node conditions in the
+	// common case. If an edge is unparseable it returns early before reaching the
+	// node loop, leaving node conditions unparsed — but that changes no lint
+	// result: the manager_loop checks gate on condition *presence* via
+	// conditionPresent (Raw != "" || Parsed != nil), which is Raw-dominated for
+	// any declared condition, and no lint inspects a node condition's parsed AST.
+	parseEdgeConditions(w)
 	_ = simulate.EnsureConditionsParsed(w)
 
 	var diags []Diagnostic

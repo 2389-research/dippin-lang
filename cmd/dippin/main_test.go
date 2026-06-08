@@ -2004,11 +2004,13 @@ func TestCmdCoverage_NoConds(t *testing.T) {
 // --- renderDoctorSuggestions (cmd_doctor.go:79) ---
 
 func TestCmdDoctor_WithSuggestions(t *testing.T) {
-	// unhealthy.dip has lint warnings + unreachable node -> generates suggestions.
+	// unhealthy.dip has lint warnings + an unreachable node (DIP004, an error) ->
+	// generates suggestions. doctor renders the report but exits non-zero because
+	// the report contains errors.
 	stdout, stderr, code := runCLI(t, "doctor", testdata("unhealthy.dip"))
 
-	if code != ExitOK {
-		t.Fatalf("expected exit 0, got %d; stderr: %s", code, stderr)
+	if code != ExitError {
+		t.Fatalf("expected ExitError (report has DIP004), got %d; stderr: %s", code, stderr)
 	}
 	if !strings.Contains(stdout, "Suggestions") {
 		t.Errorf("expected 'Suggestions' section in output, got: %s", stdout)

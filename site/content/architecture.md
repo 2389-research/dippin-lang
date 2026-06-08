@@ -67,8 +67,8 @@ dippin-lang/
 │   └── parse_helpers.go   # Shared utilities
 │
 ├── validator/          # Graph validation + semantic linting
-│   ├── validate.go     # 9 structural checks (DIP001-DIP009)
-│   ├── lint.go         # Lint orchestration (DIP101-DIP133)
+│   ├── validate.go     # 10 structural checks (DIP001-DIP010)
+│   ├── lint.go         # Lint orchestration (DIP101-DIP146)
 │   └── diagnostic.go   # Diagnostic type, Result, Severity
 │
 ├── formatter/          # Canonical .dip source formatter
@@ -103,7 +103,7 @@ dippin-lang/
   </div>
   <div class="decision-card">
     <h4>No short-circuiting validation</h4>
-    <p>All 9 structural checks and all 30 semantic checks run unconditionally. A single call reports every issue, not just the first. This enables batch fixing.</p>
+    <p>All 10 structural checks and all 46 semantic checks run unconditionally. A single call reports every issue, not just the first. This enables batch fixing.</p>
   </div>
   <div class="decision-card">
     <h4>Zero external dependencies</h4>

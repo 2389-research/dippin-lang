@@ -30,7 +30,7 @@ graph LR
 | Shell scripts | `tool_command="#!/bin/sh\nset -eu\nif..."` | Real multiline, real syntax |
 | Model config | Untyped `llm_model="..."` attribute | Typed `model:` field with validation |
 | Branching | `condition="context.x!=y && context.a==b"` | `when ctx.x != "y" and ctx.a == "b"` |
-| Validation | Silent — typos in attrs are ignored | Diagnostic codes (DIP001–DIP009, DIP101–DIP137) |
+| Validation | Silent — typos in attrs are ignored | Diagnostic codes (DIP001–DIP010, DIP101–DIP146) |
 | Node types | Shape overloading (`box`=agent, `hexagon`=human) | Explicit `agent`, `tool`, `human` keywords |
 | Composition | No import/include system | `subgraph` with ref (v2) |
 
@@ -130,8 +130,8 @@ Every analysis command (`validate`, `lint`, `doctor`, `parse`, `cost`, `coverage
 | Command | Description |
 |---------|-------------|
 | `dippin parse <file>` | Parse and output IR as JSON |
-| `dippin validate <file>` | Structural validation (DIP001–DIP009) |
-| `dippin lint <file>` | Validation + semantic warnings (DIP101–DIP133) |
+| `dippin validate <file>` | Structural validation (DIP001–DIP010) |
+| `dippin lint <file>` | Validation + semantic warnings (DIP101–DIP146) |
 | `dippin check [--format json\|text] <file>` | Parse+validate+lint in one shot (JSON default, for LLM tooling) |
 | `dippin fmt [--check] [--write] <file>` | Format to canonical style |
 | `dippin new [--name N] [--write F] <template>` | Generate a starter .dip from a template |
@@ -376,7 +376,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
   = help: did you mean "Interpret"? (declared at line 12)
 ```
 
-### Errors (DIP001–DIP009)
+### Errors (DIP001–DIP010)
 
 | Code | What it catches |
 |------|----------------|
@@ -390,7 +390,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 | DIP008 | Duplicate node ID |
 | DIP009 | Duplicate edge |
 
-### Warnings (DIP101–DIP133)
+### Warnings (DIP101–DIP146)
 
 | Code | What it catches |
 |------|----------------|
@@ -525,7 +525,7 @@ Everything flows through `ir.Workflow` — the canonical intermediate representa
 |---------|-------------|
 | `ir/` | Core types: `Workflow`, `Node`, `Edge`, `Condition` AST, typed `NodeConfig` sealed interface |
 | `parser/` | Indentation-aware lexer + recursive-descent parser producing IR |
-| `validator/` | 9 structural checks + 30 semantic lint rules |
+| `validator/` | 10 structural checks + 46 semantic lint rules |
 | `formatter/` | Canonical pretty-printer (idempotent: `format(format(x)) == format(x)`) |
 | `export/` | DOT export with shape mapping, condition serialization, restart edge styling |
 | `migrate/` | DOT→IR→Dippin converter with namespace prefixing and structural parity checker |

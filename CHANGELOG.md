@@ -2,6 +2,16 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+Dippin-side only — pure detection, no paired runtime release required.
+
+### Added
+- `DIP010` (Error) — an edge `when` condition that cannot be parsed (e.g. an unknown operator, or a tool-node field like `marker_grep` used in operator position) ([#98](https://github.com/2389-research/dippin-lang/issues/98)). Previously the parse error was discarded by `Lint()` and `EnsureConditionsParsed` stopped at the first bad edge, so `validate`/`lint`/`check`/`doctor` greenlit a workflow that hard-fails at `dippin simulate` — and every edge after the first bad one silently lost its AST-dependent lints (DIP103/120/121/122). DIP010 is emitted from `validator.Validate()`, so every command path catches it, and parsing now continues past failures (one diagnostic per bad edge; later edges keep getting linted). Edge conditions only; `manager_loop` node conditions are a separate follow-up.
+
+### Changed
+- `dippin doctor` now exits non-zero when the report contains errors (e.g. DIP010 or any structural DIP001–DIP010), rather than always exiting 0. The report still renders in full; only the exit code changes, so doctor no longer greenlights a workflow that cannot execute.
+
 ## [v0.36.0] — 2026-06-03
 
 Dippin-side only — no paired runtime release required.

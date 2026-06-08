@@ -1,17 +1,17 @@
 ---
 title: "Validation & Linting"
-description: "40 diagnostic checks for AI pipeline workflows. 9 structural errors and 31 semantic warnings catch bugs before runtime."
+description: "56 diagnostic codes for AI pipeline workflows. 10 structural errors and 46 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "40 diagnostic checks — 9 structural errors and 31 semantic warnings — to catch problems before runtime."
+subtitle: "56 diagnostic codes — 10 structural errors and 46 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
 
 Dippin provides two levels of analysis:
 
-**Structural validation** (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
+**Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP134): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP146): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -23,7 +23,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
   = help: did you mean "Interpret"?
 ```
 
-## Structural Errors (DIP001-DIP009)
+## Structural Errors (DIP001-DIP010)
 
 These must be fixed for a workflow to be valid. Each causes exit code 1.
 
@@ -99,7 +99,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: remove the duplicate edge</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP134)
+## Semantic Warnings (DIP101-DIP146)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 

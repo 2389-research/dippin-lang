@@ -51,7 +51,7 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 ## Diagnostics
 
-**DIP code** — A diagnostic identifier emitted by `dippin lint` and `dippin validate`. DIP001–DIP009 are structural errors (parse / shape failures). DIP101–DIP133 are semantic warnings (style, correctness hints, model catalog issues).
+**DIP code** — A diagnostic identifier emitted by `dippin lint` and `dippin validate`. DIP001–DIP010 are structural errors (parse / shape failures). DIP101–DIP146 are semantic warnings (style, correctness hints, model catalog issues).
 
 **Exhaustive conditions** — A pair of edge conditions detected as covering all outcomes (e.g., `when ctx.status = success` + `when ctx.status = fail`). Suppresses DIP101 / DIP102 warnings.
 

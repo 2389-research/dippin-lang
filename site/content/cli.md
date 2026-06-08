@@ -50,13 +50,13 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>validate</h3>
   <div class="cmd-usage">dippin validate &lt;file&gt;</div>
-  <p>Run structural validation checks (DIP001-DIP009) on a workflow. Outputs "validation passed" or diagnostic messages. Exit code 1 if any errors found.</p>
+  <p>Run structural validation checks (DIP001-DIP010) on a workflow. Outputs "validation passed" or diagnostic messages. Exit code 1 if any errors found.</p>
 </div>
 
 <div class="cmd-card">
   <h3>lint</h3>
   <div class="cmd-usage">dippin lint [--extra-models &lt;spec&gt;] &lt;file&gt;</div>
-  <p>Run both structural validation and semantic linting (DIP001-DIP009 + DIP101-DIP134). All 40 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
+  <p>Run both structural validation and semantic linting (DIP001-DIP010 + DIP101-DIP146). All 55 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
   <dl>
     <dt><code>--extra-models "provider:model1,model2;provider2:model3"</code></dt>
     <dd>Extend the DIP108 model catalog at runtime for private or newly-released models.</dd>
@@ -154,7 +154,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>pack</h3>
   <div class="cmd-usage">dippin pack [-o &lt;out&gt;] [--dry-run] &lt;entry.dip&gt;</div>
-  <p>Build a deterministic <code>.dipx</code> bundle from a <code>.dip</code> entry, walking every transitively-reachable subgraph ref. Runs structural validation (DIP001–DIP009) before packing. <code>-o -</code> writes to stdout; <code>--dry-run</code> validates and walks refs without writing. File output is atomic via <code>os.CreateTemp</code> + rename. Refuses symlinks anywhere in the source tree, including parent components.</p>
+  <p>Build a deterministic <code>.dipx</code> bundle from a <code>.dip</code> entry, walking every transitively-reachable subgraph ref. Runs structural validation (DIP001–DIP010) before packing. <code>-o -</code> writes to stdout; <code>--dry-run</code> validates and walks refs without writing. File output is atomic via <code>os.CreateTemp</code> + rename. Refuses symlinks anywhere in the source tree, including parent components.</p>
 </div>
 
 <div class="cmd-card">

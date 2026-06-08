@@ -95,7 +95,7 @@ dippin parse pipeline.dip
 
 ### validate
 
-Run structural validation checks (DIP001–DIP009) on a workflow.
+Run structural validation checks (DIP001–DIP010) on a workflow.
 
 ```bash
 dippin validate <file>
@@ -103,7 +103,7 @@ dippin validate <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: The 9 structural validation rules that must pass for a workflow to be executable. See [validation.md](validation.md) for details on each code.
+**Checks**: The 10 structural validation rules that must pass for a workflow to be executable. See [validation.md](validation.md) for details on each code.
 
 **Output**:
 - If all checks pass: `"validation passed"` (text mode) or empty JSON array
@@ -124,7 +124,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 
 ### lint
 
-Run both structural validation and semantic linting (DIP001–DIP009 + DIP101–DIP145).
+Run both structural validation and semantic linting (DIP001–DIP010 + DIP101–DIP146).
 
 ```bash
 dippin lint [--extra-models <spec>] <file>
@@ -132,7 +132,7 @@ dippin lint [--extra-models <spec>] <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: All 54 diagnostic rules. Errors (DIP001–DIP009) cause exit code 1. Warnings (DIP101–DIP145) are reported but don't affect the exit code.
+**Checks**: All 55 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP146) are reported but don't affect the exit code.
 
 **Output**: All diagnostics (errors and warnings) to stderr.
 
@@ -751,7 +751,7 @@ dippin pack [-o <output>] [--dry-run] <entry.dip>
 - `-o <path>` — output path (default: `<entry>.dipx`; `-` writes the bundle to stdout)
 - `--dry-run` — validate and walk refs without writing output
 
-**Behavior**: Runs structural validation (DIP001–DIP009) on the entry first. Walks every transitively-reachable subgraph ref under the entry's directory, computes per-file SHA-256, and writes a deterministic ZIP (fixed mtimes, sorted entries, no platform metadata, UTF-8 filename bit always set). File output is atomic — the bundle is written to a unique temp file alongside `<output>` and renamed on success. Symlinks anywhere between the entry's source root and a leaf `.dip` are refused.
+**Behavior**: Runs structural validation (DIP001–DIP010) on the entry first. Walks every transitively-reachable subgraph ref under the entry's directory, computes per-file SHA-256, and writes a deterministic ZIP (fixed mtimes, sorted entries, no platform metadata, UTF-8 filename bit always set). File output is atomic — the bundle is written to a unique temp file alongside `<output>` and renamed on success. Symlinks anywhere between the entry's source root and a leaf `.dip` are refused.
 
 **Exit codes**: bundle ladder (see *Exit Codes* above).
 
