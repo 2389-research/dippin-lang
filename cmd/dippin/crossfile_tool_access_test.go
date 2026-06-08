@@ -588,3 +588,137 @@ func TestCrossFile_SymlinkRefusalAtDepth(t *testing.T) {
 		t.Errorf("want the grandchild boundary classified unresolved: %v", classified)
 	}
 }
+
+// T3 — HIGHEST-VALUE GUARD: a subdir child whose ref climbs back UP into the entry
+// root must still resolve. entry -> sub/child.dip (full-restrict) -> ../other.dip
+// (zero-intent, == root/other.dip, in-root). Correct (entry-anchored fixed root):
+// other resolves, DIP146 fires on the child->other edge => count 1. A BUGGY
+// per-parent-root recompute (root = dir(sub/child.dip) = root/sub) would refuse
+// ../other.dip (escapes root/sub) => count 0. So this fails under that bug.
+func TestCrossFile_SubdirChildClimbsBackIntoRoot(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":     entryRestrictsRefs("sub/child.dip"),
+		"sub/child.dip": childWithBoundary("../other.dip"),
+		"other.dip":     childZeroIntent,
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 1 {
+		t.Fatalf("want 1 DIP146 on the climb-back ../other.dip edge, got %d: %v", got, diags)
+	}
+}
+
+// T4 — legit sibling AND subdirectory children resolve normally; DIP146
+// supersession works exactly as before the hardening (regression guard).
+func TestCrossFile_LegitSiblingAndSubdirResolve(t *testing.T) {
+	sibling := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childZeroIntent,
+	})
+	if got := countCode(firstDiags(t, sibling, "entry.dip"), validator.DIP146); got != 1 {
+		t.Fatalf("sibling: want 1 DIP146, got %d", got)
+	}
+	subdir := writeWorkflows(t, map[string]string{
+		"entry.dip":     entryRestrictsRefs("sub/child.dip"),
+		"sub/child.dip": childZeroIntent,
+	})
+	if got := countCode(firstDiags(t, subdir, "entry.dip"), validator.DIP146); got != 1 {
+		t.Fatalf("subdir: want 1 DIP146, got %d", got)
+	}
+}
+
+// T5 — policy pin: a symlink whose target is a perfectly legitimate in-root file
+// is STILL refused (all symlinks refused unconditionally, matching pack). Pins the
+// conservative policy so it is not later "fixed" into a false-positive exception.
+func TestCrossFile_BenignInRootSymlinkRefused(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":  entryRestrictsRefs("child.dip"),
+		"target.dip": childZeroIntent,
+	})
+	if err := os.Symlink(filepath.Join(dir, "target.dip"), filepath.Join(dir, "child.dip")); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	diags, classified := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (benign in-root symlink still refused), got %d", got)
+	}
+	if !hasPosture(classified, postureUnresolved) {
+		t.Errorf("want postureUnresolved, got %v", classified)
+	}
+}
+
+// T7 — lynchpin guard (spec D2): a RELATIVE entry path must still resolve legit
+// children. crossDiags always builds an absolute entry path, so this drives the
+// pass with a relative path via os.Chdir. If root were left relative (no absOrClean),
+// ensureUnderRoot's filepath.Rel(relRoot, absChild) would error and refuse every
+// child => count 0. Not parallel-safe (mutates cwd); the file uses no t.Parallel.
+func TestCrossFile_RelativeEntryResolves(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("child.dip"),
+		"child.dip": childZeroIntent,
+	})
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+	w, err := loadWorkflow("entry.dip")
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	diags, _ := crossFileToolAccess(w, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 1 {
+		t.Fatalf("want 1 DIP146 with a relative entry path, got %d", got)
+	}
+}
+
+// T8 — an absolute ref is re-rooted under the parent dir (filepath.Join swallows
+// the leading slash), not read out-of-root. /etc/passwd re-roots to <root>/etc/passwd
+// which does not exist => postureUnresolved (DIP143 retained). Documents re-rooting;
+// it does NOT assert literal absolute-path refusal.
+func TestCrossFile_AbsoluteRefReRooted(t *testing.T) {
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip": entryRestrictsRefs("/etc/passwd"),
+	})
+	diags, classified := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (abs ref re-rooted, target absent), got %d", got)
+	}
+	for _, p := range classified {
+		if p != postureUnresolved {
+			t.Errorf("want postureUnresolved, got %v", p)
+		}
+	}
+}
+
+// T9 — a symlink that would form a cycle is refused at the first hop (so the cycle
+// is never entered) and the walk terminates. Termination of NON-symlink cycles is
+// covered by TestCrossFile_CycleTerminates / TestCrossFile_SelfReferenceTerminates;
+// this only asserts the refusal short-circuit does not hang.
+func TestCrossFile_SymlinkCycleRefused(t *testing.T) {
+	a := childWithBoundary("blink.dip") // a.dip -> blink.dip
+	dir := writeWorkflows(t, map[string]string{
+		"a.dip": a,
+	})
+	// blink.dip is a symlink back to a.dip (a would-be a->blink->a cycle).
+	if err := os.Symlink(filepath.Join(dir, "a.dip"), filepath.Join(dir, "blink.dip")); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+	diags, classified := crossDiags(t, dir, "a.dip")
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (symlink hop refused), got %d", got)
+	}
+	if !hasPosture(classified, postureUnresolved) {
+		t.Errorf("want the symlink boundary classified unresolved: %v", classified)
+	}
+}
+
+// firstDiags runs the pass and returns only the diagnostics (helper for cases that
+// don't inspect the classified map).
+func firstDiags(t *testing.T, dir, entry string) []validator.Diagnostic {
+	t.Helper()
+	diags, _ := crossDiags(t, dir, entry)
+	return diags
+}
