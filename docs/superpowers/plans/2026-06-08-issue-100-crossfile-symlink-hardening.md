@@ -737,13 +737,13 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 Open `docs/architecture.md`, find the line describing `helpers.go` (around `:148`):
 
-```
+```text
 │   ├── helpers.go      # Hash verify, parse-and-link, walkSourceTree
 ```
 
 Append the shared read primitive to the responsibility list, e.g.:
 
-```
+```text
 │   ├── helpers.go      # Hash verify, parse-and-link, walkSourceTree, ReadNoFollowSymlinks (shared no-follow read)
 ```
 
@@ -790,5 +790,3 @@ Expected: all green. (`just check` fails locally on tree-sitter-generate — tha
 - **Scope — no new DIP, no build tags:** confirmed (no `validator` code edits; no `//go:build`). File directives untouched (out of scope by pack parity).
 - **Tests T1–T11:** T1=SymlinkedChildRefused (absorbs T5 policy via comment; T5 also kept explicit as BenignInRootSymlinkRefused), T2=RootEscapingChildRefused, T3=SubdirChildClimbsBackIntoRoot, T4=LegitSiblingAndSubdirResolve, T5=BenignInRootSymlinkRefused, T6=SymlinkedAncestorRefused, T7=RelativeEntryResolves, T8=AbsoluteRefReRooted, T9=SymlinkCycleRefused, T10=TestReadNoFollowSymlinks (dipx), T11=SymlinkRefusalAtDepth.
 - **Verification:** Task 7 (test-race, complexity, wasm, validate/lint-examples).
-</content>
-</invoke>
