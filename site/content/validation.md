@@ -9,7 +9,7 @@ subtitle: "40 diagnostic checks — 9 structural errors and 31 semantic warnings
 
 Dippin provides two levels of analysis:
 
-**Structural validation** (DIP001-DIP009): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
+**Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
 **Semantic linting** (DIP101-DIP134): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
@@ -23,7 +23,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
   = help: did you mean "Interpret"?
 ```
 
-## Structural Errors (DIP001-DIP009)
+## Structural Errors (DIP001-DIP010)
 
 These must be fixed for a workflow to be valid. Each causes exit code 1.
 

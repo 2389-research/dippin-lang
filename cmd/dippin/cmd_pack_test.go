@@ -109,7 +109,7 @@ func TestRunPack_NoArgs(t *testing.T) {
 }
 
 // TestRunPack_RejectsInvalidWorkflow confirms Fix H1: pack runs structural
-// validation (DIP001-DIP009) on the entry workflow first and refuses to pack
+// validation (DIP001-DIP010) on the entry workflow first and refuses to pack
 // when validation errors are present. Here the workflow declares exit: S but
 // "S" has no outgoing edges (DIP004 would fire if there were unreachable nodes,
 // or DIP002 if exit references a missing node, etc.). The workflow below

@@ -1,8 +1,9 @@
 // Package validator performs graph structure validation on Dippin IR workflows.
 //
-// It implements checks DIP001 through DIP009, covering structural correctness
+// It implements checks DIP001 through DIP010, covering structural correctness
 // of the workflow graph: start/exit existence, edge validity, reachability,
-// cycle detection, parallel/fan-in pairing, and duplicate detection.
+// cycle detection, parallel/fan-in pairing, duplicate detection, and edge
+// condition parseability.
 //
 // The validator is a pure IR consumer — it takes a *ir.Workflow and returns
 // a Result containing all diagnostics found. It always runs all checks and

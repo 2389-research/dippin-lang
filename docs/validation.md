@@ -1,8 +1,8 @@
 # Validation and Linting Reference
 
-Dippin registers 55 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (54 documented sections):
+Dippin registers 56 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (55 documented sections):
 
-- **Structural validation** (DIP001–DIP009): Errors that **must** be fixed. A workflow with any of these cannot execute.
+- **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP146): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
@@ -11,7 +11,7 @@ Run `dippin validate <file>` for structural checks only, or `dippin lint <file>`
 graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
-    IR --> VAL["Structural Validation<br>DIP001–DIP009<br>(errors)"]
+    IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
     IR --> LINT["Semantic Linting<br>DIP101–DIP146<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
@@ -44,7 +44,7 @@ In JSON output mode (`--format json`), diagnostics are emitted as an array of ob
 
 ---
 
-## Structural Validation Errors (DIP001–DIP009)
+## Structural Validation Errors (DIP001–DIP010)
 
 ### DIP001: Start Node Missing
 
@@ -221,6 +221,30 @@ error[DIP009]: duplicate edge
 **What triggers it**: Two edges with identical source, target, and condition raw text.
 
 **Note**: Edges with different conditions on the same (from, to) pair are **not** duplicates — that's intentional conditional branching.
+
+---
+
+### DIP010: Unparseable Edge Condition
+
+**Severity**: Error
+
+Every edge `when` condition must parse into a valid expression. An unparseable
+condition leaves the edge's routing undefined, so the workflow cannot execute —
+it fails at `dippin simulate` and at runtime. The most common cause is using a
+tool-node field (like `marker_grep`) or an unknown operator in operator position.
+
+```
+error[DIP010]: edge A -> Z: invalid condition "marker_grep \"^ok\"": unknown operator "^ok"
+  --> pipeline.dip:14:5
+  = help: valid operators: = == != contains startswith endswith in (combine with and/or/not)
+```
+
+**What triggers it**: An edge condition that fails to parse — an unknown operator,
+or a field name used where an operator is expected.
+
+**Note**: One diagnostic fires per unparseable edge (parsing does not stop at the
+first failure), and every parseable edge is still checked by the AST-dependent
+lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the rest.
 
 ---
 
@@ -1188,7 +1212,7 @@ escape — not that the child's tools are restricted at runtime.
 dippin validate pipeline.dip
 ```
 
-Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
+Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 
 ### Full lint (validation + semantic)
 
@@ -1196,7 +1220,7 @@ Runs DIP001–DIP009. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP009 errors and DIP101–DIP146 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP146 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

@@ -76,7 +76,7 @@ func dispatchPack(stdout, stderr io.Writer, shadowEntry, dest string, dryRun boo
 	return packToFile(stderr, ctx, shadowEntry, dest)
 }
 
-// validateEntryPrePack runs structural validation (DIP001-DIP009) on the entry
+// validateEntryPrePack runs structural validation (DIP001-DIP010) on the entry
 // workflow before invoking dipx.Pack. Per spec § "CLI", pack "runs structural
 // validation first (same checks as `dippin validate`); refuses to pack invalid
 // input." This lives at the CLI layer (not inside dipx) because the spec's

@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for graph structure validation (DIP001–DIP009).
+// Diagnostic codes for graph structure validation (DIP001–DIP010).
 const (
 	DIP001 = "DIP001" // start node missing
 	DIP002 = "DIP002" // exit node missing
@@ -11,6 +11,7 @@ const (
 	DIP007 = "DIP007" // parallel/fan_in mismatch
 	DIP008 = "DIP008" // duplicate node ID
 	DIP009 = "DIP009" // duplicate edge
+	DIP010 = "DIP010" // unparseable edge condition
 )
 
 // CodeDescription maps each code to a short human-readable description.
@@ -24,4 +25,5 @@ var CodeDescription = map[string]string{
 	DIP007: "parallel fan-out/fan-in mismatch",
 	DIP008: "duplicate node ID",
 	DIP009: "duplicate edge",
+	DIP010: "edge condition cannot be parsed",
 }

@@ -174,7 +174,7 @@ func printGlobalUsage(w io.Writer) {
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "commands:")
 	fmt.Fprintln(w, "  parse <file>                      Parse and output IR as JSON")
-	fmt.Fprintln(w, "  validate <file>                   Run structural validation (DIP001-DIP009)")
+	fmt.Fprintln(w, "  validate <file>                   Run structural validation (DIP001-DIP010)")
 	fmt.Fprintln(w, "  lint <file>                       Run validation and semantic linting")
 	fmt.Fprintln(w, "  check [--format text|json] <file> Parse+validate+lint (JSON default, for LLM tooling)")
 	fmt.Fprintln(w, "  fmt [--check] [--write] <file>    Format a .dip file")

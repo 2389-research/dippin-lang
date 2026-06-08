@@ -74,6 +74,13 @@ var Explanations = map[string]Explanation{
 		Fix:     "Remove the duplicate edge declaration.",
 		Example: "Start -> Analyze\nStart -> Analyze  // duplicate edge",
 	},
+	DIP010: {
+		Code:    DIP010,
+		Summary: CodeDescription[DIP010],
+		Trigger: "An edge's when-condition cannot be parsed (e.g. an unknown operator, or a tool-node field like marker_grep used in operator position).",
+		Fix:     "Use a valid condition: var op value, where op is = == != contains startswith endswith in (combine with and/or/not).",
+		Example: "A -> Z when marker_grep \"^ok\"  // invalid: marker_grep is not an operator",
+	},
 }
 
 func init() {

@@ -100,7 +100,7 @@ The CLI commands `lint`, `validate`, and `pack` call this automatically. Direct 
 ```go
 import "github.com/2389-research/dippin-lang/validator"
 
-// Structural checks (DIP001–DIP009) — must pass
+// Structural checks (DIP001–DIP010) — must pass
 result := validator.Validate(workflow)
 if result.HasErrors() {
     for _, d := range result.Diagnostics {

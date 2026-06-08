@@ -189,9 +189,9 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-55 diagnostic codes across two categories:
+56 diagnostic codes across two categories:
 
-- **DIP001–DIP009** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch
+- **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
 - **DIP101–DIP146** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access
 
 ---
@@ -560,7 +560,7 @@ Use `dippin help` (not `--help`) to see all commands.
 | Command | Purpose |
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
-| `dippin validate <file>` | Structural checks only (DIP001-DIP009) |
+| `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
 | `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP145) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |

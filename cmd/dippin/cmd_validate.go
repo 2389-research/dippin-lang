@@ -7,7 +7,7 @@ import (
 	"github.com/2389-research/dippin-lang/validator"
 )
 
-// CmdValidate runs structural validation (DIP001-DIP009) on a workflow.
+// CmdValidate runs structural validation (DIP001-DIP010) on a workflow.
 func (c *CLI) CmdValidate(args []string) ExitCode {
 	path, code := parseSingleFileArg("validate", "usage: dippin validate <file>", args, c.Stderr)
 	if code != ExitCode(-1) {
