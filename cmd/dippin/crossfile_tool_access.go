@@ -37,9 +37,16 @@ const (
 func crossFileToolAccess(entry *ir.Workflow, entryPath string) ([]validator.Diagnostic, map[ir.SourceLocation]childPosture) {
 	var diags []validator.Diagnostic
 	classified := map[ir.SourceLocation]childPosture{}
-	visited := map[string]bool{}
+	// walkedWithIntent records, per visited child file, whether its boundaries were
+	// walked under intentSeen=true. A child first walked WITHOUT intent is re-walked
+	// once if later reached WITH intent — intent is monotonic (OR-threaded down), so
+	// each node flips false->true at most once (see maybeRecurse). The entry is seeded
+	// as walked-with-intent=true so a cycle back to it never re-walks the linted file's
+	// own boundaries: those are validator.Lint's domain (DIP143 at depth 0), and
+	// re-walking them at depth>=1 would spuriously emit a deep advisory (#109).
+	walkedWithIntent := map[string]bool{}
 	if key := canonicalKey(entryPath); key != "" {
-		visited[key] = true
+		walkedWithIntent[key] = true
 	}
 	intentSeen := validator.WorkflowDeclaresToolAccess(entry)
 	// root is the containment anchor for every child ref, captured ONCE from the
@@ -50,18 +57,18 @@ func crossFileToolAccess(entry *ir.Workflow, entryPath string) ([]validator.Diag
 	// in the fallback case a relative root simply fails the Rel check and refuses,
 	// which is the safe (fail-soft) direction.
 	root := filepath.Dir(absOrClean(entryPath))
-	walkBoundaries(entry, intentSeen, 0, root, visited, &diags, classified)
+	walkBoundaries(entry, intentSeen, 0, root, walkedWithIntent, &diags, classified)
 	return diags, classified
 }
 
 // walkBoundaries inspects each subgraph/manager_loop boundary in w.
-func walkBoundaries(w *ir.Workflow, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
+func walkBoundaries(w *ir.Workflow, intentSeen bool, depth int, root string, walkedWithIntent map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	for _, n := range w.Nodes {
 		_, ref := boundaryKindRef(n)
 		if ref == "" || n.Source.File == "" {
 			continue
 		}
-		visitBoundary(n, ref, intentSeen, depth, root, visited, diags, classified)
+		visitBoundary(n, ref, intentSeen, depth, root, walkedWithIntent, diags, classified)
 	}
 }
 
@@ -69,7 +76,7 @@ func walkBoundaries(w *ir.Workflow, intentSeen bool, depth int, root string, vis
 // when the path shows intent and the child is zero-intent (or a deep DIP143
 // advisory when the child is partial/unresolved — see deepBoundaryDiag), then
 // recurses.
-func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
+func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, root string, walkedWithIntent map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	child, childPath := resolveBoundaryChild(n, ref, root)
 	posture := postureUnresolved // resolveBoundaryChild fail-soft: nil child => unresolved
 	if child != nil {
@@ -80,7 +87,7 @@ func visitBoundary(n *ir.Node, ref string, intentSeen bool, depth int, root stri
 		*diags = append(*diags, *d)
 	}
 	if child != nil {
-		maybeRecurse(child, childPath, intentSeen, depth, root, visited, diags, classified)
+		maybeRecurse(child, childPath, intentSeen, depth, root, walkedWithIntent, diags, classified)
 	}
 }
 
@@ -109,17 +116,34 @@ func deepAdvisory(intentSeen bool, posture childPosture, depth int) bool {
 	return intentSeen && depth >= 1 && (posture == posturePartial || posture == postureUnresolved)
 }
 
-// maybeRecurse descends into a child's own boundaries unless it was already
-// visited (cycle guard) or the depth cap is reached. The child is marked visited
-// before recursing (pre-order) so cycles terminate.
-func maybeRecurse(child *ir.Workflow, childPath string, intentSeen bool, depth int, root string, visited map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
+// maybeRecurse descends into a child's own boundaries unless the depth cap is reached
+// or the child has already been walked under intent at least as strong as this path's.
+// The child is recorded (pre-order) before recursing so cycles terminate. A child first
+// walked WITHOUT intent is re-walked ONCE when later reached WITH intent, so a grandchild
+// gap behind a child shared by a no-intent and an intent path is not missed (#109). Intent
+// is monotonic, so walkedWithIntent[key] flips false->true at most once: <=1 re-walk per
+// node, <=2N walkBoundaries calls total — bounded, and the depth cap still applies.
+func maybeRecurse(child *ir.Workflow, childPath string, intentSeen bool, depth int, root string, walkedWithIntent map[string]bool, diags *[]validator.Diagnostic, classified map[ir.SourceLocation]childPosture) {
 	key := canonicalKey(childPath)
-	if key == "" || visited[key] || depth+1 > crossFileMaxDepth {
+	childIntent := intentSeen || validator.WorkflowDeclaresToolAccess(child)
+	if !shouldWalk(key, childIntent, depth, walkedWithIntent) {
 		return
 	}
-	visited[key] = true
-	childIntent := intentSeen || validator.WorkflowDeclaresToolAccess(child)
-	walkBoundaries(child, childIntent, depth+1, root, visited, diags, classified)
+	walkedWithIntent[key] = childIntent
+	walkBoundaries(child, childIntent, depth+1, root, walkedWithIntent, diags, classified)
+}
+
+// shouldWalk reports whether a child boundary should be (re-)walked: it must resolve to a
+// key, stay within the depth cap, and not already have been walked under intent at least
+// as strong as childIntent. The only re-walk it permits is the first false->true intent
+// upgrade (#109); a node already walked with intent, or re-reached with no new intent, is
+// skipped — which is what terminates cycles and self-references.
+func shouldWalk(key string, childIntent bool, depth int, walkedWithIntent map[string]bool) bool {
+	if key == "" || depth+1 > crossFileMaxDepth {
+		return false
+	}
+	walked, seen := walkedWithIntent[key]
+	return !seen || (!walked && childIntent)
 }
 
 // resolveBoundaryChild resolves ref relative to the boundary node's source file,

@@ -907,6 +907,177 @@ func TestCrossFile_DiamondOntoPartialChild(t *testing.T) {
 	}
 }
 
+// --- #109: intent-aware re-walk of a child shared by a no-intent and an intent path ---
+
+// mixedIntentDiamond builds: entry -> P1 (no intent) -> shared (agentless) -> leaf, AND
+// entry -> P2 (restricts) -> shared. The intent path (P2) reaches `shared` only AFTER the
+// no-intent path (P1) has already walked it, so before #109 the file-keyed visited set
+// suppressed re-walking shared's boundaries under intentSeen=true and the leaf stayed
+// silent. p1First controls entry node order (which path is walked first).
+func mixedIntentDiamond(t *testing.T, leaf string, p1First bool) string {
+	t.Helper()
+	noIntentMid := `workflow P1
+  start: Go
+  exit: Sup
+
+  human Go
+    mode: freeform
+
+  manager_loop Sup
+    subgraph_ref: shared.dip
+    max_cycles: 3
+
+  edges
+    Go -> Sup
+`
+	restrictMid := `workflow P2
+  start: Lock
+  exit: Sup
+
+  agent Lock
+    prompt: "x"
+    tool_access: none
+
+  manager_loop Sup
+    subgraph_ref: shared.dip
+    max_cycles: 3
+
+  edges
+    Lock -> Sup
+`
+	shared := `workflow Shared
+  start: Go
+  exit: Sup
+
+  human Go
+    mode: freeform
+
+  manager_loop Sup
+    subgraph_ref: leaf.dip
+    max_cycles: 3
+
+  edges
+    Go -> Sup
+`
+	first, second := "p1.dip", "p2.dip"
+	if !p1First {
+		first, second = "p2.dip", "p1.dip"
+	}
+	entry := `workflow Entry
+  start: A
+  exit: B
+
+  subgraph A
+    ref: ` + first + `
+
+  subgraph B
+    ref: ` + second + `
+
+  edges
+    A -> B
+`
+	return writeWorkflows(t, map[string]string{
+		"entry.dip":  entry,
+		"p1.dip":     noIntentMid,
+		"p2.dip":     restrictMid,
+		"shared.dip": shared,
+		"leaf.dip":   leaf,
+	})
+}
+
+// TestCrossFile_MixedIntentDiamondPartial — the core #109 repro. The intent path reaches
+// the shared child second; the deep partial leaf below it must still fire one DIP143.
+func TestCrossFile_MixedIntentDiamondPartial(t *testing.T) {
+	dir := mixedIntentDiamond(t, childPartial, true /*no-intent path first*/)
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 1 {
+		t.Fatalf("want 1 deep DIP143 (intent path must re-walk shared), got %d: %v", got, diags)
+	}
+}
+
+// TestCrossFile_MixedIntentDiamondZeroIntent — proves the fix also closes the pre-existing
+// DIP146 false negative (a zero-intent grandchild below the shared child).
+func TestCrossFile_MixedIntentDiamondZeroIntent(t *testing.T) {
+	dir := mixedIntentDiamond(t, childZeroIntent, true)
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP146); got != 1 {
+		t.Fatalf("want 1 DIP146 (intent path must re-walk shared), got %d: %v", got, diags)
+	}
+}
+
+// TestCrossFile_MixedIntentDiamondOrderIndependent — the result must not depend on which
+// path the DFS happens to visit first.
+func TestCrossFile_MixedIntentDiamondOrderIndependent(t *testing.T) {
+	for _, p1First := range []bool{true, false} {
+		dir := mixedIntentDiamond(t, childPartial, p1First)
+		diags, _ := crossDiags(t, dir, "entry.dip")
+		if got := countCode(diags, validator.DIP143); got != 1 {
+			t.Fatalf("p1First=%v: want 1 deep DIP143 regardless of order, got %d", p1First, got)
+		}
+	}
+}
+
+// TestCrossFile_MixedIntentDiamondNoIntentSilent — if NEITHER path restricts, the re-walk
+// never triggers and the deep partial leaf stays silent (the gate still holds).
+func TestCrossFile_MixedIntentDiamondNoIntentSilent(t *testing.T) {
+	// Replace the restricting P2 with a second no-intent mid by pointing both at p1-style.
+	noIntentMid := `workflow P
+  start: Go
+  exit: Sup
+
+  human Go
+    mode: freeform
+
+  manager_loop Sup
+    subgraph_ref: shared.dip
+    max_cycles: 3
+
+  edges
+    Go -> Sup
+`
+	shared := `workflow Shared
+  start: Go
+  exit: Sup
+
+  human Go
+    mode: freeform
+
+  manager_loop Sup
+    subgraph_ref: leaf.dip
+    max_cycles: 3
+
+  edges
+    Go -> Sup
+`
+	entry := `workflow Entry
+  start: A
+  exit: B
+
+  subgraph A
+    ref: p1.dip
+
+  subgraph B
+    ref: p2.dip
+
+  edges
+    A -> B
+`
+	dir := writeWorkflows(t, map[string]string{
+		"entry.dip":  entry,
+		"p1.dip":     noIntentMid,
+		"p2.dip":     noIntentMid,
+		"shared.dip": shared,
+		"leaf.dip":   childPartial,
+	})
+	diags, _ := crossDiags(t, dir, "entry.dip")
+	if got := countCode(diags, validator.DIP143); got != 0 {
+		t.Fatalf("want 0 DIP143 (no intent on any path), got %d: %v", got, diags)
+	}
+	if got := countCode(diags, validator.DIP146); got != 0 {
+		t.Fatalf("want 0 DIP146 (no intent on any path), got %d", got)
+	}
+}
+
 // firstDiags runs the pass and returns only the diagnostics (helper for cases that
 // don't inspect the classified map).
 func firstDiags(t *testing.T, dir, entry string) []validator.Diagnostic {
