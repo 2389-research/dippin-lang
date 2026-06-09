@@ -259,11 +259,13 @@ Fires when `max_retries` is set in defaults and the workflow has `restart: true`
 
 **Severity:** Hint
 
-A `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) node references a child `.dip` while this workflow declares a `tool_access` restriction — and `tool_access` does not cross the file boundary. The lint cannot read the child, so it reminds you to give the child's agents their own `tool_access`. (For the resolved cross-file check that *reads* the child, see DIP146.)
+A `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) node references a child `.dip` while this workflow declares a `tool_access` restriction — and `tool_access` does not cross the file boundary. The wasm/playground lint cannot read the child, so it reminds you to give the child's agents their own `tool_access`. (For the resolved cross-file check that *reads* the child, see DIP146.)
 
 ```text
 hint[DIP143]: manager_loop "Supervise" references subgraph "child.dip", defined in its own file; this workflow's tool_access restrictions do not extend across the subgraph boundary
 ```
+
+The native `dippin lint` cross-file pass also emits DIP143 for a **deep** (depth ≥ 1) child that is either **partial-audit** (resolved — some agents restricted, at least one tool-bearing agent without a `tool_access` of its own) or **unresolvable** (missing, unparseable, or refused) — boundaries the entry-only lint never sees. Like DIP146, it fires only when a workflow on the path declares `tool_access`.
 
 ### DIP144 — Agent node has no failure route
 
@@ -290,7 +292,7 @@ warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be
 
 **Severity:** Hint
 
-`dippin lint` resolves a `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) child across the file boundary and finds it declares **no** `tool_access` restriction on any agent, while a workflow on the path from the linted entry restricts tools. Unlike DIP143 (which cannot read the child), DIP146 reads and confirms the child and traverses transitively. Detection only — dippin flags the gap; runtime enforcement is separate.
+`dippin lint` resolves a `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) child across the file boundary and finds it declares **no** `tool_access` restriction on any agent, while a workflow on the path from the linted entry restricts tools. Unlike DIP143 (which cannot read the child), DIP146 reads and confirms the child and traverses transitively. The traversal is intent-aware: a child reached through both a no-intent path and a restricting path is still checked under the restricting path. Detection only — dippin flags the gap; runtime enforcement is separate.
 
 ```text
 hint[DIP146]: manager_loop "Supervise" delegates to subgraph "worker.dip", which declares no tool_access restriction on any agent; a workflow on this path restricts tools, but the restriction does not cross the subgraph boundary

@@ -4,6 +4,19 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.38.0] — 2026-06-09
+
+Cross-file `tool_access` advisory completeness. Both changes are **dippin-side detection only** — they refine the `DIP146`/`DIP143` cross-file analysis shipped in v0.37.0 and require no paired runtime release (per `never-gate-dippin-on-tracker`, no dippin behavior is gated on runtime readiness).
+
+### Added
+- `DIP143` (Hint) **deep cross-file advisory** — the native `dippin lint` cross-file pass now emits `DIP143` for a **partial-audit** or **unresolvable** child found at **depth ≥ 1** (behind an already-audited intermediate), gated by path `tool_access` intent ([#102](https://github.com/2389-research/dippin-lang/issues/102)). Previously this fallback came only from the entry-file lint, so a partial/unresolvable gap more than one hop deep was silent — DIP146 already traversed transitively for *zero-intent* children, but the partial/unresolvable advisory did not. Reuses `DIP143` (no new code); the message distinguishes partial-audit (resolved — a tool-bearing agent lacks its own `tool_access`) from unresolvable (missing / unparseable / refused). Entry boundaries (depth 0) keep their existing `validator.Lint` `DIP143`. Emitted from `dippin lint`/`check`/`watch`; no wasm/validator-detection change.
+
+### Fixed
+- **Intent-aware cross-file re-walk** — a child reached **first** via a path with no `tool_access` intent and **later** via a restricting path was not re-walked under the restricting intent, so a zero-intent / partial-audit / unresolvable **grandchild** below the shared child was silently missed ([#109](https://github.com/2389-research/dippin-lang/issues/109)). The recursion guard is now intent-aware (re-walk once on a no-intent → intent upgrade; bounded and cycle-safe, with the entry file never re-walked). Pre-existing in `DIP146` since its introduction ([#89](https://github.com/2389-research/dippin-lang/issues/89)) and inherited by the #102 deep advisory; both now catch the mixed-intent shared-child shape regardless of traversal order.
+
+### Docs
+- Documented the deep `DIP143` advisory and the intent-aware cross-file traversal in the validation reference (`docs/validation.md` + the website validation page).
+
 ## [v0.37.0] — 2026-06-08
 
 Mixed release. The cross-file `tool_access` detection + resolver hardening and the DIP010 edge-condition error are **dippin-side detection only** (no paired runtime release required). The graph-level `on_failure` route and the declarable budget guards are an **authoring surface dippin carries + lints while a paired runtime enforces** — inert until the runtime reads them (per `never-gate-dippin-on-tracker`, no dippin behavior is gated on runtime readiness).
