@@ -74,6 +74,36 @@ func TestLint_DIP147_PerKeyDiagnostics(t *testing.T) {
 	}
 }
 
+// TestLint_DIP147_DuplicateWriteKeyDedup: a duplicated key in writes: yields one
+// diagnostic for that (source, key, sink) flow, not one per duplicate.
+func TestLint_DIP147_DuplicateWriteKeyDedup(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Writer
+
+  agent Summarize
+    prompt: "summarize"
+    tool_access: none
+    writes: tainted, tainted
+
+  agent Writer
+    prompt: "write"
+    reads: tainted
+
+  edges
+    Summarize -> Writer
+`
+	var n int
+	for _, d := range lintSrc(t, src) {
+		if d.Code == DIP147 {
+			n++
+		}
+	}
+	if n != 1 {
+		t.Errorf("expected 1 DIP147 (deduped), got %d", n)
+	}
+}
+
 // TestLint_DIP147_LastResponseEdgeNotFlagged: a bare none -> full edge with no
 // declared key dependency (the ${ctx.last_response} auto-injection topology) is
 // intentionally OUT OF SCOPE — that is issue #57 (closed/deferred), and its
@@ -153,8 +183,9 @@ func TestLint_DIP147_MultiHopKeyFlow(t *testing.T) {
     Summarize -> Passthrough
     Passthrough -> Writer
 `
-	if !hasCode(lintSrc(t, src), DIP147) {
-		t.Fatalf("expected DIP147 for multi-hop key flow, got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP147) {
+		t.Fatalf("expected DIP147 for multi-hop key flow, got: %v", codes(diags))
 	}
 }
 
@@ -191,8 +222,9 @@ func TestLint_DIP147_KeyFlowThroughFanIn(t *testing.T) {
     Seed -> P
     F -> Writer
 `
-	if !hasCode(lintSrc(t, src), DIP147) {
-		t.Fatalf("expected DIP147 for key flow through fan_in, got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP147) {
+		t.Fatalf("expected DIP147 for key flow through fan_in, got: %v", codes(diags))
 	}
 }
 

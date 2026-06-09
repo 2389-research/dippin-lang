@@ -81,8 +81,10 @@ func chainAttacksFromSource(srcID string, src *ir.Node, reads map[string]bool, s
 		return nil
 	}
 	var diags []Diagnostic
+	emitted := make(map[string]bool)
 	for _, key := range src.IO.Writes {
-		if reads[key] {
+		if reads[key] && !emitted[key] {
+			emitted[key] = true
 			diags = append(diags, chainAttackDiagnostic(srcID, key, sink))
 		}
 	}
