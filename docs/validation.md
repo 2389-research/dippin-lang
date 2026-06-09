@@ -1178,7 +1178,7 @@ restriction on any agent, while a workflow on the path from the linted entry
 restricts tools. Unlike DIP143 (which cannot read the child), DIP146 reads and
 confirms the child, and traverses transitively. The traversal is intent-aware: a
 child reached through both a no-intent path and a restricting path is still checked
-under the restricting path (#109).
+under the restricting path ([#109](https://github.com/2389-research/dippin-lang/issues/109)).
 
 ```text
 hint[DIP146]: manager_loop "Supervise" delegates to subgraph "worker.dip", which declares no tool_access restriction on any agent; a workflow on this path restricts tools, but the restriction does not cross the subgraph boundary
