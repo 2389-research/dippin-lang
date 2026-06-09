@@ -730,22 +730,65 @@ func (p *Parser) parseParallel() {
 }
 
 // parseParallelInline handles: parallel ID -> target, target
+// An optional indented params: block may follow the inline target list.
 func (p *Parser) parseParallelInline(id string) {
 	p.expect(TokenArrow)
 	targets := p.parseCommaList()
+	params := p.parseOptionalParamsBlock()
 	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
 		ID:     id,
 		Kind:   ir.NodeParallel,
-		Config: ir.ParallelConfig{Targets: targets},
+		Config: ir.ParallelConfig{Targets: targets, Params: params},
 	})
-	p.expect(TokenNewline)
 }
 
-// parseParallelBlock handles block form with per-branch config.
+// tokenIsIdent reports whether t is the given keyword identifier.
+func tokenIsIdent(t Token, name string) bool {
+	return t.Type == TokenIdentifier && t.Value == name
+}
+
+// parseNodeParamsField parses a `params:` field at the cursor (the "params"
+// identifier is the next token) and returns the parsed key/value map.
+func (p *Parser) parseNodeParamsField() map[string]string {
+	t := p.lexer.NextToken() // "params"
+	p.expect(TokenColon)
+	val := p.readFieldValue(t.Location.Line)
+	return p.parseParamsBlock(val)
+}
+
+// parseOptionalParamsBlock consumes the trailing newline after an inline
+// parallel/fan_in declaration and, if an indented block follows, parses a
+// `params:` field from it. Returns nil when no block is present.
+func (p *Parser) parseOptionalParamsBlock() map[string]string {
+	p.expect(TokenNewline)
+	if p.lexer.PeekToken().Type != TokenIndent {
+		return nil
+	}
+	p.expect(TokenIndent)
+	params := p.parseIndentedParams()
+	p.expect(TokenOutdent)
+	return params
+}
+
+// parseIndentedParams scans an indented block for a `params:` field, skipping
+// any other tokens. Returns nil if no params block is present.
+func (p *Parser) parseIndentedParams() map[string]string {
+	var params map[string]string
+	for p.lexer.PeekToken().Type != TokenOutdent && p.lexer.PeekToken().Type != TokenEOF {
+		if tokenIsIdent(p.lexer.PeekToken(), "params") {
+			params = p.parseNodeParamsField()
+			continue
+		}
+		p.lexer.NextToken()
+	}
+	return params
+}
+
+// parseParallelBlock handles block form with per-branch config and an optional params block.
 func (p *Parser) parseParallelBlock(id string) {
 	p.expect(TokenNewline)
 	p.expect(TokenIndent)
-	branches := p.parseParallelBranches()
+	branches, params := p.parseParallelBody()
 	p.expect(TokenOutdent)
 
 	targets := branchTargets(branches)
@@ -755,33 +798,41 @@ func (p *Parser) parseParallelBlock(id string) {
 		Config: ir.ParallelConfig{
 			Targets:  targets,
 			Branches: branches,
+			Params:   params,
 		},
 	})
 }
 
-// parseParallelBranches parses branch declarations inside a parallel block.
-func (p *Parser) parseParallelBranches() []ir.BranchConfig {
+// parseParallelBody parses branch declarations and an optional params block
+// inside a parallel block.
+func (p *Parser) parseParallelBody() ([]ir.BranchConfig, map[string]string) {
 	var branches []ir.BranchConfig
+	var params map[string]string
 	for p.lexer.PeekToken().Type != TokenOutdent && p.lexer.PeekToken().Type != TokenEOF {
-		t := p.lexer.PeekToken()
-		if b, ok := p.tryParseBranch(t); ok {
-			branches = append(branches, b)
+		b, ps := p.parseParallelBodyLine()
+		if b != nil {
+			branches = append(branches, *b)
+		}
+		if ps != nil {
+			params = ps
 		}
 	}
-	return branches
+	return branches, params
 }
 
-// tryParseBranch tries to parse a branch or skip a non-branch token.
-func (p *Parser) tryParseBranch(t Token) (ir.BranchConfig, bool) {
-	if t.Type == TokenNewline {
-		p.lexer.NextToken()
-		return ir.BranchConfig{}, false
+// parseParallelBodyLine parses one item in a parallel block: a branch, a params
+// block, or a skipped token. Returns the parsed branch (or nil) and params (or nil).
+func (p *Parser) parseParallelBodyLine() (*ir.BranchConfig, map[string]string) {
+	t := p.lexer.PeekToken()
+	if tokenIsIdent(t, "branch") {
+		b := p.parseOneBranch()
+		return &b, nil
 	}
-	if t.Type == TokenIdentifier && t.Value == "branch" {
-		return p.parseOneBranch(), true
+	if tokenIsIdent(t, "params") {
+		return nil, p.parseNodeParamsField()
 	}
 	p.lexer.NextToken()
-	return ir.BranchConfig{}, false
+	return nil, nil
 }
 
 // parseOneBranch parses: branch: target\n  model: ...\n  provider: ...
@@ -864,15 +915,17 @@ func branchTargets(branches []ir.BranchConfig) []string {
 	return targets
 }
 
+// parseFanIn handles: fan_in ID <- source, source
+// An optional indented params: block may follow the source list.
 func (p *Parser) parseFanIn() {
 	p.lexer.NextToken() // fan_in
 	id := p.lexer.NextToken().Value
 	p.expect(TokenBackArrow)
 	sources := p.parseCommaList()
+	params := p.parseOptionalParamsBlock()
 	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
 		ID:     id,
 		Kind:   ir.NodeFanIn,
-		Config: ir.FanInConfig{Sources: sources},
+		Config: ir.FanInConfig{Sources: sources, Params: params},
 	})
-	p.expect(TokenNewline)
 }

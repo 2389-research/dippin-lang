@@ -208,6 +208,10 @@
         {
           "type": "identifier_list",
           "named": true
+        },
+        {
+          "type": "node_attr_block",
+          "named": true
         }
       ]
     }
@@ -313,6 +317,21 @@
       "types": [
         {
           "type": "block_content",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "node_attr_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "node_field",
           "named": true
         }
       ]
@@ -432,6 +451,10 @@
         },
         {
           "type": "identifier_list",
+          "named": true
+        },
+        {
+          "type": "node_attr_block",
           "named": true
         }
       ]

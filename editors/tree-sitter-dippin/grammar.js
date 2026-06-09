@@ -76,10 +76,29 @@ module.exports = grammar({
       seq("manager_loop", $.identifier, $._indent, repeat1(choice($.node_field, $._newline)), $._dedent),
 
     parallel_node: ($) =>
-      seq("parallel", $.identifier, "->", $.identifier_list, $._newline),
+      seq(
+        "parallel",
+        $.identifier,
+        "->",
+        $.identifier_list,
+        choice($._newline, $.node_attr_block)
+      ),
 
     fan_in_node: ($) =>
-      seq("fan_in", $.identifier, "<-", $.identifier_list, $._newline),
+      seq(
+        "fan_in",
+        $.identifier,
+        "<-",
+        $.identifier_list,
+        choice($._newline, $.node_attr_block)
+      ),
+
+    // An optional indented block of node fields (e.g. a params: block) beneath
+    // an inline parallel/fan_in declaration. When the scanner sees a more-indented
+    // line after the inline declaration it emits INDENT directly (no NEWLINE),
+    // mirroring how agent_node opens its body.
+    node_attr_block: ($) =>
+      seq($._indent, repeat1(choice($.node_field, $._newline)), $._dedent),
 
     node_field: ($) => seq($.field_name, ":", $.field_value),
 

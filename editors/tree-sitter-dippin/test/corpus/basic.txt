@@ -269,3 +269,60 @@ workflow Gate
                     (operand (variable (identifier) (identifier)))
                     (compare_op)
                     (operand (identifier))))))))))))
+
+================================================================================
+Parallel and fan_in with params block
+================================================================================
+
+workflow PP
+  start: Fan
+  exit: Join
+
+  parallel Fan -> A, B
+    params:
+      fan_in_policy: all
+
+  fan_in Join <- A, B
+    params:
+      quorum: 2
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (workflow_decl
+    (identifier)
+    (workflow_body
+      (workflow_field
+        (field_value
+          (raw_inline)))
+      (workflow_field
+        (field_value
+          (raw_inline)))
+      (node_decl
+        (parallel_node
+          (identifier)
+          (identifier_list
+            (identifier)
+            (identifier))
+          (node_attr_block
+            (node_field
+              (field_name
+                (identifier))
+              (field_value
+                (multiline_block
+                  (block_content
+                    (block_line))))))))
+      (node_decl
+        (fan_in_node
+          (identifier)
+          (identifier_list
+            (identifier)
+            (identifier))
+          (node_attr_block
+            (node_field
+              (field_name
+                (identifier))
+              (field_value
+                (multiline_block
+                  (block_content
+                    (block_line)))))))))))

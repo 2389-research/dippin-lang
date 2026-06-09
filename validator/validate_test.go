@@ -130,6 +130,37 @@ func TestValidate(t *testing.T) {
 			},
 			wantNoDiag: true,
 		},
+		{
+			name: "valid parallel/fan_in pair carrying params (DIP007 unaffected)",
+			workflow: &ir.Workflow{
+				Name:  "parallel_params_ok",
+				Start: "Start",
+				Exit:  "End",
+				Nodes: []*ir.Node{
+					{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go"}},
+					{ID: "Fork", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+						Targets: []string{"W1", "W2"},
+						Params:  map[string]string{"fan_in_policy": "all"},
+					}},
+					{ID: "W1", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "w1"}},
+					{ID: "W2", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "w2"}},
+					{ID: "Join", Kind: ir.NodeFanIn, Config: ir.FanInConfig{
+						Sources: []string{"W1", "W2"},
+						Params:  map[string]string{"fan_in_policy": "all", "quorum": "2"},
+					}},
+					{ID: "End", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done"}},
+				},
+				Edges: []*ir.Edge{
+					{From: "Start", To: "Fork"},
+					{From: "Fork", To: "W1"},
+					{From: "Fork", To: "W2"},
+					{From: "W1", To: "Join"},
+					{From: "W2", To: "Join"},
+					{From: "Join", To: "End"},
+				},
+			},
+			wantNoDiag: true,
+		},
 
 		// --- Error cases: one diagnostic each ---
 		{
