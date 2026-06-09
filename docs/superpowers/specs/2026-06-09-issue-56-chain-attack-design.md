@@ -2,7 +2,22 @@
 
 **Date:** 2026-06-09
 **Issue:** [#56](https://github.com/2389-research/dippin-lang/issues/56) — follow-up deferred from #41 (`safety-follow-up`, P2).
-**Status:** Design approved; ready for TDD.
+**Status:** Implemented. Scope narrowed during build — see § Scope decision (#57).
+
+## Scope decision (#57)
+
+Issue [#57](https://github.com/2389-research/dippin-lang/issues/57) ("Cross-node lint:
+`tool_access: none` source → `full` target edge warning") was filed as a sibling non-goal of #56 and
+**closed/deferred** ("useful once cascade exists; less so when authors annotate per-node"); `skill.md`
+calls it "the rejected in-file graph-topology lint." A bare `none → full` *edge* warning (the
+`${ctx.last_response}` auto-injection topology) is therefore **out of scope** for this PR.
+
+DIP147 instead ships only the **explicit-key vector** — a flow the author wired by hand
+(`writes: K` on a restricted agent → `reads: K` on a downstream tool-bearing agent). This is genuinely
+new (#57 never covered named-key laundering), maximally precise (no edge-proximity heuristic — it fires
+only on a declared data dependency), and does not resurrect the rejected edge warning. The
+`${ctx.last_response}` auto-injection vector and the `last_response_truncate:` mitigation attribute remain
+#56 follow-ups. Consequently this PR **partially addresses** #56 (it does not `Closes` it).
 
 ## The gap
 
@@ -37,30 +52,22 @@ DIP147 fires when a **restricted source** agent's output reaches a **tool-bearin
 - **sink** = an agent node with canonical `tool_access == ""` (the full catalog / default). Only agents
   have a tool catalog and an auto-injected prompt.
 
-The flow is detected via two vectors:
-
-- **(a) `last_response` vector (1-hop):** a direct, non-restart edge `source → sink`. The runtime
-  auto-injects the source's `last_response` into the sink's prompt regardless of whether the sink
-  references `${ctx.last_response}` — so the flow exists structurally on every such edge.
-- **(b) explicit-key vector (multi-hop):** the source declares `writes: K`, and a tool-bearing agent that
-  is **downstream** of the source (reachable via forward edges) declares `reads: K`. The tainted key
-  persists in context across hops, so reachability — not adjacency — is the right relation here.
+The flow is detected via the **explicit-key vector** (multi-hop): the source declares `writes: K`, and a
+tool-bearing agent that is **downstream** of the source (reachable via forward edges) declares `reads: K`.
+The tainted key persists in context across hops, so reachability — not adjacency — is the right relation,
+and a non-agent node (e.g. a tool node) between source and sink does not hide the flow.
 
 ### Why this is precise (the false-positive crux)
 
-`last_response` auto-injects into *every* downstream agent by convention, so a naive "any restricted node
-near an unrestricted node" rule would be noisy. The rule above fires on **exactly** the `none → full`
-topology and nothing else:
+The rule fires on an **author-declared data dependency**, never on graph adjacency, so it cannot be noisy
+the way a bare-edge heuristic would be:
 
-- A restricted agent feeding another restricted agent (`none → none`) does **not** fire — the taint stays
-  in a tool-less context; no privilege to escalate to.
-- A full agent feeding a restricted agent (`full → none`) does **not** fire — wrong direction.
-- A `full → none → full` laundering chain fires on the **`none → full` hop** — precisely where laundered
-  content reaches a privileged agent. This is the terror-squad chain's danger point.
-- The explicit-key vector requires the sink to *actually* `reads:` the key, so it flags real consumption,
-  not mere proximity.
+- A restricted agent's key flowing into another restricted agent (`none → none`) does **not** fire — the
+  taint stays in a tool-less context; no privilege to escalate to.
+- A `full → … → full` or `full → none` key flow does **not** fire — no restricted-source escalation.
+- The sink must *actually* declare the key in `reads:`, so it flags real, hand-wired consumption.
 
-Because a `none → full` flow can still be legitimate (e.g. a classifier over trusted input feeding a
+Because a restricted-source key flow can still be legitimate (a classifier over trusted input feeding a
 worker), and the repo has **no per-diagnostic suppression**, severity is **Hint** — matching DIP143/146
 ("audit this, may be intentional"), not the DIP139–142 Warnings (which fire on definite typos / dead
 config).
@@ -70,18 +77,16 @@ config).
 - **Code:** `DIP147`, **Severity:** `SeverityHint`.
 - **Location:** the **sink** node's `Source` — the privileged consumer is where the risk materializes and
   where a future mitigation knob would live.
-- **Message:** names both the restricted source and the tool-bearing sink, and which vector triggered.
-- **Dedup:** at most one diagnostic per `(source, sink)` pair; if both vectors hit the same pair, the
-  `last_response` message wins (it is the always-on auto-injection path).
+- **Message:** names the restricted source, the laundered key, and the tool-bearing sink.
+- One diagnostic per `(source, key, sink)` flow (each distinct restricted source upstream of a sink that
+  shares a written/read key).
 
 ## Implementation
 
 New file `validator/lint_chain_attack.go`, registered in `validator/lint.go`. Reuses:
 
-- `buildForwardAdjacency` (lint.go) — not strictly needed for vector (a); the `last_response` pass iterates
-  `w.Edges` directly (non-restart explicit edges) for precision.
-- `computeAvailableAndUpstream` (lint_context.go) — the `upstream` map gives, per node, the set of strictly
-  upstream node IDs; reused for vector (b)'s reachability.
+- `buildForwardAdjacency` (lint.go) + `computeAvailableAndUpstream` (lint_context.go) — the `upstream` map
+  gives, per node, the set of strictly upstream node IDs; used for the explicit-key reachability relation.
 - The canonicalization idiom from `lint_tool_access.go` (`strings.ToLower(strings.TrimSpace(...))`).
 
 The validator must **not** import the parser or cmd-dippin and must compile to wasm — DIP147 touches only
@@ -99,26 +104,27 @@ The validator must **not** import the parser or cmd-dippin and must compile to w
    (`docs/llm-reference.md`, `site/static/skill.md`) then regen `cmd/dippin/generated-spec.md` via
    `scripts/gen-spec.sh` (freshness-gated by `releasecheck`). Sweep the hardcoded `DIP14x` range strings.
 
-## Test matrix (failing tests first)
+## Test matrix
 
-1. `none → full` direct edge → DIP147 fires (last_response vector).
-2. same chain where the downstream agent is also `none` → DIP147 does **not** fire.
-3. explicit `writes:`/`reads:` key flow `none → full` → DIP147 fires (explicit-key vector).
-4. benign topology (`full → full`, `full → none`) → no false positive.
-5. explanation-parity test for DIP147 stays green.
-6. `lint-examples`: no existing example newly trips DIP147 (fix/annotate if so).
+1. explicit `writes:`/`reads:` key flow `none → full` → DIP147 fires; message names both nodes + key.
+2. bare `none → full` edge with no declared key (last_response topology) → DIP147 does **not** fire
+   (documents the #57 scope boundary).
+3. `none → none` key flow → DIP147 does **not** fire (sink restricted; no escalation).
+4. multi-hop key flow across a non-agent (tool) node → DIP147 fires (reachability, not adjacency).
+5. benign topology (`full → full`, `full → none` key flow) → no false positive.
+6. explanation-parity test for DIP147 stays green.
+7. `lint-examples`: no existing example newly trips DIP147.
 
 ## Out of scope (follow-ups)
 
-- **Carry-only mitigation attribute** (`last_response_truncate:` or a structural context-input bound):
-  deferred. Needs its own design (which node it lives on, wire format, round-trip). Detection ships first
-  and stands alone — mirrors the DIP143-first / DIP146-follow-up split.
+- **`${ctx.last_response}` auto-injection edge (bare `none → full`)** and the **`last_response_truncate:`
+  mitigation attribute:** the edge-warning topology is issue #57 (closed/deferred); the attribute is #56's
+  literally-named mitigation. Both remain follow-ups; this PR partially addresses #56.
 - **Cross-file subgraph chains:** a restricted agent in one file feeding a tool-bearing agent across a
   `subgraph`/`manager_loop` boundary. Belongs in the `cmd/dippin` native cross-file pass (like DIP146),
   **not** the wasm-safe validator.
-- **Parallel-branch / fan_in / manager_loop multi-hop vectors:** v1 is agent-node `tool_access` + direct
-  edges + explicit-key reachability. Branch-level overrides and join-node `last_response` ambiguity are a
-  follow-up.
+- **Parallel-branch / fan_in / manager_loop vectors:** v1 is agent-node `tool_access` + explicit-key
+  reachability. Branch-level overrides are a follow-up.
 
 ## Why detection, not enforcement
 

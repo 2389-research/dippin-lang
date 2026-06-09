@@ -417,7 +417,7 @@ func nodeValidationExplanations() map[string]Explanation {
 	}
 }
 
-// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP146).
+// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP147).
 func safetyExplanations() map[string]Explanation {
 	return map[string]Explanation{
 		DIP138: {
@@ -468,6 +468,13 @@ func safetyExplanations() map[string]Explanation {
 			Trigger: "Surfaced by `dippin lint` (native, cross-file) — not by validator.Lint(), which cannot read the child. A workflow on the path from the linted entry down to a manager_loop (subgraph_ref) or subgraph (ref) boundary declares tool_access on some agent or branch (containment intent), and the resolved child workflow declares NO tool_access restriction on any of its agents or parallel branches. The pass reads and confirms the child (the precision win over DIP143) and traverses transitively, so a zero-intent grandchild is flagged too. A child that restricts every agent is silent; one that restricts some but leaves a tool-bearing agent open keeps the DIP143 advisory instead. Hint, not Warning: a fully-open child may be intentional (a trusted tool worker), and there is no per-diagnostic suppression.",
 			Fix:     "Give the referenced .dip's agents their own tool_access (e.g. tool_access: none on summarizers). Restrictions declared in a parent do not flow into a referenced subgraph. This bounds the child's tool catalog, not information flow across the supervisory boundary (steer_context / stack.child.* — see #56). A clean result means every resolvable child is fully locked down or had no restriction to escape — not that the child's tools are enforced at runtime.",
 			Example: "agent Lock\n  tool_access: none\nmanager_loop Supervise\n  subgraph_ref: worker.dip   // DIP146 if worker.dip restricts no agent's tool_access",
+		},
+		DIP147: {
+			Code:    DIP147,
+			Summary: "restricted agent output flows into a tool-bearing agent (chain-attack)",
+			Trigger: "An agent with tool_access: none (a restricted, untrusted-input handler) declares a context key in writes:, and a tool-bearing agent (tool_access omitted / full catalog) reachable downstream declares that same key in reads:. tool_access bounds the source's TOOLS, not its information flow, so an injection payload it processed can launder through the named key into a privileged prompt and drive the sink's tools. The flow is followed multi-hop via forward-edge reachability, so a non-agent node (e.g. a tool node) between them does not hide it. The source is canonical 'none' only (invalid values are DIP139's domain and fail closed); the sink is canonical '' (full catalog); both must be agent nodes. Hint, not Warning: a none -> full flow over trusted input is legitimate, and there is no per-diagnostic suppression. Scope: this fires only on an EXPLICIT, author-declared writes:/reads: key dependency. The bare ${ctx.last_response} auto-injection edge (a none -> full edge with no declared key) is NOT flagged — that topology is issue #57 (deferred) and its mitigation is #56's last_response_truncate: attribute. Cross-file chains and parallel-branch / fan_in / manager_loop vectors are follow-ups.",
+			Fix:     "Confirm the restricted agent's input is trusted. If it is not, remove the consuming agent's tool catalog (give it tool_access: none too) or insert a sanitizing / validating step between them so the untrusted text never reaches a privileged prompt verbatim. Detection only: dippin flags the topology; the runtime enforces the information-flow bound (key sanitization / context limit).",
+			Example: "agent Summarize\n  tool_access: none      // handles untrusted input\n  writes: tainted\nagent Writer\n  prompt: \"write the report\"\n  reads: tainted         // DIP147: restricted output laundered via a key into a tool-bearing prompt\nedges\n  Summarize -> Writer",
 		},
 	}
 }

@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 56 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (55 documented sections):
+Dippin registers 57 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (56 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP146): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP147): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP146<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP147<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP146)
+## Semantic Lint Warnings (DIP101–DIP147)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1210,6 +1210,45 @@ escape — not that the child's tools are restricted at runtime.
 
 ---
 
+### DIP147: Restricted Agent Output Flows Into a Tool-Bearing Agent (chain-attack)
+
+A `tool_access: none` agent declares a context key in `writes:`, and a
+tool-bearing agent (`tool_access` omitted / full catalog) reachable downstream
+declares that same key in `reads:`. `tool_access` bounds the restricted agent's
+**tools**, not its **information flow** — so a prompt-injection payload it
+processed can launder through the named key into a privileged agent's prompt and
+drive that agent's tools. This closes the gap the `tool_access` arc leaves open
+([#56](https://github.com/2389-research/dippin-lang/issues/56)).
+
+```text
+hint[DIP147]: restricted agent "Summarize" (tool_access: none) writes context key "tainted" that tool-bearing agent "Writer" reads — its output reaches a privileged prompt
+```
+
+**Trigger:** A restricted agent (`tool_access: none`) writes a context key that a
+downstream tool-bearing agent reads. The flow is followed multi-hop via
+forward-edge reachability, so a non-agent node (e.g. a tool node) between them
+does not hide it. The source is canonical `none` only (invalid values are
+DIP139's domain and fail closed); the sink is the full catalog (`tool_access`
+omitted); both must be agent nodes. `none → none` (no escalation) and
+`full → …` (no restricted source) do not fire.
+
+**Fix:** Confirm the restricted agent's input is trusted. If it is not, give the
+consuming agent `tool_access: none` too, or insert a sanitizing / validating step
+between them so untrusted text never reaches a privileged prompt verbatim.
+
+**Scope:** DIP147 is a **Hint** (a restricted-source key flow over trusted input
+is legitimate, and there is no per-diagnostic suppression) and fires only on an
+**explicit, author-declared** `writes:`/`reads:` key dependency. The bare
+`${ctx.last_response}` auto-injection edge (a `none → full` edge with no declared
+key) is **not** flagged — that topology is
+[#57](https://github.com/2389-research/dippin-lang/issues/57) (deferred), and its
+mitigation (`last_response_truncate:`) is a #56 follow-up. Cross-file chains and
+parallel-branch / `fan_in` / `manager_loop` vectors are also follow-ups.
+Detection only: dippin flags the topology; the tracker runtime enforces the
+information-flow bound.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1226,7 +1265,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP146 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP147 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

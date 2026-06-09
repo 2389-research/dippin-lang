@@ -1,0 +1,155 @@
+package validator
+
+import (
+	"strings"
+	"testing"
+)
+
+// TestLint_DIP147_ExplicitKeyNoneToFull: a tool_access:none agent writes a
+// context key that a downstream tool-bearing agent reads — laundering an
+// author-declared key into a privileged prompt. DIP147 fires.
+func TestLint_DIP147_ExplicitKeyNoneToFull(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Writer
+
+  agent Summarize
+    prompt: "summarize the untrusted input"
+    tool_access: none
+    writes: tainted
+
+  agent Writer
+    prompt: "write the report"
+    reads: tainted
+
+  edges
+    Summarize -> Writer
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP147) {
+		t.Fatalf("expected DIP147, got: %v", codes(diags))
+	}
+	var msg string
+	for _, d := range diags {
+		if d.Code == DIP147 {
+			msg = d.Message
+		}
+	}
+	// The diagnostic names both nodes and the laundered key.
+	for _, want := range []string{"Summarize", "Writer", "tainted"} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("DIP147 message should mention %q; got %q", want, msg)
+		}
+	}
+}
+
+// TestLint_DIP147_LastResponseEdgeNotFlagged: a bare none -> full edge with no
+// declared key dependency (the ${ctx.last_response} auto-injection topology) is
+// intentionally OUT OF SCOPE — that is issue #57 (closed/deferred), and its
+// mitigation is #56's last_response_truncate: attribute. DIP147 must not fire on
+// adjacency alone.
+func TestLint_DIP147_LastResponseEdgeNotFlagged(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Writer
+
+  agent Summarize
+    prompt: "summarize"
+    tool_access: none
+
+  agent Writer
+    prompt: "act on ${ctx.last_response}"
+
+  edges
+    Summarize -> Writer
+`
+	if hasCode(lintSrc(t, src), DIP147) {
+		t.Errorf("DIP147 should not fire on a bare none->full edge (no declared key); got: %v", codes(lintSrc(t, src)))
+	}
+}
+
+// TestLint_DIP147_NoneToNoneDoesNotFire: a restricted agent's key flowing into
+// another restricted agent keeps the taint in a tool-less context — no privilege
+// to escalate to, so DIP147 must not fire.
+func TestLint_DIP147_NoneToNoneDoesNotFire(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Downstream
+
+  agent Summarize
+    prompt: "summarize"
+    tool_access: none
+    writes: tainted
+
+  agent Downstream
+    prompt: "still restricted"
+    tool_access: none
+    reads: tainted
+
+  edges
+    Summarize -> Downstream
+`
+	if hasCode(lintSrc(t, src), DIP147) {
+		t.Errorf("DIP147 should not fire for none->none; got: %v", codes(lintSrc(t, src)))
+	}
+}
+
+// TestLint_DIP147_MultiHopKeyFlow: the tainted key persists in context across a
+// non-agent intermediate (a tool node). The restricted source and the
+// tool-bearing sink are not adjacent, but reachability + the shared key still
+// flags the laundering.
+func TestLint_DIP147_MultiHopKeyFlow(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Writer
+
+  agent Summarize
+    prompt: "summarize"
+    tool_access: none
+    writes: tainted
+
+  tool Passthrough
+    command: echo hi
+    timeout: 5s
+
+  agent Writer
+    prompt: "write"
+    reads: tainted
+
+  edges
+    Summarize -> Passthrough
+    Passthrough -> Writer
+`
+	if !hasCode(lintSrc(t, src), DIP147) {
+		t.Fatalf("expected DIP147 for multi-hop key flow, got: %v", codes(lintSrc(t, src)))
+	}
+}
+
+// TestLint_DIP147_BenignNoFalsePositive: full->full and full->none key flows
+// carry no restricted->privileged escalation, so DIP147 must stay silent.
+func TestLint_DIP147_BenignNoFalsePositive(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: C
+
+  agent A
+    prompt: "a"
+    writes: shared
+
+  agent B
+    prompt: "b"
+    reads: shared
+
+  agent C
+    prompt: "c"
+    tool_access: none
+    reads: shared
+
+  edges
+    A -> B
+    B -> C
+`
+	if hasCode(lintSrc(t, src), DIP147) {
+		t.Errorf("DIP147 false positive on benign topology; got: %v", codes(lintSrc(t, src)))
+	}
+}
