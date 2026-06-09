@@ -271,9 +271,9 @@ func deepBoundaryDiag(n *ir.Node, ref string, posture childPosture) validator.Di
 		// tool_access while every agent-level tool_access is empty (countAgents'
 		// AgentConfig-only census), where zero agents are restricted. The invariant
 		// that always holds is restricted < agents => >=1 tool-bearing agent open.
-		detail = "does not restrict every agent, leaving at least one tool-bearing agent open to the full tool catalog"
+		detail = "does not restrict every agent, leaving at least one tool-bearing agent without a tool_access restriction of its own"
 		help = fmt.Sprintf(
-			"a workflow on this path restricts tools, but subgraph %q leaves at least one agent open to the full tool catalog. Audit that agent and give it its own tool_access (e.g. tool_access: none). Multiple boundaries referencing the same child each get a hint; one tool_access edit clears them all.",
+			"a workflow on this path restricts tools, but subgraph %q leaves at least one agent with no tool_access restriction of its own. Audit that agent and give it its own tool_access (e.g. tool_access: none). Multiple boundaries referencing the same child each get a hint; one tool_access edit clears them all.",
 			ref)
 	} else {
 		detail = "could not be resolved or parsed (missing, unparseable, or refused), so its tool_access posture is unknown"

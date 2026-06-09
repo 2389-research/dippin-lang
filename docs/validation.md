@@ -1192,10 +1192,11 @@ wasm/playground linter.
 none`). Restrictions in a parent do not flow into a referenced subgraph.
 
 **What DIP146 does NOT check:** DIP146 *does* traverse transitively — a
-zero-intent grandchild is flagged, and a **partial-audit or unparseable** child at
-any depth now gets a DIP143 advisory from the cross-file pass
-([#102](https://github.com/2389-research/dippin-lang/issues/102)), not just the
-entry's direct boundaries. Out of scope:
+zero-intent grandchild is flagged, and a **partial-audit or unparseable** child is
+now also flagged with a DIP143 advisory at *any* depth: the entry's own boundaries
+(depth 0) from `validator.Lint` as before, and **deeper boundaries (depth ≥ 1)**
+from the cross-file pass
+([#102](https://github.com/2389-research/dippin-lang/issues/102)). Out of scope:
 information flow across the supervisory boundary (`steer_context` /
 `stack.child.*` — see [#56](https://github.com/2389-research/dippin-lang/issues/56));
 runtime enforcement (the tracker runtime enforces; dippin detects). A clean

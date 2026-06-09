@@ -192,8 +192,8 @@ guards the location join against a future DIP143 location change).
 DIP143 is a per-file lint that runs only on the entry, so a **partial-audit or unparseable child
 at depth > 1** (behind an already-audited intermediate) was **not** separately flagged by
 `validator.Lint` — the retained-DIP143 backstop covered the entry's direct boundaries only.
-#102 closes this: the cross-file pass now emits its own DIP143 advisory (Hint, gated by path
-intent) for partial-audit/unresolvable children at depth >= 1, mirroring how it CLI-emits
+Issue #102 closes this: the cross-file pass now emits its own DIP143 advisory (Hint, gated by
+path intent) for partial-audit/unresolvable children at depth >= 1, mirroring how it CLI-emits
 DIP146 for deep zero-intent gaps. *(Security I2)*
 
 ### Severity: `Hint` (not Warning)
