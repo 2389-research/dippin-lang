@@ -123,8 +123,12 @@ The validator must **not** import the parser or cmd-dippin and must compile to w
 - **Cross-file subgraph chains:** a restricted agent in one file feeding a tool-bearing agent across a
   `subgraph`/`manager_loop` boundary. Belongs in the `cmd/dippin` native cross-file pass (like DIP146),
   **not** the wasm-safe validator.
-- **Parallel-branch / fan_in / manager_loop vectors:** v1 is agent-node `tool_access` + explicit-key
-  reachability. Branch-level overrides are a follow-up.
+- **Parallel-branch / fan_in / manager_loop vectors:** v1 classifies a source/sink by the **agent node's
+  own** `tool_access`. A `tool_access: none` declared as a per-branch override (`BranchConfig.ToolAccess`)
+  is **not** analyzed — the target agent keeps its node-level `tool_access` (often `""`), so a
+  branch-restricted source is not treated as restricted. This is a known asymmetry (node-level caught,
+  branch-level not); a clean fix needs per-branch *effective* `tool_access` resolution, which is contextual
+  to the parallel invocation and deserves its own design. Follow-up.
 
 ## Why detection, not enforcement
 

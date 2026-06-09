@@ -43,6 +43,37 @@ func TestLint_DIP147_ExplicitKeyNoneToFull(t *testing.T) {
 	}
 }
 
+// TestLint_DIP147_PerKeyDiagnostics: a restricted agent laundering two distinct
+// keys into one tool-bearing sink yields one diagnostic per (source, key, sink)
+// flow, not a single collapsed hint.
+func TestLint_DIP147_PerKeyDiagnostics(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Writer
+
+  agent Summarize
+    prompt: "summarize"
+    tool_access: none
+    writes: tainted_a, tainted_b
+
+  agent Writer
+    prompt: "write"
+    reads: tainted_a, tainted_b
+
+  edges
+    Summarize -> Writer
+`
+	var n int
+	for _, d := range lintSrc(t, src) {
+		if d.Code == DIP147 {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Errorf("expected 2 DIP147 (one per laundered key), got %d", n)
+	}
+}
+
 // TestLint_DIP147_LastResponseEdgeNotFlagged: a bare none -> full edge with no
 // declared key dependency (the ${ctx.last_response} auto-injection topology) is
 // intentionally OUT OF SCOPE — that is issue #57 (closed/deferred), and its

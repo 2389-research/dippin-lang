@@ -60,20 +60,25 @@ func chainAttacksIntoSink(w *ir.Workflow, sink *ir.Node, upstreamIDs map[string]
 	}
 	var diags []Diagnostic
 	for srcID := range upstreamIDs {
-		if key, ok := sharedRestrictedWrite(w.Node(srcID), reads); ok {
-			diags = append(diags, chainAttackDiagnostic(srcID, key, sink))
-		}
+		diags = append(diags, chainAttacksFromSource(srcID, w.Node(srcID), reads, sink)...)
 	}
 	return diags
 }
 
-// sharedRestrictedWrite returns a context key that src (a restricted agent)
-// declares in writes: and that appears in reads, and whether one exists.
-func sharedRestrictedWrite(src *ir.Node, reads map[string]bool) (string, bool) {
+// chainAttacksFromSource emits one DIP147 per context key that src (when it is a
+// restricted agent) declares in writes: and sink declares in reads: — a distinct
+// laundered (source, key, sink) flow each.
+func chainAttacksFromSource(srcID string, src *ir.Node, reads map[string]bool, sink *ir.Node) []Diagnostic {
 	if !isRestrictedAgent(src) {
-		return "", false
+		return nil
 	}
-	return firstSharedWrite(src, reads)
+	var diags []Diagnostic
+	for _, key := range src.IO.Writes {
+		if reads[key] {
+			diags = append(diags, chainAttackDiagnostic(srcID, key, sink))
+		}
+	}
+	return diags
 }
 
 // chainAttackDiagnostic builds the DIP147 hint located at the privileged sink.
@@ -121,15 +126,4 @@ func readSet(n *ir.Node) map[string]bool {
 		set[k] = true
 	}
 	return set
-}
-
-// firstSharedWrite returns a write key of src that appears in reads, and whether
-// any such key exists.
-func firstSharedWrite(src *ir.Node, reads map[string]bool) (string, bool) {
-	for _, k := range src.IO.Writes {
-		if reads[k] {
-			return k, true
-		}
-	}
-	return "", false
 }
