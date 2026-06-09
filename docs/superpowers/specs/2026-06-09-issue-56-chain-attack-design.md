@@ -2,7 +2,9 @@
 
 **Date:** 2026-06-09
 **Issue:** [#56](https://github.com/2389-research/dippin-lang/issues/56) — follow-up deferred from #41 (`safety-follow-up`, P2).
-**Status:** Implemented. Scope narrowed during build — see § Scope decision (#57).
+**Status:** Implemented — **partially addresses #56** (explicit-key vector only; the
+`${ctx.last_response}` auto-injection vector and the `last_response_truncate:` mitigation remain follow-ups,
+so #56 stays open). Scope narrowed during build — see § Scope decision (#57).
 
 ## Scope decision (#57)
 
@@ -123,12 +125,14 @@ The validator must **not** import the parser or cmd-dippin and must compile to w
 - **Cross-file subgraph chains:** a restricted agent in one file feeding a tool-bearing agent across a
   `subgraph`/`manager_loop` boundary. Belongs in the `cmd/dippin` native cross-file pass (like DIP146),
   **not** the wasm-safe validator.
-- **Parallel-branch / fan_in / manager_loop vectors:** v1 classifies a source/sink by the **agent node's
-  own** `tool_access`. A `tool_access: none` declared as a per-branch override (`BranchConfig.ToolAccess`)
-  is **not** analyzed — the target agent keeps its node-level `tool_access` (often `""`), so a
-  branch-restricted source is not treated as restricted. This is a known asymmetry (node-level caught,
-  branch-level not); a clean fix needs per-branch *effective* `tool_access` resolution, which is contextual
-  to the parallel invocation and deserves its own design. Follow-up.
+- **Branch-level `tool_access` override classification:** the *path* is followed through any node type
+  (parallel / fan_in / tool nodes) via the same reachability as DIP112 — a restricted writer routed through
+  a fan_in into a downstream tool-bearing reader **is** flagged. What is out of scope is the
+  source/sink **classification**: v1 classifies an agent by its **own** node-level `tool_access`, so a
+  `tool_access: none` declared as a per-branch override (`BranchConfig.ToolAccess`) is **not** treated as
+  restricted (the target agent keeps its node-level `tool_access`, often `""`). This is a known asymmetry
+  (node-level caught, branch-level not); a clean fix needs per-branch *effective* `tool_access` resolution,
+  which is contextual to the parallel invocation and deserves its own design. Follow-up.
 
 ## Why detection, not enforcement
 

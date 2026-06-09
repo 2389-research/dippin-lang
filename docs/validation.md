@@ -1217,8 +1217,10 @@ tool-bearing agent (`tool_access` omitted / full catalog) reachable downstream
 declares that same key in `reads:`. `tool_access` bounds the restricted agent's
 **tools**, not its **information flow** — so a prompt-injection payload it
 processed can launder through the named key into a privileged agent's prompt and
-drive that agent's tools. This closes the gap the `tool_access` arc leaves open
-([#56](https://github.com/2389-research/dippin-lang/issues/56)).
+drive that agent's tools. This detects one vector of the gap the `tool_access`
+arc leaves open ([#56](https://github.com/2389-research/dippin-lang/issues/56)) —
+the explicit declared-key flow; the `${ctx.last_response}` auto-injection vector
+and a truncation mitigation remain follow-ups.
 
 ```text
 hint[DIP147]: restricted agent "Summarize" (tool_access: none) writes context key "tainted" that tool-bearing agent "Writer" reads — its output reaches a privileged prompt

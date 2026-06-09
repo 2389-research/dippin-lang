@@ -187,7 +187,7 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-56 diagnostic codes across two categories:
+57 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
 - **DIP101–DIP147** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack)

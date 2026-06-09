@@ -29,10 +29,18 @@ import (
 // key dependency keeps DIP147 precise — it flags a flow the author wired by hand,
 // not mere graph adjacency.
 //
+// The explicit-key flow is followed through ANY intermediate node — including
+// parallel / fan_in / tool nodes — via the same forward-edge reachability
+// (buildForwardAdjacency) DIP112 uses; a restricted writer routed through a
+// fan_in into a downstream tool-bearing reader is a real laundering path and is
+// flagged. What is out of scope (follow-ups) is the SOURCE/SINK classification,
+// not the path: a tool_access: none declared as a per-branch override
+// (BranchConfig.ToolAccess) is not treated as restricted, the bare
+// ${ctx.last_response} auto-injection edge is not flagged (issue #57), and
+// cross-file chains belong in the cmd/dippin native pass (like DIP146).
+//
 // Detection only — dippin flags the topology; the runtime enforces info-flow
-// control (key sanitization / context bound). Cross-file chains and
-// parallel-branch / fan_in / manager_loop vectors are out of scope (follow-ups).
-// Wasm-safe: ir.Workflow + graph only.
+// control (key sanitization / context bound). Wasm-safe: ir.Workflow + graph only.
 func lintChainAttack(w *ir.Workflow) []Diagnostic {
 	if w.Start == "" || w.Node(w.Start) == nil {
 		return nil

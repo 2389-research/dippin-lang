@@ -94,8 +94,9 @@ func TestLint_DIP147_LastResponseEdgeNotFlagged(t *testing.T) {
   edges
     Summarize -> Writer
 `
-	if hasCode(lintSrc(t, src), DIP147) {
-		t.Errorf("DIP147 should not fire on a bare none->full edge (no declared key); got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if hasCode(diags, DIP147) {
+		t.Errorf("DIP147 should not fire on a bare none->full edge (no declared key); got: %v", codes(diags))
 	}
 }
 
@@ -120,8 +121,9 @@ func TestLint_DIP147_NoneToNoneDoesNotFire(t *testing.T) {
   edges
     Summarize -> Downstream
 `
-	if hasCode(lintSrc(t, src), DIP147) {
-		t.Errorf("DIP147 should not fire for none->none; got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if hasCode(diags, DIP147) {
+		t.Errorf("DIP147 should not fire for none->none; got: %v", codes(diags))
 	}
 }
 
@@ -156,6 +158,44 @@ func TestLint_DIP147_MultiHopKeyFlow(t *testing.T) {
 	}
 }
 
+// TestLint_DIP147_KeyFlowThroughFanIn: the explicit-key flow follows declared-IO
+// reachability through any intermediate node, including parallel/fan_in (same
+// adjacency as DIP112). A restricted writer routed through a fan_in into a
+// downstream tool-bearing reader is a real laundering path and fires — only the
+// branch-level tool_access OVERRIDE classification is out of scope, not paths
+// that traverse a fan_in.
+func TestLint_DIP147_KeyFlowThroughFanIn(t *testing.T) {
+	src := `workflow X
+  start: Seed
+  exit: Writer
+
+  agent Seed
+    prompt: "seed"
+
+  agent Risky
+    prompt: "handle untrusted"
+    tool_access: none
+    writes: tainted
+
+  agent Other
+    prompt: "other work"
+
+  agent Writer
+    prompt: "write"
+    reads: tainted
+
+  parallel P -> Risky, Other
+  fan_in F <- Risky, Other
+
+  edges
+    Seed -> P
+    F -> Writer
+`
+	if !hasCode(lintSrc(t, src), DIP147) {
+		t.Fatalf("expected DIP147 for key flow through fan_in, got: %v", codes(lintSrc(t, src)))
+	}
+}
+
 // TestLint_DIP147_BenignNoFalsePositive: full->full and full->none key flows
 // carry no restricted->privileged escalation, so DIP147 must stay silent.
 func TestLint_DIP147_BenignNoFalsePositive(t *testing.T) {
@@ -180,7 +220,8 @@ func TestLint_DIP147_BenignNoFalsePositive(t *testing.T) {
     A -> B
     B -> C
 `
-	if hasCode(lintSrc(t, src), DIP147) {
-		t.Errorf("DIP147 false positive on benign topology; got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if hasCode(diags, DIP147) {
+		t.Errorf("DIP147 false positive on benign topology; got: %v", codes(diags))
 	}
 }
