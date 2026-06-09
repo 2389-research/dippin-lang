@@ -249,22 +249,37 @@ func writeStructuralNode(wr *writer, n *ir.Node) bool {
 			writeParallelBlock(wr, n.ID, cfg)
 		} else {
 			wr.line("parallel %s -> %s", n.ID, strings.Join(cfg.Targets, ", "))
+			writeNodeParams(wr, cfg.Params)
 		}
 		return true
 	case ir.FanInConfig:
 		wr.line("fan_in %s <- %s", n.ID, strings.Join(cfg.Sources, ", "))
+		writeNodeParams(wr, cfg.Params)
 		return true
 	}
 	return false
 }
 
-// writeParallelBlock writes a parallel node in block form with per-branch config.
+// writeNodeParams emits an indented params: block beneath a structural node's
+// declaration line (inline parallel / fan_in). No-op when params is empty.
+func writeNodeParams(wr *writer, params map[string]string) {
+	if len(params) == 0 {
+		return
+	}
+	wr.push()
+	writeSortedMapBlock(wr, "params", params)
+	wr.pop()
+}
+
+// writeParallelBlock writes a parallel node in block form with per-branch config
+// and an optional params block.
 func writeParallelBlock(wr *writer, id string, cfg ir.ParallelConfig) {
 	wr.line("parallel %s", id)
 	wr.push()
 	for _, b := range cfg.Branches {
 		writeBranch(wr, b)
 	}
+	writeSortedMapBlock(wr, "params", cfg.Params)
 	wr.pop()
 }
 

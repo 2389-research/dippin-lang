@@ -1,0 +1,35 @@
+workflow FanInPolicy
+  goal: "Run two reviewers in parallel and require BOTH to pass via a strict fan-in policy"
+  start: split
+  exit: decide
+
+  defaults
+    on_failure: decide
+
+  agent correctness_reviewer
+    prompt:
+      Review the change for correctness bugs. Respond PASS or FAIL with reasons.
+
+  agent security_reviewer
+    prompt:
+      Review the change for security issues. Respond PASS or FAIL with reasons.
+
+  parallel split -> correctness_reviewer, security_reviewer
+    params:
+      fan_in_policy: all
+
+  fan_in gather <- correctness_reviewer, security_reviewer
+    params:
+      fan_in_policy: all
+      required_branches: correctness_reviewer, security_reviewer
+
+  agent decide
+    prompt:
+      Given both reviews, decide whether to merge.
+
+  edges
+    split -> correctness_reviewer
+    split -> security_reviewer
+    correctness_reviewer -> gather
+    security_reviewer -> gather
+    gather -> decide

@@ -1,0 +1,25 @@
+workflow ParallelFanInParams
+  goal: "Test params on parallel (inline + block) and fan_in"
+  start: split
+  exit: join
+
+  agent reviewer_a
+    prompt: "Reviewer A."
+
+  agent reviewer_b
+    prompt: "Reviewer B."
+
+  parallel split -> reviewer_a, reviewer_b
+    params:
+      fan_in_policy: all
+
+  fan_in join <- reviewer_a, reviewer_b
+    params:
+      fan_in_policy: quorum
+      quorum: 2
+
+  edges
+    split -> reviewer_a
+    split -> reviewer_b
+    reviewer_a -> join
+    reviewer_b -> join

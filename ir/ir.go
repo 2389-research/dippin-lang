@@ -152,8 +152,9 @@ func (ToolConfig) nodeConfig() {}
 
 // ParallelConfig holds configuration for fan-out nodes.
 type ParallelConfig struct {
-	Targets  []string       // Fan-out target node IDs (inline form)
-	Branches []BranchConfig // Per-branch config (block form)
+	Targets  []string          // Fan-out target node IDs (inline form)
+	Branches []BranchConfig    // Per-branch config (block form)
+	Params   map[string]string // Generic key-value pairs passed through to runtime (e.g. fan-in aggregation policy); carried, not interpreted
 }
 
 func (ParallelConfig) nodeConfig() {}
@@ -181,7 +182,8 @@ type BranchConfig struct {
 
 // FanInConfig holds configuration for join nodes.
 type FanInConfig struct {
-	Sources []string // Source node IDs to join
+	Sources []string          // Source node IDs to join
+	Params  map[string]string // Generic key-value pairs passed through to runtime (e.g. fan-in aggregation policy); carried, not interpreted
 }
 
 func (FanInConfig) nodeConfig() {}

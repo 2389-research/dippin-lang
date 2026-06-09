@@ -2240,3 +2240,104 @@ func TestFormatDurationNegativeRoundTrips(t *testing.T) {
 		}
 	}
 }
+
+// TestFormatParallelParamsRoundTrip verifies that params on an inline parallel
+// node survive Format -> parse, and are emitted as an indented params: block.
+func TestFormatParallelParamsRoundTrip(t *testing.T) {
+	w1 := &ir.Workflow{
+		Name:  "par",
+		Start: "P",
+		Exit:  "J",
+		Nodes: []*ir.Node{
+			{ID: "P", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets: []string{"A", "B"},
+				Params:  map[string]string{"fan_in_policy": "all"},
+			}},
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a."}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b."}},
+			{ID: "J", Kind: ir.NodeFanIn, Config: ir.FanInConfig{Sources: []string{"A", "B"}}},
+		},
+	}
+	out := Format(w1)
+	assertContains(t, out, "  parallel P -> A, B")
+	assertContains(t, out, "    params:")
+	assertContains(t, out, "      fan_in_policy: all")
+
+	w2, err := parser.NewParser(out, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse: %v\n%s", err, out)
+	}
+	got := w2.Node("P").Config.(ir.ParallelConfig).Params
+	if got["fan_in_policy"] != "all" {
+		t.Errorf("parallel params after round-trip = %v, want fan_in_policy=all", got)
+	}
+}
+
+// TestFormatParallelBlockParamsRoundTrip verifies params on a block-form parallel
+// node (with branches) survive Format -> parse.
+func TestFormatParallelBlockParamsRoundTrip(t *testing.T) {
+	w1 := &ir.Workflow{
+		Name:  "par",
+		Start: "P",
+		Exit:  "J",
+		Nodes: []*ir.Node{
+			{ID: "P", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets:  []string{"A", "B"},
+				Branches: []ir.BranchConfig{{Target: "A"}, {Target: "B"}},
+				Params:   map[string]string{"quorum": "2"},
+			}},
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a."}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b."}},
+			{ID: "J", Kind: ir.NodeFanIn, Config: ir.FanInConfig{Sources: []string{"A", "B"}}},
+		},
+	}
+	out := Format(w1)
+	assertContains(t, out, "  parallel P")
+	assertContains(t, out, "    branch: A")
+	assertContains(t, out, "    params:")
+	assertContains(t, out, "      quorum: 2")
+
+	w2, err := parser.NewParser(out, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse: %v\n%s", err, out)
+	}
+	cfg := w2.Node("P").Config.(ir.ParallelConfig)
+	if cfg.Params["quorum"] != "2" {
+		t.Errorf("parallel block params after round-trip = %v, want quorum=2", cfg.Params)
+	}
+	if len(cfg.Branches) != 2 {
+		t.Errorf("branches after round-trip = %d, want 2", len(cfg.Branches))
+	}
+}
+
+// TestFormatFanInParamsRoundTrip verifies params on a fan_in node survive
+// Format -> parse, and are emitted as an indented params: block.
+func TestFormatFanInParamsRoundTrip(t *testing.T) {
+	w1 := &ir.Workflow{
+		Name:  "par",
+		Start: "P",
+		Exit:  "J",
+		Nodes: []*ir.Node{
+			{ID: "P", Kind: ir.NodeParallel, Config: ir.ParallelConfig{Targets: []string{"A", "B"}}},
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a."}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b."}},
+			{ID: "J", Kind: ir.NodeFanIn, Config: ir.FanInConfig{
+				Sources: []string{"A", "B"},
+				Params:  map[string]string{"fan_in_policy": "quorum", "quorum": "2"},
+			}},
+		},
+	}
+	out := Format(w1)
+	assertContains(t, out, "  fan_in J <- A, B")
+	assertContains(t, out, "    params:")
+	assertContains(t, out, "      fan_in_policy: quorum")
+
+	w2, err := parser.NewParser(out, "rt.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse: %v\n%s", err, out)
+	}
+	got := w2.Node("J").Config.(ir.FanInConfig).Params
+	if got["fan_in_policy"] != "quorum" || got["quorum"] != "2" {
+		t.Errorf("fan_in params after round-trip = %v", got)
+	}
+}

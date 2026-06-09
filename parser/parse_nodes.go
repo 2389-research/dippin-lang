@@ -79,7 +79,7 @@ func (p *Parser) parseNodeField(node *ir.Node, t Token) {
 // emitUnknownFieldHint emits a diagnostic for an unrecognized field on a node.
 func (p *Parser) emitUnknownFieldHint(kind, key string, loc ir.SourceLocation) {
 	hint := fmt.Sprintf("unrecognized %s field %q at %d:%d", kind, key, loc.Line, loc.Column)
-	if kind == "agent" || kind == "subgraph" {
+	if kind == "agent" || kind == "subgraph" || kind == "parallel" || kind == "fan_in" {
 		hint += " — did you mean to put it under params:?"
 	}
 	p.diagnostics = append(p.diagnostics, hint)
@@ -730,22 +730,118 @@ func (p *Parser) parseParallel() {
 }
 
 // parseParallelInline handles: parallel ID -> target, target
+// An optional indented params: block may follow the inline target list.
 func (p *Parser) parseParallelInline(id string) {
 	p.expect(TokenArrow)
 	targets := p.parseCommaList()
+	params := p.parseOptionalParamsBlock("parallel")
 	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
 		ID:     id,
 		Kind:   ir.NodeParallel,
-		Config: ir.ParallelConfig{Targets: targets},
+		Config: ir.ParallelConfig{Targets: targets, Params: params},
 	})
-	p.expect(TokenNewline)
 }
 
-// parseParallelBlock handles block form with per-branch config.
+// tokenIsIdent reports whether t is the given keyword identifier.
+func tokenIsIdent(t Token, name string) bool {
+	return t.Type == TokenIdentifier && t.Value == name
+}
+
+// parseNodeParamsField parses a `params:` field at the cursor (the "params"
+// identifier is the next token) and returns the parsed key/value map.
+func (p *Parser) parseNodeParamsField() map[string]string {
+	t := p.lexer.NextToken() // "params"
+	p.expect(TokenColon)
+	val := p.readFieldValue(t.Location.Line)
+	return p.parseParamsBlock(val)
+}
+
+// parseOptionalParamsBlock consumes the trailing newline after an inline
+// parallel/fan_in declaration and, if an indented block follows, parses a
+// `params:` field from it. kind ("parallel"/"fan_in") labels diagnostics for
+// stray non-params fields. Always returns a non-nil map (matching the
+// agent/subgraph Params convention), empty when no params are present.
+func (p *Parser) parseOptionalParamsBlock(kind string) map[string]string {
+	p.expect(TokenNewline)
+	if p.lexer.PeekToken().Type != TokenIndent {
+		return map[string]string{}
+	}
+	p.expect(TokenIndent)
+	params := p.parseIndentedParams(kind)
+	p.expect(TokenOutdent)
+	return params
+}
+
+// parseIndentedParams scans an indented block for a `params:` field. A stray
+// non-params field (e.g. a key written without the params: wrapper) is surfaced
+// via emitUnknownFieldHint rather than silently dropped. A nested indented block
+// (only reachable via malformed input) is consumed whole via skipBalancedBlock
+// so the scan halts at this block's own outdent, never a nested one — otherwise
+// the rest of the parse would silently desync. Always returns a non-nil map.
+func (p *Parser) parseIndentedParams(kind string) map[string]string {
+	params := map[string]string{}
+	for p.lexer.PeekToken().Type != TokenOutdent && p.lexer.PeekToken().Type != TokenEOF {
+		if ps := p.scanParamsBlockToken(kind); ps != nil {
+			params = ps
+		}
+	}
+	return params
+}
+
+// scanParamsBlockToken handles one token inside a parallel/fan_in attribute
+// block: a params: field (returned), a stray field (hinted + consumed), a
+// nested block (skipped balanced), or any other token (skipped). Returns the
+// parsed params map only for a params: field, else nil.
+func (p *Parser) scanParamsBlockToken(kind string) map[string]string {
+	t := p.lexer.PeekToken()
+	switch {
+	case tokenIsIdent(t, "params"):
+		return p.parseNodeParamsField()
+	case t.Type == TokenIndent:
+		p.skipBalancedBlock()
+	case t.Type == TokenIdentifier:
+		p.consumeUnknownNodeField(kind)
+	default:
+		p.lexer.NextToken()
+	}
+	return nil
+}
+
+// consumeUnknownNodeField emits an unknown-field hint for a stray `key: value`
+// field inside a parallel/fan_in attribute block and consumes the field (key,
+// colon, and value) so the scan does not desync.
+func (p *Parser) consumeUnknownNodeField(kind string) {
+	t := p.lexer.NextToken() // key
+	p.emitUnknownFieldHint(kind, t.Value, t.Location)
+	if p.lexer.PeekToken().Type == TokenColon {
+		p.lexer.NextToken()
+		p.readFieldValue(t.Location.Line)
+	}
+}
+
+// skipBalancedBlock consumes a matched TokenIndent..TokenOutdent pair, including
+// any nested pairs, leaving the cursor just past the closing outdent. Used to
+// step over an unexpected nested block without desyncing the enclosing scan.
+func (p *Parser) skipBalancedBlock() {
+	depth := 0
+	for p.lexer.PeekToken().Type != TokenEOF {
+		switch p.lexer.NextToken().Type {
+		case TokenIndent:
+			depth++
+		case TokenOutdent:
+			depth--
+		}
+		if depth == 0 {
+			return
+		}
+	}
+}
+
+// parseParallelBlock handles block form with per-branch config and an optional params block.
 func (p *Parser) parseParallelBlock(id string) {
 	p.expect(TokenNewline)
 	p.expect(TokenIndent)
-	branches := p.parseParallelBranches()
+	branches, params := p.parseParallelBody()
 	p.expect(TokenOutdent)
 
 	targets := branchTargets(branches)
@@ -755,33 +851,52 @@ func (p *Parser) parseParallelBlock(id string) {
 		Config: ir.ParallelConfig{
 			Targets:  targets,
 			Branches: branches,
+			Params:   params,
 		},
 	})
 }
 
-// parseParallelBranches parses branch declarations inside a parallel block.
-func (p *Parser) parseParallelBranches() []ir.BranchConfig {
+// parseParallelBody parses branch declarations and an optional params block
+// inside a parallel block. Params is always non-nil (empty when absent),
+// matching the agent/subgraph convention.
+func (p *Parser) parseParallelBody() ([]ir.BranchConfig, map[string]string) {
 	var branches []ir.BranchConfig
+	params := map[string]string{}
 	for p.lexer.PeekToken().Type != TokenOutdent && p.lexer.PeekToken().Type != TokenEOF {
-		t := p.lexer.PeekToken()
-		if b, ok := p.tryParseBranch(t); ok {
-			branches = append(branches, b)
+		b, ps := p.parseParallelBodyLine()
+		if b != nil {
+			branches = append(branches, *b)
+		}
+		if ps != nil {
+			params = ps
 		}
 	}
-	return branches
+	return branches, params
 }
 
-// tryParseBranch tries to parse a branch or skip a non-branch token.
-func (p *Parser) tryParseBranch(t Token) (ir.BranchConfig, bool) {
-	if t.Type == TokenNewline {
-		p.lexer.NextToken()
-		return ir.BranchConfig{}, false
+// parseParallelBodyLine parses one item in a parallel block: a branch, a params
+// block, or a skipped token. Returns the parsed branch (or nil) and params (or
+// nil). An unexpected nested block is consumed whole via skipBalancedBlock so a
+// malformed line cannot desync the enclosing scan.
+func (p *Parser) parseParallelBodyLine() (*ir.BranchConfig, map[string]string) {
+	t := p.lexer.PeekToken()
+	if tokenIsIdent(t, "branch") {
+		b := p.parseOneBranch()
+		return &b, nil
 	}
-	if t.Type == TokenIdentifier && t.Value == "branch" {
-		return p.parseOneBranch(), true
+	if tokenIsIdent(t, "params") {
+		return nil, p.parseNodeParamsField()
 	}
+	if t.Type == TokenIndent {
+		p.skipBalancedBlock()
+		return nil, nil
+	}
+	// Other identifiers (non-branch, non-params) are skipped silently here,
+	// preserving block-form parallel's long-standing behavior. (The inline
+	// form hints on stray fields because there they were previously a hard
+	// parse error — see parseIndentedParams.)
 	p.lexer.NextToken()
-	return ir.BranchConfig{}, false
+	return nil, nil
 }
 
 // parseOneBranch parses: branch: target\n  model: ...\n  provider: ...
@@ -864,15 +979,17 @@ func branchTargets(branches []ir.BranchConfig) []string {
 	return targets
 }
 
+// parseFanIn handles: fan_in ID <- source, source
+// An optional indented params: block may follow the source list.
 func (p *Parser) parseFanIn() {
 	p.lexer.NextToken() // fan_in
 	id := p.lexer.NextToken().Value
 	p.expect(TokenBackArrow)
 	sources := p.parseCommaList()
+	params := p.parseOptionalParamsBlock("fan_in")
 	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
 		ID:     id,
 		Kind:   ir.NodeFanIn,
-		Config: ir.FanInConfig{Sources: sources},
+		Config: ir.FanInConfig{Sources: sources, Params: params},
 	})
-	p.expect(TokenNewline)
 }
