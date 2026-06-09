@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -228,11 +229,9 @@ func TestParseParallelMalformedNestedBlockNoDesync(t *testing.T) {
   edges
     J -> J
 `
-	w, err := NewParser(input, "test.dip").Parse()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	// The fan_in node after the malformed block must still be parsed.
+	// The stray fields produce hint diagnostics (err != nil); the point is that
+	// the parse does not desync — the fan_in after the malformed block survives.
+	w, _ := NewParser(input, "test.dip").Parse()
 	var sawFanIn bool
 	for _, n := range w.Nodes {
 		if n.Kind == ir.NodeFanIn {
@@ -241,5 +240,69 @@ func TestParseParallelMalformedNestedBlockNoDesync(t *testing.T) {
 	}
 	if !sawFanIn {
 		t.Error("fan_in node after malformed nested block was dropped (parse desync)")
+	}
+}
+
+// TestParseFanInBareFieldErrors guards that a node-level field missing the
+// params: wrapper is surfaced as a diagnostic rather than silently dropped
+// (before this feature it was a hard "unexpected top-level identifier" error).
+func TestParseFanInBareFieldErrors(t *testing.T) {
+	input := `workflow Test
+  start: P
+  exit: J
+
+  agent A
+    prompt: "A"
+
+  parallel P -> A
+
+  fan_in J <- A
+    fan_in_policy: all
+`
+	_, err := NewParser(input, "test.dip").Parse()
+	if err == nil || !strings.Contains(err.Error(), "fan_in_policy") {
+		t.Errorf("expected diagnostic mentioning fan_in_policy, got err=%v", err)
+	}
+}
+
+// TestParseInlineParallelBareFieldErrors — same guard for inline parallel.
+func TestParseInlineParallelBareFieldErrors(t *testing.T) {
+	input := `workflow Test
+  start: P
+  exit: J
+
+  agent A
+    prompt: "A"
+
+  parallel P -> A
+    fan_in_policy: all
+
+  fan_in J <- A
+`
+	_, err := NewParser(input, "test.dip").Parse()
+	if err == nil || !strings.Contains(err.Error(), "fan_in_policy") {
+		t.Errorf("expected diagnostic mentioning fan_in_policy, got err=%v", err)
+	}
+}
+
+// TestParseParallelBlockBareFieldSilent documents that block-form parallel
+// keeps its long-standing silent-skip of stray non-branch/non-params fields
+// (unlike the inline form, where such a field was previously a hard error).
+func TestParseParallelBlockBareFieldSilent(t *testing.T) {
+	input := `workflow Test
+  start: P
+  exit: J
+
+  agent A
+    prompt: "A"
+
+  parallel P
+    branch: A
+    fan_in_policy: all
+
+  fan_in J <- A
+`
+	if _, err := NewParser(input, "test.dip").Parse(); err != nil {
+		t.Errorf("block-form parallel should silently skip stray fields, got err=%v", err)
 	}
 }
