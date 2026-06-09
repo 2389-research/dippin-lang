@@ -265,7 +265,7 @@ A `manager_loop` (`subgraph_ref`) or `subgraph` (`ref`) node references a child 
 hint[DIP143]: manager_loop "Supervise" references subgraph "child.dip", defined in its own file; this workflow's tool_access restrictions do not extend across the subgraph boundary
 ```
 
-The native `dippin lint` cross-file pass also emits DIP143 for a **deep** (depth ≥ 1) child it resolved and found either **partial-audit** (some agents restricted, at least one tool-bearing agent without a `tool_access` of its own) or **unresolvable** (missing, unparseable, or refused) — boundaries the entry-only lint never sees. Like DIP146, it fires only when a workflow on the path declares `tool_access`.
+The native `dippin lint` cross-file pass also emits DIP143 for a **deep** (depth ≥ 1) child that is either **partial-audit** (resolved — some agents restricted, at least one tool-bearing agent without a `tool_access` of its own) or **unresolvable** (missing, unparseable, or refused) — boundaries the entry-only lint never sees. Like DIP146, it fires only when a workflow on the path declares `tool_access`.
 
 ### DIP144 — Agent node has no failure route
 
