@@ -758,11 +758,12 @@ func (p *Parser) parseNodeParamsField() map[string]string {
 
 // parseOptionalParamsBlock consumes the trailing newline after an inline
 // parallel/fan_in declaration and, if an indented block follows, parses a
-// `params:` field from it. Returns nil when no block is present.
+// `params:` field from it. Always returns a non-nil map (matching the
+// agent/subgraph Params convention), empty when no params are present.
 func (p *Parser) parseOptionalParamsBlock() map[string]string {
 	p.expect(TokenNewline)
 	if p.lexer.PeekToken().Type != TokenIndent {
-		return nil
+		return map[string]string{}
 	}
 	p.expect(TokenIndent)
 	params := p.parseIndentedParams()
@@ -771,17 +772,42 @@ func (p *Parser) parseOptionalParamsBlock() map[string]string {
 }
 
 // parseIndentedParams scans an indented block for a `params:` field, skipping
-// any other tokens. Returns nil if no params block is present.
+// any other tokens. A nested indented block (only reachable via malformed
+// input) is consumed whole via skipBalancedBlock so the scan halts at this
+// block's own outdent, never a nested one — otherwise the rest of the parse
+// would silently desync. Always returns a non-nil map.
 func (p *Parser) parseIndentedParams() map[string]string {
-	var params map[string]string
+	params := map[string]string{}
 	for p.lexer.PeekToken().Type != TokenOutdent && p.lexer.PeekToken().Type != TokenEOF {
-		if tokenIsIdent(p.lexer.PeekToken(), "params") {
+		t := p.lexer.PeekToken()
+		switch {
+		case tokenIsIdent(t, "params"):
 			params = p.parseNodeParamsField()
-			continue
+		case t.Type == TokenIndent:
+			p.skipBalancedBlock()
+		default:
+			p.lexer.NextToken()
 		}
-		p.lexer.NextToken()
 	}
 	return params
+}
+
+// skipBalancedBlock consumes a matched TokenIndent..TokenOutdent pair, including
+// any nested pairs, leaving the cursor just past the closing outdent. Used to
+// step over an unexpected nested block without desyncing the enclosing scan.
+func (p *Parser) skipBalancedBlock() {
+	depth := 0
+	for p.lexer.PeekToken().Type != TokenEOF {
+		switch p.lexer.NextToken().Type {
+		case TokenIndent:
+			depth++
+		case TokenOutdent:
+			depth--
+		}
+		if depth == 0 {
+			return
+		}
+	}
 }
 
 // parseParallelBlock handles block form with per-branch config and an optional params block.
@@ -804,10 +830,11 @@ func (p *Parser) parseParallelBlock(id string) {
 }
 
 // parseParallelBody parses branch declarations and an optional params block
-// inside a parallel block.
+// inside a parallel block. Params is always non-nil (empty when absent),
+// matching the agent/subgraph convention.
 func (p *Parser) parseParallelBody() ([]ir.BranchConfig, map[string]string) {
 	var branches []ir.BranchConfig
-	var params map[string]string
+	params := map[string]string{}
 	for p.lexer.PeekToken().Type != TokenOutdent && p.lexer.PeekToken().Type != TokenEOF {
 		b, ps := p.parseParallelBodyLine()
 		if b != nil {
@@ -821,7 +848,9 @@ func (p *Parser) parseParallelBody() ([]ir.BranchConfig, map[string]string) {
 }
 
 // parseParallelBodyLine parses one item in a parallel block: a branch, a params
-// block, or a skipped token. Returns the parsed branch (or nil) and params (or nil).
+// block, or a skipped token. Returns the parsed branch (or nil) and params (or
+// nil). An unexpected nested block is consumed whole via skipBalancedBlock so a
+// malformed line cannot desync the enclosing scan.
 func (p *Parser) parseParallelBodyLine() (*ir.BranchConfig, map[string]string) {
 	t := p.lexer.PeekToken()
 	if tokenIsIdent(t, "branch") {
@@ -830,6 +859,10 @@ func (p *Parser) parseParallelBodyLine() (*ir.BranchConfig, map[string]string) {
 	}
 	if tokenIsIdent(t, "params") {
 		return nil, p.parseNodeParamsField()
+	}
+	if t.Type == TokenIndent {
+		p.skipBalancedBlock()
+		return nil, nil
 	}
 	p.lexer.NextToken()
 	return nil, nil

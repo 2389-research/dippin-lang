@@ -149,3 +149,97 @@ func TestParseInlineParallelNoParamsStillWorks(t *testing.T) {
 		t.Errorf("fan_in params = %d, want 0", len(fcfg.Params))
 	}
 }
+
+// TestParseParallelParamsAlwaysNonNil guards the agent/subgraph convention that
+// Params is non-nil even when no params block is present.
+func TestParseParallelParamsAlwaysNonNil(t *testing.T) {
+	input := `workflow Test
+  start: P
+  exit: J
+
+  agent A
+    prompt: "A"
+  agent B
+    prompt: "B"
+
+  parallel P -> A, B
+  fan_in J <- A, B
+
+  edges
+    J -> J
+`
+	w, err := NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if findNode(t, w, "P").Config.(ir.ParallelConfig).Params == nil {
+		t.Error("inline parallel Params is nil, want non-nil empty map")
+	}
+	if findNode(t, w, "J").Config.(ir.FanInConfig).Params == nil {
+		t.Error("fan_in Params is nil, want non-nil empty map")
+	}
+}
+
+// TestParseParallelBlockParamsAlwaysNonNil guards non-nil Params for block form.
+func TestParseParallelBlockParamsAlwaysNonNil(t *testing.T) {
+	input := `workflow Test
+  start: P
+  exit: J
+
+  agent A
+    prompt: "A"
+  agent B
+    prompt: "B"
+
+  parallel P
+    branch: A
+    branch: B
+
+  fan_in J <- A, B
+
+  edges
+    J -> J
+`
+	w, err := NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if findNode(t, w, "P").Config.(ir.ParallelConfig).Params == nil {
+		t.Error("block parallel Params is nil, want non-nil empty map")
+	}
+}
+
+// TestParseParallelMalformedNestedBlockNoDesync guards that a malformed nested
+// block beneath an inline parallel does not swallow the rest of the workflow.
+func TestParseParallelMalformedNestedBlockNoDesync(t *testing.T) {
+	input := `workflow Test
+  start: P
+  exit: J
+
+  agent A
+    prompt: "A"
+
+  parallel P -> A, A
+    foo: bar
+      baz: qux
+
+  fan_in J <- A, A
+
+  edges
+    J -> J
+`
+	w, err := NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// The fan_in node after the malformed block must still be parsed.
+	var sawFanIn bool
+	for _, n := range w.Nodes {
+		if n.Kind == ir.NodeFanIn {
+			sawFanIn = true
+		}
+	}
+	if !sawFanIn {
+		t.Error("fan_in node after malformed nested block was dropped (parse desync)")
+	}
+}
