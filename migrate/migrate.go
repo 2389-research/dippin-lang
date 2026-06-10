@@ -431,7 +431,8 @@ func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	applyRuntimeSafetyAttrs(cfg, attrs)
 }
 
-// applyRuntimeSafetyAttrs applies the tool_access + writable_paths safety attrs.
+// applyRuntimeSafetyAttrs applies the tool_access, writable_paths, and
+// last_response_truncate safety attrs.
 func applyRuntimeSafetyAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["tool_access"]; ok && strings.TrimSpace(v) != "" {
 		cfg.ToolAccess = v
