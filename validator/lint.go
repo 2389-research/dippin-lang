@@ -5,7 +5,8 @@ import (
 	"github.com/2389-research/dippin-lang/simulate"
 )
 
-// Lint runs all semantic quality checks (DIP101–DIP147) on the workflow
+// Lint runs all semantic quality checks (DIP101–DIP147, except DIP146 — which
+// the CLI's cross-file pass emits, not this function) on the workflow
 // and returns all diagnostics found. These are warnings, not errors —
 // the workflow can still execute, but the findings indicate likely bugs
 // or quality issues.

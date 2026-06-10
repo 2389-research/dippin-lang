@@ -8,9 +8,9 @@ import (
 )
 
 // lintChainAttack emits DIP147 (Hint): a restricted (tool_access: none) agent
-// declares a context key in writes: that a downstream tool-bearing
-// (tool_access: full) agent declares in reads:, laundering whatever the
-// restricted agent processed into a privileged context.
+// declares a context key in writes: that a downstream tool-bearing agent
+// (tool_access omitted — the default full catalog) declares in reads:,
+// laundering whatever the restricted agent processed into a privileged context.
 //
 // tool_access bounds an agent's TOOLS, not its INFORMATION FLOW. An agent marked
 // tool_access: none is the author's declaration that its inputs/outputs are
@@ -104,7 +104,7 @@ func chainAttackDiagnostic(srcID, key string, sink *ir.Node) Diagnostic {
 	}
 }
 
-const chainAttackHelp = "tool_access bounds tools, not information flow: a restricted agent's output can launder an injection payload into a privileged agent's prompt. Audit whether the restricted agent's input is trusted; if not, drop tool_access on the consumer or insert a sanitizing / validating step between them. The runtime enforces the bound (key sanitization / context limit); this is an author-time advisory."
+const chainAttackHelp = "tool_access bounds tools, not information flow: a restricted agent's output can launder an injection payload into a privileged agent's prompt. Audit whether the restricted agent's input is trusted; if not, set tool_access: none on the consuming agent (removing its tool catalog — not the same as deleting the field, which grants the full catalog) or insert a sanitizing / validating step between them. The runtime enforces the bound (key sanitization / context limit); this is an author-time advisory."
 
 // isRestrictedAgent reports whether n is an agent node with a deliberate,
 // recognized tool_access: none restriction. Invalid/typo values are DIP139's

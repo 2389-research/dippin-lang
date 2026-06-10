@@ -390,7 +390,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 | DIP008 | Duplicate node ID |
 | DIP009 | Duplicate edge |
 
-### Warnings (DIP101–DIP147)
+### Warnings (DIP101–DIP147 — selected; see [docs/validation.md](docs/validation.md) for the full catalog)
 
 | Code | What it catches |
 |------|----------------|
