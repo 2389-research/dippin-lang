@@ -4,6 +4,16 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+Detection, carry, and correctness work — no paired runtime release required (per `never-gate-dippin-on-tracker`). `DIP147` and the `params:` carry are dippin-side detection / round-trip only; the single-quote fix is a parser correctness fix; the catalog refresh is data.
+
+### Added
+- `DIP147` (Warning) — **chain-attack detection**: a restricted agent's output is laundered through an **explicitly-keyed** context handoff into a downstream tool-bearing agent, re-granting capability the upstream node was denied ([#56](https://github.com/2389-research/dippin-lang/issues/56), [#115](https://github.com/2389-research/dippin-lang/pull/115)). Covers the explicit-key vector only — a **partial** #56 (the `last_response` edge case is closed separately via [#57](https://github.com/2389-research/dippin-lang/issues/57); the attribute, cross-file, and branch-override vectors remain open). Detection, not runtime enforcement.
+- `params:` on `parallel` / `fan_in` nodes are now carried through parse → IR → formatter round-trip ([#110](https://github.com/2389-research/dippin-lang/issues/110), [#113](https://github.com/2389-research/dippin-lang/pull/113)). Formatter round-trip only (not DOT export or migrate); a paired runtime owns any fan-in policy semantics.
+- **Model catalog + pricing refresh** for Anthropic's 2026-05/06 releases ([#116](https://github.com/2389-research/dippin-lang/issues/116)): `claude-opus-4-8`, `claude-fable-5`, `claude-mythos-5`, and `claude-mythos-preview` are recognized models (clearing a spurious `DIP108`), with `claude-opus-4-8` ($5/$25), `claude-fable-5` ($10/$50), and `claude-mythos-5` ($10/$50) priced so `dippin cost` can estimate them. Deprecation metadata refreshed (`claude-opus-4-1` retires 2026-08-05; `claude-opus-4-0` migration target → `claude-opus-4-8`). The richer cache/batch/fast-mode pricing schema is an explicit non-goal; tracker-side runtime support is a cross-repo follow-up.
+
+### Fixed
+- **Single-quoted scalar values are no longer corrupted** ([#114](https://github.com/2389-research/dippin-lang/issues/114)). The parser stripped only double quotes, so `marker_grep: '^(a|b)$'` was stored with the literal `'` chars — and the formatter then re-wrapped it in double quotes — silently breaking the runtime regex. Single quotes are now YAML-style (surrounding quotes stripped, `''` → `'`, backslashes literal), and a `#` inside `'...'` is no longer mistaken for a trailing comment. Fixed in the parser so every path (lint / pack / format / DOT / migrate / runtime) benefits; the tree-sitter grammar admits single-quoted strings too.
+
 ## [v0.38.0] — 2026-06-09
 
 Cross-file `tool_access` advisory completeness. Both changes are **dippin-side detection only** — they refine the `DIP146`/`DIP143` cross-file analysis shipped in v0.37.0 and require no paired runtime release (per `never-gate-dippin-on-tracker`, no dippin behavior is gated on runtime readiness).
