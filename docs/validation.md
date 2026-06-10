@@ -3,7 +3,7 @@
 Dippin registers 57 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (56 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP147): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP148): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP147<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP148<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP147)
+## Semantic Lint Warnings (DIP101–DIP148)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1251,6 +1251,30 @@ information-flow bound.
 
 ---
 
+### DIP148: Negative `last_response_truncate`
+
+**Severity**: Warning
+
+An agent node or a parallel-branch override sets `last_response_truncate` to a
+negative value. The field is a character cap on the prior node's response before
+it is auto-injected into this agent's prompt (a #56 mitigation for the
+`${ctx.last_response}` flow); a negative cap is meaningless. `0` (or unset) means
+**no truncation**.
+
+```text
+warning[DIP148]: node "Writer" has last_response_truncate -1; must be non-negative (0 or unset = no truncation)
+```
+
+**Trigger:** `last_response_truncate` is negative on an `agent` node or on a
+per-branch override within a `parallel` node.
+
+**Fix:** Use a non-negative character count to cap the injected response, or omit
+the field (equivalently `0`) for no truncation. Note `0` means *no truncation*,
+not "truncate to zero." Detection only: dippin carries and lints the field; a
+runtime enforces the truncation.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1267,7 +1291,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP147 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP148 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 
