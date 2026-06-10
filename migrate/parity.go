@@ -258,7 +258,8 @@ func compareAgentModelProvider(id string, ac, bc ir.AgentConfig) []Difference {
 	return diffs
 }
 
-// compareAgentBehavior compares goal_gate, auto_status, and tool_access fields.
+// compareAgentBehavior compares goal_gate, auto_status, tool_access, and
+// per-agent limits (writable_paths, last_response_truncate).
 func compareAgentBehavior(id string, ac, bc ir.AgentConfig) []Difference {
 	var diffs []Difference
 	if ac.GoalGate != bc.GoalGate {

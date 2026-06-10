@@ -41,6 +41,14 @@ func TestParity_AgentLastResponseTruncateEqual(t *testing.T) {
 	}
 }
 
+func TestParity_AgentLastResponseTruncateZeroNoDiff(t *testing.T) {
+	a := ir.AgentConfig{}
+	b := ir.AgentConfig{}
+	if diffs := compareAgentBehavior("A", a, b); len(diffs) != 0 {
+		t.Errorf("expected no diff for zero/unset values, got %v", diffs)
+	}
+}
+
 func TestParity_BranchLastResponseTruncateDiff(t *testing.T) {
 	a := ir.ParallelConfig{Branches: []ir.BranchConfig{{Target: "x", LastResponseTruncate: 4096}}}
 	b := ir.ParallelConfig{Branches: []ir.BranchConfig{{Target: "x", LastResponseTruncate: 2048}}}
