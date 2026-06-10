@@ -435,6 +435,16 @@ func TestFieldCompletionsIncludesCommandFile(t *testing.T) {
 	t.Error("missing completion for 'command_file:' (v0.33.0 directive)")
 }
 
+func TestFieldCompletionsIncludesLastResponseTruncate(t *testing.T) {
+	items := fieldCompletions()
+	for _, it := range items {
+		if it.Label == "last_response_truncate:" {
+			return
+		}
+	}
+	t.Error("missing completion for 'last_response_truncate:' (chain-attack mitigation primitive)")
+}
+
 func TestConvertDiagnostic(t *testing.T) {
 	d := validator.Diagnostic{
 		Code:     "DIP001",
