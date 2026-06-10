@@ -489,12 +489,68 @@ func (l *Lexer) RawValueText(lineNum int) string {
 	return maybeStripComment(val)
 }
 
-// maybeStripComment strips an inline comment from val unless val starts with # or ".
+// maybeStripComment strips a trailing inline comment from a single-line field
+// value. A value that starts with `#` is left as-is (it is not a comment here).
+// A quoted value (single or double) keeps its delimiters and content intact —
+// only a `#` comment *after* the closing quote is dropped — so a `#` inside the
+// quotes survives. Unbalanced quotes are returned untouched for unquoteRaw to
+// pass through. Unquoted values fall back to whitespace-delimited stripping.
 func maybeStripComment(val string) string {
-	if len(val) == 0 || val[0] == '#' || val[0] == '"' || val[0] == '\'' {
+	if len(val) == 0 || val[0] == '#' {
 		return val
 	}
+	if val[0] == '"' || val[0] == '\'' {
+		return stripCommentAfterQuote(val)
+	}
 	return strings.TrimSpace(stripComment(val))
+}
+
+// stripCommentAfterQuote keeps a complete quoted scalar (delimiters + content)
+// and drops anything after the closing quote; an unbalanced value is returned
+// untouched.
+func stripCommentAfterQuote(val string) string {
+	if end := quoteEnd(val); end >= 0 {
+		return val[:end+1]
+	}
+	return val
+}
+
+// quoteEnd returns the index of the closing quote matching the opening quote at
+// val[0], or -1 if the value is not a complete quoted scalar.
+func quoteEnd(val string) int {
+	if val[0] == '"' {
+		return doubleQuoteEnd(val)
+	}
+	return singleQuoteEnd(val)
+}
+
+// doubleQuoteEnd finds the closing `"`, honoring backslash escapes.
+func doubleQuoteEnd(val string) int {
+	for i := 1; i < len(val); i++ {
+		if val[i] == '\\' {
+			i++ // skip the escaped char
+			continue
+		}
+		if val[i] == '"' {
+			return i
+		}
+	}
+	return -1
+}
+
+// singleQuoteEnd finds the closing single quote, treating a doubled single quote as a literal escape.
+func singleQuoteEnd(val string) int {
+	for i := 1; i < len(val); i++ {
+		if val[i] != '\'' {
+			continue
+		}
+		if i+1 < len(val) && val[i+1] == '\'' {
+			i++ // doubled single quote: a literal escape, consume both
+			continue
+		}
+		return i
+	}
+	return -1
 }
 
 func isAlphaNum(ch byte) bool {

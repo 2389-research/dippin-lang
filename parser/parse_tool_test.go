@@ -68,6 +68,28 @@ func TestParseToolMarkerGrepSingleQuoted(t *testing.T) {
 	}
 }
 
+func TestParseToolMarkerGrepSingleQuotedTrailingComment(t *testing.T) {
+	// A trailing `# comment` after a closing quote is stripped; the regex itself
+	// (incl. an internal #) is preserved. Applies to single and double quotes.
+	cfg, diags := parseToolFixture(t, `    marker_grep: '^(green|red)$' # route marker`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != "^(green|red)$" {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, "^(green|red)$")
+	}
+}
+
+func TestParseToolMarkerGrepDoubleQuotedTrailingComment(t *testing.T) {
+	cfg, diags := parseToolFixture(t, `    marker_grep: "^(green|red)$" # route marker`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != "^(green|red)$" {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, "^(green|red)$")
+	}
+}
+
 func TestParseToolMarkerGrepSingleQuotedEscaped(t *testing.T) {
 	// YAML single-quote escaping: '' collapses to a single ' (no backslash escapes).
 	cfg, diags := parseToolFixture(t, `    marker_grep: 'it''s ok'`)
