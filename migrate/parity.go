@@ -270,8 +270,18 @@ func compareAgentBehavior(id string, ac, bc ir.AgentConfig) []Difference {
 	if ac.ToolAccess != bc.ToolAccess {
 		diffs = append(diffs, fieldDiff(id, "tool_access", fmt.Sprintf("node %q tool_access: %q vs %q", id, ac.ToolAccess, bc.ToolAccess)))
 	}
+	diffs = append(diffs, compareAgentLimits(id, ac, bc)...)
+	return diffs
+}
+
+// compareAgentLimits compares writable_paths and last_response_truncate.
+func compareAgentLimits(id string, ac, bc ir.AgentConfig) []Difference {
+	var diffs []Difference
 	if strings.Join(ac.WritablePaths, ",") != strings.Join(bc.WritablePaths, ",") {
 		diffs = append(diffs, fieldDiff(id, "writable_paths", fmt.Sprintf("node %q writable_paths: %v vs %v", id, ac.WritablePaths, bc.WritablePaths)))
+	}
+	if ac.LastResponseTruncate != bc.LastResponseTruncate {
+		diffs = append(diffs, fieldDiff(id, "last_response_truncate", fmt.Sprintf("node %q last_response_truncate: %d vs %d", id, ac.LastResponseTruncate, bc.LastResponseTruncate)))
 	}
 	return diffs
 }
@@ -389,7 +399,14 @@ func branchesEqual(a, b ir.BranchConfig) bool {
 
 func branchScalarsEqual(a, b ir.BranchConfig) bool {
 	return a.Target == b.Target && a.Model == b.Model &&
-		a.Provider == b.Provider && a.Fidelity == b.Fidelity && a.ToolAccess == b.ToolAccess
+		a.Provider == b.Provider && branchLimitsEqual(a, b)
+}
+
+// branchLimitsEqual reports whether the fidelity, tool_access, and
+// last_response_truncate fields of two branch configs match.
+func branchLimitsEqual(a, b ir.BranchConfig) bool {
+	return a.Fidelity == b.Fidelity && a.ToolAccess == b.ToolAccess &&
+		a.LastResponseTruncate == b.LastResponseTruncate
 }
 
 func compareFanInConfigs(id, path string, ac ir.FanInConfig, bCfg interface{}) []Difference {
