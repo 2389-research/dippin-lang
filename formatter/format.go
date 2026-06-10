@@ -297,7 +297,12 @@ func writeBranch(wr *writer, b ir.BranchConfig) {
 // branchHasFields reports whether a branch carries any optional field beyond its target.
 func branchHasFields(b ir.BranchConfig) bool {
 	return b.Model != "" || b.Provider != "" || b.Fidelity != "" ||
-		b.ToolAccess != "" || len(b.WritablePaths) > 0
+		b.ToolAccess != "" || branchHasNonScalarFields(b)
+}
+
+// branchHasNonScalarFields reports whether a branch carries any non-scalar optional field.
+func branchHasNonScalarFields(b ir.BranchConfig) bool {
+	return len(b.WritablePaths) > 0 || b.LastResponseTruncate > 0
 }
 
 // writeBranchFields writes the optional fields within a branch.
@@ -305,6 +310,9 @@ func writeBranchFields(wr *writer, b ir.BranchConfig) {
 	writeBranchScalarFields(wr, b)
 	if len(b.WritablePaths) > 0 {
 		wr.line("writable_paths: %s", strings.Join(b.WritablePaths, ", "))
+	}
+	if b.LastResponseTruncate > 0 {
+		wr.line("last_response_truncate: %d", b.LastResponseTruncate)
 	}
 }
 
@@ -426,8 +434,16 @@ func writeAgentRuntimeFields(wr *writer, cfg ir.AgentConfig) {
 	if strings.TrimSpace(cfg.ToolAccess) != "" {
 		wr.line("tool_access: %s", quoteValue(cfg.ToolAccess))
 	}
+	writeAgentSandboxFields(wr, cfg)
+}
+
+// writeAgentSandboxFields writes sandbox/limit fields for agent nodes.
+func writeAgentSandboxFields(wr *writer, cfg ir.AgentConfig) {
 	if len(cfg.WritablePaths) > 0 {
 		wr.line("writable_paths: %s", strings.Join(cfg.WritablePaths, ", "))
+	}
+	if cfg.LastResponseTruncate > 0 {
+		wr.line("last_response_truncate: %d", cfg.LastResponseTruncate)
 	}
 }
 
