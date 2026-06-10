@@ -77,6 +77,7 @@ func Lint(w *ir.Workflow) Result {
 	diags = append(diags, lintAgentFailureRoute(w)...)
 	diags = append(diags, lintBudgetRanges(w)...)
 	diags = append(diags, lintChainAttack(w)...)
+	diags = append(diags, lintLastResponseTruncate(w)...)
 
 	return Result{Diagnostics: diags}
 }

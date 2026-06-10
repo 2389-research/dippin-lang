@@ -417,7 +417,7 @@ func nodeValidationExplanations() map[string]Explanation {
 	}
 }
 
-// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP147).
+// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP148).
 func safetyExplanations() map[string]Explanation {
 	return map[string]Explanation{
 		DIP138: {
@@ -475,6 +475,13 @@ func safetyExplanations() map[string]Explanation {
 			Trigger: "An agent with tool_access: none (a restricted, untrusted-input handler) declares a context key in writes:, and a tool-bearing agent (tool_access omitted / full catalog) reachable downstream declares that same key in reads:. tool_access bounds the source's TOOLS, not its information flow, so an injection payload it processed can launder through the named key into a privileged prompt and drive the sink's tools. The flow is followed multi-hop via forward-edge reachability, so a non-agent node (e.g. a tool node) between them does not hide it. The source is canonical 'none' only (invalid values are DIP139's domain and fail closed); the sink is canonical '' (full catalog); both must be agent nodes. Hint, not Warning: a none -> full flow over trusted input is legitimate, and there is no per-diagnostic suppression. Scope: this fires only on an EXPLICIT, author-declared writes:/reads: key dependency. The bare ${ctx.last_response} auto-injection edge (a none -> full edge with no declared key) is NOT flagged — that topology is issue #57 (deferred) and its mitigation is #56's last_response_truncate: attribute. Cross-file chains and parallel-branch / fan_in / manager_loop vectors are follow-ups.",
 			Fix:     "Confirm the restricted agent's input is trusted. If it is not, remove the consuming agent's tool catalog (give it tool_access: none too) or insert a sanitizing / validating step between them so the untrusted text never reaches a privileged prompt verbatim. Detection only: dippin flags the topology; the runtime enforces the information-flow bound (key sanitization / context limit).",
 			Example: "agent Summarize\n  tool_access: none      // handles untrusted input\n  writes: tainted\nagent Writer\n  prompt: \"write the report\"\n  reads: tainted         // DIP147: restricted output laundered via a key into a tool-bearing prompt\nedges\n  Summarize -> Writer",
+		},
+		DIP148: {
+			Code:    DIP148,
+			Summary: "last_response_truncate is negative",
+			Trigger: "An agent node or a per-branch override sets last_response_truncate to a negative value. The field caps how many Unicode characters of the auto-injected previous response the runtime injects into the agent's prompt — a chain-attack mitigation (issue #56). A negative cap is meaningless; 0 (or unset) means no truncation.",
+			Fix:     "Use a non-negative character count (e.g. last_response_truncate: 4096), or omit the field / set 0 for no truncation. dippin carries + lints this value; a runtime enforces the truncation.",
+			Example: "agent Writer\n  prompt: \"write the report\"\n  last_response_truncate: -1   // DIP148: negative; use a non-negative count or omit",
 		},
 	}
 }
