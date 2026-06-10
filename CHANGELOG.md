@@ -4,6 +4,8 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.39.0] — 2026-06-10
+
 Detection, carry, and correctness work — no paired runtime release required (per `never-gate-dippin-on-tracker`). `DIP147` and the `params:` carry are dippin-side detection / round-trip only; the single-quote fix is a parser correctness fix; the catalog refresh is data.
 
 ### Added

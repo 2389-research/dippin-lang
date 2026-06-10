@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "56 diagnostic codes for AI pipeline workflows. 10 structural errors and 46 semantic warnings catch bugs before runtime."
+description: "57 diagnostic codes for AI pipeline workflows. 10 structural errors and 47 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "56 diagnostic codes — 10 structural errors and 46 semantic warnings — to catch problems before runtime."
+subtitle: "57 diagnostic codes — 10 structural errors and 47 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP146): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP147): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP146)
+## Semantic Warnings (DIP101-DIP147)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -298,4 +298,14 @@ warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be
 hint[DIP146]: manager_loop "Supervise" delegates to subgraph "worker.dip", which declares no tool_access restriction on any agent; a workflow on this path restricts tools, but the restriction does not cross the subgraph boundary
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP146) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+### DIP147 — Restricted agent's output reaches a privileged prompt (chain attack)
+
+**Severity:** Hint
+
+A `tool_access: none` agent declares a context key in `writes:`, and a downstream tool-bearing agent (one that omits `tool_access`, so it holds the full catalog) declares that same key in `reads:`. `tool_access` bounds an agent's *tools*, not the *information* its output carries — so the restricted agent's output (potentially a laundered injection payload) reaches a privileged agent's prompt, re-granting capability the upstream node was denied. dippin flags the explicitly-keyed handoff the author wired by hand; the runtime enforces the bound. Detection only.
+
+```text
+hint[DIP147]: restricted agent "Summarize" (tool_access: none) writes context key "summary" that tool-bearing agent "Act" reads — its output reaches a privileged prompt
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP147) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
