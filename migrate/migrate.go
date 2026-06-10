@@ -439,6 +439,16 @@ func applyRuntimeSafetyAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["writable_paths"]; ok {
 		cfg.WritablePaths = splitComma(v)
 	}
+	applyLastResponseTruncate(cfg, attrs)
+}
+
+// applyLastResponseTruncate parses and sets the last_response_truncate field.
+func applyLastResponseTruncate(cfg *ir.AgentConfig, attrs map[string]string) {
+	if v, ok := attrs["last_response_truncate"]; ok {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.LastResponseTruncate = n
+		}
+	}
 }
 
 // applyModelField sets the model field from model or llm_model attrs.
@@ -677,6 +687,11 @@ var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
 	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
 	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
 	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitComma(v) },
+	"last_response_truncate": func(b *ir.BranchConfig, v string) {
+		if n, err := strconv.Atoi(v); err == nil {
+			b.LastResponseTruncate = n
+		}
+	},
 }
 
 // applyBranchToken sets one "key=value" field on a BranchConfig. The value is

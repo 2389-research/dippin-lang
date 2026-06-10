@@ -336,6 +336,15 @@ func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if len(cfg.WritablePaths) > 0 {
 		attrs["writable_paths"] = strings.Join(cfg.WritablePaths, ",")
 	}
+	applyAgentSafetyLimitAttrs(attrs, cfg)
+}
+
+// applyAgentSafetyLimitAttrs writes the numeric safety-limit attrs.
+// Extracted from applyAgentRuntimeAttrs to keep cyclomatic complexity ≤ 5.
+func applyAgentSafetyLimitAttrs(attrs map[string]string, cfg ir.AgentConfig) {
+	if cfg.LastResponseTruncate > 0 {
+		attrs["last_response_truncate"] = strconv.Itoa(cfg.LastResponseTruncate)
+	}
 }
 
 // applyToolSemanticAttrs adds tool runtime attrs (always exported).
@@ -459,6 +468,7 @@ func encodeBranch(b ir.BranchConfig) string {
 	parts = appendBranchField(parts, "fidelity", b.Fidelity)
 	parts = appendBranchField(parts, "tool_access", b.ToolAccess)
 	parts = appendBranchField(parts, "writable_paths", strings.Join(b.WritablePaths, ","))
+	parts = appendBranchIntField(parts, "last_response_truncate", b.LastResponseTruncate)
 	return strings.Join(parts, ";")
 }
 
@@ -468,6 +478,14 @@ func appendBranchField(parts []string, key, val string) []string {
 		return parts
 	}
 	return append(parts, key+"="+encodeBranchToken(val))
+}
+
+// appendBranchIntField appends key=value only when val > 0.
+func appendBranchIntField(parts []string, key string, val int) []string {
+	if val <= 0 {
+		return parts
+	}
+	return append(parts, key+"="+encodeBranchToken(strconv.Itoa(val)))
 }
 
 // branchEncoder percent-encodes the reserved characters of the branches

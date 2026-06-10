@@ -392,6 +392,25 @@ func TestExportDOT_AgentToolAccess_WithoutPrompts(t *testing.T) {
 	}
 }
 
+func TestExportDOT_AgentLastResponseTruncate(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "X",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:               "x",
+				LastResponseTruncate: 4096,
+			}},
+		},
+	}
+	out := ExportDOT(w, ExportOptions{IncludePrompts: true})
+	if !strings.Contains(out, `last_response_truncate="4096"`) &&
+		!strings.Contains(out, `last_response_truncate=4096`) {
+		t.Errorf("DOT output missing last_response_truncate attribute:\n%s", out)
+	}
+}
+
 func TestExportDOTSubgraphConfig(t *testing.T) {
 	// Tests the export package's handling of un-flattened subgraph nodes.
 	// In production, the CLI calls flatten.Flatten before ExportDOT,
