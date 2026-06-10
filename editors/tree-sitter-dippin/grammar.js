@@ -179,7 +179,12 @@ module.exports = grammar({
     identifier: ($) => /[a-zA-Z0-9][a-zA-Z0-9_\-]*/,
 
     string: ($) =>
-      seq('"', repeat(choice(/[^"\\]+/, /\\./)), '"'),
+      choice(
+        // Double-quoted: \" and \\ escapes.
+        seq('"', repeat(choice(/[^"\\]+/, /\\./)), '"'),
+        // Single-quoted (YAML-style): literal content; the only escape is '' → '.
+        seq("'", repeat(choice(/[^']+/, "''")), "'")
+      ),
 
     comment: ($) => token(seq("#", /.*/)),
   },

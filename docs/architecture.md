@@ -298,7 +298,7 @@ The lexer (`lexer.go`) converts source text into a flat token stream. Key featur
 
 - **Indentation tracking**: Maintains an indent stack. When indentation increases, emits `TokenIndent`. When it decreases, emits `TokenOutdent` (potentially multiple if skipping levels).
 - **Token types**: `Keyword`, `Identifier`, `Operator`, `Literal`, `Colon`, `Comma`, `Arrow` (`->`), `BackArrow` (`<-`), `LParen`, `RParen`, `Newline`, `EOF`.
-- **String handling**: Double-quoted strings with `\"` and `\\` escapes.
+- **String handling**: The token literal (`TokenLiteral`, used in the `edges` section for edge attributes and `when` conditions) is double-quoted with `\"` and `\\` escapes. Single-line **field values** are taken via raw extraction (`RawValueText` → `unquoteRaw`) and additionally accept single-quoted (YAML-style) strings — literal apart from the `''` → `'` escape; the comment stripper keeps a `#` inside quotes and only drops a comment after the closing quote.
 - **Comments**: `#` to end-of-line, stripped during lexing.
 
 ### Stage 2: Parser

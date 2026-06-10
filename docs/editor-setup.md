@@ -85,7 +85,7 @@ Or use a generic LSP client extension (like vscode-languageclient) with this con
 | Keywords | `workflow`, `agent`, `tool`, `human`, `edges` | keyword |
 | Node names | `agent MyNode` | function |
 | Field keys | `model:`, `prompt:`, `timeout:` | tag |
-| Strings | `"quoted value"` | string |
+| Strings | `"quoted value"`, `'quoted value'` | string |
 | Comments | `# comment` | comment |
 | Arrows | `->`, `<-` | operator |
 | Conditions | `when`, `and`, `or`, `not` | keyword |

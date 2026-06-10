@@ -370,6 +370,43 @@ func TestFormatHumanPromptRoundtrip(t *testing.T) {
 	}
 }
 
+func TestFormatSingleQuotedRoundtrip(t *testing.T) {
+	// A single-quoted regex must survive parse -> format -> parse without the
+	// literal ' chars leaking into the value or the regex being double-wrapped
+	// (issue #114). Single-quoted input normalizes to double-quoted output.
+	input := `workflow SQ
+  start: T
+  exit: T
+
+  tool T
+    command: run
+    marker_grep: '^(green|red)$'
+
+  edges
+    T -> T
+`
+	w1, err := parser.NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse failed: %v", err)
+	}
+	if got := w1.Nodes[0].Config.(ir.ToolConfig).MarkerGrep; got != "^(green|red)$" {
+		t.Fatalf("MarkerGrep after parse = %q, want %q", got, "^(green|red)$")
+	}
+
+	formatted := Format(w1)
+	w2, err := parser.NewParser(formatted, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse failed: %v\nformatted:\n%s", err, formatted)
+	}
+	if got := w2.Nodes[0].Config.(ir.ToolConfig).MarkerGrep; got != "^(green|red)$" {
+		t.Errorf("MarkerGrep after round-trip = %q, want %q\nformatted:\n%s", got, "^(green|red)$", formatted)
+	}
+
+	if reformatted := Format(w2); formatted != reformatted {
+		t.Errorf("formatter not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, reformatted)
+	}
+}
+
 func TestFormatToolMultilineCommand(t *testing.T) {
 	w := &ir.Workflow{
 		Name:  "tool_test",
