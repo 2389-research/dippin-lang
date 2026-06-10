@@ -2,7 +2,7 @@ package cost
 
 // DefaultPricing returns a PricingTable with current model prices (USD per 1M tokens).
 //
-// Last verified: 2026-05-18
+// Last verified: 2026-06-10
 //
 // Sources:
 //
@@ -34,13 +34,19 @@ func DefaultPricing() PricingTable {
 	grok := grokPricing()
 	return PricingTable{
 		"anthropic": {
+			"claude-opus-4-8":   {InputPer1M: 5.00, OutputPer1M: 25.00},
 			"claude-opus-4-7":   {InputPer1M: 5.00, OutputPer1M: 25.00},
 			"claude-opus-4-6":   {InputPer1M: 5.00, OutputPer1M: 25.00},
 			"claude-sonnet-4-6": {InputPer1M: 3.00, OutputPer1M: 15.00},
 			"claude-haiku-4-5":  {InputPer1M: 1.00, OutputPer1M: 5.00},
+			// Fable 5 / Mythos 5 line (2026-06-09); base input/output rates
+			// only (cache/batch/fast-mode tiers are out of dippin's schema).
+			"claude-fable-5":    {InputPer1M: 10.00, OutputPer1M: 50.00},
+			"claude-mythos-5":   {InputPer1M: 10.00, OutputPer1M: 50.00},
 			"claude-sonnet-4-5": {InputPer1M: 3.00, OutputPer1M: 15.00},
 			"claude-opus-4-5":   {InputPer1M: 5.00, OutputPer1M: 25.00},
-			"claude-opus-4-1":   {InputPer1M: 15.00, OutputPer1M: 75.00},
+			// Deprecated; retires 2026-08-05 → claude-opus-4-8.
+			"claude-opus-4-1": {InputPer1M: 15.00, OutputPer1M: 75.00},
 			// Both deprecated 2026-04-14, retire 2026-06-15.
 			"claude-sonnet-4-0": {InputPer1M: 3.00, OutputPer1M: 15.00},
 			"claude-opus-4-0":   {InputPer1M: 15.00, OutputPer1M: 75.00},

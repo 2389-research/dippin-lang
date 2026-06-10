@@ -12,7 +12,7 @@ import (
 // This is a best-effort catalog — unknown combinations produce a warning,
 // not an error, since new models may be added at any time.
 //
-// Last verified: 2026-05-18
+// Last verified: 2026-06-10
 //
 // Sources:
 //
@@ -26,17 +26,25 @@ import (
 //	Cohere:     https://docs.cohere.com/docs/models
 var knownModelProviders = map[string]map[string]bool{
 	"anthropic": {
+		"claude-opus-4-8":   true,
 		"claude-opus-4-7":   true,
 		"claude-opus-4-6":   true,
 		"claude-sonnet-4-6": true,
 		"claude-haiku-4-5":  true,
+		// Fable 5 / Mythos 5 line (2026-06-09). Mythos 5 and the research
+		// preview are invite-only (Project Glasswing) but are real IDs —
+		// listed so approved users don't trip a spurious DIP108.
+		"claude-fable-5":        true,
+		"claude-mythos-5":       true,
+		"claude-mythos-preview": true,
 		// Legacy models still available via API.
 		"claude-sonnet-4-5": true,
 		"claude-opus-4-5":   true,
-		"claude-opus-4-1":   true,
+		// Deprecated; retires 2026-08-05 → claude-opus-4-8.
+		"claude-opus-4-1": true,
 		// Deprecated 2026-04-14, retires 2026-06-15 → claude-sonnet-4-6.
 		"claude-sonnet-4-0": true,
-		// Deprecated 2026-04-14, retires 2026-06-15 → claude-opus-4-7.
+		// Deprecated 2026-04-14, retires 2026-06-15 → claude-opus-4-8.
 		"claude-opus-4-0": true,
 		// Retired 2026-02-19 on first-party API; remains on Bedrock/Vertex AI.
 		"claude-haiku-3-5": true,

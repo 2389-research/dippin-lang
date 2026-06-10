@@ -11,6 +11,28 @@ func testPricing() PricingTable {
 	return DefaultPricing()
 }
 
+// TestDefaultPricingNewAnthropicModels guards the #116 pricing refresh: the new
+// flagship IDs must be priced so `dippin cost` can estimate them. Mythos
+// Preview is intentionally absent (no published per-token price).
+func TestDefaultPricingNewAnthropicModels(t *testing.T) {
+	anthropic := DefaultPricing()["anthropic"]
+	want := map[string]ModelPrice{
+		"claude-opus-4-8": {InputPer1M: 5.00, OutputPer1M: 25.00},
+		"claude-fable-5":  {InputPer1M: 10.00, OutputPer1M: 50.00},
+		"claude-mythos-5": {InputPer1M: 10.00, OutputPer1M: 50.00},
+	}
+	for model, price := range want {
+		got, ok := anthropic[model]
+		if !ok {
+			t.Errorf("%s missing from anthropic pricing", model)
+			continue
+		}
+		if got != price {
+			t.Errorf("%s price = %+v, want %+v", model, got, price)
+		}
+	}
+}
+
 func TestSingleAgentNode(t *testing.T) {
 	w := &ir.Workflow{
 		Start: "a1",
