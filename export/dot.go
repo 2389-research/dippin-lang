@@ -322,7 +322,7 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 }
 
-// applyAgentRuntimeAttrs adds backend, working_dir, tool_access, and writable_paths attributes.
+// applyAgentRuntimeAttrs adds backend, working_dir, tool_access, writable_paths, and last_response_truncate attributes.
 func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Backend != "" {
 		attrs["backend"] = cfg.Backend
@@ -335,6 +335,15 @@ func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 	if len(cfg.WritablePaths) > 0 {
 		attrs["writable_paths"] = strings.Join(cfg.WritablePaths, ",")
+	}
+	applyAgentSafetyLimitAttrs(attrs, cfg)
+}
+
+// applyAgentSafetyLimitAttrs writes the numeric safety-limit attrs.
+// Extracted from applyAgentRuntimeAttrs to keep cyclomatic complexity ≤ 5.
+func applyAgentSafetyLimitAttrs(attrs map[string]string, cfg ir.AgentConfig) {
+	if cfg.LastResponseTruncate > 0 {
+		attrs["last_response_truncate"] = strconv.Itoa(cfg.LastResponseTruncate)
 	}
 }
 
@@ -451,7 +460,8 @@ func encodeBranches(branches []ir.BranchConfig) string {
 }
 
 // encodeBranch encodes one branch as ';'-joined k=v tokens. target is always
-// first; model/provider/fidelity/tool_access/writable_paths only when non-empty.
+// first; model/provider/fidelity/tool_access/writable_paths only when non-empty,
+// and last_response_truncate only when > 0.
 func encodeBranch(b ir.BranchConfig) string {
 	parts := []string{"target=" + encodeBranchToken(b.Target)}
 	parts = appendBranchField(parts, "model", b.Model)
@@ -459,6 +469,7 @@ func encodeBranch(b ir.BranchConfig) string {
 	parts = appendBranchField(parts, "fidelity", b.Fidelity)
 	parts = appendBranchField(parts, "tool_access", b.ToolAccess)
 	parts = appendBranchField(parts, "writable_paths", strings.Join(b.WritablePaths, ","))
+	parts = appendBranchIntField(parts, "last_response_truncate", b.LastResponseTruncate)
 	return strings.Join(parts, ";")
 }
 
@@ -468,6 +479,14 @@ func appendBranchField(parts []string, key, val string) []string {
 		return parts
 	}
 	return append(parts, key+"="+encodeBranchToken(val))
+}
+
+// appendBranchIntField appends key=value only when val > 0.
+func appendBranchIntField(parts []string, key string, val int) []string {
+	if val <= 0 {
+		return parts
+	}
+	return append(parts, key+"="+encodeBranchToken(strconv.Itoa(val)))
 }
 
 // branchEncoder percent-encodes the reserved characters of the branches

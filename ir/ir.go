@@ -119,7 +119,15 @@ type AgentConfig struct {
 	// the native backend (Bash + its children included); claude-code/acp refuse to
 	// start. See issue #75.
 	WritablePaths []string
-	Params        map[string]string // Generic key-value pairs passed through to runtime
+	// LastResponseTruncate caps, at the runtime, the number of Unicode
+	// characters of the auto-injected previous response ("last response") that
+	// this agent receives in its prompt. 0 / unset = no truncation (full
+	// response injected). A chain-attack mitigation (issue #56): it bounds how
+	// much potentially-tainted upstream output reaches a privileged prompt.
+	// dippin carries + lints (DIP148 flags a negative value); the runtime
+	// enforces the truncation. Inert until a runtime reads it.
+	LastResponseTruncate int
+	Params               map[string]string // Generic key-value pairs passed through to runtime
 }
 
 func (AgentConfig) nodeConfig() {}
@@ -178,6 +186,11 @@ type BranchConfig struct {
 	// the runtime resolves effective = branch if non-empty else agent. dippin carries +
 	// lints; the runtime enforces. See issue #75.
 	WritablePaths []string
+	// LastResponseTruncate is a per-branch override of the target agent's
+	// last_response_truncate. 0 INHERITS the target agent's value (never resets
+	// to "no truncation") — the runtime resolves effective = branch if > 0 else
+	// agent, mirroring ToolAccess / WritablePaths inheritance. See issue #56.
+	LastResponseTruncate int
 }
 
 // FanInConfig holds configuration for join nodes.

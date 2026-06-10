@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP147).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP148).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -52,6 +52,7 @@ const (
 	// only so it appears in the catalog / `dippin explain` / docs.
 	DIP146 = "DIP146" // child subgraph re-grants tools the parent restricted (cross-file)
 	DIP147 = "DIP147" // restricted (tool_access:none) agent output flows into a tool-bearing agent (chain-attack / info-flow)
+	DIP148 = "DIP148" // last_response_truncate is negative
 )
 
 func init() {
@@ -103,4 +104,5 @@ func init() {
 	CodeDescription[DIP145] = "graph budget default is negative"
 	CodeDescription[DIP146] = "child subgraph re-grants tools the parent restricted (cross-file)"
 	CodeDescription[DIP147] = "restricted agent output flows into a tool-bearing agent (chain-attack)"
+	CodeDescription[DIP148] = "last_response_truncate is negative"
 }

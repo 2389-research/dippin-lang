@@ -2743,3 +2743,57 @@ func TestMigrateBranchToolAccess(t *testing.T) {
 		t.Errorf("branch[1].ToolAccess = %q, want empty", cfg.Branches[1].ToolAccess)
 	}
 }
+
+func TestMigrate_AgentLastResponseTruncate_RoundTrip(t *testing.T) {
+	dot := `digraph X {
+  graph [rankdir=TB];
+  A [shape=box, label=A, prompt="x", last_response_truncate="4096"];
+}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate error: %v", err)
+	}
+	node := w.Node("A")
+	if node == nil {
+		t.Fatalf("node A not found")
+	}
+	cfg, ok := node.Config.(ir.AgentConfig)
+	if !ok {
+		t.Fatalf("expected AgentConfig, got %T", node.Config)
+	}
+	if cfg.LastResponseTruncate != 4096 {
+		t.Errorf("last_response_truncate lost on DOT round-trip: got %d, want 4096", cfg.LastResponseTruncate)
+	}
+}
+
+func TestMigrateBranchLastResponseTruncate(t *testing.T) {
+	dot := `digraph G {
+		Start [shape=Mdiamond];
+		P [shape=component, targets="a,b", branches="target=a;last_response_truncate=4096,target=b;model=claude-haiku-4-5"];
+		a [shape=box];
+		b [shape=box];
+		Exit [shape=Msquare];
+		Start -> P;
+		P -> a;
+		P -> b;
+		a -> Exit;
+		b -> Exit;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	cfg, ok := w.Node("P").Config.(ir.ParallelConfig)
+	if !ok {
+		t.Fatalf("config type = %T, want ParallelConfig", w.Node("P").Config)
+	}
+	if len(cfg.Branches) != 2 {
+		t.Fatalf("branches = %d, want 2", len(cfg.Branches))
+	}
+	if cfg.Branches[0].LastResponseTruncate != 4096 {
+		t.Errorf("branch[0].LastResponseTruncate = %d, want 4096", cfg.Branches[0].LastResponseTruncate)
+	}
+	if cfg.Branches[1].LastResponseTruncate != 0 {
+		t.Errorf("branch[1].LastResponseTruncate = %d, want 0", cfg.Branches[1].LastResponseTruncate)
+	}
+}

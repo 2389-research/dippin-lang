@@ -431,13 +431,24 @@ func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	applyRuntimeSafetyAttrs(cfg, attrs)
 }
 
-// applyRuntimeSafetyAttrs applies the tool_access + writable_paths safety attrs.
+// applyRuntimeSafetyAttrs applies the tool_access, writable_paths, and
+// last_response_truncate safety attrs.
 func applyRuntimeSafetyAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["tool_access"]; ok && strings.TrimSpace(v) != "" {
 		cfg.ToolAccess = v
 	}
 	if v, ok := attrs["writable_paths"]; ok {
 		cfg.WritablePaths = splitComma(v)
+	}
+	applyLastResponseTruncate(cfg, attrs)
+}
+
+// applyLastResponseTruncate parses and sets the last_response_truncate field.
+func applyLastResponseTruncate(cfg *ir.AgentConfig, attrs map[string]string) {
+	if v, ok := attrs["last_response_truncate"]; ok {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.LastResponseTruncate = n
+		}
 	}
 }
 
@@ -677,6 +688,11 @@ var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
 	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
 	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
 	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitComma(v) },
+	"last_response_truncate": func(b *ir.BranchConfig, v string) {
+		if n, err := strconv.Atoi(v); err == nil {
+			b.LastResponseTruncate = n
+		}
+	},
 }
 
 // applyBranchToken sets one "key=value" field on a BranchConfig. The value is

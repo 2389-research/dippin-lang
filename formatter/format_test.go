@@ -2378,3 +2378,72 @@ func TestFormatFanInParamsRoundTrip(t *testing.T) {
 		t.Errorf("fan_in params after round-trip = %v", got)
 	}
 }
+
+func TestFormat_LastResponseTruncate_RoundTrip(t *testing.T) {
+	src := `workflow X
+  start: P
+  exit: W
+
+  agent W
+    prompt: "w"
+    last_response_truncate: 4096
+
+  parallel P
+    branch: W
+      last_response_truncate: 2048
+`
+	w, err := parser.NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "last_response_truncate: 4096") {
+		t.Errorf("agent last_response_truncate not emitted:\n%s", out)
+	}
+	if !strings.Contains(out, "last_response_truncate: 2048") {
+		t.Errorf("branch last_response_truncate not emitted:\n%s", out)
+	}
+	// Re-parse the formatted output: the values must survive.
+	w2, err := parser.NewParser(out, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("re-parse error: %v\n%s", err, out)
+	}
+	// Find the agent node by kind (node order is not guaranteed).
+	var found bool
+	for _, n := range w2.Nodes {
+		if ac, ok := n.Config.(ir.AgentConfig); ok && ac.LastResponseTruncate == 4096 {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("agent value lost on round-trip:\n%s", out)
+	}
+	// Verify branch value survived re-parse.
+	var branchFound bool
+	for _, n := range w2.Nodes {
+		if pc, ok := n.Config.(ir.ParallelConfig); ok {
+			for _, b := range pc.Branches {
+				if b.Target == "W" {
+					branchFound = true
+					if b.LastResponseTruncate != 2048 {
+						t.Errorf("branch LastResponseTruncate after round-trip = %d, want 2048", b.LastResponseTruncate)
+					}
+				}
+			}
+		}
+	}
+	if !branchFound {
+		t.Errorf("branch to W not found after round-trip:\n%s", out)
+	}
+}
+
+func TestFormat_LastResponseTruncate_OmittedWhenZero(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "X", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "x"}}},
+		Edges: []*ir.Edge{{From: "A", To: "A"}},
+	}
+	if strings.Contains(Format(w), "last_response_truncate") {
+		t.Errorf("last_response_truncate emitted for zero value")
+	}
+}

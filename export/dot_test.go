@@ -392,6 +392,25 @@ func TestExportDOT_AgentToolAccess_WithoutPrompts(t *testing.T) {
 	}
 }
 
+func TestExportDOT_AgentLastResponseTruncate(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "X",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:               "x",
+				LastResponseTruncate: 4096,
+			}},
+		},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	if !strings.Contains(out, `last_response_truncate="4096"`) &&
+		!strings.Contains(out, `last_response_truncate=4096`) {
+		t.Errorf("DOT output missing last_response_truncate attribute:\n%s", out)
+	}
+}
+
 func TestExportDOTSubgraphConfig(t *testing.T) {
 	// Tests the export package's handling of un-flattened subgraph nodes.
 	// In production, the CLI calls flatten.Flatten before ExportDOT,
@@ -1537,6 +1556,19 @@ func TestExportDOTParallelBranchToolAccess(t *testing.T) {
 	})
 	if attrs["branches"] != "target=a;tool_access=none,target=b;model=claude-haiku-4-5" {
 		t.Errorf("branches = %q, want target=a;tool_access=none,target=b;model=claude-haiku-4-5", attrs["branches"])
+	}
+}
+
+// Per-branch last_response_truncate is encoded into the branches= token.
+func TestExportDOTParallelBranchLastResponseTruncate(t *testing.T) {
+	attrs := map[string]string{}
+	applyParallelAttrs(attrs, ir.ParallelConfig{
+		Branches: []ir.BranchConfig{
+			{Target: "a", LastResponseTruncate: 512},
+		},
+	})
+	if attrs["branches"] != "target=a;last_response_truncate=512" {
+		t.Errorf("branches = %q, want target=a;last_response_truncate=512", attrs["branches"])
 	}
 }
 

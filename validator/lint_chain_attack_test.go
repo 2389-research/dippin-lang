@@ -257,3 +257,34 @@ func TestLint_DIP147_BenignNoFalsePositive(t *testing.T) {
 		t.Errorf("DIP147 false positive on benign topology; got: %v", codes(diags))
 	}
 }
+
+// TestLint_DIP147_StillFiresWhenSinkHasLastResponseTruncate: truncation bounds
+// payload SIZE, not the EXISTENCE of a laundered information flow — a tiny
+// malicious payload fits within any cap. Suppressing DIP147 when a sink sets
+// last_response_truncate would be fail-open. This guards that DIP148
+// (lintLastResponseTruncate) and DIP147 (lintChainAttack) stay independent: the
+// same none->full key-laundering fixture must still fire DIP147 even when the
+// sink mitigates with last_response_truncate.
+func TestLint_DIP147_StillFiresWhenSinkHasLastResponseTruncate(t *testing.T) {
+	src := `workflow X
+  start: Summarize
+  exit: Writer
+
+  agent Summarize
+    prompt: "summarize the untrusted input"
+    tool_access: none
+    writes: tainted
+
+  agent Writer
+    prompt: "write the report"
+    last_response_truncate: 100
+    reads: tainted
+
+  edges
+    Summarize -> Writer
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP147) {
+		t.Errorf("DIP147 must still fire when sink sets last_response_truncate (truncation is not a full fix); got: %v", codes(diags))
+	}
+}
