@@ -1262,7 +1262,7 @@ it is auto-injected into this agent's prompt (a #56 mitigation for the
 **no truncation**.
 
 ```text
-warning[DIP148]: node "Writer" has last_response_truncate -1; must be non-negative (0 or unset = no truncation)
+warning[DIP148]: agent "Writer" last_response_truncate is -1; cannot be negative
 ```
 
 **Trigger:** `last_response_truncate` is negative on an `agent` node or on a
