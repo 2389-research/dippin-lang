@@ -1,6 +1,9 @@
 package validator
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestLint_DIP148_FiresOnNegativeAgentValue(t *testing.T) {
 	src := `workflow X
@@ -45,5 +48,30 @@ func TestLint_DIP148_SilentOnZeroAndPositive(t *testing.T) {
 		if hasCode(lintSrc(t, src), DIP148) {
 			t.Errorf("DIP148 should not fire for value %q", v)
 		}
+	}
+}
+
+func TestLint_DIP148_MessageNamesNodeAndValue(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    last_response_truncate: -1
+`
+	diags := lintSrc(t, src)
+	var msg string
+	for _, d := range diags {
+		if d.Code == DIP148 {
+			msg = d.Message
+			break
+		}
+	}
+	if msg == "" {
+		t.Fatalf("expected DIP148 diagnostic, got: %v", codes(diags))
+	}
+	if !strings.Contains(msg, "A") || !strings.Contains(msg, "-1") {
+		t.Errorf("message must name node and value, got: %q", msg)
 	}
 }
