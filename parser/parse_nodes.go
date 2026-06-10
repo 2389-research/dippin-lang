@@ -408,6 +408,8 @@ func (p *Parser) applyAgentParsedField(cfg *ir.AgentConfig, key, val string, loc
 	switch key {
 	case "max_turns":
 		cfg.MaxTurns = p.parseInt(val, key, loc)
+	case "last_response_truncate":
+		cfg.LastResponseTruncate = p.parseInt(val, key, loc)
 	case "compaction_threshold":
 		cfg.CompactionThreshold = p.parseFloat(val, key, loc)
 	case "cmd_timeout":
@@ -944,6 +946,10 @@ func (p *Parser) parseBranchFields(bc *ir.BranchConfig) {
 // unknown-field hint for unrecognized keys (FIX B).
 func (p *Parser) applyBranchFieldChecked(bc *ir.BranchConfig, key, val string, loc ir.SourceLocation) {
 	if p.rejectEmptyWritablePaths(key, val, loc) {
+		return
+	}
+	if key == "last_response_truncate" {
+		bc.LastResponseTruncate = p.parseInt(val, key, loc)
 		return
 	}
 	if !applyBranchField(bc, key, val) {

@@ -2527,3 +2527,54 @@ func TestParseBranchToolAccess(t *testing.T) {
 		t.Errorf("branch[1].ToolAccess = %q, want empty", cfg.Branches[1].ToolAccess)
 	}
 }
+
+func TestParse_AgentLastResponseTruncate(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    last_response_truncate: 4096
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	acfg := w.Nodes[0].Config.(ir.AgentConfig)
+	if acfg.LastResponseTruncate != 4096 {
+		t.Errorf("last_response_truncate = %d, want 4096", acfg.LastResponseTruncate)
+	}
+}
+
+func TestParse_BranchLastResponseTruncate(t *testing.T) {
+	src := `workflow X
+  start: P
+  exit: W
+
+  agent W
+    prompt: "w"
+
+  parallel P
+    branch: W
+      last_response_truncate: 2048
+`
+	w, err := NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	var pNode *ir.Node
+	for _, n := range w.Nodes {
+		if n.Kind == ir.NodeParallel {
+			pNode = n
+			break
+		}
+	}
+	if pNode == nil {
+		t.Fatal("parallel node not found")
+	}
+	pcfg := pNode.Config.(ir.ParallelConfig)
+	if len(pcfg.Branches) != 1 || pcfg.Branches[0].LastResponseTruncate != 2048 {
+		t.Errorf("branch last_response_truncate = %+v, want 2048", pcfg.Branches)
+	}
+}
