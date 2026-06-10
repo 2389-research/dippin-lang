@@ -51,6 +51,31 @@ func TestLint_DIP148_SilentOnZeroAndPositive(t *testing.T) {
 	}
 }
 
+func TestLint_DIP148_CarriesSourceLocation(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    last_response_truncate: -1
+`
+	diags := lintSrc(t, src)
+	var found bool
+	for _, d := range diags {
+		if d.Code == DIP148 {
+			found = true
+			if d.Location.Line <= 0 {
+				t.Errorf("DIP148 diagnostic must carry a real source location, got Line=%d", d.Location.Line)
+			}
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected DIP148 diagnostic, got: %v", codes(diags))
+	}
+}
+
 func TestLint_DIP148_MessageNamesNodeAndValue(t *testing.T) {
 	src := `workflow X
   start: A

@@ -21,33 +21,35 @@ func lintLastResponseTruncate(w *ir.Workflow) []Diagnostic {
 		case ir.AgentConfig:
 			if cfg.LastResponseTruncate < 0 {
 				diags = append(diags, lastResponseTruncateDiag(
-					fmt.Sprintf("agent %q last_response_truncate is %d; cannot be negative", n.ID, cfg.LastResponseTruncate)))
+					fmt.Sprintf("agent %q last_response_truncate is %d; cannot be negative", n.ID, cfg.LastResponseTruncate), n.Source))
 			}
 		case ir.ParallelConfig:
-			diags = append(diags, lintBranchTruncate(n.ID, cfg.Branches)...)
+			diags = append(diags, lintBranchTruncate(n.ID, cfg.Branches, n.Source)...)
 		}
 	}
 	return diags
 }
 
 // lintBranchTruncate flags negative per-branch last_response_truncate overrides
-// for one parallel node.
-func lintBranchTruncate(id string, branches []ir.BranchConfig) []Diagnostic {
+// for one parallel node. Branches have no own source location, so diagnostics
+// are anchored to the enclosing parallel node's source (loc).
+func lintBranchTruncate(id string, branches []ir.BranchConfig, loc ir.SourceLocation) []Diagnostic {
 	var diags []Diagnostic
 	for _, b := range branches {
 		if b.LastResponseTruncate < 0 {
 			diags = append(diags, lastResponseTruncateDiag(
-				fmt.Sprintf("parallel %q branch -> %q last_response_truncate is %d; cannot be negative", id, b.Target, b.LastResponseTruncate)))
+				fmt.Sprintf("parallel %q branch -> %q last_response_truncate is %d; cannot be negative", id, b.Target, b.LastResponseTruncate), loc))
 		}
 	}
 	return diags
 }
 
-func lastResponseTruncateDiag(msg string) Diagnostic {
+func lastResponseTruncateDiag(msg string, loc ir.SourceLocation) Diagnostic {
 	return Diagnostic{
 		Code:     DIP148,
 		Severity: SeverityWarning,
 		Message:  msg,
+		Location: loc,
 		Help:     "use a non-negative character count (e.g. last_response_truncate: 4096); on an agent, omit it / set 0 for no truncation, but on a parallel-branch override 0 inherits the agent's cap (it cannot reset to no truncation)",
 	}
 }
