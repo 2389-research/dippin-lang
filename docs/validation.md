@@ -1258,8 +1258,9 @@ information-flow bound.
 An agent node or a parallel-branch override sets `last_response_truncate` to a
 negative value. The field is a character cap on the prior node's response before
 it is auto-injected into this agent's prompt (a #56 mitigation for the
-`${ctx.last_response}` flow); a negative cap is meaningless. `0` (or unset) means
-**no truncation**.
+`${ctx.last_response}` flow); a negative cap is meaningless. On an agent, `0` (or
+unset) means **no truncation**; on a parallel-branch override, `0` (or unset)
+**inherits the target agent's cap** (it does not disable truncation).
 
 ```text
 warning[DIP148]: agent "Writer" last_response_truncate is -1; cannot be negative
@@ -1268,10 +1269,12 @@ warning[DIP148]: agent "Writer" last_response_truncate is -1; cannot be negative
 **Trigger:** `last_response_truncate` is negative on an `agent` node or on a
 per-branch override within a `parallel` node.
 
-**Fix:** Use a non-negative character count to cap the injected response, or omit
-the field (equivalently `0`) for no truncation. Note `0` means *no truncation*,
-not "truncate to zero." Detection only: dippin carries and lints the field; a
-runtime enforces the truncation.
+**Fix:** Use a non-negative character count to cap the injected response. On an
+agent, omit the field (equivalently `0`) for no truncation — `0` means *no
+truncation*, not "truncate to zero." On a parallel-branch override, `0` (or unset)
+**inherits the target agent's cap** (a branch cannot reset to no truncation when
+the agent sets a positive cap). Detection only: dippin carries and lints the
+field; a runtime enforces the truncation.
 
 ---
 

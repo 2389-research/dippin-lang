@@ -7,9 +7,11 @@ import (
 )
 
 // lintLastResponseTruncate checks DIP148: last_response_truncate must not be
-// negative, on an agent node or a parallel-branch override. 0 / unset means "no
-// truncation" (the formatter emits only positive values), so only values < 0 are
-// flagged. dippin carries + lints; a runtime enforces the truncation. This does
+// negative, on an agent node or a parallel-branch override. For an agent, 0 /
+// unset means "no truncation"; on a parallel-branch override 0 / unset inherits
+// the target agent's value (it does not disable truncation). The formatter emits
+// only positive values, so only values < 0 are flagged. dippin carries + lints; a
+// runtime enforces the truncation. This does
 // NOT interact with DIP147 — a sink carrying last_response_truncate still emits
 // the chain-attack Hint (truncation bounds size, not the laundered flow).
 func lintLastResponseTruncate(w *ir.Workflow) []Diagnostic {
@@ -46,6 +48,6 @@ func lastResponseTruncateDiag(msg string) Diagnostic {
 		Code:     DIP148,
 		Severity: SeverityWarning,
 		Message:  msg,
-		Help:     "use a non-negative character count (e.g. last_response_truncate: 4096), or omit it / set 0 for no truncation",
+		Help:     "use a non-negative character count (e.g. last_response_truncate: 4096); on an agent, omit it / set 0 for no truncation, but on a parallel-branch override 0 inherits the agent's cap (it cannot reset to no truncation)",
 	}
 }

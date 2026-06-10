@@ -479,8 +479,8 @@ func safetyExplanations() map[string]Explanation {
 		DIP148: {
 			Code:    DIP148,
 			Summary: "last_response_truncate is negative",
-			Trigger: "An agent node or a per-branch override sets last_response_truncate to a negative value. The field caps how many Unicode characters of the auto-injected previous response the runtime injects into the agent's prompt — a chain-attack mitigation (issue #56). A negative cap is meaningless; 0 (or unset) means no truncation.",
-			Fix:     "Use a non-negative character count (e.g. last_response_truncate: 4096), or omit the field / set 0 for no truncation. dippin carries + lints this value; a runtime enforces the truncation.",
+			Trigger: "An agent node or a per-branch override sets last_response_truncate to a negative value. The field caps how many Unicode characters of the auto-injected previous response the runtime injects into the agent's prompt — a chain-attack mitigation (issue #56). A negative cap is meaningless. On an agent, 0 (or unset) means no truncation; on a parallel-branch override, 0 (or unset) inherits the target agent's cap (it does not disable truncation).",
+			Fix:     "Use a non-negative character count (e.g. last_response_truncate: 4096). On an agent, omit the field / set 0 for no truncation; on a parallel-branch override, 0 inherits the target agent's cap (a branch cannot reset to no truncation when the agent sets a positive cap). dippin carries + lints this value; a runtime enforces the truncation.",
 			Example: "agent Writer\n  prompt: \"write the report\"\n  last_response_truncate: -1   // DIP148: negative; use a non-negative count or omit",
 		},
 	}
