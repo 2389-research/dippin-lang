@@ -111,7 +111,7 @@ if result.HasErrors() {
     }
 }
 
-// Semantic lint (DIP101–DIP146) — warnings
+// Semantic lint (DIP101–DIP147; DIP146 is CLI/cross-file only) — warnings
 lintResult := validator.Lint(workflow)
 for _, d := range lintResult.Diagnostics {
     fmt.Println(d.String())
