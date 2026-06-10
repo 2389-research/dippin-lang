@@ -56,6 +56,64 @@ func TestParseToolMarkerGrepRegexMetachars(t *testing.T) {
 	}
 }
 
+func TestParseToolMarkerGrepSingleQuoted(t *testing.T) {
+	// Single-quoted scalars are YAML-style: surrounding quotes are stripped,
+	// so the literal ' chars must NOT leak into the stored value (issue #114).
+	cfg, diags := parseToolFixture(t, `    marker_grep: '^(a|b)$'`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != "^(a|b)$" {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, "^(a|b)$")
+	}
+}
+
+func TestParseToolMarkerGrepSingleQuotedEscaped(t *testing.T) {
+	// YAML single-quote escaping: '' collapses to a single ' (no backslash escapes).
+	cfg, diags := parseToolFixture(t, `    marker_grep: 'it''s ok'`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != "it's ok" {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, "it's ok")
+	}
+}
+
+func TestParseToolMarkerGrepSingleQuotedEmpty(t *testing.T) {
+	// '' is an empty string, not a literal pair of quote chars.
+	cfg, diags := parseToolFixture(t, `    marker_grep: ''`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != "" {
+		t.Errorf("MarkerGrep = %q, want empty", cfg.MarkerGrep)
+	}
+}
+
+func TestParseToolMarkerGrepSingleQuotedNoBackslashEscape(t *testing.T) {
+	// Single quotes are literal: backslashes are preserved verbatim (unlike "...").
+	cfg, diags := parseToolFixture(t, `    marker_grep: '^\d+$'`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != `^\d+$` {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, `^\d+$`)
+	}
+}
+
+func TestParseToolMarkerGrepSingleQuotedWithHash(t *testing.T) {
+	// A # inside a single-quoted value is literal content, not a comment — the
+	// same protection double quotes already get (issue #114). The space before #
+	// would otherwise trip the trailing-comment stripper.
+	cfg, diags := parseToolFixture(t, `    marker_grep: '^a #b$'`)
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if cfg.MarkerGrep != "^a #b$" {
+		t.Errorf("MarkerGrep = %q, want %q", cfg.MarkerGrep, "^a #b$")
+	}
+}
+
 func TestParseToolRouteRequired(t *testing.T) {
 	cfg, diags := parseToolFixture(t, "    route_required: true")
 	if len(diags) != 0 {

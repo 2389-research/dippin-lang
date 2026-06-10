@@ -266,11 +266,17 @@ See [edges.md](edges.md) for full details on conditions, routing, and restart se
 
 String values can be:
 - **Unquoted**: Simple values without spaces or special characters — `start: MyNode`
-- **Quoted**: Double-quoted strings — `label: "My Node Label"`
+- **Double-quoted**: `label: "My Node Label"`
+- **Single-quoted** (YAML-style, literal): `marker_grep: '^(green|red)$'`
 
-Quoted strings support escape sequences:
+Double-quoted strings support escape sequences:
 - `\"` — literal double quote
 - `\\` — literal backslash
+
+Single-quoted strings are literal — backslashes are not escapes. The only
+escape is `''`, which produces a single `'`. This makes single quotes
+convenient for regular expressions and other values full of backslashes:
+`marker_grep: 'it''s a \d+ match'` stores `it's a \d+ match`.
 
 ---
 

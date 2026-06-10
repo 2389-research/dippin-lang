@@ -326,3 +326,32 @@ workflow PP
                 (multiline_block
                   (block_content
                     (block_line)))))))))))
+
+================================================================================
+Single-quoted string value
+================================================================================
+
+workflow Gate
+  start: Route
+  exit: Route
+
+  conditional Route
+    label: 'It''s routed'
+
+  edges
+    Route -> Route
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (workflow_decl
+    (identifier)
+    (workflow_body
+      (workflow_field (field_value (raw_inline)))
+      (workflow_field (field_value (raw_inline)))
+      (node_decl
+        (conditional_node
+          (identifier)
+          (node_field (field_name (identifier)) (field_value (string)))))
+      (edges_section
+        (edge_entry (identifier) (identifier))))))

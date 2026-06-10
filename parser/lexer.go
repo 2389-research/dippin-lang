@@ -491,7 +491,7 @@ func (l *Lexer) RawValueText(lineNum int) string {
 
 // maybeStripComment strips an inline comment from val unless val starts with # or ".
 func maybeStripComment(val string) string {
-	if len(val) == 0 || val[0] == '#' || val[0] == '"' {
+	if len(val) == 0 || val[0] == '#' || val[0] == '"' || val[0] == '\'' {
 		return val
 	}
 	return strings.TrimSpace(stripComment(val))

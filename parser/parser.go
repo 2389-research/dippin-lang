@@ -230,13 +230,21 @@ func (p *Parser) consumeUntilNewline() {
 	}
 }
 
-// unquoteRaw unquotes a double-quoted string, handling basic escape sequences.
+// unquoteRaw unquotes a quoted string. Double quotes process \" and \\ escapes;
+// single quotes are YAML-style literals where a doubled single-quote escapes (no
+// backslash processing). A value that is not wrapped in matching quotes is
+// returned unchanged.
 func unquoteRaw(raw string) string {
-	if len(raw) < 2 || raw[0] != '"' || raw[len(raw)-1] != '"' {
+	if len(raw) < 2 || raw[0] != raw[len(raw)-1] {
 		return raw
 	}
-	unquoted := raw[1 : len(raw)-1]
-	unquoted = strings.ReplaceAll(unquoted, `\"`, `"`)
-	unquoted = strings.ReplaceAll(unquoted, `\\`, `\`)
-	return unquoted
+	inner := raw[1 : len(raw)-1]
+	switch raw[0] {
+	case '"':
+		inner = strings.ReplaceAll(inner, `\"`, `"`)
+		return strings.ReplaceAll(inner, `\\`, `\`)
+	case '\'':
+		return strings.ReplaceAll(inner, `''`, `'`)
+	}
+	return raw
 }
