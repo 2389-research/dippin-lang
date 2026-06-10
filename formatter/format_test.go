@@ -2418,6 +2418,23 @@ func TestFormat_LastResponseTruncate_RoundTrip(t *testing.T) {
 	if !found {
 		t.Errorf("agent value lost on round-trip:\n%s", out)
 	}
+	// Verify branch value survived re-parse.
+	var branchFound bool
+	for _, n := range w2.Nodes {
+		if pc, ok := n.Config.(ir.ParallelConfig); ok {
+			for _, b := range pc.Branches {
+				if b.Target == "W" {
+					branchFound = true
+					if b.LastResponseTruncate != 2048 {
+						t.Errorf("branch LastResponseTruncate after round-trip = %d, want 2048", b.LastResponseTruncate)
+					}
+				}
+			}
+		}
+	}
+	if !branchFound {
+		t.Errorf("branch to W not found after round-trip:\n%s", out)
+	}
 }
 
 func TestFormat_LastResponseTruncate_OmittedWhenZero(t *testing.T) {
