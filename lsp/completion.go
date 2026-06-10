@@ -60,7 +60,7 @@ func fieldCompletions() []protocol.CompletionItem {
 		{"command_file:", "External script reference for tool node (path relative to .dip source directory)"},
 		{"route_required:", "Fail the node if the command emits no runtime-recognized routing signal on stdout"},
 		{"output_limit:", "Per-node stdout byte cap (non-negative int; 0 = engine default)"},
-		{"last_response_truncate:", "Char cap on the auto-injected previous response in this agent's prompt (chain-attack mitigation; 0/unset = no truncation; runtime-enforced). On a parallel branch, 0 = inherit the agent's cap"},
+		{"last_response_truncate:", "Char cap on the auto-injected previous response in this agent's prompt (chain-attack mitigation; 0/unset = no truncation; runtime-enforced). On a parallel branch, 0 = inherit the target agent's cap"},
 	}
 	var items []protocol.CompletionItem
 	for _, f := range fields {

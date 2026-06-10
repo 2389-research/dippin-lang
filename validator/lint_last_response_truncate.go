@@ -50,6 +50,6 @@ func lastResponseTruncateDiag(msg string, loc ir.SourceLocation) Diagnostic {
 		Severity: SeverityWarning,
 		Message:  msg,
 		Location: loc,
-		Help:     "use a non-negative character count (e.g. last_response_truncate: 4096); on an agent, omit it / set 0 for no truncation, but on a parallel-branch override 0 inherits the agent's cap (it cannot reset to no truncation)",
+		Help:     "use a non-negative character count (e.g. last_response_truncate: 4096); on an agent, omit it / set 0 for no truncation, but on a parallel-branch override 0 inherits the target agent's cap (it cannot reset to no truncation)",
 	}
 }
