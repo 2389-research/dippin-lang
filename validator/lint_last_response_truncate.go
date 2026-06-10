@@ -10,10 +10,10 @@ import (
 // negative, on an agent node or a parallel-branch override. For an agent, 0 /
 // unset means "no truncation"; on a parallel-branch override 0 / unset inherits
 // the target agent's value (it does not disable truncation). The formatter emits
-// only positive values, so only values < 0 are flagged. dippin carries + lints; a
-// runtime enforces the truncation. This does
-// NOT interact with DIP147 — a sink carrying last_response_truncate still emits
-// the chain-attack Hint (truncation bounds size, not the laundered flow).
+// only positive values, so only values < 0 are flagged. dippin carries + lints;
+// a runtime enforces the truncation. This does NOT interact with DIP147 — a sink
+// carrying last_response_truncate still emits the chain-attack Hint (truncation
+// bounds size, not the laundered flow).
 func lintLastResponseTruncate(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
