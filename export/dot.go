@@ -322,7 +322,7 @@ func applyAgentAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	}
 }
 
-// applyAgentRuntimeAttrs adds backend, working_dir, tool_access, and writable_paths attributes.
+// applyAgentRuntimeAttrs adds backend, working_dir, tool_access, writable_paths, and last_response_truncate attributes.
 func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.Backend != "" {
 		attrs["backend"] = cfg.Backend
@@ -460,7 +460,8 @@ func encodeBranches(branches []ir.BranchConfig) string {
 }
 
 // encodeBranch encodes one branch as ';'-joined k=v tokens. target is always
-// first; model/provider/fidelity/tool_access/writable_paths only when non-empty.
+// first; model/provider/fidelity/tool_access/writable_paths only when non-empty,
+// and last_response_truncate only when > 0.
 func encodeBranch(b ir.BranchConfig) string {
 	parts := []string{"target=" + encodeBranchToken(b.Target)}
 	parts = appendBranchField(parts, "model", b.Model)

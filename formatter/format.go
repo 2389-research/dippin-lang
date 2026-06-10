@@ -297,11 +297,12 @@ func writeBranch(wr *writer, b ir.BranchConfig) {
 // branchHasFields reports whether a branch carries any optional field beyond its target.
 func branchHasFields(b ir.BranchConfig) bool {
 	return b.Model != "" || b.Provider != "" || b.Fidelity != "" ||
-		b.ToolAccess != "" || branchHasNonScalarFields(b)
+		b.ToolAccess != "" || branchHasSandboxFields(b)
 }
 
-// branchHasNonScalarFields reports whether a branch carries any non-scalar optional field.
-func branchHasNonScalarFields(b ir.BranchConfig) bool {
+// branchHasSandboxFields reports whether a branch carries any sandbox/limit field
+// (writable_paths or last_response_truncate).
+func branchHasSandboxFields(b ir.BranchConfig) bool {
 	return len(b.WritablePaths) > 0 || b.LastResponseTruncate > 0
 }
 
