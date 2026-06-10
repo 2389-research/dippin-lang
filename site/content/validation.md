@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "56 diagnostic codes for AI pipeline workflows. 10 structural errors and 46 semantic warnings catch bugs before runtime."
+description: "57 diagnostic codes for AI pipeline workflows. 10 structural errors and 47 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "56 diagnostic codes — 10 structural errors and 46 semantic warnings — to catch problems before runtime."
+subtitle: "57 diagnostic codes — 10 structural errors and 47 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
