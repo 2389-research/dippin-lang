@@ -14,8 +14,9 @@ func TestLint_DIP148_FiresOnNegativeAgentValue(t *testing.T) {
     prompt: "x"
     last_response_truncate: -1
 `
-	if !hasCode(lintSrc(t, src), DIP148) {
-		t.Errorf("expected DIP148, got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP148) {
+		t.Errorf("expected DIP148, got: %v", codes(diags))
 	}
 }
 
@@ -31,8 +32,9 @@ func TestLint_DIP148_FiresOnNegativeBranchValue(t *testing.T) {
     branch: W
       last_response_truncate: -5
 `
-	if !hasCode(lintSrc(t, src), DIP148) {
-		t.Errorf("expected DIP148 for negative branch value, got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP148) {
+		t.Errorf("expected DIP148 for negative branch value, got: %v", codes(diags))
 	}
 }
 
