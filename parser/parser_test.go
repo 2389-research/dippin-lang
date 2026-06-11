@@ -780,6 +780,73 @@ func TestParseEdgeAttributes(t *testing.T) {
 	}
 }
 
+func TestParseEdgeOverride(t *testing.T) {
+	input := `workflow Override
+  goal: "Test override edge attribute"
+  start: A
+  exit: D
+
+  human A
+    prompt: "Decide A."
+
+  agent B
+    prompt: "Do B."
+
+  agent C
+    prompt: "Do C."
+
+  agent D
+    prompt: "Do D."
+
+  edges
+    A -> B override: true
+    B -> C when ctx.outcome = pass label: accept override: true
+    C -> D override: false
+`
+	p := NewParser(input, "override.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(w.Edges) != 3 {
+		t.Fatalf("edges = %d, want 3", len(w.Edges))
+	}
+
+	// Edge 0: override: true on its own.
+	if !w.Edges[0].Override {
+		t.Error("edge[0] override = false, want true")
+	}
+
+	// Edge 1: override after when/label — the override keyword must terminate
+	// the condition (not be swallowed into it), and all attrs coexist.
+	e1 := w.Edges[1]
+	if !e1.Override {
+		t.Error("edge[1] override = false, want true")
+	}
+	if e1.Label != "accept" {
+		t.Errorf("edge[1] label = %q, want accept", e1.Label)
+	}
+	if e1.Condition == nil || !strings.Contains(e1.Condition.Raw, "ctx.outcome") {
+		t.Errorf("edge[1] condition = %v, want ctx.outcome condition", e1.Condition)
+	}
+	if strings.Contains(condRaw(e1), "override") {
+		t.Errorf("edge[1] condition swallowed override: %q", condRaw(e1))
+	}
+
+	// Edge 2: override: false parses without error and leaves the field false.
+	if w.Edges[2].Override {
+		t.Error("edge[2] override = true, want false")
+	}
+}
+
+func condRaw(e *ir.Edge) string {
+	if e.Condition == nil {
+		return ""
+	}
+	return e.Condition.Raw
+}
+
 func TestParseRetryFields(t *testing.T) {
 	input := readTestdata(t, "retry_fields.dip")
 	p := NewParser(input, "retry_fields.dip")

@@ -370,6 +370,42 @@ func TestFormatHumanPromptRoundtrip(t *testing.T) {
 	}
 }
 
+func TestFormatEdgeOverrideRoundtrip(t *testing.T) {
+	input := `workflow OverrideRT
+  start: Gate
+  exit: Done
+
+  human Gate
+    prompt: "Decide."
+
+  agent Done
+    prompt: "Ship it."
+
+  edges
+    Gate -> Done  label: accept  override: true
+`
+	w1, err := parser.NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse failed: %v", err)
+	}
+
+	formatted := Format(w1)
+	assertContains(t, formatted, "override: true")
+
+	w2, err := parser.NewParser(formatted, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse failed: %v\nformatted:\n%s", err, formatted)
+	}
+	if !w2.Edges[0].Override {
+		t.Error("override not preserved through format round-trip")
+	}
+
+	reformatted := Format(w2)
+	if formatted != reformatted {
+		t.Errorf("formatter not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, reformatted)
+	}
+}
+
 func TestFormatSingleQuotedRoundtrip(t *testing.T) {
 	// A single-quoted regex must survive parse -> format -> parse without the
 	// literal ' chars leaking into the value or the regex being double-wrapped

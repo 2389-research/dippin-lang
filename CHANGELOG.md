@@ -4,6 +4,16 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+Carry + detection work pairing with downstream runtimes — no dippin behavior is gated on runtime readiness (per `never-gate-dippin-on-tracker`). Both attributes are carried through every `.dip` path; their semantics are owned by a paired runtime.
+
+### Added
+- `last_response_truncate` (agent node + `parallel` branch override, integer) — a character-count cap on the auto-injected `${ctx.last_response}` handoff, a **carry-only chain-attack mitigation** ([#56](https://github.com/2389-research/dippin-lang/issues/56), [#123](https://github.com/2389-research/dippin-lang/pull/123)). Carried through parse → IR → formatter → DOT export → migrate; `DIP148` (Warning) flags a negative value (`0`/unset = disabled). Carried, not interpreted — a paired runtime performs the truncation. Closes the `${ctx.last_response}` auto-injection vector of the #56 laundering arc; `DIP147` (explicit-key handoff) is unaffected and there is no DIP147↔truncate interaction.
+- `override: true` / `override: false` edge attribute → `ir.Edge.Override` (bool) — **carried, not interpreted** (the same policy as `restart:`) ([#124](https://github.com/2389-research/dippin-lang/issues/124)). Parsed in any order alongside `when` / `label` / `weight` / `restart` (no longer silently swallowed), and round-tripped through the `.dip` formatter, DOT export, and migrate. No dippin-side semantics — a paired runtime maps it onward and owns the rule that `override` edges originate from `human` nodes. Same shape as the `params:` carry shipped in v0.39.0 ([#113](https://github.com/2389-research/dippin-lang/pull/113)).
+
+### Runtime pairing (requires an enforcing runtime)
+- Edge `override` unblocks the workflow-author syntax for [2389-research/tracker#271](https://github.com/2389-research/tracker/issues/271), whose engine half (the `validation_overridden` terminal status, `pipeline.Edge.Override`, sticky checkpoint persistence, `--fail-on-override`, lint TRK102) shipped in tracker v0.35.0. Once this is tagged, tracker maps `ir.Edge.Override` → `pipeline.Edge.Override` in `convertEdge`, adds the human-origin validation (tracker spec D11), and migrates the catalogued override edges (tracker#271 finisher).
+- `last_response_truncate` is carried + linted by dippin but the truncation is performed by the runtime — inert until a paired runtime reads it.
+
 ## [v0.39.0] — 2026-06-10
 
 Detection, carry, and correctness work — no paired runtime release required (per `never-gate-dippin-on-tracker`). `DIP147` and the `params:` carry are dippin-side detection / round-trip only; the single-quote fix is a parser correctness fix; the catalog refresh is data.

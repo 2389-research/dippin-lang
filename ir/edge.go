@@ -8,6 +8,7 @@ type Edge struct {
 	Condition *Condition // Parsed condition (not raw string)
 	Weight    int        // Priority hint for edge selection
 	Restart   bool       // Back-edge: triggers downstream clear + re-execution
+	Override  bool       // Carried, not interpreted: human-authored validation override (tracker#271)
 	Source    SourceLocation
 }
 

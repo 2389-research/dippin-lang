@@ -534,6 +534,7 @@ func writeEdgeDOT(b *strings.Builder, e *ir.Edge) {
 	}
 	addEdgeConditionAttrs(attrs, e)
 	addEdgeWeightAndRestart(attrs, e)
+	addEdgeOverride(attrs, e)
 
 	fmt.Fprintf(b, "  %s -> %s", dotID(e.From), dotID(e.To))
 	if len(attrs) > 0 {
@@ -578,6 +579,13 @@ func addEdgeWeightAndRestart(attrs map[string]string, e *ir.Edge) {
 	if e.Restart {
 		attrs["restart"] = "true"
 		attrs["style"] = "dashed"
+	}
+}
+
+// addEdgeOverride adds the override attribute (carried, not interpreted) to attrs.
+func addEdgeOverride(attrs map[string]string, e *ir.Edge) {
+	if e.Override {
+		attrs["override"] = "true"
 	}
 }
 

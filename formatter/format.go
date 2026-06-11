@@ -768,7 +768,7 @@ func appendEdgeCondition(parts []string, e *ir.Edge) []string {
 	return parts
 }
 
-// appendEdgeAttrs appends label, weight, and restart parts.
+// appendEdgeAttrs appends label, weight, restart, and override parts.
 func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 	if e.Label != "" {
 		parts = append(parts, fmt.Sprintf("label: %s", quoteValue(e.Label)))
@@ -778,6 +778,9 @@ func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 	}
 	if e.Restart {
 		parts = append(parts, "restart: true")
+	}
+	if e.Override {
+		parts = append(parts, "override: true")
 	}
 	return parts
 }
