@@ -19,11 +19,15 @@ mechanisms for loops (`restart: true` edges vs `retry_target`+`max_retries`) ove
 
 This proposal:
 
-1. **Diagnoses** the overloading against two *real* production workflows
-   (`dev_loop.dip`, 653 lines; `build_product.dip`, 2061 lines), not toy examples.
-2. Proposes a **non-breaking Phase 0** (pure sugar + stricter parsing) that already
-   removes most of the daily pain — `on <outcome>`, `loop`, `choice:`, deprecate
-   `weight`, reject unknown attributes.
+1. **Diagnoses** the overloading against two *real* production workflows from downstream
+   repos (`pipelines/dev_loop.dip`, 653 lines; `tracker/build_product.dip`, 2061 lines),
+   not toy examples.
+2. Proposes a **source-compatible Phase 0** (additive sugar + new diagnostics, no format
+   version bump) that already removes most of the daily pain — `on <outcome>`, `loop`,
+   `choice:`, deprecate `weight`, reject unknown attributes. "Source-compatible" rather
+   than strictly non-breaking: the new diagnostics (unknown-attr rejection via #126) can
+   newly *reject* a file that parses today, and a few items carry a small compatibility
+   rule (below) so no currently-working routing silently changes.
 3. Proposes a **versioned Phase 1 (`dip 2`)** that fixes the structural problems:
    make the `edges` block the single source of truth for *destinations*, keep only
    *budgets* on nodes, collapse the cascade to "first match in source order + explicit
@@ -40,9 +44,14 @@ The guiding values throughout: **DRY** (one source of truth per routing fact),
 
 ## 1. Evidence: routing in real workflows
 
-Toy examples hide the problem. Two production workflows expose it.
+Toy examples hide the problem. Two production workflows expose it. Both live in
+*downstream* repos, not in dippin-lang itself —
+[`2389-research/pipelines`](https://github.com/2389-research/pipelines/blob/main/dev_loop/dev_loop.dip)
+and
+[`2389-research/tracker`](https://github.com/2389-research/tracker/blob/main/examples/build_product.dip)
+— and consume dippin as a parsed-IR dependency.
 
-### 1a. `pipelines/dev_loop.dip` — 653 lines, ~70-line edges block
+### 1a. `pipelines/dev_loop.dip` (downstream repo) — 653 lines, ~70-line edges block
 
 The dominant pattern is the **error funnel**: nearly every node routes its failure to a
 single `CleanupWorktree` handler. `CleanupWorktree` appears as an edge *target* **more
@@ -67,8 +76,9 @@ Three compounding smells, all visible above:
   `marker_grep: "^(setup-ok|setup-resume-required|setup-failed|setup-lock-held)$"`, then
   the edges block re-lists every one of those four values as a separate
   `when ctx.tool_marker = …` edge. If the regex and the edges drift, routing breaks
-  silently. (DIP103 catches *some* of this; it does not catch a marker the regex emits
-  but no edge handles.)
+  silently. (DIP103 only flags overlapping/duplicate *conditions between edges* — it does
+  **not** reconcile a node's `marker_grep` enum against the set of markers the edges
+  handle, so a marker the regex emits but no edge handles goes uncaught today.)
 - **The same fail destination is asserted twice per node.** Most of these nodes *also*
   carry `fallback_target: CleanupWorktree` as a node field (lines 53, 79, 91, 130,
   157, 183, 223, …). So "on failure go to CleanupWorktree" is written once as a node
@@ -77,7 +87,7 @@ Three compounding smells, all visible above:
   columns with runs of spaces. When a syntax needs hand-built ASCII tables to stay
   readable, the syntax is too noisy.
 
-### 1b. `tracker/build_product.dip` — 2061 lines
+### 1b. `tracker/build_product.dip` (downstream repo) — 2061 lines
 
 Here the split-brain reaches its worst. `TestMilestone`'s failure routing is expressed
 in **four** places:
@@ -163,7 +173,7 @@ cascade:
 | 1 | First matching `when` condition | **Yes — the only tier anyone relies on** |
 | 2 | Handler `PreferredLabel` match | Invisible at author time; not exercised in examples |
 | 3 | Handler `SuggestedNextNodes` | Invisible at author time; not exercised |
-| 4 | Highest `weight` | **`weight:` appears in zero example/production `.dip` files** |
+| 4 | Highest `weight` | **`weight:` appears in no `examples/*.dip` and neither cited production workflow** (only in parser test fixtures + docs) |
 | 5 | Alphabetically-first target ID | **Footgun** — renaming a node silently re-routes |
 
 Of five tiers, authors can predict exactly one (conditions). Two are runtime handler
@@ -203,9 +213,13 @@ Applied directly from our working style:
 Deliberately phased. Phase 0 is non-breaking and delivers most of the daily-readability
 win cheaply. Phase 1 is the versioned structural fix.
 
-### Phase 0 — Non-breaking sugar + stricter parsing (no version bump)
+### Phase 0 — Source-compatible sugar + new diagnostics (no version bump)
 
-These are additive: old syntax keeps parsing, `dippin fmt` can rewrite to the new forms.
+Old syntax keeps parsing and `dippin fmt` can rewrite to the new forms. Two caveats keep
+this honest rather than "strictly non-breaking": (1) the unknown-attr diagnostic (#126)
+can newly reject files with typo'd attributes; (2) where a Phase 0 item could otherwise
+change the meaning of a working file (`choice:`, `weight`), it carries an explicit
+compatibility rule so routing behavior is preserved until `dip 2`.
 
 **0.1 `on <token>` — outcome/marker shorthand.**
 `on X` desugars to a comparison against the node's *natural outcome channel*:
@@ -235,8 +249,13 @@ flag buried among attributes. `loop` reads as what it is. (`restart: true` still
 `fmt` rewrites it.)
 
 **0.3 `choice:` — split human-gate keys from display labels.**
-Human-gate matching uses `choice:`; `label:` becomes display-only. Deleting a `label:`
-is now provably safe; deleting a `choice:` is provably load-bearing.
+Human-gate matching gets a dedicated `choice:` key so the routing key is no longer
+conflated with display text. **Compatibility rule (Phase 0):** a v1 edge with only
+`label:` keeps routing exactly as today — `label` still populates the choice key when
+`choice:` is absent, so existing `Approve -> Ship label: "yes"` workflows are unaffected.
+The clean split — `label:` becomes display-*only* — lands in `dip 2`, where `fmt --migrate`
+rewrites routing-bearing `label:` into `choice:`. After that split, deleting a `label:`
+is provably safe and deleting a `choice:` is provably load-bearing.
 
 ```dippin
 ApprovePlan -> PickNextMilestone  choice: "approve"
@@ -244,8 +263,12 @@ ApprovePlan -> Decompose          choice: "adjust"   loop
 ApprovePlan -> Done               choice: "reject"
 ```
 
-**0.4 Deprecate `weight:`.** Emit a lint (`DIPxxx: weight is unused by routing`) and
-have `fmt` strip it. Zero real files use it. Removing it shrinks the cascade by a tier.
+**0.4 Soft-deprecate `weight:`.** Emit a lint (`DIPxxx: weight is unused by routing`) but
+**keep parsing and preserving it** — `weight` is part of the documented v1 routing
+priority, so a Phase 0 `fmt` must not strip it (an external workflow could rely on
+weighted tie-breaking even though no `examples/*.dip` or cited production workflow does).
+Actual removal — and shrinking the cascade by a tier — is deferred to `dip 2`, where
+`fmt --migrate` drops it.
 
 **0.5 Reject unknown edge attributes (already in flight via #124 pt 4).**
 The parser's `applyEdgeAttribute` switch has no `default`, so unknown attributes are
