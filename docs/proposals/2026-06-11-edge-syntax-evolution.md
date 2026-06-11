@@ -20,8 +20,8 @@ mechanisms for loops (`restart: true` edges vs `retry_target`+`max_retries`) ove
 This proposal:
 
 1. **Diagnoses** the overloading against two *real* production workflows from downstream
-   repos (`pipelines/dev_loop.dip`, 653 lines; `tracker/build_product.dip`, 2061 lines),
-   not toy examples.
+   repos (`dev_loop.dip` in `2389-research/pipelines`, 653 lines; `build_product.dip` in
+   `2389-research/tracker`, 2061 lines), not toy examples.
 2. Proposes a **source-compatible Phase 0** (additive sugar + new diagnostics, no format
    version bump) that already removes most of the daily pain — `on <outcome>`, `loop`,
    `choice:`, deprecate `weight`, reject unknown attributes. "Source-compatible" rather
@@ -51,7 +51,7 @@ and
 [`2389-research/tracker`](https://github.com/2389-research/tracker/blob/main/examples/build_product.dip)
 — and consume dippin as a parsed-IR dependency.
 
-### 1a. `pipelines/dev_loop.dip` (downstream repo) — 653 lines, ~70-line edges block
+### 1a. `dev_loop.dip` (`2389-research/pipelines`, at `dev_loop/dev_loop.dip`) — 653 lines, ~70-line edges block
 
 The dominant pattern is the **error funnel**: nearly every node routes its failure to a
 single `CleanupWorktree` handler. `CleanupWorktree` appears as an edge *target* **more
@@ -87,7 +87,7 @@ Three compounding smells, all visible above:
   columns with runs of spaces. When a syntax needs hand-built ASCII tables to stay
   readable, the syntax is too noisy.
 
-### 1b. `tracker/build_product.dip` (downstream repo) — 2061 lines
+### 1b. `build_product.dip` (`2389-research/tracker`, at `examples/build_product.dip`) — 2061 lines
 
 Here the split-brain reaches its worst. `TestMilestone`'s failure routing is expressed
 in **four** places:
@@ -435,7 +435,8 @@ edge *structure* and out of scope here; worth its own proposal.
 
 ## Open questions
 
-1. Error funnel: `else ->` default route (6/1.3a) vs marker-classified failure (1.3b)?
+1. Error funnel: `else ->` default route vs marker-classified failure (§4, Phase 1.3,
+   options (a) and (b))?
 2. Does the engine actually consume the duplicated `parallel`/`fan_in` edges-block
    entries, or are they echoes safe to forbid (1.4)?
 3. `on <token>` for tool nodes keys off `ctx.tool_marker` — what is the fallback when a
