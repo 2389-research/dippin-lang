@@ -4,6 +4,8 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.40.0] — 2026-06-11
+
 Carry + detection work pairing with downstream runtimes — no dippin behavior is gated on runtime readiness (per `never-gate-dippin-on-tracker`). Both attributes are carried through every `.dip` path; their semantics are owned by a paired runtime.
 
 ### Added
