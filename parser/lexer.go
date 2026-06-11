@@ -73,10 +73,17 @@ func (l *Lexer) NextToken() Token {
 }
 
 func (l *Lexer) PeekToken() Token {
-	if l.tokenIdx >= len(l.tokens) {
+	return l.PeekTokenN(0)
+}
+
+// PeekTokenN returns the token n positions ahead of the cursor without
+// consuming it. PeekTokenN(0) is equivalent to PeekToken.
+func (l *Lexer) PeekTokenN(n int) Token {
+	idx := l.tokenIdx + n
+	if idx >= len(l.tokens) {
 		return Token{Type: TokenEOF, Location: ir.SourceLocation{Line: l.line, Column: l.col}}
 	}
-	return l.tokens[l.tokenIdx]
+	return l.tokens[idx]
 }
 
 // lineIndent returns the number of leading whitespace bytes in a line.

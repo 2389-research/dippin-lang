@@ -46,7 +46,7 @@ func (p *Parser) parseEdgeAttributes(edge *ir.Edge) {
 	}
 	for p.lexer.PeekToken().Type != TokenNewline && p.lexer.PeekToken().Type != TokenEOF {
 		attr := p.lexer.NextToken()
-		p.applyEdgeAttribute(edge, attr.Value)
+		p.applyEdgeAttribute(edge, attr)
 	}
 }
 
@@ -66,8 +66,8 @@ var edgeAttrKeywords = map[string]bool{
 }
 
 // applyEdgeAttribute applies a single edge attribute.
-func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attrName string) {
-	switch attrName {
+func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
+	switch attr.Value {
 	case "when":
 		edge.Condition = &ir.Condition{Raw: p.readConditionRaw()}
 	case "label":
@@ -78,29 +78,52 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attrName string) {
 		wt := p.lexer.NextToken()
 		edge.Weight = p.parseInt(wt.Value, "weight", wt.Location)
 	default:
-		p.applyEdgeBoolAttribute(edge, attrName)
+		p.applyEdgeBoolAttribute(edge, attr)
 	}
 }
 
 // applyEdgeBoolAttribute applies the boolean edge attributes (restart, override),
-// each of the form "<name>: true|false". Carried, not interpreted.
-func (p *Parser) applyEdgeBoolAttribute(edge *ir.Edge, attrName string) {
-	switch attrName {
+// each of the form "<name>: true|false". Carried, not interpreted. An
+// unrecognized attribute is diagnosed once rather than silently swallowed.
+func (p *Parser) applyEdgeBoolAttribute(edge *ir.Edge, attr Token) {
+	switch attr.Value {
 	case "restart":
 		p.expect(TokenColon)
 		edge.Restart = (p.lexer.NextToken().Value == "true")
 	case "override":
 		p.expect(TokenColon)
 		edge.Override = (p.lexer.NextToken().Value == "true")
+	default:
+		p.emitUnknownEdgeAttribute(attr)
 	}
 }
 
-// readConditionRaw reads tokens until a newline/EOF or a known edge attribute keyword.
+// emitUnknownEdgeAttribute records a located diagnostic for an unrecognized edge
+// attribute and consumes its optional ": value" payload, so the per-token
+// attribute loop diagnoses each unknown attribute exactly once.
+func (p *Parser) emitUnknownEdgeAttribute(attr Token) {
+	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+		"unknown edge attribute %q at %d:%d",
+		attr.Value, attr.Location.Line, attr.Location.Column,
+	))
+	if p.lexer.PeekToken().Type != TokenColon {
+		return
+	}
+	p.lexer.NextToken() // consume ':'
+	if t := p.lexer.PeekToken().Type; t != TokenNewline && t != TokenEOF {
+		p.lexer.NextToken() // consume value (only when present)
+	}
+}
+
+// readConditionRaw reads tokens until a newline/EOF or a known edge attribute
+// keyword. An attribute keyword only terminates the condition when it is
+// followed by ':' (the shape of an attribute); a bare keyword on the right-hand
+// side of a condition (e.g. "when ctx.reason = override") is part of the value.
 func (p *Parser) readConditionRaw() string {
 	var parts []string
 	for p.lexer.PeekToken().Type != TokenNewline && p.lexer.PeekToken().Type != TokenEOF {
 		pk := p.lexer.PeekToken()
-		if edgeAttrKeywords[pk.Value] {
+		if edgeAttrKeywords[pk.Value] && p.lexer.PeekTokenN(1).Type == TokenColon {
 			break
 		}
 		t := p.lexer.NextToken()
