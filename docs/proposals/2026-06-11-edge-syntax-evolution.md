@@ -371,13 +371,17 @@ whether the edges-block entries are load-bearing or purely echoed before changin
 A versioned breaking change is **feasible and contained** because Dippin is IR-centric:
 almost every consumer programs against `ir.Edge`, not `.dip` text.
 
-**Versioning.** `ir.Workflow.Version` already exists (`ir/ir.go:13`) but is *dead* —
-never read or emitted. Reuse it: add a `version: 2` workflow-header field (or a `dip 2`
+**Versioning.** `ir.Workflow.Version` already exists (`ir/ir.go:13`) but is **never
+parsed from `.dip` source and never emitted by the formatter** — DOT migration hard-codes
+it to `"1"` (`migrate/migrate.go:58`) and flatten carries it through
+(`flatten/flatten.go:105`), but nothing populates it from `.dip` text. Reuse it: add a
+`version: 2` workflow-header field (or a `dip 2`
 line-1 declaration if we want a true bootstrap switch), wired in `parser/parser.go`
 (~line 102) + `formatter/format.go` `writeWorkflowHeader`. The lexer needs no change.
 
 **`fmt` is the migration vector.** `dippin fmt` already parses to IR and re-emits
-canonical text (`cmd/dippin/cmd_fmt.go` → `parser.Parse()` → `formatter.Format()`). A
+canonical text (`cmd/dippin/cmd_fmt.go` → `parser.NewParser(...).Parse()` →
+`formatter.Format()`). A
 `fmt --migrate` mode = parse v1 → emit v2. Phase 0 sugar and the 1.1 field→edge reshuffle
 are largely **IR-preserving** (the destinations already exist in IR as
 `RetryConfig.RetryTarget/FallbackTarget`), so migration is mostly an emit-side change.
