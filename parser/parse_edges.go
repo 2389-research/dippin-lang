@@ -106,9 +106,12 @@ func (p *Parser) emitUnknownEdgeAttribute(attr Token) {
 		"unknown edge attribute %q at %d:%d",
 		attr.Value, attr.Location.Line, attr.Location.Column,
 	))
-	if p.lexer.PeekToken().Type == TokenColon {
-		p.lexer.NextToken() // consume ':'
-		p.lexer.NextToken() // consume value
+	if p.lexer.PeekToken().Type != TokenColon {
+		return
+	}
+	p.lexer.NextToken() // consume ':'
+	if t := p.lexer.PeekToken().Type; t != TokenNewline && t != TokenEOF {
+		p.lexer.NextToken() // consume value (only when present)
 	}
 }
 

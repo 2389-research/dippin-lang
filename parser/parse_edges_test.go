@@ -89,6 +89,35 @@ func TestParseUnknownBareEdgeAttributeDiagnosesOnce(t *testing.T) {
 	}
 }
 
+// TestParseUnknownEdgeAttributeMissingValue covers the no-value form
+// ("bogus:" with nothing after the colon): the diagnostic must fire once and
+// the parser must not consume the newline, so the following edge still parses.
+func TestParseUnknownEdgeAttributeMissingValue(t *testing.T) {
+	p := NewParser(buildEdgeDip("A -> B bogus:"), "test.dip")
+	w, err := p.Parse()
+	if err == nil {
+		t.Fatal("expected parse error for unknown edge attribute, got nil")
+	}
+	count := 0
+	for _, d := range p.Diagnostics() {
+		if strings.Contains(d, "bogus") {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly one diagnostic mentioning 'bogus', got %d: %v", count, p.Diagnostics())
+	}
+	found := false
+	for _, e := range w.Edges {
+		if e.From == "B" && e.To == "C" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected edge B -> C to still parse after a value-less unknown attr")
+	}
+}
+
 // TestParseConditionWithBareKeywordRHS covers #126(b): a condition whose bare
 // unquoted right-hand value is an attribute keyword must NOT truncate the
 // condition. The keyword only terminates a condition when followed by ':'.
