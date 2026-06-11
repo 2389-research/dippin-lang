@@ -18,7 +18,7 @@ All edges are defined in the `edges` block at the bottom of a workflow:
 Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [when <condition>] [label: <text>] [weight: <int>] [restart: true]
+<FromID> -> <ToID> [when <condition>] [label: <text>] [weight: <int>] [restart: true] [override: true]
 ```
 
 ---
@@ -33,6 +33,7 @@ Each edge is a single line:
 | `label` | String | No | Human-readable text. Displayed on the edge in DOT exports. Also used for human gate choice matching. |
 | `weight` | Integer | No | Priority hint. Higher values win when multiple edges are candidates. |
 | `restart` | Boolean | No | When `true`, marks this as a back-edge that triggers a loop restart. |
+| `override` | Boolean | No | Carried, not interpreted by dippin. Marks an edge as a human-authored validation override for a paired runtime to act on (e.g. tracker's `validation_overridden` flow); dippin does not assign it any execution semantics. |
 
 ---
 

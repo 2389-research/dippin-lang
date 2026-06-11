@@ -656,6 +656,23 @@
               "name": "field_value"
             }
           ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "override"
+            },
+            {
+              "type": "STRING",
+              "value": ":"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "field_value"
+            }
+          ]
         }
       ]
     },

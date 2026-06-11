@@ -62,7 +62,7 @@ func (p *Parser) emitBracketSyntaxError() {
 
 // edgeAttrKeywords contains the set of edge attribute keywords that terminate condition parsing.
 var edgeAttrKeywords = map[string]bool{
-	"label": true, "weight": true, "restart": true,
+	"label": true, "weight": true, "restart": true, "override": true,
 }
 
 // applyEdgeAttribute applies a single edge attribute.
@@ -77,9 +77,21 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attrName string) {
 		p.expect(TokenColon)
 		wt := p.lexer.NextToken()
 		edge.Weight = p.parseInt(wt.Value, "weight", wt.Location)
+	default:
+		p.applyEdgeBoolAttribute(edge, attrName)
+	}
+}
+
+// applyEdgeBoolAttribute applies the boolean edge attributes (restart, override),
+// each of the form "<name>: true|false". Carried, not interpreted.
+func (p *Parser) applyEdgeBoolAttribute(edge *ir.Edge, attrName string) {
+	switch attrName {
 	case "restart":
 		p.expect(TokenColon)
 		edge.Restart = (p.lexer.NextToken().Value == "true")
+	case "override":
+		p.expect(TokenColon)
+		edge.Override = (p.lexer.NextToken().Value == "true")
 	}
 }
 

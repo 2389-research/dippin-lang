@@ -872,6 +872,7 @@ func convertEdge(de dotEdge) (*ir.Edge, error) {
 	}
 	applyEdgeWeight(e, de.Attrs)
 	applyEdgeRestart(e, de.Attrs)
+	applyEdgeOverride(e, de.Attrs)
 	return e, nil
 }
 
@@ -905,6 +906,13 @@ func applyEdgeRestart(e *ir.Edge, attrs map[string]string) {
 	}
 	if v, ok := attrs["loop_restart"]; ok && isTruthy(v) {
 		e.Restart = true
+	}
+}
+
+// applyEdgeOverride checks for the override attr (carried, not interpreted).
+func applyEdgeOverride(e *ir.Edge, attrs map[string]string) {
+	if v, ok := attrs["override"]; ok && isTruthy(v) {
+		e.Override = true
 	}
 }
 

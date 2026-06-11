@@ -114,7 +114,8 @@ module.exports = grammar({
         seq("when", $.condition),
         seq("label", ":", $.field_value),
         seq("weight", ":", $.field_value),
-        seq("restart", ":", $.field_value)
+        seq("restart", ":", $.field_value),
+        seq("override", ":", $.field_value)
       ),
 
     condition: ($) => $.or_expr,
