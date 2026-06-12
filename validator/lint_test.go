@@ -1316,14 +1316,9 @@ func TestLintDIP108NoModelOrProvider(t *testing.T) {
 	}
 }
 
-func TestRegisterExtraModels(t *testing.T) {
+func TestExtraModels_ScopedSuppressesDIP108(t *testing.T) {
 	const provider = "custom-corp"
 	const model = "custom-llm-v1"
-
-	// Cleanup: remove the test provider after the test.
-	t.Cleanup(func() {
-		delete(knownModelProviders, provider)
-	})
 
 	w := &ir.Workflow{
 		Name:  "custom_model",
@@ -1338,56 +1333,64 @@ func TestRegisterExtraModels(t *testing.T) {
 		},
 	}
 
-	// Before registration, DIP108 should fire.
-	result := Lint(w)
-	hasDIP108 := false
-	for _, d := range result.Diagnostics {
-		if d.Code == DIP108 {
-			hasDIP108 = true
-			break
-		}
-	}
-	if !hasDIP108 {
-		t.Error("expected DIP108 before RegisterExtraModels, but got none")
+	// Without extra models, DIP108 should fire.
+	if !hasCode(Lint(w).Diagnostics, DIP108) {
+		t.Error("expected DIP108 without extra models, but got none")
 	}
 
-	// Register the custom model.
-	RegisterExtraModels(provider + ":" + model)
-
-	// After registration, DIP108 should not fire.
-	result2 := Lint(w)
-	for _, d := range result2.Diagnostics {
-		if d.Code == DIP108 {
-			t.Errorf("unexpected DIP108 after RegisterExtraModels: %s", d.Message)
-		}
+	// With the custom model passed via scoped options, DIP108 should not fire.
+	opts := Options{ExtraModels: ParseExtraModels(provider + ":" + model)}
+	if hasCode(LintWithOptions(w, opts).Diagnostics, DIP108) {
+		t.Error("unexpected DIP108 with scoped extra models")
 	}
 }
 
-func TestRegisterExtraModels_MultipleProviders(t *testing.T) {
-	t.Cleanup(func() {
-		delete(knownModelProviders, "corp-a")
-		delete(knownModelProviders, "corp-b")
-	})
+func TestExtraModels_DoesNotLeakAcrossCalls(t *testing.T) {
+	const provider = "custom-corp"
+	const model = "custom-llm-v1"
 
-	RegisterExtraModels("corp-a:model-x,model-y;corp-b:model-z")
+	w := &ir.Workflow{
+		Name:  "custom_model",
+		Start: "A",
+		Exit:  "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:   "hello",
+				Model:    model,
+				Provider: provider,
+			}},
+		},
+	}
 
-	if !knownModelProviders["corp-a"]["model-x"] {
-		t.Error("expected corp-a:model-x to be registered")
-	}
-	if !knownModelProviders["corp-a"]["model-y"] {
-		t.Error("expected corp-a:model-y to be registered")
-	}
-	if !knownModelProviders["corp-b"]["model-z"] {
-		t.Error("expected corp-b:model-z to be registered")
+	// A scoped call registering the custom model must not leak into a later
+	// default Lint call — the registry stays non-global.
+	_ = LintWithOptions(w, Options{ExtraModels: ParseExtraModels(provider + ":" + model)})
+	if !hasCode(Lint(w).Diagnostics, DIP108) {
+		t.Error("expected DIP108 after a scoped call — extra models leaked into global state")
 	}
 }
 
-func TestRegisterExtraModels_EmptyAndMalformed(t *testing.T) {
-	// Should not panic or register garbage.
-	RegisterExtraModels("")
-	RegisterExtraModels(";;")
-	RegisterExtraModels("no-colon-here")
-	RegisterExtraModels("provider-only:")
+func TestParseExtraModels_MultipleProviders(t *testing.T) {
+	extra := ParseExtraModels("corp-a:model-x,model-y;corp-b:model-z")
+
+	if !extra["corp-a"]["model-x"] {
+		t.Error("expected corp-a:model-x to be parsed")
+	}
+	if !extra["corp-a"]["model-y"] {
+		t.Error("expected corp-a:model-y to be parsed")
+	}
+	if !extra["corp-b"]["model-z"] {
+		t.Error("expected corp-b:model-z to be parsed")
+	}
+}
+
+func TestParseExtraModels_EmptyAndMalformed(t *testing.T) {
+	// Should not panic or produce garbage entries.
+	for _, spec := range []string{"", ";;", "no-colon-here", "provider-only:"} {
+		if got := ParseExtraModels(spec); len(got) != 0 {
+			t.Errorf("ParseExtraModels(%q) = %v, want empty", spec, got)
+		}
+	}
 }
 
 func TestLintDIP112CycleDoesNotPanic(t *testing.T) {

@@ -16,6 +16,21 @@ import (
 //	structureResult := validator.Validate(w)
 //	lintResult := validator.Lint(w)
 func Lint(w *ir.Workflow) Result {
+	return LintWithOptions(w, Options{})
+}
+
+// Options carries per-invocation lint configuration. It is passed by value so
+// each call is fully scoped — nothing here mutates package-level state, which
+// keeps lint runs from leaking into one another (e.g. across validate/doctor/lint).
+type Options struct {
+	// ExtraModels extends the known model catalog for the DIP108 check only.
+	// nil is treated as empty.
+	ExtraModels ExtraModels
+}
+
+// LintWithOptions runs all semantic quality checks like Lint, but with the given
+// per-invocation Options (currently a scoped extra-models catalog for DIP108).
+func LintWithOptions(w *ir.Workflow, opts Options) Result {
 	// Ensure condition ASTs are populated — the AST-dependent lint checks
 	// (DIP103/120/121/122) read edge Condition.Parsed.
 	//
@@ -42,7 +57,7 @@ func Lint(w *ir.Workflow) Result {
 	diags = append(diags, lintSuccessPath(w)...)
 	diags = append(diags, lintUndefinedVariables(w)...)
 	diags = append(diags, lintUnusedWrites(w)...)
-	diags = append(diags, lintModelProvider(w)...)
+	diags = append(diags, lintModelProvider(w, opts.ExtraModels)...)
 	diags = append(diags, lintNamespaceCollisions(w)...)
 	diags = append(diags, lintEmptyPrompts(w)...)
 	diags = append(diags, lintToolTimeout(w)...)

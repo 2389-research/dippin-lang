@@ -48,16 +48,21 @@ func parseLintArgs(name, usage string, args []string, c *CLI) (path, extraModels
 	return fs.Arg(0), *em, ExitCode(-1)
 }
 
+// lintOptions builds scoped lint options from an --extra-models spec. An empty
+// spec yields default options (nil extra catalog).
+func lintOptions(extraModels string) validator.Options {
+	if extraModels == "" {
+		return validator.Options{}
+	}
+	return validator.Options{ExtraModels: validator.ParseExtraModels(extraModels)}
+}
+
 // CmdLint runs both structural validation and semantic linting.
 // Errors cause exit 1; warnings alone exit 0.
 func (c *CLI) CmdLint(args []string) ExitCode {
 	path, extraModels, code := parseLintArgs("lint", "usage: dippin lint [--extra-models spec] <file>", args, c)
 	if code != ExitCode(-1) {
 		return code
-	}
-
-	if extraModels != "" {
-		validator.RegisterExtraModels(extraModels)
 	}
 
 	w, err := loadWorkflow(path)
@@ -67,8 +72,9 @@ func (c *CLI) CmdLint(args []string) ExitCode {
 	}
 
 	// Run both validation and linting per spec — lint includes all checks.
+	// Extra models are passed as scoped options, never mutating global state.
 	valRes := validator.Validate(w)
-	lintRes := validator.Lint(w)
+	lintRes := validator.LintWithOptions(w, lintOptions(extraModels))
 
 	// Merge all diagnostics, then apply the native cross-file tool_access pass
 	// (DIP146) — it supersedes DIP143 for boundaries whose child it resolved.
