@@ -298,7 +298,7 @@ The lexer (`lexer.go`) converts source text into a flat token stream. Key featur
 
 - **Indentation tracking**: Maintains an indent stack. When indentation increases, emits `TokenIndent`. When it decreases, emits `TokenOutdent` (potentially multiple if skipping levels).
 - **Token types**: `Keyword`, `Identifier`, `Operator`, `Literal`, `Colon`, `Comma`, `Arrow` (`->`), `BackArrow` (`<-`), `LParen`, `RParen`, `Newline`, `EOF`.
-- **String handling**: The token literal (`TokenLiteral`, used in the `edges` section for edge attributes and `when` conditions) is double-quoted with `\"` and `\\` escapes. Single-line **field values** are taken via raw extraction (`RawValueText` → `unquoteRaw`) and additionally accept single-quoted (YAML-style) strings — literal apart from the `''` → `'` escape; the comment stripper keeps a `#` inside quotes and only drops a comment after the closing quote.
+- **String handling**: The token literal (`TokenLiteral`, used in the `edges` section for edge attributes and `when` conditions) accepts both double-quoted strings (`\"` and `\\` escapes) and single-quoted (YAML-style) strings — literal apart from the `''` → `'` escape. The token-stream comment stripper (`findUnquotedHash`) keeps a `#` inside either quote; a single quote is treated as a string delimiter only at a token-start boundary, so a prose apostrophe (e.g. in `goal: it's great # note`) does not protect a trailing comment. Single-line **field values** are taken via raw extraction (`RawValueText` → `unquoteRaw`) and accept the same two string forms.
 - **Comments**: `#` to end-of-line, stripped during lexing.
 
 ### Stage 2: Parser

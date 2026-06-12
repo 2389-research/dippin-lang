@@ -105,19 +105,90 @@ func isBlankOrComment(line string) bool {
 	return len(trimmed) == 0 || trimmed[0] == '#'
 }
 
-// findUnquotedHash scans a string for a # character that is not inside double quotes.
+// findUnquotedHash scans a token-stream line for a # that starts a trailing
+// comment — one not inside a quoted string. Double quotes toggle on every `"`.
+// A single quote is a string delimiter only at a token-start boundary (see
+// opensSingleQuote); a `'` mid-word is a prose apostrophe and is ignored, so a
+// value like `goal: it's great # note` still strips its comment. Inside a
+// single-quoted string a doubled single quote is a literal escape, not a close.
 // Returns the index of the # or -1 if not found.
 func findUnquotedHash(s string) int {
-	inQuote := false
+	var quote byte // 0 = none, '"' or '\'' = inside that quote
 	for i := 0; i < len(s); i++ {
-		if s[i] == '"' {
-			inQuote = !inQuote
+		if quote != 0 {
+			i, quote = advanceInQuote(s, i, quote)
+			continue
 		}
-		if !inQuote && s[i] == '#' {
+		if s[i] == '#' {
 			return i
 		}
+		quote = quoteOpenedAt(s, i)
 	}
 	return -1
+}
+
+// quoteOpenedAt reports which quote (if any) the character at index i opens when
+// we are outside any quote: `"` always opens; `'` opens only at a token-start
+// boundary (see opensSingleQuote) so a prose apostrophe is not a delimiter.
+// Returns 0 when no quote is opened.
+func quoteOpenedAt(s string, i int) byte {
+	switch {
+	case s[i] == '"':
+		return '"'
+	case s[i] == '\'' && opensSingleQuote(s, i):
+		return '\''
+	default:
+		return 0
+	}
+}
+
+// advanceInQuote consumes one character at index i while inside the given quote,
+// returning the index of the last byte consumed and the new quote state (0 when
+// the quote closes). A `"`-string closes on the next `"`; a `'`-string closes on
+// a lone `'` but treats a doubled single quote as a literal escape that stays inside.
+func advanceInQuote(s string, i int, quote byte) (int, byte) {
+	if quote == '"' {
+		return advanceInDoubleQuote(s, i)
+	}
+	return advanceInSingleQuote(s, i)
+}
+
+// advanceInDoubleQuote closes a `"`-string on a `"`, otherwise stays inside.
+func advanceInDoubleQuote(s string, i int) (int, byte) {
+	if s[i] == '"' {
+		return i, 0
+	}
+	return i, '"'
+}
+
+// advanceInSingleQuote closes a `'`-string on a lone `'`, but treats a doubled
+// single quote as a literal escape that stays inside.
+func advanceInSingleQuote(s string, i int) (int, byte) {
+	if s[i] != '\'' {
+		return i, '\''
+	}
+	if i+1 < len(s) && s[i+1] == '\'' {
+		return i + 1, '\'' // doubled '' escape: skip both, stay inside
+	}
+	return i, 0 // closing quote
+}
+
+// opensSingleQuote reports whether the `'` at index i begins a single-quoted
+// token rather than being a prose apostrophe. It opens a token only at a
+// token-start boundary: start of content, or right after whitespace or a token
+// delimiter (`:`, `=`, `(`, `,`, or the `>` of `->`). A `'` after a word
+// character (e.g. the apostrophe in `it's`) is prose; a prose value's
+// apostrophe is always mid-word, never glued to a delimiter.
+func opensSingleQuote(s string, i int) bool {
+	if i == 0 {
+		return true
+	}
+	switch s[i-1] {
+	case ' ', '\t', ':', '=', '(', ',', '>':
+		return true
+	default:
+		return false
+	}
 }
 
 // stripComment removes a trailing comment from a line, but only if # is preceded by
@@ -427,14 +498,22 @@ func (l *Lexer) tryLexOperator(line string, i int, loc ir.SourceLocation) (int, 
 	return i + 1, true
 }
 
-// tryLexQuotedString handles double-quoted string literals with escape sequences.
+// tryLexQuotedString handles quoted string literals. Double quotes process
+// backslash escapes; single quotes are YAML-style literals where the only escape
+// is a doubled single quote collapsing to one `'` (no backslash processing).
 func (l *Lexer) tryLexQuotedString(line string, i int, loc ir.SourceLocation) (int, bool) {
-	if line[i] != '"' {
+	switch line[i] {
+	case '"':
+		content, newI := readQuotedContent(line, i+1)
+		l.tokens = append(l.tokens, Token{Type: TokenLiteral, Value: content, Location: loc})
+		return newI, true
+	case '\'':
+		content, newI := readSingleQuotedContent(line, i+1)
+		l.tokens = append(l.tokens, Token{Type: TokenLiteral, Value: content, Location: loc})
+		return newI, true
+	default:
 		return i, false
 	}
-	content, newI := readQuotedContent(line, i+1)
-	l.tokens = append(l.tokens, Token{Type: TokenLiteral, Value: content, Location: loc})
-	return newI, true
 }
 
 // readQuotedContent reads characters from line[start:] until an unescaped closing quote.
@@ -447,6 +526,28 @@ func readQuotedContent(line string, start int) (string, int) {
 	}
 	if i < len(line) {
 		i++ // skip closing quote
+	}
+	return content.String(), i
+}
+
+// readSingleQuotedContent reads characters from line[start:] until the closing
+// single quote, collapsing a doubled single quote to one literal `'`. Returns the
+// content string and the position after the closing quote.
+func readSingleQuotedContent(line string, start int) (string, int) {
+	var content strings.Builder
+	i := start
+	for i < len(line) {
+		if line[i] == '\'' {
+			if i+1 < len(line) && line[i+1] == '\'' {
+				content.WriteByte('\'')
+				i += 2
+				continue
+			}
+			i++ // skip closing quote
+			break
+		}
+		content.WriteByte(line[i])
+		i++
 	}
 	return content.String(), i
 }

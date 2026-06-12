@@ -445,3 +445,51 @@ workflow Gate
           (node_field (field_name (identifier)) (field_value (string)))))
       (edges_section
         (edge_entry (identifier) (identifier))))))
+
+================================================================================
+Single-quoted edge label and condition
+================================================================================
+
+workflow SQEdge
+  start: A
+  exit: B
+
+  agent A
+    prompt: go
+
+  agent B
+    prompt: stop
+
+  edges
+    A -> B  when ctx.reason = 'gave up'  label: 'try again'
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (workflow_decl
+    (identifier)
+    (workflow_body
+      (workflow_field (field_value (raw_inline)))
+      (workflow_field (field_value (raw_inline)))
+      (node_decl
+        (agent_node
+          (identifier)
+          (node_field (field_name (identifier)) (field_value (raw_inline)))))
+      (node_decl
+        (agent_node
+          (identifier)
+          (node_field (field_name (identifier)) (field_value (raw_inline)))))
+      (edges_section
+        (edge_entry
+          (identifier)
+          (identifier)
+          (edge_attr
+            (condition
+              (or_expr
+                (and_expr
+                  (compare_expr
+                    (operand (variable (identifier) (identifier)))
+                    (compare_op)
+                    (operand (string)))))))
+          (edge_attr
+            (field_value (string))))))))
