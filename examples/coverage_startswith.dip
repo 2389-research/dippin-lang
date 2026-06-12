@@ -1,0 +1,32 @@
+# Regression for issue #141: a `startswith` edge predicate must count a
+# printf-format marker (e.g. `citations-fail-%s`) as covered, since its
+# static prefix matches the edge's `startswith` constant.
+workflow CoverageStartswith
+  goal: "Demonstrate that startswith edges cover printf-format stdout markers"
+  start: CheckCitations
+  exit: Done
+
+  tool CheckCitations
+    timeout: 2m
+    command:
+      set -eu
+      if true; then
+        printf 'citations-ok'
+      else
+        printf 'citations-fail-%s' "$ids"
+      fi
+
+  agent FixCitations
+    prompt: Repair the failing citations.
+
+  agent Dispatch
+    prompt: Proceed with the validated citations.
+
+  agent Done
+    prompt: Final report.
+
+  edges
+    CheckCitations -> Dispatch     when ctx.tool_stdout = citations-ok
+    CheckCitations -> FixCitations when ctx.tool_stdout startswith citations-fail
+    Dispatch -> Done
+    FixCitations -> Done
