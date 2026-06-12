@@ -141,6 +141,12 @@ When a node completes, the engine selects the next edge using this cascade (firs
 
 This means conditions always take precedence over labels, and labels over weights. The lexical fallback ensures deterministic behavior.
 
+> **Don't rely on the lexical tiebreak.** Priority 5 resolves ties by the
+> *spelling* of the target node ID, so renaming a target can silently change
+> which edge fires. When a node has two or more unconditional outgoing edges,
+> [DIP149](validation.md#dip149-ambiguous-routing) warns: keep at most one
+> unconditional edge as the default fallback and guard the rest with `when`.
+
 ---
 
 ## Failure Handling

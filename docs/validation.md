@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 58 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (57 documented sections):
+Dippin registers 59 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (58 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP148): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP149): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP148<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP149<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP148)
+## Semantic Lint Warnings (DIP101–DIP149)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1278,6 +1278,32 @@ field; a runtime enforces the truncation.
 
 ---
 
+### DIP149: Ambiguous routing
+
+**Severity**: Warning
+
+A node has two or more **unconditional** (no `when`) outgoing edges. Both are
+equally eligible, so which one fires is decided only by the routing cascade's
+[lexical tiebreak](edges.md#routing-priority) — alphabetical order of the target
+node ID. That is silent action-at-a-distance: renaming a target node can change
+which edge fires with no other change.
+
+```text
+warning[DIP149]: node "Route" has multiple unconditional outgoing edges; which one fires is decided only by the lexical tiebreak
+```
+
+**Trigger:** A node has 2+ outgoing edges with no condition. Restart back-edges
+(`restart: true` or the `loop` keyword) are excluded — they are a distinct
+re-execution channel, not a forward-routing competitor.
+
+**Fix:** Keep at most one unconditional edge per node as the default fallback;
+guard the others with a `when` condition, or remove the extra edge. A guarded
+edge plus a single unconditional fallback is the intended pattern and is **not**
+flagged. Conservative by design — duplicate same-variable/same-value guards are
+covered by [DIP103](#dip103-overlapping-or-contradictory-conditions) instead.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1294,7 +1320,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP148 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP149 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 
