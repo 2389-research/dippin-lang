@@ -158,22 +158,29 @@ func grokModels() map[string]bool {
 	}
 }
 
-// RegisterExtraModels extends the known model catalog with user-provided entries.
-// Format: "provider:model1,model2;provider2:model3"
-func RegisterExtraModels(spec string) {
+// ExtraModels is a user-supplied catalog of provider→model sets that extends the
+// known model catalog for a single lint invocation. It is passed via Options and
+// never mutates the package-level base catalog, so it cannot leak across calls.
+type ExtraModels map[string]map[string]bool
+
+// ParseExtraModels parses user-provided entries into a scoped ExtraModels catalog.
+// Format: "provider:model1,model2;provider2:model3". Malformed or empty entries
+// are silently skipped. The result is always safe to pass to LintWithOptions.
+func ParseExtraModels(spec string) ExtraModels {
+	extra := ExtraModels{}
 	for _, entry := range strings.Split(spec, ";") {
 		entry = strings.TrimSpace(entry)
 		if entry == "" {
 			continue
 		}
-		registerOneProvider(entry)
+		extra.addEntry(entry)
 	}
+	return extra
 }
 
-// registerOneProvider parses a single "provider:model1,model2" entry and adds
-// the models to the known catalog. Silently ignores entries with empty provider
-// or no valid model names.
-func registerOneProvider(entry string) {
+// addEntry parses a single "provider:model1,model2" entry into the catalog.
+// Silently ignores entries with empty provider or no valid model names.
+func (e ExtraModels) addEntry(entry string) {
 	parts := strings.SplitN(entry, ":", 2)
 	if len(parts) != 2 {
 		return
@@ -186,16 +193,16 @@ func registerOneProvider(entry string) {
 	if len(models) == 0 {
 		return
 	}
-	addModelsToProvider(provider, models)
+	e.addModels(provider, models)
 }
 
-// addModelsToProvider registers models under the given provider name.
-func addModelsToProvider(provider string, models []string) {
-	if knownModelProviders[provider] == nil {
-		knownModelProviders[provider] = make(map[string]bool)
+// addModels registers models under the given provider name in the catalog.
+func (e ExtraModels) addModels(provider string, models []string) {
+	if e[provider] == nil {
+		e[provider] = make(map[string]bool)
 	}
 	for _, m := range models {
-		knownModelProviders[provider][m] = true
+		e[provider][m] = true
 	}
 }
 
@@ -213,17 +220,17 @@ func parseModelNames(raw string) []string {
 }
 
 // lintModelProvider checks DIP108: model/provider combinations should be
-// in the known catalog. Unknown combinations may indicate typos.
-func lintModelProvider(w *ir.Workflow) []Diagnostic {
+// in the known catalog (base ∪ extra). Unknown combinations may indicate typos.
+func lintModelProvider(w *ir.Workflow, extra ExtraModels) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
-		diags = append(diags, checkNodeModelProvider(w, n)...)
+		diags = append(diags, checkNodeModelProvider(w, n, extra)...)
 	}
 	return diags
 }
 
 // checkNodeModelProvider validates the model/provider for a single node.
-func checkNodeModelProvider(w *ir.Workflow, n *ir.Node) []Diagnostic {
+func checkNodeModelProvider(w *ir.Workflow, n *ir.Node, extra ExtraModels) []Diagnostic {
 	cfg, ok := n.Config.(ir.AgentConfig)
 	if !ok {
 		return nil
@@ -232,7 +239,7 @@ func checkNodeModelProvider(w *ir.Workflow, n *ir.Node) []Diagnostic {
 	if model == "" || provider == "" {
 		return nil
 	}
-	return validateModelProvider(n, model, provider)
+	return validateModelProvider(n, model, provider, extra)
 }
 
 // resolveModelProvider resolves model and provider using node config and workflow defaults.
@@ -248,46 +255,77 @@ func resolveModelProvider(cfg ir.AgentConfig, w *ir.Workflow) (model, provider s
 	return
 }
 
-// validateModelProvider checks if a model/provider combination is known.
-func validateModelProvider(n *ir.Node, model, provider string) []Diagnostic {
-	providerModels, providerKnown := knownModelProviders[provider]
-	if !providerKnown {
+// validateModelProvider checks if a model/provider combination is known,
+// consulting the base catalog plus the scoped extra catalog.
+func validateModelProvider(n *ir.Node, model, provider string, extra ExtraModels) []Diagnostic {
+	if !providerKnown(provider, extra) {
 		return []Diagnostic{{
 			Code:     DIP108,
 			Severity: SeverityWarning,
 			Message:  fmt.Sprintf("node %q uses unknown provider %q", n.ID, provider),
 			Location: n.Source,
-			Help:     fmt.Sprintf("known providers: %s", knownProviderList()),
+			Help:     fmt.Sprintf("known providers: %s", knownProviderList(extra)),
 		}}
 	}
-	if !providerModels[model] {
+	if !modelKnown(provider, model, extra) {
 		return []Diagnostic{{
 			Code:     DIP108,
 			Severity: SeverityWarning,
 			Message:  fmt.Sprintf("node %q uses unknown model %q for provider %q", n.ID, model, provider),
 			Location: n.Source,
-			Help:     fmt.Sprintf("known models for %s: %s", provider, knownModelList(provider)),
+			Help:     fmt.Sprintf("known models for %s: %s", provider, knownModelList(provider, extra)),
 		}}
 	}
 	return nil
 }
 
-// knownProviderList returns a sorted comma-separated list of known providers.
-func knownProviderList() string {
-	providers := make([]string, 0, len(knownModelProviders))
-	for p := range knownModelProviders {
-		providers = append(providers, p)
+// providerKnown reports whether the provider appears in the base catalog or the
+// scoped extra catalog.
+func providerKnown(provider string, extra ExtraModels) bool {
+	if _, ok := knownModelProviders[provider]; ok {
+		return true
 	}
-	sort.Strings(providers)
-	return strings.Join(providers, ", ")
+	_, ok := extra[provider]
+	return ok
 }
 
-// knownModelList returns a sorted comma-separated list of known models for a provider.
-func knownModelList(provider string) string {
-	models := knownModelProviders[provider]
-	list := make([]string, 0, len(models))
-	for m := range models {
-		list = append(list, m)
+// modelKnown reports whether the model is registered for the provider in either
+// the base catalog or the scoped extra catalog.
+func modelKnown(provider, model string, extra ExtraModels) bool {
+	return knownModelProviders[provider][model] || extra[provider][model]
+}
+
+// knownProviderList returns a sorted comma-separated list of known providers,
+// merging the base catalog with the scoped extra catalog.
+func knownProviderList(extra ExtraModels) string {
+	seen := map[string]bool{}
+	for p := range knownModelProviders {
+		seen[p] = true
+	}
+	for p := range extra {
+		seen[p] = true
+	}
+	return sortedJoin(seen)
+}
+
+// knownModelList returns a sorted comma-separated list of known models for a
+// provider, merging the base catalog with the scoped extra catalog.
+func knownModelList(provider string, extra ExtraModels) string {
+	seen := map[string]bool{}
+	for m := range knownModelProviders[provider] {
+		seen[m] = true
+	}
+	for m := range extra[provider] {
+		seen[m] = true
+	}
+	return sortedJoin(seen)
+}
+
+// sortedJoin returns the keys of seen as a sorted, comma-separated string.
+func sortedJoin(seen map[string]bool) string {
+	list := make([]string, 0, len(seen))
+	for k := range seen {
+		list = append(list, k)
 	}
 	sort.Strings(list)
 	return strings.Join(list, ", ")

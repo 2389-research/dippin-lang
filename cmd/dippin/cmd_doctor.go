@@ -6,7 +6,6 @@ import (
 
 	"github.com/2389-research/dippin-lang/cost"
 	"github.com/2389-research/dippin-lang/doctor"
-	"github.com/2389-research/dippin-lang/validator"
 )
 
 // CmdDoctor produces a health report card for a workflow.
@@ -14,10 +13,6 @@ func (c *CLI) CmdDoctor(args []string) ExitCode {
 	path, extraModels, code := parseLintArgs("doctor", "usage: dippin doctor [--extra-models spec] <file>", args, c)
 	if code != ExitCode(-1) {
 		return code
-	}
-
-	if extraModels != "" {
-		validator.RegisterExtraModels(extraModels)
 	}
 
 	w, err := loadWorkflow(path)
@@ -33,7 +28,7 @@ func (c *CLI) CmdDoctor(args []string) ExitCode {
 	// effect is minor (a DIP143 vs DIP146 hint is counted the same; only a
 	// fully-restricted child differs by one hint). `dippin lint`/`check`/`watch`
 	// carry the precise DIP146 behavior. (#89)
-	report := doctor.Diagnose(w, cost.DefaultPricing())
+	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), lintOptions(extraModels))
 	return c.renderDoctorReport(report)
 }
 
