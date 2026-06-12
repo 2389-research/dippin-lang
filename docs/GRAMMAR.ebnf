@@ -207,7 +207,7 @@ edges_section   = "edges" NEWLINE INDENT { edge_entry } OUTDENT ;
 edge_entry      = IDENTIFIER "->" IDENTIFIER { edge_attr } NEWLINE ;
 
 edge_attr       = "when" condition
-                | "on" IDENTIFIER   (* sugar: equality vs the source node's   *)
+                | "on" OUTCOME_TOKEN (* sugar: equality vs the source node's  *)
                                     (* outcome channel — ctx.outcome (agent)   *)
                                     (* or ctx.tool_marker (tool+marker_grep);   *)
                                     (* desugars to when. Not for human gates.   *)
@@ -302,6 +302,11 @@ raw_content     = ? verbatim text lines at block indentation,
 (* IDENTIFIER tokens and parsed by the consumer.              *)
 
 IDENTIFIER      = ( letter | digit ) { letter | digit | "_" | "-" | "." | "/" } ;
+
+(* The `on` shorthand value is stricter than IDENTIFIER: no "." or "/", so it  *)
+(* round-trips as one token in both the .dip lexer and the tree-sitter grammar *)
+(* (enforced by ir.IsOutcomeToken). A "." / "/" / quoted value needs a `when`. *)
+OUTCOME_TOKEN   = ( letter | digit ) { letter | digit | "_" | "-" } ;
 
 STRING          = '"' { string_char } '"' ;
 
