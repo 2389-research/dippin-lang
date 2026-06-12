@@ -98,7 +98,7 @@ func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
 				"channel (agent, or tool with marker_grep); use `when` instead",
 			attr.Location.Line, attr.Location.Column,
 		))
-		p.consumeOptionalValue()
+		p.discardOnValue()
 		return
 	}
 	if raw, ok := p.readOnValue(channel, attr); ok {
@@ -157,12 +157,15 @@ func (p *Parser) tokenGluedAt(line, col int) bool {
 		next.Location.Line == line && next.Location.Column == col
 }
 
-// consumeOptionalValue consumes a single value token following an attribute when
-// one is present, so the per-token attribute loop stays aligned after an error.
-func (p *Parser) consumeOptionalValue() {
-	if t := p.lexer.PeekToken().Type; t != TokenNewline && t != TokenEOF {
-		p.lexer.NextToken()
+// discardOnValue consumes an `on` value — including any glued fragments of a
+// lexer-split value (e.g. `a:b` → a · : · b) — when one is present, so an `on`
+// used where it isn't valid doesn't leave token fragments behind to cascade as
+// spurious "unknown edge attribute" diagnostics.
+func (p *Parser) discardOnValue() {
+	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
+		return
 	}
+	p.joinGluedTokens(p.lexer.NextToken())
 }
 
 // applyEdgeBoolAttribute applies the boolean edge attributes (restart, override),

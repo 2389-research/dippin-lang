@@ -170,6 +170,25 @@ func TestParseOnNoChannelDiagnoses(t *testing.T) {
 	}
 }
 
+// TestParseOnNoChannelGluedValueNoLeak guards the no-channel error path against
+// the same lexer-split leak as the value path: `on a:b` on a node without an
+// outcome channel must emit only the no-channel diagnostic and consume the whole
+// glued value, not leave `:`/`b` to cascade as "unknown edge attribute" errors.
+func TestParseOnNoChannelGluedValueNoLeak(t *testing.T) {
+	p := NewParser(buildOnDip(onHumanA, "A -> B on a:b"), "test.dip")
+	_, err := p.Parse()
+	if err == nil {
+		t.Fatal("expected parse error for `on` without a channel")
+	}
+	joined := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(joined, "`on`") {
+		t.Errorf("expected `on` no-channel diagnostic, got: %v", p.Diagnostics())
+	}
+	if strings.Contains(joined, "unknown edge attribute") {
+		t.Errorf("glued `on` value leaked to the attribute loop: %v", p.Diagnostics())
+	}
+}
+
 // TestParseUnknownEdgeAttributeDiagnoses covers #126(a): an unrecognized edge
 // attribute must become a single located parse diagnostic, not be silently
 // swallowed, and must not fire once per token (name / ':' / value).
