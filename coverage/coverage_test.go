@@ -1,9 +1,11 @@
 package coverage
 
 import (
+	"os"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/parser"
 )
 
 // makeEdge creates a simple unconditional edge.
@@ -597,4 +599,57 @@ func slicesEqual(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// --- issue #141: startswith coverage of printf-format markers ---
+
+// TestFindMissingEdges_Startswith asserts that a printf-format output
+// (`citations-fail-%s`) is treated as covered when a `startswith` term
+// matches its static prefix, while a bare equality term does not.
+func TestFindMissingEdges_Startswith(t *testing.T) {
+	outputs := []string{"citations-ok", "citations-fail-%s"}
+	terms := []condTerm{
+		{op: "=", value: "citations-ok"},
+		{op: "startswith", value: "citations-fail"},
+	}
+	missing := findMissingEdges(outputs, terms)
+	if len(missing) != 0 {
+		t.Errorf("expected no missing edges, got %v", missing)
+	}
+}
+
+// TestFindMissingEdges_StartswithNonPrefix asserts conservatism: a
+// `startswith` term that is NOT a prefix of the output leaves it missing.
+func TestFindMissingEdges_StartswithNonPrefix(t *testing.T) {
+	outputs := []string{"citations-fail-%s"}
+	terms := []condTerm{{op: "startswith", value: "roadmap-invalid"}}
+	missing := findMissingEdges(outputs, terms)
+	if len(missing) != 1 || missing[0] != "citations-fail-%s" {
+		t.Errorf("expected [citations-fail-%%s] missing, got %v", missing)
+	}
+}
+
+// TestCoverageStartswith_FixtureCovered parses the in-repo fixture and
+// asserts the printf-format marker is no longer reported missing and the
+// tool node is fully covered (issue #141).
+func TestCoverageStartswith_FixtureCovered(t *testing.T) {
+	src, err := os.ReadFile("../examples/coverage_startswith.dip")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	w, err := parser.NewParser(string(src), "coverage_startswith.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse fixture: %v", err)
+	}
+
+	r := Analyze(w)
+	cov := r.Nodes["CheckCitations"]
+	for _, m := range cov.MissingEdges {
+		if m == "citations-fail-%s" {
+			t.Errorf("citations-fail-%%s should be covered by startswith edge, got missing=%v", cov.MissingEdges)
+		}
+	}
+	if cov.Status != "covered" {
+		t.Errorf("expected status covered, got %q (missing=%v)", cov.Status, cov.MissingEdges)
+	}
 }

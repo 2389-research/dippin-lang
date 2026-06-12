@@ -79,6 +79,7 @@ func analyzeToolNode(w *ir.Workflow, n *ir.Node) NodeCoverage {
 	}
 	edges := w.EdgesFrom(n.ID)
 	conditions, hasFallback := collectEdgeConditions(edges)
+	terms := collectEdgeConditionTerms(edges)
 
 	cov := NodeCoverage{
 		NodeID:          n.ID,
@@ -94,7 +95,7 @@ func analyzeToolNode(w *ir.Workflow, n *ir.Node) NodeCoverage {
 		cov.ExtractedOutputs = outputs
 	}
 
-	cov.MissingEdges = findMissingEdges(outputs, conditions)
+	cov.MissingEdges = findMissingEdges(outputs, terms)
 	cov.Status = determineStatus(cov)
 	return cov
 }
@@ -113,25 +114,47 @@ func determineStatus(cov NodeCoverage) string {
 	return "partial"
 }
 
-// findMissingEdges returns extracted outputs that have no matching edge condition.
-func findMissingEdges(outputs, conditions []string) []string {
-	condSet := toSet(conditions)
+// condTerm is a single edge comparison term (operator + value) used for
+// matching tool outputs. Unlike the flat EdgeConditions report field, it
+// preserves the operator so prefix predicates can be evaluated.
+type condTerm struct {
+	op    string
+	value string
+}
+
+// findMissingEdges returns extracted outputs that no edge term covers. An
+// output is covered when some `=`/`==` term equals it, or some `startswith`
+// term is a prefix of it. Other operators are conservatively ignored.
+func findMissingEdges(outputs []string, terms []condTerm) []string {
 	var missing []string
 	for _, o := range outputs {
-		if !condSet[o] {
+		if !outputCovered(o, terms) {
 			missing = append(missing, o)
 		}
 	}
 	return missing
 }
 
-// toSet converts a string slice to a map for O(1) lookups.
-func toSet(items []string) map[string]bool {
-	s := make(map[string]bool, len(items))
-	for _, item := range items {
-		s[item] = true
+// outputCovered reports whether any term covers the given output.
+func outputCovered(output string, terms []condTerm) bool {
+	for _, t := range terms {
+		if termCovers(t, output) {
+			return true
+		}
 	}
-	return s
+	return false
+}
+
+// termCovers reports whether a single term covers the output value.
+func termCovers(t condTerm, output string) bool {
+	switch t.op {
+	case "=", "==":
+		return t.value == output
+	case "startswith":
+		return strings.HasPrefix(output, t.value)
+	default:
+		return false
+	}
 }
 
 // echoFlags are echo invocations that should be skipped when extracting
@@ -322,6 +345,40 @@ func collectEdgeConditions(edges []*ir.Edge) (conditions []string, hasFallback b
 		conditions = appendConditionValues(conditions, e.Condition.Parsed)
 	}
 	return conditions, hasFallback
+}
+
+// collectEdgeConditionTerms extracts typed comparison terms (operator +
+// value) from edges, preserving the operator so prefix predicates can be
+// matched. The flat EdgeConditions report field is produced separately by
+// collectEdgeConditions.
+func collectEdgeConditionTerms(edges []*ir.Edge) []condTerm {
+	var terms []condTerm
+	for _, e := range edges {
+		if e.Condition == nil {
+			continue
+		}
+		terms = appendConditionTerms(terms, e.Condition.Parsed)
+	}
+	return terms
+}
+
+// appendConditionTerms walks a condition expression tree and collects each
+// comparison as a typed term.
+func appendConditionTerms(out []condTerm, expr ir.ConditionExpr) []condTerm {
+	switch e := expr.(type) {
+	case ir.CondCompare:
+		return append(out, condTerm{op: e.Op, value: e.Value})
+	case ir.CondAnd:
+		out = appendConditionTerms(out, e.Left)
+		return appendConditionTerms(out, e.Right)
+	case ir.CondOr:
+		out = appendConditionTerms(out, e.Left)
+		return appendConditionTerms(out, e.Right)
+	case ir.CondNot:
+		return appendConditionTerms(out, e.Inner)
+	default:
+		return out
+	}
 }
 
 // appendConditionValues extracts comparison values from a condition expression tree.
