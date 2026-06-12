@@ -448,6 +448,41 @@ func TestFormatLoopRoundtrip(t *testing.T) {
 	}
 }
 
+// TestFormatLoopValueQuotedFromParsed guards the round-trip hazard: a condition
+// whose literal value is the reserved flag word `loop` (e.g. `when ctx.x =
+// "loop"`) loses its quotes in the parsed AST (CondCompare.Value == "loop"), which
+// validate/simulate populate. The formatter prefers the AST, so it must re-quote
+// the value — otherwise re-parsing `when ctx.x = loop` would treat `loop` as the
+// edge flag, truncate the condition, and flip Restart on.
+func TestFormatLoopValueQuotedFromParsed(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "LoopVal", Start: "A", Exit: "B",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
+		},
+		Edges: []*ir.Edge{
+			{From: "A", To: "B", Condition: &ir.Condition{
+				Raw:    `ctx.x = "loop"`,
+				Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "loop"},
+			}},
+		},
+	}
+	formatted := Format(w)
+	assertContains(t, formatted, `ctx.x = "loop"`)
+
+	w2, err := parser.NewParser(formatted, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse failed: %v\nformatted:\n%s", err, formatted)
+	}
+	if w2.Edges[0].Restart {
+		t.Errorf("round-trip flipped Restart on a quoted `loop` literal value")
+	}
+	if c := w2.Edges[0].Condition; c == nil || c.Raw != `ctx.x = "loop"` {
+		t.Errorf("condition not preserved through round-trip: %+v", c)
+	}
+}
+
 // TestFormatRestartTrueMigratesToLoop: the legacy `restart: true` form is rewritten
 // by fmt to the canonical `loop` keyword.
 func TestFormatRestartTrueMigratesToLoop(t *testing.T) {

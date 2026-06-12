@@ -66,13 +66,6 @@ var edgeAttrKeywords = map[string]bool{
 	"label": true, "weight": true, "restart": true, "override": true,
 }
 
-// valuelessEdgeKeywords are bare-flag edge keywords with no "<name>: value" payload.
-// Having no colon to gate on, they terminate a preceding condition unconditionally,
-// which makes them reserved on a condition's right-hand side: write `when ctx.x =
-// "loop"` (quoted) for the literal value. This is the symmetric inverse of #126's
-// bare-keyword-RHS handling, which applies only to value-bearing keywords.
-var valuelessEdgeKeywords = map[string]bool{"loop": true}
-
 // applyEdgeAttribute dispatches a single edge attribute by its structural form:
 // a `when` condition, an `on` shorthand, a value-less `loop` flag, or — by
 // default — a uniform "<keyword>: value" attribute.
@@ -83,11 +76,29 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 	case "on":
 		p.applyOnAttribute(edge, attr)
 	case "loop":
-		// Value-less synonym for `restart: true`: sets the same ir.Edge.Restart
-		// field, consuming no colon or value (a bare keyword flag).
-		edge.Restart = true
+		p.applyLoopAttribute(edge)
 	default:
 		p.applyEdgeValueAttribute(edge, attr)
+	}
+}
+
+// applyLoopAttribute applies the value-less `loop` flag — a synonym for `restart:
+// true` that sets the same ir.Edge.Restart field and consumes no colon or value.
+// A `loop: <value>` written in the legacy boolean shape is a mistake: the flag is
+// still set, but the stray `: value` is diagnosed once with a clear hint rather
+// than leaking as spurious "unknown edge attribute" errors for `:` and the value.
+func (p *Parser) applyLoopAttribute(edge *ir.Edge) {
+	edge.Restart = true
+	if p.lexer.PeekToken().Type != TokenColon {
+		return
+	}
+	colon := p.lexer.NextToken() // consume ':'
+	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+		"`loop` takes no value at %d:%d; write `loop` (no colon)",
+		colon.Location.Line, colon.Location.Column,
+	))
+	if t := p.lexer.PeekToken().Type; t != TokenNewline && t != TokenEOF {
+		p.lexer.NextToken() // consume the stray value
 	}
 }
 
@@ -246,7 +257,7 @@ func (p *Parser) readConditionRaw() string {
 // while a value-bearing keyword (e.g. `restart`) terminates only when followed by
 // ':' — a bare such keyword on a condition's RHS is part of the value (#126).
 func (p *Parser) conditionTerminates(pk Token) bool {
-	if pk.Type == TokenIdentifier && valuelessEdgeKeywords[pk.Value] {
+	if pk.Type == TokenIdentifier && ir.IsReservedEdgeFlag(pk.Value) {
 		return true
 	}
 	return edgeAttrKeywords[pk.Value] && p.lexer.PeekTokenN(1).Type == TokenColon

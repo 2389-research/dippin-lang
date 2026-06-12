@@ -375,6 +375,24 @@ func TestParseRestartTrueBackCompat(t *testing.T) {
 	}
 }
 
+// TestParseLoopWithValueDiagnoses: writing `loop` in the legacy boolean shape
+// `loop: true` still sets Restart, but the stray `: value` is reported once with a
+// clear hint — not leaked as spurious "unknown edge attribute" errors for `:`/`true`.
+func TestParseLoopWithValueDiagnoses(t *testing.T) {
+	p := NewParser(buildEdgeDip("A -> B loop: true"), "test.dip")
+	w, _ := p.Parse()
+	if !w.Edges[0].Restart {
+		t.Errorf("Restart = false, want true even for the mistaken `loop: true`")
+	}
+	joined := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(joined, "`loop` takes no value") {
+		t.Errorf("expected a clear `loop takes no value` diagnostic, got: %v", p.Diagnostics())
+	}
+	if strings.Contains(joined, "unknown edge attribute") {
+		t.Errorf("`loop: true` leaked stray tokens as unknown-attribute errors: %v", p.Diagnostics())
+	}
+}
+
 // TestParseLoopTerminatesCondition guards the design trap: a value-less `loop`
 // keyword must terminate a preceding condition unconditionally (it has no ':' to
 // gate on), so it is recorded as Restart rather than absorbed into the condition

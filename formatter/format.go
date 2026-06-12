@@ -833,10 +833,21 @@ func formatCondition(expr ir.ConditionExpr) string {
 	return formatConditionExpr(expr, 0)
 }
 
+// formatCondValue renders a comparison's right-hand value. A value that is a
+// reserved value-less edge flag (e.g. `loop`) must be quoted, or re-parsing the
+// emitted condition would treat it as the edge flag and truncate the condition —
+// the AST path drops the quotes the raw text carried (see ir.IsReservedEdgeFlag).
+func formatCondValue(v string) string {
+	if ir.IsReservedEdgeFlag(v) {
+		return `"` + v + `"`
+	}
+	return v
+}
+
 func formatConditionExpr(expr ir.ConditionExpr, parentPrec int) string {
 	switch e := expr.(type) {
 	case ir.CondCompare:
-		return fmt.Sprintf("%s %s %s", e.Variable, e.Op, e.Value)
+		return fmt.Sprintf("%s %s %s", e.Variable, e.Op, formatCondValue(e.Value))
 	case ir.CondAnd:
 		return fmtBinaryCondExpr(e.Left, e.Right, "and", precAnd, parentPrec)
 	case ir.CondOr:

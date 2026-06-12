@@ -57,6 +57,20 @@ func IsOutcomeToken(s string) bool {
 	return s != ""
 }
 
+// reservedEdgeFlags are the value-less edge keywords (bare flags). Because the
+// parser terminates a condition unconditionally at one of these (they have no
+// colon to gate on), the same word written as a bare comparison value would
+// re-parse as the flag — so the formatter must quote it to round-trip.
+var reservedEdgeFlags = map[string]bool{"loop": true}
+
+// IsReservedEdgeFlag reports whether s is a value-less edge keyword. It is the
+// single source of truth shared by the parser (which terminates a condition at
+// such a token) and the formatter (which quotes such a token when emitting it as
+// a comparison value), guaranteeing parser-accepts and formatter-emits agree.
+func IsReservedEdgeFlag(s string) bool {
+	return reservedEdgeFlags[s]
+}
+
 // isOutcomeTokenChar reports whether ch is allowed at this position in an outcome
 // token: an ASCII letter or digit anywhere, or `_`/`-` in any non-leading spot.
 func isOutcomeTokenChar(ch rune, first bool) bool {
