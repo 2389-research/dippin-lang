@@ -94,6 +94,27 @@ func TestParseOnHyphenatedToken(t *testing.T) {
 	}
 }
 
+// TestParseOnNonBareTokenDiagnoses: an `on` value that is not a bare identifier
+// (dotted/slashed value, quoted literal) must be diagnosed rather than silently
+// desugared, keeping the parser's accept rule symmetric with what the formatter
+// emits. A `.`-containing value is a single lexer token, so it reaches the
+// shorthand-token check; the message must point at `when`.
+func TestParseOnNonBareTokenDiagnoses(t *testing.T) {
+	for _, tok := range []string{"a.b", "a/b", `"quoted"`} {
+		t.Run(tok, func(t *testing.T) {
+			p := NewParser(buildOnDip(onAgentA, "A -> B on "+tok), "test.dip")
+			_, err := p.Parse()
+			if err == nil {
+				t.Fatalf("expected parse error for non-bare `on` value %q", tok)
+			}
+			joined := strings.Join(p.Diagnostics(), "\n")
+			if !strings.Contains(joined, "`on`") || !strings.Contains(joined, "when") {
+				t.Errorf("expected diagnostic mentioning `on` and `when`, got: %v", p.Diagnostics())
+			}
+		})
+	}
+}
+
 // TestParseOnIdenticalToWhen: `on X` must produce the same Condition as the
 // equivalent `when`, and coexist with trailing attributes.
 func TestParseOnIdenticalToWhen(t *testing.T) {

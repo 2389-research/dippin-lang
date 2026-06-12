@@ -787,37 +787,19 @@ func conditionText(c *ir.Condition) string {
 
 // onShorthand returns the outcome token when text is exactly an equality test
 // against the source node's outcome channel (e.g. "ctx.outcome = success", the
-// shape `on success` desugars to) and the token re-emits unquoted. Matching the
-// node's own channel guarantees the re-emitted `on` parses back identically.
+// shape `on success` desugars to) and the value is a bare identifier. Matching
+// the node's own channel guarantees the re-emitted `on` parses back identically.
+//
+// ir.IsOutcomeToken is stricter than `needsQuoting`: the latter permits `:` (the
+// .dip lexer splits it into a separate token) and `.`/`/` (the .dip lexer keeps
+// them, but the tree-sitter grammar's identifier rule rejects them). Restricting
+// to `[a-zA-Z0-9][a-zA-Z0-9_-]*` keeps fmt from emitting an `on` that fails to
+// re-parse in either grammar, and mirrors the parser's accept rule exactly.
 func onShorthand(text, channel string) (string, bool) {
-	if tok, ok := strings.CutPrefix(text, channel+" = "); ok && isOnToken(tok) {
+	if tok, ok := strings.CutPrefix(text, channel+" = "); ok && ir.IsOutcomeToken(tok) {
 		return tok, true
 	}
 	return "", false
-}
-
-// isOnToken reports whether s re-emits as a single bare identifier token that
-// both the .dip lexer and the tree-sitter grammar will read back as one token —
-// the round-trip precondition for the `on <token>` shorthand. The grammar's
-// identifier rule (`[a-zA-Z0-9][a-zA-Z0-9_-]*`) is stricter than `needsQuoting`,
-// which permits `:`/`.`/`/` that the lexer would split; using it here keeps fmt
-// from emitting an `on` that fails to re-parse.
-func isOnToken(s string) bool {
-	for i, ch := range s {
-		if !isOnTokenChar(ch, i == 0) {
-			return false
-		}
-	}
-	return s != ""
-}
-
-// isOnTokenChar reports whether ch is allowed at this position in an `on` token:
-// an ASCII letter or digit anywhere, or `_`/`-` in any non-leading position.
-func isOnTokenChar(ch rune, first bool) bool {
-	if isUnquotedAlphanumeric(ch) {
-		return true
-	}
-	return !first && (ch == '_' || ch == '-')
 }
 
 // appendEdgeAttrs appends label, weight, restart, and override parts.

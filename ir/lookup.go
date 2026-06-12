@@ -43,6 +43,37 @@ func (n *Node) toolMarkerChannel() (string, bool) {
 	return "", false
 }
 
+// IsOutcomeToken reports whether s is a valid `on <token>` value: a single bare
+// identifier matching the shorthand grammar `[a-zA-Z0-9][a-zA-Z0-9_-]*`. This is
+// the single source of truth shared by the parser (which rejects non-conforming
+// `on` values) and the formatter (which only rewrites `when` to `on` for tokens
+// that satisfy it), guaranteeing the two agree on what re-parses as a shorthand.
+func IsOutcomeToken(s string) bool {
+	for i, ch := range s {
+		if !isOutcomeTokenChar(ch, i == 0) {
+			return false
+		}
+	}
+	return s != ""
+}
+
+// isOutcomeTokenChar reports whether ch is allowed at this position in an outcome
+// token: an ASCII letter or digit anywhere, or `_`/`-` in any non-leading spot.
+func isOutcomeTokenChar(ch rune, first bool) bool {
+	if isASCIILetterOrDigit(ch) {
+		return true
+	}
+	return !first && (ch == '_' || ch == '-')
+}
+
+func isASCIILetterOrDigit(ch rune) bool {
+	return isASCIILetter(ch) || (ch >= '0' && ch <= '9')
+}
+
+func isASCIILetter(ch rune) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
 // EdgesFrom returns all edges originating from the given node ID.
 // This includes explicit edges from the workflow's Edges slice, as well as
 // implicit edges defined by parallel fan-outs and fan-in joins.

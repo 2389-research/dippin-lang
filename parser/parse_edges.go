@@ -88,8 +88,8 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 // against the source node's natural outcome channel: ctx.outcome for agent
 // nodes, ctx.tool_marker for tool nodes that declare marker_grep. It produces
 // the same ir.Condition as the equivalent `when`. A source node with no defined
-// outcome channel (human gate, conditional, marker-less tool) is a located
-// diagnostic suggesting `when`.
+// outcome channel (human gate, conditional, marker-less tool), or a value that
+// is not a bare identifier, is a located diagnostic suggesting `when`.
 func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
 	channel, ok := p.workflow.Node(edge.From).OutcomeChannel()
 	if !ok {
@@ -108,7 +108,25 @@ func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
 		))
 		return
 	}
-	edge.Condition = &ir.Condition{Raw: channel + " = " + p.lexer.NextToken().Value}
+	// The value must be a single bare identifier so the shorthand re-parses; a
+	// quoted literal or a dotted/slashed value belongs in a full `when`.
+	val := p.lexer.NextToken()
+	if !onValueValid(val) {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`on` value %q at %d:%d must be a bare identifier ([A-Za-z0-9][A-Za-z0-9_-]*); "+
+				"use `when %s = ...` for other values",
+			val.Value, val.Location.Line, val.Location.Column, channel,
+		))
+		return
+	}
+	edge.Condition = &ir.Condition{Raw: channel + " = " + val.Value}
+}
+
+// onValueValid reports whether val is a usable `on` token: a bare identifier
+// token (not a quoted literal, colon, etc.) whose text matches the shorthand
+// grammar, so the desugared condition re-emits and re-parses as `on`.
+func onValueValid(val Token) bool {
+	return val.Type == TokenIdentifier && ir.IsOutcomeToken(val.Value)
 }
 
 // consumeOptionalValue consumes a single value token following an attribute when
