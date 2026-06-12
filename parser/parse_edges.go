@@ -101,32 +101,60 @@ func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
 		p.consumeOptionalValue()
 		return
 	}
+	if raw, ok := p.readOnValue(channel, attr); ok {
+		edge.Condition = &ir.Condition{Raw: channel + " = " + raw}
+	}
+}
+
+// readOnValue consumes and validates the `on` shorthand's value token, returning
+// the bare identifier and true on success. The value must be a single bare
+// identifier so the shorthand re-parses; a quoted literal, or one the lexer
+// splits (e.g. `a:b` → a · : · b), belongs in a full `when`. Glued fragments are
+// joined first so a split value is diagnosed once as a whole rather than leaking
+// its tail to the attribute loop. On any malformed value it emits a located
+// diagnostic suggesting `when` and returns false.
+func (p *Parser) readOnValue(channel string, attr Token) (string, bool) {
 	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
 			"`on` at %d:%d requires an outcome token (e.g. `on success`)",
 			attr.Location.Line, attr.Location.Column,
 		))
-		return
+		return "", false
 	}
-	// The value must be a single bare identifier so the shorthand re-parses; a
-	// quoted literal or a dotted/slashed value belongs in a full `when`.
 	val := p.lexer.NextToken()
-	if !onValueValid(val) {
+	raw := p.joinGluedTokens(val)
+	if val.Type != TokenIdentifier || !ir.IsOutcomeToken(raw) {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
 			"`on` value %q at %d:%d must be a bare identifier ([A-Za-z0-9][A-Za-z0-9_-]*); "+
 				"use `when %s = ...` for other values",
-			val.Value, val.Location.Line, val.Location.Column, channel,
+			raw, val.Location.Line, val.Location.Column, channel,
 		))
-		return
+		return "", false
 	}
-	edge.Condition = &ir.Condition{Raw: channel + " = " + val.Value}
+	return raw, true
 }
 
-// onValueValid reports whether val is a usable `on` token: a bare identifier
-// token (not a quoted literal, colon, etc.) whose text matches the shorthand
-// grammar, so the desugared condition re-emits and re-parses as `on`.
-func onValueValid(val Token) bool {
-	return val.Type == TokenIdentifier && ir.IsOutcomeToken(val.Value)
+// joinGluedTokens returns val's text concatenated with any immediately following
+// tokens that carry no intervening whitespace — the fragments a lexer-split
+// value (e.g. `a:b` → a · : · b) decomposes into — consuming them so a malformed
+// `on` value is reported once as the whole intended token.
+func (p *Parser) joinGluedTokens(val Token) string {
+	raw := val.Value
+	end := val.Location.Column + len(val.Value)
+	for p.tokenGluedAt(val.Location.Line, end) {
+		t := p.lexer.NextToken()
+		raw += t.Value
+		end += len(t.Value)
+	}
+	return raw
+}
+
+// tokenGluedAt reports whether the next token abuts (line, col) with no
+// whitespace gap. Newline/EOF never count as glued.
+func (p *Parser) tokenGluedAt(line, col int) bool {
+	next := p.lexer.PeekToken()
+	return next.Type != TokenNewline && next.Type != TokenEOF &&
+		next.Location.Line == line && next.Location.Column == col
 }
 
 // consumeOptionalValue consumes a single value token following an attribute when
