@@ -10,6 +10,33 @@ func (w *Workflow) Node(id string) *Node {
 	return nil
 }
 
+// OutcomeChannel returns the node's natural outcome channel — the context
+// variable the `on <token>` edge shorthand routes against — and whether the
+// node has one. Agent and human nodes route on ctx.outcome; tool nodes that
+// declare marker_grep route on ctx.tool_marker. Any other node has none.
+// This is the single source of truth shared by the parser (which desugars `on`)
+// and the formatter (which re-emits it), so the two never diverge.
+func (n *Node) OutcomeChannel() (string, bool) {
+	if n == nil {
+		return "", false
+	}
+	switch n.Kind {
+	case NodeAgent, NodeHuman:
+		return "ctx.outcome", true
+	case NodeTool:
+		return n.toolMarkerChannel()
+	}
+	return "", false
+}
+
+// toolMarkerChannel returns ctx.tool_marker only when the tool declares marker_grep.
+func (n *Node) toolMarkerChannel() (string, bool) {
+	if cfg, ok := n.Config.(ToolConfig); ok && cfg.MarkerGrep != "" {
+		return "ctx.tool_marker", true
+	}
+	return "", false
+}
+
 // EdgesFrom returns all edges originating from the given node ID.
 // This includes explicit edges from the workflow's Edges slice, as well as
 // implicit edges defined by parallel fan-outs and fan-in joins.

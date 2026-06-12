@@ -70,6 +70,8 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 	switch attr.Value {
 	case "when":
 		edge.Condition = &ir.Condition{Raw: p.readConditionRaw()}
+	case "on":
+		p.applyOnAttribute(edge, attr)
 	case "label":
 		p.expect(TokenColon)
 		edge.Label = p.lexer.NextToken().Value
@@ -79,6 +81,40 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 		edge.Weight = p.parseInt(wt.Value, "weight", wt.Location)
 	default:
 		p.applyEdgeBoolAttribute(edge, attr)
+	}
+}
+
+// applyOnAttribute desugars the `on <token>` shorthand into an equality test
+// against the source node's natural outcome channel: ctx.outcome for
+// agent/human nodes, ctx.tool_marker for tool nodes that declare marker_grep.
+// It produces the same ir.Condition as the equivalent `when`. A source node
+// with no defined outcome channel is a located diagnostic suggesting `when`.
+func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
+	channel, ok := p.workflow.Node(edge.From).OutcomeChannel()
+	if !ok {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`on` shorthand at %d:%d requires a source node with a defined outcome "+
+				"channel (agent/human, or tool with marker_grep); use `when` instead",
+			attr.Location.Line, attr.Location.Column,
+		))
+		p.consumeOptionalValue()
+		return
+	}
+	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`on` at %d:%d requires an outcome token (e.g. `on success`)",
+			attr.Location.Line, attr.Location.Column,
+		))
+		return
+	}
+	edge.Condition = &ir.Condition{Raw: channel + " = " + p.lexer.NextToken().Value}
+}
+
+// consumeOptionalValue consumes a single value token following an attribute when
+// one is present, so the per-token attribute loop stays aligned after an error.
+func (p *Parser) consumeOptionalValue() {
+	if t := p.lexer.PeekToken().Type; t != TokenNewline && t != TokenEOF {
+		p.lexer.NextToken()
 	}
 }
 

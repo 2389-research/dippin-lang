@@ -207,6 +207,10 @@ edges_section   = "edges" NEWLINE INDENT { edge_entry } OUTDENT ;
 edge_entry      = IDENTIFIER "->" IDENTIFIER { edge_attr } NEWLINE ;
 
 edge_attr       = "when" condition
+                | "on" IDENTIFIER   (* sugar: equality vs the source node's   *)
+                                    (* outcome channel — ctx.outcome (agent/   *)
+                                    (* human) or ctx.tool_marker (tool+         *)
+                                    (* marker_grep); desugars to a when         *)
                 | "label"   ":" field_value
                 | "weight"  ":" INTEGER
                 | "restart" ":" BOOLEAN ;

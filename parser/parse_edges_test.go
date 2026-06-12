@@ -29,6 +29,128 @@ func buildEdgeDip(edgeLine string) string {
 		"    B -> C\n"
 }
 
+// buildOnDip produces a workflow whose first edge originates from a node of the
+// given kind, so `on` desugaring can be exercised per source-node channel.
+// kindBlock is the node declaration for A (e.g. an agent, tool, or parallel).
+func buildOnDip(kindBlock, edgeLine string) string {
+	return "workflow X\n" +
+		"  goal: \"Test on\"\n" +
+		"  start: A\n" +
+		"  exit: C\n" +
+		"\n" +
+		kindBlock + "\n" +
+		"\n" +
+		"  agent B\n" +
+		"    prompt: \"Do B.\"\n" +
+		"\n" +
+		"  agent C\n" +
+		"    prompt: \"Do C.\"\n" +
+		"\n" +
+		"  edges\n" +
+		"    " + edgeLine + "\n" +
+		"    B -> C\n"
+}
+
+const onAgentA = "  agent A\n    prompt: \"Do A.\""
+const onHumanA = "  human A\n    mode: freeform"
+const onToolMarkerA = "  tool A\n    command: \"echo hi\"\n    marker_grep: \"^(ok|bad)$\""
+const onToolNoMarkerA = "  tool A\n    command: \"echo hi\""
+const onParallelA = "  parallel A\n    targets: B, C"
+
+// TestParseOnAgentSource: `on X` from an agent source desugars to the outcome channel.
+func TestParseOnAgentSource(t *testing.T) {
+	p := NewParser(buildOnDip(onAgentA, "A -> B on success"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	got := w.Edges[0].Condition
+	if got == nil || got.Raw != "ctx.outcome = success" {
+		t.Fatalf("Condition = %+v, want Raw %q", got, "ctx.outcome = success")
+	}
+}
+
+// TestParseOnHumanSource: human sources also route on ctx.outcome.
+func TestParseOnHumanSource(t *testing.T) {
+	p := NewParser(buildOnDip(onHumanA, "A -> B on approved"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition; got == nil || got.Raw != "ctx.outcome = approved" {
+		t.Fatalf("Condition = %+v, want Raw %q", got, "ctx.outcome = approved")
+	}
+}
+
+// TestParseOnToolMarkerSource: a tool with marker_grep routes on ctx.tool_marker.
+func TestParseOnToolMarkerSource(t *testing.T) {
+	p := NewParser(buildOnDip(onToolMarkerA, "A -> B on tests_green"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition; got == nil || got.Raw != "ctx.tool_marker = tests_green" {
+		t.Fatalf("Condition = %+v, want Raw %q", got, "ctx.tool_marker = tests_green")
+	}
+}
+
+// TestParseOnHyphenatedToken: a hyphenated marker is one identifier token.
+func TestParseOnHyphenatedToken(t *testing.T) {
+	p := NewParser(buildOnDip(onToolMarkerA, "A -> B on setup-failed"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition; got == nil || got.Raw != "ctx.tool_marker = setup-failed" {
+		t.Fatalf("Condition = %+v, want Raw %q", got, "ctx.tool_marker = setup-failed")
+	}
+}
+
+// TestParseOnIdenticalToWhen: `on X` must produce the same Condition as the
+// equivalent `when`, and coexist with trailing attributes.
+func TestParseOnIdenticalToWhen(t *testing.T) {
+	pOn := NewParser(buildOnDip(onAgentA, "A -> B on fail  label: retry"), "test.dip")
+	wOn, err := pOn.Parse()
+	if err != nil {
+		t.Fatalf("on parse error: %v (%v)", err, pOn.Diagnostics())
+	}
+	pWhen := NewParser(buildOnDip(onAgentA, "A -> B when ctx.outcome = fail  label: retry"), "test.dip")
+	wWhen, err := pWhen.Parse()
+	if err != nil {
+		t.Fatalf("when parse error: %v (%v)", err, pWhen.Diagnostics())
+	}
+	if wOn.Edges[0].Condition.Raw != wWhen.Edges[0].Condition.Raw {
+		t.Errorf("on Raw %q != when Raw %q", wOn.Edges[0].Condition.Raw, wWhen.Edges[0].Condition.Raw)
+	}
+	if wOn.Edges[0].Label != "retry" {
+		t.Errorf("label = %q, want retry", wOn.Edges[0].Label)
+	}
+}
+
+// TestParseOnNoChannelDiagnoses: `on` on a node with no defined outcome channel
+// (parallel, or tool without marker_grep) is a located diagnostic suggesting when.
+func TestParseOnNoChannelDiagnoses(t *testing.T) {
+	for _, tc := range []struct{ name, block string }{
+		{"parallel", onParallelA},
+		{"tool-no-marker", onToolNoMarkerA},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewParser(buildOnDip(tc.block, "A -> B on whatever"), "test.dip")
+			_, err := p.Parse()
+			if err == nil {
+				t.Fatal("expected parse error for `on` without a channel")
+			}
+			joined := strings.Join(p.Diagnostics(), "\n")
+			if !strings.Contains(joined, "`on`") || !strings.Contains(joined, "when") {
+				t.Errorf("expected diagnostic mentioning `on` and `when`, got: %v", p.Diagnostics())
+			}
+			if !strings.Contains(joined, "16:") {
+				t.Errorf("expected located diagnostic (line 16), got: %v", p.Diagnostics())
+			}
+		})
+	}
+}
+
 // TestParseUnknownEdgeAttributeDiagnoses covers #126(a): an unrecognized edge
 // attribute must become a single located parse diagnostic, not be silently
 // swallowed, and must not fire once per token (name / ':' / value).

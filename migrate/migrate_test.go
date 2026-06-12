@@ -757,8 +757,8 @@ func TestMigrateToSourceRoundTrip(t *testing.T) {
 	if !strings.Contains(source, "edges") {
 		t.Errorf("source should contain edges section, got:\n%s", source)
 	}
-	if !strings.Contains(source, "ctx.outcome = success") {
-		t.Errorf("source should contain namespaced condition, got:\n%s", source)
+	if !strings.Contains(source, "on success") {
+		t.Errorf("source should contain on-shorthand routing condition, got:\n%s", source)
 	}
 }
 
