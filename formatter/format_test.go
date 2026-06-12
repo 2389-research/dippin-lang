@@ -176,7 +176,7 @@ func TestFormatHappyPath(t *testing.T) {
 				"  edges",
 				"    AskUser -> Interpret",
 				"    Validate -> Approve  on success",
-				`    Validate -> Interpret  on fail  label: retry  restart: true`,
+				`    Validate -> Interpret  on fail  label: retry  loop`,
 			},
 		},
 	}
@@ -403,6 +403,75 @@ func TestFormatEdgeOverrideRoundtrip(t *testing.T) {
 	reformatted := Format(w2)
 	if formatted != reformatted {
 		t.Errorf("formatter not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, reformatted)
+	}
+}
+
+// TestFormatLoopRoundtrip: a back-edge written as `loop` survives parse -> format
+// -> parse as the same Restart field, the formatter emits the `loop` keyword, and
+// formatting is idempotent.
+func TestFormatLoopRoundtrip(t *testing.T) {
+	input := `workflow LoopRT
+  start: Gate
+  exit: Done
+
+  agent Gate
+    prompt: "Check."
+
+  agent Done
+    prompt: "Ship it."
+
+  edges
+    Gate -> Done  on fail  loop
+`
+	w1, err := parser.NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse failed: %v", err)
+	}
+
+	formatted := Format(w1)
+	assertContains(t, formatted, "loop")
+	if strings.Contains(formatted, "restart: true") {
+		t.Errorf("formatter emitted `restart: true`, want `loop`:\n%s", formatted)
+	}
+
+	w2, err := parser.NewParser(formatted, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse failed: %v\nformatted:\n%s", err, formatted)
+	}
+	if !w2.Edges[0].Restart {
+		t.Error("loop (Restart) not preserved through format round-trip")
+	}
+
+	reformatted := Format(w2)
+	if formatted != reformatted {
+		t.Errorf("formatter not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, reformatted)
+	}
+}
+
+// TestFormatRestartTrueMigratesToLoop: the legacy `restart: true` form is rewritten
+// by fmt to the canonical `loop` keyword.
+func TestFormatRestartTrueMigratesToLoop(t *testing.T) {
+	input := `workflow MigrateRT
+  start: Gate
+  exit: Done
+
+  agent Gate
+    prompt: "Check."
+
+  agent Done
+    prompt: "Ship it."
+
+  edges
+    Gate -> Done  when ctx.outcome = fail  restart: true
+`
+	w, err := parser.NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse failed: %v", err)
+	}
+	formatted := Format(w)
+	assertContains(t, formatted, "loop")
+	if strings.Contains(formatted, "restart: true") {
+		t.Errorf("fmt did not migrate `restart: true` to `loop`:\n%s", formatted)
 	}
 }
 
@@ -638,7 +707,7 @@ func TestFormatEdges(t *testing.T) {
 				},
 			},
 			checks: []string{
-				`    A -> B  on fail  label: retry  weight: 10  restart: true`,
+				`    A -> B  on fail  label: retry  weight: 10  loop`,
 			},
 		},
 		{

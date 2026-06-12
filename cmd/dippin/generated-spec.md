@@ -40,7 +40,7 @@ workflow <Name>
   fan_in <ID> <- <Source1>, <Source2>[, ...]
 
   edges
-    <From> -> <To> [on <token> | when <condition>] [label: <text>] [weight: <int>] [restart: true]
+    <From> -> <To> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop]
 ```
 
 ---
@@ -154,7 +154,7 @@ workflow ReviewPipeline
 
 **Identifiers:** `[a-zA-Z0-9][a-zA-Z0-9_\-./]*` — letters, digits, underscore, dash, dot, slash.
 
-**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `label`, `weight`.
+**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `label`, `weight`.
 
 ---
 
@@ -475,7 +475,7 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
     Analyze -> Decide
     Decide -> Merge when ctx.outcome = success
     Decide -> Revise when ctx.outcome = fail
-    Revise -> Analyze restart: true
+    Revise -> Analyze loop
 ```
 
 | Attribute | Syntax | Notes |
@@ -484,7 +484,7 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
 | weight | `weight: <int>` | Priority (higher wins) |
-| restart | `restart: true` | **Required on back-edges** to avoid DIP005 (unconditional cycle) |
+| loop | `loop` | Bare keyword marking a back-edge; **required on back-edges** to avoid DIP005 (unconditional cycle). Legacy `restart: true` still parses; `fmt` rewrites it to `loop` |
 
 ### Conditions
 
@@ -646,7 +646,7 @@ The primary loop for authoring .dip files:
 | DIP002 | Exit node missing | Add `exit: <NodeID>` to workflow header |
 | DIP003 | Unknown node in edge | Check spelling of node IDs in edges block |
 | DIP004 | Unreachable node | Add an edge path from start to the node |
-| DIP005 | Unconditional cycle | Add `restart: true` to the back-edge |
+| DIP005 | Unconditional cycle | Add `loop` to the back-edge |
 | DIP006 | Exit has outgoing edges | Remove edges from exit node or change exit to a different node |
 | DIP007 | Parallel/fan_in mismatch | Add matching `fan_in` node with identical target set, and wire edges from each target to the fan_in node |
 | DIP008 | Duplicate node ID | Rename one of the duplicate nodes |
@@ -702,7 +702,7 @@ The primary loop for authoring .dip files:
 - **Boolean fields** (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively. Anything else is a parse diagnostic.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
-- **Mark back-edges `restart: true`** — loops without it trigger DIP005
+- **Mark back-edges `loop`** — loops without it trigger DIP005
 - **Declare `reads`/`writes`** on nodes to document data flow (enables DIP107/DIP112 checks)
 - **Add `retry_target` or `fallback_target`** to `goal_gate: true` nodes
 - **Run `dippin check`** after every edit — it catches issues the formatter won't
@@ -721,7 +721,7 @@ The primary loop for authoring .dip files:
   edges
     Implement -> Review
     Review -> Done when ctx.outcome = success
-    Review -> Implement when ctx.outcome = fail restart: true
+    Review -> Implement when ctx.outcome = fail loop
 ```
 
 ### Human Gate

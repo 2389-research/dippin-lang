@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/parser"
 )
 
 // --- Test fixtures ---
@@ -729,6 +730,43 @@ func TestDIP005CyclePathIncluded(t *testing.T) {
 	}
 	if !found {
 		t.Error("expected DIP005 diagnostic for cycle test")
+	}
+}
+
+// TestDIP005LoopKeywordExempt: a back-edge written with the `loop` keyword sets the
+// same Restart field, so the unconditional cycle it closes is exempt from DIP005 —
+// no validator logic is loop-aware.
+func TestDIP005LoopKeywordExempt(t *testing.T) {
+	src := `workflow LoopExempt
+  start: A
+  exit: D
+
+  agent A
+    prompt: "a"
+
+  agent B
+    prompt: "b"
+
+  agent C
+    prompt: "c"
+
+  agent D
+    prompt: "d"
+
+  edges
+    A -> B
+    B -> C
+    C -> A loop
+    C -> D
+`
+	w, err := parser.NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse failed: %v", err)
+	}
+	for _, d := range Validate(w).Diagnostics {
+		if d.Code == DIP005 {
+			t.Errorf("DIP005 fired on a `loop` back-edge cycle: %s", d.Message)
+		}
 	}
 }
 

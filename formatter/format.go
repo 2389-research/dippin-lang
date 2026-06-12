@@ -802,7 +802,9 @@ func onShorthand(text, channel string) (string, bool) {
 	return "", false
 }
 
-// appendEdgeAttrs appends label, weight, restart, and override parts.
+// appendEdgeAttrs appends label, weight, loop (back-edge), and override parts.
+// A restart edge is emitted as the canonical `loop` keyword, which also migrates
+// hand-written `restart: true` to the scannable form.
 func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 	if e.Label != "" {
 		parts = append(parts, fmt.Sprintf("label: %s", quoteValue(e.Label)))
@@ -811,7 +813,7 @@ func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 		parts = append(parts, fmt.Sprintf("weight: %d", e.Weight))
 	}
 	if e.Restart {
-		parts = append(parts, "restart: true")
+		parts = append(parts, "loop")
 	}
 	if e.Override {
 		parts = append(parts, "override: true")

@@ -60,27 +60,34 @@ func (p *Parser) emitBracketSyntaxError() {
 	p.consumeUntilNewline()
 }
 
-// edgeAttrKeywords contains the set of edge attribute keywords that terminate condition parsing.
+// edgeAttrKeywords contains the value-bearing edge attribute keywords (each of the
+// form "<name>: value"). They terminate condition parsing only when followed by ':'.
 var edgeAttrKeywords = map[string]bool{
 	"label": true, "weight": true, "restart": true, "override": true,
 }
 
-// applyEdgeAttribute applies a single edge attribute.
+// valuelessEdgeKeywords are bare-flag edge keywords with no "<name>: value" payload.
+// Having no colon to gate on, they terminate a preceding condition unconditionally,
+// which makes them reserved on a condition's right-hand side: write `when ctx.x =
+// "loop"` (quoted) for the literal value. This is the symmetric inverse of #126's
+// bare-keyword-RHS handling, which applies only to value-bearing keywords.
+var valuelessEdgeKeywords = map[string]bool{"loop": true}
+
+// applyEdgeAttribute dispatches a single edge attribute by its structural form:
+// a `when` condition, an `on` shorthand, a value-less `loop` flag, or — by
+// default — a uniform "<keyword>: value" attribute.
 func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 	switch attr.Value {
 	case "when":
 		edge.Condition = &ir.Condition{Raw: p.readConditionRaw()}
 	case "on":
 		p.applyOnAttribute(edge, attr)
-	case "label":
-		p.expect(TokenColon)
-		edge.Label = p.lexer.NextToken().Value
-	case "weight":
-		p.expect(TokenColon)
-		wt := p.lexer.NextToken()
-		edge.Weight = p.parseInt(wt.Value, "weight", wt.Location)
+	case "loop":
+		// Value-less synonym for `restart: true`: sets the same ir.Edge.Restart
+		// field, consuming no colon or value (a bare keyword flag).
+		edge.Restart = true
 	default:
-		p.applyEdgeBoolAttribute(edge, attr)
+		p.applyEdgeValueAttribute(edge, attr)
 	}
 }
 
@@ -176,11 +183,20 @@ func (p *Parser) discardOnValue() {
 	p.joinGluedTokens(p.lexer.NextToken())
 }
 
-// applyEdgeBoolAttribute applies the boolean edge attributes (restart, override),
-// each of the form "<name>: true|false". Carried, not interpreted. An
-// unrecognized attribute is diagnosed once rather than silently swallowed.
-func (p *Parser) applyEdgeBoolAttribute(edge *ir.Edge, attr Token) {
+// applyEdgeValueAttribute applies the uniform "<keyword>: value" edge attributes:
+// the string `label`, the integer `weight`, and the booleans `restart` and
+// `override` (carried, not interpreted). `restart` is the legacy spelling of the
+// `loop` flag. An unrecognized attribute is diagnosed once rather than silently
+// swallowed.
+func (p *Parser) applyEdgeValueAttribute(edge *ir.Edge, attr Token) {
 	switch attr.Value {
+	case "label":
+		p.expect(TokenColon)
+		edge.Label = p.lexer.NextToken().Value
+	case "weight":
+		p.expect(TokenColon)
+		wt := p.lexer.NextToken()
+		edge.Weight = p.parseInt(wt.Value, "weight", wt.Location)
 	case "restart":
 		p.expect(TokenColon)
 		edge.Restart = (p.lexer.NextToken().Value == "true")
@@ -209,21 +225,31 @@ func (p *Parser) emitUnknownEdgeAttribute(attr Token) {
 	}
 }
 
-// readConditionRaw reads tokens until a newline/EOF or a known edge attribute
-// keyword. An attribute keyword only terminates the condition when it is
-// followed by ':' (the shape of an attribute); a bare keyword on the right-hand
-// side of a condition (e.g. "when ctx.reason = override") is part of the value.
+// readConditionRaw reads tokens until a newline/EOF or a terminating edge
+// attribute keyword (see conditionTerminates): a value-bearing keyword followed
+// by ':', or a value-less keyword unconditionally. A bare value-bearing keyword
+// on the right-hand side (e.g. "when ctx.reason = override") is part of the value.
 func (p *Parser) readConditionRaw() string {
 	var parts []string
 	for p.lexer.PeekToken().Type != TokenNewline && p.lexer.PeekToken().Type != TokenEOF {
-		pk := p.lexer.PeekToken()
-		if edgeAttrKeywords[pk.Value] && p.lexer.PeekTokenN(1).Type == TokenColon {
+		if p.conditionTerminates(p.lexer.PeekToken()) {
 			break
 		}
 		t := p.lexer.NextToken()
 		parts = append(parts, formatConditionToken(t))
 	}
 	return strings.TrimSpace(strings.Join(parts, " "))
+}
+
+// conditionTerminates reports whether the upcoming token ends the current
+// condition: a value-less edge keyword (e.g. `loop`) terminates unconditionally,
+// while a value-bearing keyword (e.g. `restart`) terminates only when followed by
+// ':' — a bare such keyword on a condition's RHS is part of the value (#126).
+func (p *Parser) conditionTerminates(pk Token) bool {
+	if pk.Type == TokenIdentifier && valuelessEdgeKeywords[pk.Value] {
+		return true
+	}
+	return edgeAttrKeywords[pk.Value] && p.lexer.PeekTokenN(1).Type == TokenColon
 }
 
 // formatConditionToken formats a single token for raw condition text.

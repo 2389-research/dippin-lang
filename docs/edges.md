@@ -12,13 +12,13 @@ All edges are defined in the `edges` block at the bottom of a workflow:
   edges
     A -> B
     B -> C when ctx.outcome = success
-    B -> D when ctx.outcome = fail label: "retry" restart: true
+    B -> D when ctx.outcome = fail label: "retry" loop
 ```
 
 Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [weight: <int>] [restart: true] [override: true]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop] [override: true]
 ```
 
 ---
@@ -33,7 +33,7 @@ Each edge is a single line:
 | `when` | Condition | No | Boolean guard expression. Edge is only traversed if true at runtime. |
 | `label` | String | No | Human-readable text. Displayed on the edge in DOT exports. Also used for human gate choice matching. |
 | `weight` | Integer | No | Priority hint. Higher values win when multiple edges are candidates. |
-| `restart` | Boolean | No | When `true`, marks this as a back-edge that triggers a loop restart. |
+| `loop` | Flag | No | Bare keyword marking this as a back-edge that triggers a loop restart. The legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop`. |
 | `override` | Boolean | No | Carried, not interpreted by dippin. Marks an edge as a human-authored validation override for a paired runtime to act on (e.g. tracker's `validation_overridden` flow); dippin does not assign it any execution semantics. |
 
 ---
@@ -102,15 +102,17 @@ Weight provides a priority hint when multiple edges compete:
 
 Higher weight = higher priority. If conditions and labels don't resolve the choice, weight breaks the tie.
 
-### Restart Edges (Back-Edges)
+### Loop Edges (Back-Edges)
 
-Restart edges create controlled loops:
+A `loop` edge creates a controlled back-edge. `loop` is a bare keyword — the heaviest-semantics construct in the language gets a scannable word rather than a boolean flag buried among attributes:
 
 ```dippin
-    Validate -> Implement when ctx.outcome = fail restart: true
+    Validate -> Implement when ctx.outcome = fail loop
 ```
 
-When a restart edge is followed:
+`loop` sets the same back-edge field as the legacy `restart: true`, which still parses; `dippin fmt` rewrites `restart: true` to `loop`. Because `loop` is a reserved bare keyword, an unquoted `loop` on a condition's right-hand side is taken as the flag — write `when ctx.x = "loop"` (quoted) for the literal value.
+
+When a loop edge is followed:
 
 1. The engine increments the global restart counter
 2. If the counter exceeds `max_restarts` (default 5), the pipeline fails
@@ -119,9 +121,9 @@ When a restart edge is followed:
 5. Context is **preserved** — all key-values survive across restarts
 6. Execution resumes from the restart target node
 
-Restart edges are **not** counted as cycles by DIP005 validation — they are the intentional mechanism for iteration.
+Loop edges are **not** counted as cycles by DIP005 validation — they are the intentional mechanism for iteration.
 
-In DOT export, restart edges are styled with dashed lines.
+In DOT export, loop edges are styled with dashed lines.
 
 ---
 
@@ -164,7 +166,7 @@ Graph-level `on_failure` is declared in the `defaults` block — it is a workflo
     on_failure: Escalate
 ```
 
-A restart-edge (`restart: true`) tagged with `when ctx.outcome = fail` falls under priority 1 and carries its own `max_restarts` budget rather than `max_retries`.
+A loop edge (`loop`) tagged with `when ctx.outcome = fail` falls under priority 1 and carries its own `max_restarts` budget rather than `max_retries`.
 
 **Separation of concerns:** dippin validates that the `on_failure` target node exists (DIP003) and is reachable (DIP004); the runtime owns the evaluation ordering shown above. DIP144 warns when an agent node has no failure route at any level of this cascade; any of priorities 1–4 suppresses the warning.
 
@@ -278,14 +280,14 @@ graph LR
 graph LR
     Implement --> Review
     Review --> |"ctx.outcome = success"| Ship
-    Review -.-> |"ctx.outcome = fail (restart)"| Implement
+    Review -.-> |"ctx.outcome = fail (loop)"| Implement
 ```
 
 ```dippin
   edges
     Implement -> Review
     Review -> Ship       when ctx.outcome = success
-    Review -> Implement  when ctx.outcome = fail restart: true
+    Review -> Implement  when ctx.outcome = fail loop
 ```
 
 ### Human choice gate
@@ -332,7 +334,7 @@ graph LR
 |------|------|----------|
 | DIP003 | Edge endpoints or on_failure target must reference an existing node | Error |
 | DIP004 | All nodes (including the on_failure target) must be reachable from start | Error |
-| DIP005 | No unconditional cycles (restart edges are exempt) | Error |
+| DIP005 | No unconditional cycles (loop edges are exempt) | Error |
 | DIP006 | Exit node must have zero outgoing edges | Error |
 | DIP009 | No duplicate edges (same from, to, and condition) | Error |
 | DIP101 | Node only reachable via conditional edges may be skipped | Warning |

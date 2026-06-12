@@ -146,7 +146,7 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "condition",
@@ -770,6 +770,10 @@
   },
   {
     "type": "label",
+    "named": false
+  },
+  {
+    "type": "loop",
     "named": false
   },
   {
