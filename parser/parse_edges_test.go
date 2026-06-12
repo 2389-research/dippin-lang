@@ -349,6 +349,115 @@ func TestParseKeywordAttributesStillTerminateCondition(t *testing.T) {
 	}
 }
 
+// TestParseLoopKeyword: the bare `loop` keyword sets ir.Edge.Restart, consuming
+// no colon or value, and emits no diagnostics.
+func TestParseLoopKeyword(t *testing.T) {
+	p := NewParser(buildEdgeDip("A -> B loop"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if !w.Edges[0].Restart {
+		t.Errorf("Restart = false, want true for `A -> B loop`")
+	}
+}
+
+// TestParseRestartTrueBackCompat: the legacy `restart: true` form still parses to
+// the same Restart field, so existing files keep working.
+func TestParseRestartTrueBackCompat(t *testing.T) {
+	p := NewParser(buildEdgeDip("A -> B restart: true"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if !w.Edges[0].Restart {
+		t.Errorf("Restart = false, want true for `A -> B restart: true`")
+	}
+}
+
+// TestParseLoopWithValueDiagnoses: writing `loop` in the legacy boolean shape
+// `loop: true` still sets Restart, but the stray `: value` is reported once with a
+// clear hint — not leaked as spurious "unknown edge attribute" errors for `:`/`true`.
+func TestParseLoopWithValueDiagnoses(t *testing.T) {
+	p := NewParser(buildEdgeDip("A -> B loop: true"), "test.dip")
+	w, _ := p.Parse()
+	if !w.Edges[0].Restart {
+		t.Errorf("Restart = false, want true even for the mistaken `loop: true`")
+	}
+	joined := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(joined, "`loop` takes no value") {
+		t.Errorf("expected a clear `loop takes no value` diagnostic, got: %v", p.Diagnostics())
+	}
+	if strings.Contains(joined, "unknown edge attribute") {
+		t.Errorf("`loop: true` leaked stray tokens as unknown-attribute errors: %v", p.Diagnostics())
+	}
+}
+
+// TestParseLoopTerminatesCondition guards the design trap: a value-less `loop`
+// keyword must terminate a preceding condition unconditionally (it has no ':' to
+// gate on), so it is recorded as Restart rather than absorbed into the condition
+// Raw. Both the `on` shorthand and a full `when` must behave identically.
+func TestParseLoopTerminatesCondition(t *testing.T) {
+	cases := map[string]string{
+		"on":   "A -> B on fail loop",
+		"when": "A -> B when ctx.outcome = fail loop",
+	}
+	for name, line := range cases {
+		t.Run(name, func(t *testing.T) {
+			p := NewParser(buildOnDip(onAgentA, line), "test.dip")
+			w, err := p.Parse()
+			if err != nil {
+				t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+			}
+			edge := w.Edges[0]
+			if !edge.Restart {
+				t.Errorf("Restart = false, want true for %q", line)
+			}
+			if edge.Condition == nil || edge.Condition.Raw != "ctx.outcome = fail" {
+				t.Fatalf("condition Raw = %+v, want %q (loop must not leak in)",
+					edge.Condition, "ctx.outcome = fail")
+			}
+			if strings.Contains(edge.Condition.Raw, "loop") {
+				t.Errorf("condition Raw %q absorbed the `loop` terminator", edge.Condition.Raw)
+			}
+		})
+	}
+}
+
+// TestParseLoopIsReservedOnConditionRHS pins the deliberate trade-off: because
+// `loop` terminates a condition unconditionally, it cannot be a bare unquoted
+// right-hand value — it is consumed as the back-edge flag. The condition's RHS
+// must be quoted to mean the literal string "loop".
+func TestParseLoopIsReservedOnConditionRHS(t *testing.T) {
+	// Bare `loop` on the RHS is taken as the flag, truncating the condition.
+	p := NewParser(buildEdgeDip("A -> B when ctx.x = loop"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	edge := w.Edges[0]
+	if !edge.Restart {
+		t.Errorf("Restart = false, want true: bare `loop` RHS is the flag")
+	}
+	if edge.Condition == nil || edge.Condition.Raw != "ctx.x =" {
+		t.Errorf("condition Raw = %+v, want %q", edge.Condition, "ctx.x =")
+	}
+
+	// Quoting keeps `loop` as the literal value, with no back-edge.
+	pq := NewParser(buildEdgeDip(`A -> B when ctx.x = "loop"`), "test.dip")
+	wq, err := pq.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, pq.Diagnostics())
+	}
+	edgeq := wq.Edges[0]
+	if edgeq.Restart {
+		t.Errorf("Restart = true, want false for quoted `\"loop\"` RHS")
+	}
+	if edgeq.Condition == nil || edgeq.Condition.Raw != `ctx.x = "loop"` {
+		t.Errorf("condition Raw = %+v, want %q", edgeq.Condition, `ctx.x = "loop"`)
+	}
+}
+
 // TestExistingDipFilesStillParse covers #126(c): the new diagnostics must not
 // regress any currently-valid .dip file. Every examples/*.dip and
 // parser/testdata/*.dip must still parse without error.

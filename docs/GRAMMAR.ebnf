@@ -213,7 +213,9 @@ edge_attr       = "when" condition
                                     (* desugars to when. Not for human gates.   *)
                 | "label"   ":" field_value
                 | "weight"  ":" INTEGER
-                | "restart" ":" BOOLEAN ;
+                | "loop"                           (* back-edge; canonical form  *)
+                | "restart" ":" BOOLEAN            (* legacy alias; fmt → loop   *)
+                | "override" ":" BOOLEAN ;         (* carried human-override mark*)
 
 (* ═══════════════════════════════════════════════════════════ *)
 (* Stylesheet Section                                         *)
@@ -382,4 +384,4 @@ digit           = "0" | "1" | ... | "9" ;
 (* workflow, agent, human, tool, subgraph, conditional,       *)
 (* parallel, fan_in, manager_loop, edges, defaults, vars,     *)
 (* when, and, or, not, contains, startswith, endswith, in,    *)
-(* true, false, restart, label, weight                        *)
+(* true, false, restart, loop, override, label, weight        *)

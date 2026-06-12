@@ -802,7 +802,9 @@ func onShorthand(text, channel string) (string, bool) {
 	return "", false
 }
 
-// appendEdgeAttrs appends label, weight, restart, and override parts.
+// appendEdgeAttrs appends label, weight, loop (back-edge), and override parts.
+// A restart edge is emitted as the canonical `loop` keyword, which also migrates
+// hand-written `restart: true` to the scannable form.
 func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 	if e.Label != "" {
 		parts = append(parts, fmt.Sprintf("label: %s", quoteValue(e.Label)))
@@ -811,7 +813,7 @@ func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 		parts = append(parts, fmt.Sprintf("weight: %d", e.Weight))
 	}
 	if e.Restart {
-		parts = append(parts, "restart: true")
+		parts = append(parts, "loop")
 	}
 	if e.Override {
 		parts = append(parts, "override: true")
@@ -831,10 +833,21 @@ func formatCondition(expr ir.ConditionExpr) string {
 	return formatConditionExpr(expr, 0)
 }
 
+// formatCondValue renders a comparison's right-hand value. A value that is a
+// reserved value-less edge flag (e.g. `loop`) must be quoted, or re-parsing the
+// emitted condition would treat it as the edge flag and truncate the condition —
+// the AST path drops the quotes the raw text carried (see ir.IsReservedEdgeFlag).
+func formatCondValue(v string) string {
+	if ir.IsReservedEdgeFlag(v) {
+		return `"` + v + `"`
+	}
+	return v
+}
+
 func formatConditionExpr(expr ir.ConditionExpr, parentPrec int) string {
 	switch e := expr.(type) {
 	case ir.CondCompare:
-		return fmt.Sprintf("%s %s %s", e.Variable, e.Op, e.Value)
+		return fmt.Sprintf("%s %s %s", e.Variable, e.Op, formatCondValue(e.Value))
 	case ir.CondAnd:
 		return fmtBinaryCondExpr(e.Left, e.Right, "and", precAnd, parentPrec)
 	case ir.CondOr:

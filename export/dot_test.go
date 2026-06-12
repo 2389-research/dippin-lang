@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/parser"
 )
 
 // --- Fixtures ---
@@ -573,6 +574,30 @@ func TestExportDOTEdgeRestart(t *testing.T) {
 	}
 	out := ExportDOT(w, ExportOptions{})
 	assertContains(t, out, `restart="true"`)
+	assertContains(t, out, `style="dashed"`)
+}
+
+// TestExportDOTLoopKeyword: an edge written with the `loop` keyword sets the same
+// Restart field, so it is dashed in DOT export — no DOT-layer logic is loop-aware.
+func TestExportDOTLoopKeyword(t *testing.T) {
+	src := `workflow LoopDOT
+  start: A
+  exit: B
+
+  agent A
+    prompt: "go."
+
+  agent B
+    prompt: "done."
+
+  edges
+    A -> B loop
+`
+	w, err := parser.NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse failed: %v", err)
+	}
+	out := ExportDOT(w, ExportOptions{})
 	assertContains(t, out, `style="dashed"`)
 }
 
