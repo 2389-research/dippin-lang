@@ -88,8 +88,15 @@ function syncScroll() {
   highlightEl.scrollTop = editorEl.scrollTop;
   highlightEl.scrollLeft = editorEl.scrollLeft;
 }
-// Initial highlight.
-syncHighlight();
+// Initial highlight. highlight.js is loaded at the end of <body>, after this
+// inline script runs, so dippinHighlight isn't defined yet — defer the first
+// highlight to DOMContentLoaded or the default source renders invisible
+// (transparent textarea over an empty overlay) until the first keystroke.
+if (window.dippinHighlight) {
+  syncHighlight();
+} else {
+  document.addEventListener("DOMContentLoaded", syncHighlight);
+}
 
 // Tab key inserts 2 spaces instead of changing focus.
 editorEl.addEventListener("keydown", function(e) {
