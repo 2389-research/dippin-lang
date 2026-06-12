@@ -175,8 +175,8 @@ func TestFormatHappyPath(t *testing.T) {
 				"  agent Done",
 				"  edges",
 				"    AskUser -> Interpret",
-				"    Validate -> Approve  when ctx.outcome = success",
-				`    Validate -> Interpret  when ctx.outcome = fail  label: retry  restart: true`,
+				"    Validate -> Approve  on success",
+				`    Validate -> Interpret  on fail  label: retry  restart: true`,
 			},
 		},
 	}
@@ -620,7 +620,7 @@ func TestFormatEdges(t *testing.T) {
 					Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
 				}},
 			},
-			checks: []string{"    A -> B  when ctx.outcome = success"},
+			checks: []string{"    A -> B  on success"},
 		},
 		{
 			name: "edge with all attributes",
@@ -638,7 +638,7 @@ func TestFormatEdges(t *testing.T) {
 				},
 			},
 			checks: []string{
-				`    A -> B  when ctx.outcome = fail  label: retry  weight: 10  restart: true`,
+				`    A -> B  on fail  label: retry  weight: 10  restart: true`,
 			},
 		},
 		{
@@ -1516,14 +1516,59 @@ func TestFormatEdgeConditionRawOnly(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
+				Raw:    "ctx.tool_stdout contains escalate",
 				Parsed: nil, // Parsed not populated
 			}},
 		},
 	}
 	output := Format(w)
-	assertContains(t, output, "A -> B  when ctx.outcome = success")
+	assertContains(t, output, "A -> B  when ctx.tool_stdout contains escalate")
 	assertIdempotent(t, w)
+}
+
+// TestFormatEdgeOnShorthand covers the `on <token>` rewrite: a condition shaped
+// exactly like an outcome/marker equality re-emits as `on X` (from Raw or
+// Parsed, migrating hand-written `when`), while non-equality conditions stay
+// `when`. The rewrite is IR-preserving and idempotent.
+func TestFormatEdgeOnShorthand(t *testing.T) {
+	agentA := &ir.Node{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "go."}}
+	toolA := &ir.Node{ID: "A", Kind: ir.NodeTool, Config: ir.ToolConfig{Command: "x", MarkerGrep: "^.*$"}}
+	tests := []struct {
+		name string
+		src  *ir.Node
+		cond *ir.Condition
+		want string
+	}{
+		{"outcome raw", agentA, &ir.Condition{Raw: "ctx.outcome = success"}, "A -> B  on success"},
+		{"marker raw", toolA, &ir.Condition{Raw: "ctx.tool_marker = setup-failed"}, "A -> B  on setup-failed"},
+		{"from parsed AST", agentA, &ir.Condition{
+			Raw:    "ctx.outcome = fail",
+			Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+		}, "A -> B  on fail"},
+		{"double-eq stays when", agentA, &ir.Condition{Raw: "ctx.outcome == success"}, "A -> B  when ctx.outcome == success"},
+		{"non-channel var stays when", agentA, &ir.Condition{Raw: "ctx.reason = stalled"}, "A -> B  when ctx.reason = stalled"},
+		{"marker var on agent stays when", agentA, &ir.Condition{Raw: "ctx.tool_marker = x"}, "A -> B  when ctx.tool_marker = x"},
+		// Tokens the lexer/grammar would split must NOT rewrite to `on`, or the
+		// emitted shorthand would fail to re-parse (the colon case especially:
+		// `:` is a separate token, so `on a:b` would lex as on·a·:·b).
+		{"colon token stays when", agentA, &ir.Condition{Raw: "ctx.outcome = a:b"}, "A -> B  when ctx.outcome = a:b"},
+		{"dot token stays when", agentA, &ir.Condition{Raw: "ctx.outcome = a.b"}, "A -> B  when ctx.outcome = a.b"},
+		{"slash token stays when", agentA, &ir.Condition{Raw: "ctx.outcome = a/b"}, "A -> B  when ctx.outcome = a/b"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := &ir.Workflow{
+				Name: "on_fmt", Start: "A", Exit: "B",
+				Nodes: []*ir.Node{
+					tt.src,
+					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done."}},
+				},
+				Edges: []*ir.Edge{{From: "A", To: "B", Condition: tt.cond}},
+			}
+			assertContains(t, Format(w), tt.want)
+			assertIdempotent(t, w)
+		})
+	}
 }
 
 func TestFormatHumanInterview(t *testing.T) {

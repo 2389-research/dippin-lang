@@ -70,6 +70,8 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 	switch attr.Value {
 	case "when":
 		edge.Condition = &ir.Condition{Raw: p.readConditionRaw()}
+	case "on":
+		p.applyOnAttribute(edge, attr)
 	case "label":
 		p.expect(TokenColon)
 		edge.Label = p.lexer.NextToken().Value
@@ -80,6 +82,98 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 	default:
 		p.applyEdgeBoolAttribute(edge, attr)
 	}
+}
+
+// applyOnAttribute desugars the `on <token>` shorthand into an equality test
+// against the source node's natural outcome channel: ctx.outcome for agent
+// nodes, ctx.tool_marker for tool nodes that declare marker_grep. It produces
+// the same ir.Condition as the equivalent `when`. A known source node with no
+// defined outcome channel (human gate, conditional, marker-less tool), or a
+// value that is not a bare identifier, is a located diagnostic suggesting `when`.
+func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
+	node := p.workflow.Node(edge.From)
+	if node == nil {
+		// Unknown source node: stay silent here and let the validator's DIP003
+		// report it clearly, exactly as a `when` edge does — emitting a channel
+		// diagnostic would be misleading and would fail the parse prematurely.
+		p.discardOnValue()
+		return
+	}
+	channel, ok := node.OutcomeChannel()
+	if !ok {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`on` shorthand at %d:%d requires a source node with a defined outcome "+
+				"channel (agent, or tool with marker_grep); use `when` instead",
+			attr.Location.Line, attr.Location.Column,
+		))
+		p.discardOnValue()
+		return
+	}
+	if raw, ok := p.readOnValue(channel, attr); ok {
+		edge.Condition = &ir.Condition{Raw: channel + " = " + raw}
+	}
+}
+
+// readOnValue consumes and validates the `on` shorthand's value token, returning
+// the bare identifier and true on success. The value must be a single bare
+// identifier so the shorthand re-parses; a quoted literal, or one the lexer
+// splits (e.g. `a:b` → a · : · b), belongs in a full `when`. Glued fragments are
+// joined first so a split value is diagnosed once as a whole rather than leaking
+// its tail to the attribute loop. On any malformed value it emits a located
+// diagnostic suggesting `when` and returns false.
+func (p *Parser) readOnValue(channel string, attr Token) (string, bool) {
+	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`on` at %d:%d requires an outcome token (e.g. `on success`)",
+			attr.Location.Line, attr.Location.Column,
+		))
+		return "", false
+	}
+	val := p.lexer.NextToken()
+	raw := p.joinGluedTokens(val)
+	if val.Type != TokenIdentifier || !ir.IsOutcomeToken(raw) {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`on` value %q at %d:%d must be a bare identifier ([A-Za-z0-9][A-Za-z0-9_-]*); "+
+				"use `when %s = ...` for other values",
+			raw, val.Location.Line, val.Location.Column, channel,
+		))
+		return "", false
+	}
+	return raw, true
+}
+
+// joinGluedTokens returns val's text concatenated with any immediately following
+// tokens that carry no intervening whitespace — the fragments a lexer-split
+// value (e.g. `a:b` → a · : · b) decomposes into — consuming them so a malformed
+// `on` value is reported once as the whole intended token.
+func (p *Parser) joinGluedTokens(val Token) string {
+	raw := val.Value
+	end := val.Location.Column + len(val.Value)
+	for p.tokenGluedAt(val.Location.Line, end) {
+		t := p.lexer.NextToken()
+		raw += t.Value
+		end += len(t.Value)
+	}
+	return raw
+}
+
+// tokenGluedAt reports whether the next token abuts (line, col) with no
+// whitespace gap. Newline/EOF never count as glued.
+func (p *Parser) tokenGluedAt(line, col int) bool {
+	next := p.lexer.PeekToken()
+	return next.Type != TokenNewline && next.Type != TokenEOF &&
+		next.Location.Line == line && next.Location.Column == col
+}
+
+// discardOnValue consumes an `on` value — including any glued fragments of a
+// lexer-split value (e.g. `a:b` → a · : · b) — when one is present, so an `on`
+// used where it isn't valid doesn't leave token fragments behind to cascade as
+// spurious "unknown edge attribute" diagnostics.
+func (p *Parser) discardOnValue() {
+	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
+		return
+	}
+	p.joinGluedTokens(p.lexer.NextToken())
 }
 
 // applyEdgeBoolAttribute applies the boolean edge attributes (restart, override),

@@ -112,6 +112,7 @@ module.exports = grammar({
     edge_attr: ($) =>
       choice(
         seq("when", $.condition),
+        seq("on", $.identifier),
         seq("label", ":", $.field_value),
         seq("weight", ":", $.field_value),
         seq("restart", ":", $.field_value),

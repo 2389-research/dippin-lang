@@ -155,6 +155,10 @@
         {
           "type": "field_value",
           "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
         }
       ]
     }
@@ -774,6 +778,10 @@
   },
   {
     "type": "not",
+    "named": false
+  },
+  {
+    "type": "on",
     "named": false
   },
   {

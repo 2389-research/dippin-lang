@@ -18,7 +18,7 @@ All edges are defined in the `edges` block at the bottom of a workflow:
 Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [when <condition>] [label: <text>] [weight: <int>] [restart: true] [override: true]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [weight: <int>] [restart: true] [override: true]
 ```
 
 ---
@@ -29,6 +29,7 @@ Each edge is a single line:
 |-------|------|----------|-------------|
 | `From` | Node ID | Yes | Source node — where the edge originates |
 | `To` | Node ID | Yes | Target node — where the edge leads |
+| `on` | Token | No | Shorthand for an equality guard against the source node's outcome channel — agent (`ctx.outcome`) or tool+`marker_grep` (`ctx.tool_marker`) (see [Outcome Shorthand](#outcome-shorthand-on)). |
 | `when` | Condition | No | Boolean guard expression. Edge is only traversed if true at runtime. |
 | `label` | String | No | Human-readable text. Displayed on the edge in DOT exports. Also used for human gate choice matching. |
 | `weight` | Integer | No | Priority hint. Higher values win when multiple edges are candidates. |
@@ -58,6 +59,23 @@ Edges gated on runtime conditions:
 ```
 
 At runtime, the engine evaluates conditions and follows the first matching edge. If no conditional edge matches and there's an unconditional edge, that serves as the fallback.
+
+### Outcome Shorthand (`on`)
+
+The most common condition is an equality test against the source node's *natural outcome channel*. `on <token>` is shorthand for exactly that:
+
+```dippin
+    Review -> Approve  on success      # = when ctx.outcome = success
+    Review -> Reject   on fail         # = when ctx.outcome = fail
+    Tests  -> Ship     on tests_green  # = when ctx.tool_marker = tests_green
+```
+
+The channel is chosen from the source node's kind:
+
+- **agent** nodes → `ctx.outcome`
+- **tool** nodes that declare `marker_grep` → `ctx.tool_marker`
+
+`on` is pure sugar: it produces the identical condition to the equivalent `when`, is non-breaking, and `dippin fmt` rewrites eligible `when` edges into `on` form. Any source node without a defined outcome channel has no `on` channel — use `when` there. This includes **human gates** (they route on the human's choice / edge labels, not `ctx.outcome`; dedicated routing keys arrive with `choice:`), `conditional` nodes, and tools without `marker_grep`. Use `when` for everything that isn't a single equality (`and`/`or`, `contains`, dotted vars, `!=`, etc.).
 
 ### Labeled Edges
 

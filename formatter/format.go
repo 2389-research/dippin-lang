@@ -48,7 +48,7 @@ func writeWorkflowTailSections(wr *writer, w *ir.Workflow) {
 	}
 	if len(w.Edges) > 0 {
 		wr.blank()
-		writeEdges(wr, w.Edges)
+		writeEdges(wr, w)
 	}
 }
 
@@ -737,35 +737,69 @@ func writeRuleProperties(b *strings.Builder, props map[string]string) {
 	}
 }
 
-func writeEdges(wr *writer, edges []*ir.Edge) {
+func writeEdges(wr *writer, w *ir.Workflow) {
 	wr.line("edges")
 	wr.push()
-	for _, e := range edges {
-		writeEdge(wr, e)
+	for _, e := range w.Edges {
+		writeEdge(wr, w, e)
 	}
 	wr.pop()
 }
 
-func writeEdge(wr *writer, e *ir.Edge) {
+func writeEdge(wr *writer, w *ir.Workflow, e *ir.Edge) {
 	var parts []string
 	parts = append(parts, fmt.Sprintf("%s -> %s", e.From, e.To))
-	parts = appendEdgeCondition(parts, e)
+	parts = appendEdgeCondition(parts, w, e)
 	parts = appendEdgeAttrs(parts, e)
 	wr.line("%s", strings.Join(parts, "  "))
 }
 
-// appendEdgeCondition appends the "when ..." part if a condition is present.
-func appendEdgeCondition(parts []string, e *ir.Edge) []string {
+// appendEdgeCondition appends the condition part if one is present. When the
+// source node has a natural outcome channel and the condition is exactly an
+// equality against it (e.g. ctx.outcome = X), it re-emits as the `on X`
+// shorthand — which also migrates hand-written `when` of that shape. Everything
+// else, and any source node without an outcome channel, stays `when ...`.
+func appendEdgeCondition(parts []string, w *ir.Workflow, e *ir.Edge) []string {
 	if e.Condition == nil {
 		return parts
 	}
-	if e.Condition.Parsed != nil {
-		return append(parts, fmt.Sprintf("when %s", formatCondition(e.Condition.Parsed)))
+	text := conditionText(e.Condition)
+	if text == "" {
+		return parts
 	}
-	if e.Condition.Raw != "" {
-		return append(parts, fmt.Sprintf("when %s", e.Condition.Raw))
+	channel, ok := w.Node(e.From).OutcomeChannel()
+	if ok {
+		if tok, isOn := onShorthand(text, channel); isOn {
+			return append(parts, "on "+tok)
+		}
 	}
-	return parts
+	return append(parts, "when "+text)
+}
+
+// conditionText returns the canonical source text of a condition, preferring the
+// parsed AST when present and falling back to the raw string.
+func conditionText(c *ir.Condition) string {
+	if c.Parsed != nil {
+		return formatCondition(c.Parsed)
+	}
+	return c.Raw
+}
+
+// onShorthand returns the outcome token when text is exactly an equality test
+// against the source node's outcome channel (e.g. "ctx.outcome = success", the
+// shape `on success` desugars to) and the value is a bare identifier. Matching
+// the node's own channel guarantees the re-emitted `on` parses back identically.
+//
+// ir.IsOutcomeToken is stricter than `needsQuoting`: the latter permits `:` (the
+// .dip lexer splits it into a separate token) and `.`/`/` (the .dip lexer keeps
+// them, but the tree-sitter grammar's identifier rule rejects them). Restricting
+// to `[a-zA-Z0-9][a-zA-Z0-9_-]*` keeps fmt from emitting an `on` that fails to
+// re-parse in either grammar, and mirrors the parser's accept rule exactly.
+func onShorthand(text, channel string) (string, bool) {
+	if tok, ok := strings.CutPrefix(text, channel+" = "); ok && ir.IsOutcomeToken(tok) {
+		return tok, true
+	}
+	return "", false
 }
 
 // appendEdgeAttrs appends label, weight, restart, and override parts.
