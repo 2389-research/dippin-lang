@@ -87,11 +87,19 @@ func (p *Parser) applyEdgeAttribute(edge *ir.Edge, attr Token) {
 // applyOnAttribute desugars the `on <token>` shorthand into an equality test
 // against the source node's natural outcome channel: ctx.outcome for agent
 // nodes, ctx.tool_marker for tool nodes that declare marker_grep. It produces
-// the same ir.Condition as the equivalent `when`. A source node with no defined
-// outcome channel (human gate, conditional, marker-less tool), or a value that
-// is not a bare identifier, is a located diagnostic suggesting `when`.
+// the same ir.Condition as the equivalent `when`. A known source node with no
+// defined outcome channel (human gate, conditional, marker-less tool), or a
+// value that is not a bare identifier, is a located diagnostic suggesting `when`.
 func (p *Parser) applyOnAttribute(edge *ir.Edge, attr Token) {
-	channel, ok := p.workflow.Node(edge.From).OutcomeChannel()
+	node := p.workflow.Node(edge.From)
+	if node == nil {
+		// Unknown source node: stay silent here and let the validator's DIP003
+		// report it clearly, exactly as a `when` edge does — emitting a channel
+		// diagnostic would be misleading and would fail the parse prematurely.
+		p.discardOnValue()
+		return
+	}
+	channel, ok := node.OutcomeChannel()
 	if !ok {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
 			"`on` shorthand at %d:%d requires a source node with a defined outcome "+

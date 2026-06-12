@@ -170,6 +170,33 @@ func TestParseOnNoChannelDiagnoses(t *testing.T) {
 	}
 }
 
+// TestParseOnUnknownSourceDefersToValidator: an `on` edge from an undeclared
+// source node must parse cleanly (no parse diagnostic), exactly as the
+// equivalent `when` edge does, so the validator's DIP003 owns the unknown-node
+// report rather than a misleading channel diagnostic emitted at parse time.
+// (The conditions differ by design: `when` carries its explicit condition,
+// while `on` attaches none since the channel can't be resolved for an unknown
+// node — but neither should produce a parse diagnostic.)
+func TestParseOnUnknownSourceDefersToValidator(t *testing.T) {
+	for _, line := range []string{"Nope -> B on success", "Nope -> B when ctx.outcome = success"} {
+		t.Run(line, func(t *testing.T) {
+			p := NewParser(buildOnDip(onAgentA, line), "test.dip")
+			if _, err := p.Parse(); err != nil {
+				t.Fatalf("expected clean parse (DIP003 is the validator's job), got: %v", p.Diagnostics())
+			}
+			if len(p.Diagnostics()) != 0 {
+				t.Errorf("expected no parse diagnostics, got: %v", p.Diagnostics())
+			}
+		})
+	}
+	// The `on` form attaches no condition when the source is unknown.
+	p := NewParser(buildOnDip(onAgentA, "Nope -> B on success"), "test.dip")
+	w, _ := p.Parse()
+	if c := w.Edges[0].Condition; c != nil {
+		t.Errorf("expected no condition on `on` edge from unknown source, got %+v", c)
+	}
+}
+
 // TestParseOnNoChannelGluedValueNoLeak guards the no-channel error path against
 // the same lexer-split leak as the value path: `on a:b` on a node without an
 // outcome channel must emit only the no-channel diagnostic and consume the whole
