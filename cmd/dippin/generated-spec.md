@@ -72,7 +72,7 @@ on <token>                       # sugar: equality vs the source node's outcome 
 
 **Comparison operators:** `=`, `==`, `!=`, `contains`, `not contains`, `startswith`, `endswith`, `in` (all string comparison, no numeric ops)
 
-**`on <token>` shorthand:** desugars to `when <channel> = <token>`, where the channel is the source node's natural outcome channel — `ctx.outcome` for agent/human nodes, `ctx.tool_marker` for tool nodes with `marker_grep`. IR-identical to the equivalent `when`; `dippin fmt` rewrites eligible `when` edges to `on`. Source nodes with no outcome channel (e.g. `conditional`, or a tool without `marker_grep`) must use `when`.
+**`on <token>` shorthand:** desugars to `when <channel> = <token>`, where the channel is the source node's natural outcome channel — `ctx.outcome` for agent nodes, `ctx.tool_marker` for tool nodes with `marker_grep`. IR-identical to the equivalent `when`; `dippin fmt` rewrites eligible `when` edges to `on`. Source nodes with no outcome channel must use `when`: human gates (which route on the choice/label, not `ctx.outcome`), `conditional` nodes, and tools without `marker_grep`.
 
 **Variables:** Always namespace-qualified: `ctx.outcome`, `ctx.status`, `graph.goal`
 
@@ -481,7 +481,7 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | Attribute | Syntax | Notes |
 |-----------|--------|-------|
 | condition | `when <expr>` | Guard expression |
-| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent/human) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on` |
+| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
 | weight | `weight: <int>` | Priority (higher wins) |
 | restart | `restart: true` | **Required on back-edges** to avoid DIP005 (unconditional cycle) |

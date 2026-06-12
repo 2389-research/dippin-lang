@@ -70,18 +70,6 @@ func TestParseOnAgentSource(t *testing.T) {
 	}
 }
 
-// TestParseOnHumanSource: human sources also route on ctx.outcome.
-func TestParseOnHumanSource(t *testing.T) {
-	p := NewParser(buildOnDip(onHumanA, "A -> B on approved"), "test.dip")
-	w, err := p.Parse()
-	if err != nil {
-		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
-	}
-	if got := w.Edges[0].Condition; got == nil || got.Raw != "ctx.outcome = approved" {
-		t.Fatalf("Condition = %+v, want Raw %q", got, "ctx.outcome = approved")
-	}
-}
-
 // TestParseOnToolMarkerSource: a tool with marker_grep routes on ctx.tool_marker.
 func TestParseOnToolMarkerSource(t *testing.T) {
 	p := NewParser(buildOnDip(onToolMarkerA, "A -> B on tests_green"), "test.dip")
@@ -133,6 +121,7 @@ func TestParseOnNoChannelDiagnoses(t *testing.T) {
 	for _, tc := range []struct{ name, block string }{
 		{"parallel", onParallelA},
 		{"tool-no-marker", onToolNoMarkerA},
+		{"human", onHumanA}, // human gates route on labels, not ctx.outcome (#130)
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewParser(buildOnDip(tc.block, "A -> B on whatever"), "test.dip")

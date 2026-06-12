@@ -12,8 +12,14 @@ func (w *Workflow) Node(id string) *Node {
 
 // OutcomeChannel returns the node's natural outcome channel — the context
 // variable the `on <token>` edge shorthand routes against — and whether the
-// node has one. Agent and human nodes route on ctx.outcome; tool nodes that
-// declare marker_grep route on ctx.tool_marker. Any other node has none.
+// node has one. Agent nodes route on ctx.outcome; tool nodes that declare
+// marker_grep route on ctx.tool_marker. Any other node has none.
+//
+// Human gates are deliberately excluded: they route on the human's choice
+// (preferred_label / edge labels), and nothing populates ctx.outcome for them,
+// so `on` would desugar to a condition that never matches. Human-gate routing
+// keys are the domain of the `choice:` work (#130); use `when` meanwhile.
+//
 // This is the single source of truth shared by the parser (which desugars `on`)
 // and the formatter (which re-emits it), so the two never diverge.
 func (n *Node) OutcomeChannel() (string, bool) {
@@ -21,7 +27,7 @@ func (n *Node) OutcomeChannel() (string, bool) {
 		return "", false
 	}
 	switch n.Kind {
-	case NodeAgent, NodeHuman:
+	case NodeAgent:
 		return "ctx.outcome", true
 	case NodeTool:
 		return n.toolMarkerChannel()

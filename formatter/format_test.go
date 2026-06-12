@@ -1548,6 +1548,12 @@ func TestFormatEdgeOnShorthand(t *testing.T) {
 		{"double-eq stays when", agentA, &ir.Condition{Raw: "ctx.outcome == success"}, "A -> B  when ctx.outcome == success"},
 		{"non-channel var stays when", agentA, &ir.Condition{Raw: "ctx.reason = stalled"}, "A -> B  when ctx.reason = stalled"},
 		{"marker var on agent stays when", agentA, &ir.Condition{Raw: "ctx.tool_marker = x"}, "A -> B  when ctx.tool_marker = x"},
+		// Tokens the lexer/grammar would split must NOT rewrite to `on`, or the
+		// emitted shorthand would fail to re-parse (the colon case especially:
+		// `:` is a separate token, so `on a:b` would lex as on·a·:·b).
+		{"colon token stays when", agentA, &ir.Condition{Raw: "ctx.outcome = a:b"}, "A -> B  when ctx.outcome = a:b"},
+		{"dot token stays when", agentA, &ir.Condition{Raw: "ctx.outcome = a.b"}, "A -> B  when ctx.outcome = a.b"},
+		{"slash token stays when", agentA, &ir.Condition{Raw: "ctx.outcome = a/b"}, "A -> B  when ctx.outcome = a/b"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

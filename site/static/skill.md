@@ -299,7 +299,7 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | Attribute | Syntax | Notes |
 |-----------|--------|-------|
 | condition | `when <expr>` | Guard expression |
-| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent/human) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on` |
+| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
 | weight | `weight: <int>` | Priority (higher wins) |
 | restart | `restart: true` | **Required on back-edges** to avoid DIP005 (unconditional cycle) |
