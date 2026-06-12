@@ -448,6 +448,53 @@ func TestFormatLoopRoundtrip(t *testing.T) {
 	}
 }
 
+// TestFormatSingleQuotedEdgeRoundtrip: single-quoted edge `label:` and `when`
+// condition values (with spaces and an internal `#`) parse to their literal
+// content, normalize to double-quoted output on format, and survive a
+// parse -> format -> parse round-trip with the formatter staying idempotent (#120).
+func TestFormatSingleQuotedEdgeRoundtrip(t *testing.T) {
+	input := `workflow SQRT
+  start: A
+  exit: B
+
+  agent A
+    prompt: "Do A."
+
+  agent B
+    prompt: "Do B."
+
+  edges
+    A -> B  when ctx.reason = 'gave up #1'  label: 'try again'
+`
+	w1, err := parser.NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse failed: %v", err)
+	}
+	if got := w1.Edges[0].Label; got != "try again" {
+		t.Fatalf("label = %q, want %q", got, "try again")
+	}
+	if got := w1.Edges[0].Condition.Raw; got != `ctx.reason = "gave up #1"` {
+		t.Fatalf("condition Raw = %q, want %q", got, `ctx.reason = "gave up #1"`)
+	}
+
+	formatted := Format(w1)
+	assertContains(t, formatted, `label: "try again"`)
+	assertContains(t, formatted, `ctx.reason = "gave up #1"`)
+
+	w2, err := parser.NewParser(formatted, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse failed: %v\nformatted:\n%s", err, formatted)
+	}
+	if w2.Edges[0].Label != "try again" || w2.Edges[0].Condition.Raw != `ctx.reason = "gave up #1"` {
+		t.Errorf("values not preserved: label=%q raw=%q", w2.Edges[0].Label, w2.Edges[0].Condition.Raw)
+	}
+
+	reformatted := Format(w2)
+	if formatted != reformatted {
+		t.Errorf("formatter not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, reformatted)
+	}
+}
+
 // TestFormatLoopValueQuotedFromParsed guards the round-trip hazard: a condition
 // whose literal value is the reserved flag word `loop` (e.g. `when ctx.x =
 // "loop"`) loses its quotes in the parsed AST (CondCompare.Value == "loop"), which

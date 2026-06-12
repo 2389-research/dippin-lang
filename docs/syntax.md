@@ -281,11 +281,10 @@ convenient for regular expressions and other values full of backslashes:
 A trailing `# comment` after a closing quote is stripped, so a `#` *inside*
 quotes is kept verbatim (`marker_grep: '^a#b$' # note` stores `^a#b$`).
 
-> **Scope:** single quotes are supported for node and workflow **field values**
-> (the `key: value` form, e.g. `model:`, `marker_grep:`, node `label:`, `goal:`).
-> Edge-attribute positions in the `edges` section — an edge's `label:` /
-> `weight:` / `restart:` and `when` conditions — are read from the token stream,
-> which currently recognizes **double-quoted** strings only. Use `"..."` there.
+Single quotes work everywhere a string is accepted, including the token-stream
+positions in the `edges` section — an edge's `label:` and `when` conditions
+(e.g. `A -> B when ctx.reason = 'gave up' label: 'try again'`). As with field
+values, a single-quoted edge value normalizes to double-quoted output on `fmt`.
 
 ---
 
