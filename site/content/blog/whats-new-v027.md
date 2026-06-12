@@ -93,13 +93,14 @@ One quieter change worth noting. Cohere's documentation now lists `command-r-08-
 
 ## The escape hatch
 
-If you need a model we don't catalog yet — provider-specific betas, fine-tuned variants, a hosted gateway with custom IDs — register them at startup:
+If you need a model we don't catalog yet — provider-specific betas, fine-tuned variants, a hosted gateway with custom IDs — pass them per lint run via scoped options (the CLI exposes this as `--extra-models`):
 
 ```go
-validator.RegisterExtraModels("openai:my-custom-model;anthropic:claude-internal-2026")
+extra := validator.ParseExtraModels("openai:my-custom-model;anthropic:claude-internal-2026")
+result := validator.LintWithOptions(w, validator.Options{ExtraModels: extra})
 ```
 
-Unknown `provider:model` combos produce a DIP108 warning, not a hard error, so workflows still run — but adding the ID makes the warning go away and gets you accurate cost estimation.
+The catalog is scoped to that single call — nothing mutates package-level state, so extra models never leak across lint runs. Unknown `provider:model` combos produce a DIP108 warning, not a hard error, so workflows still run — but adding the ID makes the warning go away and gets you accurate cost estimation.
 
 ## Methodology
 

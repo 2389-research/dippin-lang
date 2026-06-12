@@ -1316,11 +1316,10 @@ func TestLintDIP108NoModelOrProvider(t *testing.T) {
 	}
 }
 
-func TestExtraModels_ScopedSuppressesDIP108(t *testing.T) {
-	const provider = "custom-corp"
-	const model = "custom-llm-v1"
-
-	w := &ir.Workflow{
+// customModelWorkflow builds a single-agent workflow whose node uses the given
+// provider/model — the shared fixture for the scoped extra-models tests.
+func customModelWorkflow(provider, model string) *ir.Workflow {
+	return &ir.Workflow{
 		Name:  "custom_model",
 		Start: "A",
 		Exit:  "A",
@@ -1332,6 +1331,13 @@ func TestExtraModels_ScopedSuppressesDIP108(t *testing.T) {
 			}},
 		},
 	}
+}
+
+func TestExtraModels_ScopedSuppressesDIP108(t *testing.T) {
+	const provider = "custom-corp"
+	const model = "custom-llm-v1"
+
+	w := customModelWorkflow(provider, model)
 
 	// Without extra models, DIP108 should fire.
 	if !hasCode(Lint(w).Diagnostics, DIP108) {
@@ -1345,22 +1351,35 @@ func TestExtraModels_ScopedSuppressesDIP108(t *testing.T) {
 	}
 }
 
+func TestExtraModels_HelpListsScopedModels(t *testing.T) {
+	const provider = "custom-corp"
+	const goodModel = "custom-llm-v1"
+	const typoModel = "custom-llm-v2" // mistyped: not registered
+
+	// Provider is registered via extra-models with goodModel, but the node
+	// mistypes the model. The DIP108 help text must list the scoped model.
+	w := customModelWorkflow(provider, typoModel)
+	opts := Options{ExtraModels: ParseExtraModels(provider + ":" + goodModel)}
+
+	var help string
+	for _, d := range LintWithOptions(w, opts).Diagnostics {
+		if d.Code == DIP108 {
+			help = d.Help
+		}
+	}
+	if help == "" {
+		t.Fatal("expected a DIP108 diagnostic for the mistyped model")
+	}
+	if !strings.Contains(help, goodModel) {
+		t.Errorf("DIP108 help %q should list scoped model %q", help, goodModel)
+	}
+}
+
 func TestExtraModels_DoesNotLeakAcrossCalls(t *testing.T) {
 	const provider = "custom-corp"
 	const model = "custom-llm-v1"
 
-	w := &ir.Workflow{
-		Name:  "custom_model",
-		Start: "A",
-		Exit:  "A",
-		Nodes: []*ir.Node{
-			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
-				Prompt:   "hello",
-				Model:    model,
-				Provider: provider,
-			}},
-		},
-	}
+	w := customModelWorkflow(provider, model)
 
 	// A scoped call registering the custom model must not leak into a later
 	// default Lint call — the registry stays non-global.

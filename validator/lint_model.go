@@ -264,7 +264,7 @@ func validateModelProvider(n *ir.Node, model, provider string, extra ExtraModels
 			Severity: SeverityWarning,
 			Message:  fmt.Sprintf("node %q uses unknown provider %q", n.ID, provider),
 			Location: n.Source,
-			Help:     fmt.Sprintf("known providers: %s", knownProviderList()),
+			Help:     fmt.Sprintf("known providers: %s", knownProviderList(extra)),
 		}}
 	}
 	if !modelKnown(provider, model, extra) {
@@ -273,7 +273,7 @@ func validateModelProvider(n *ir.Node, model, provider string, extra ExtraModels
 			Severity: SeverityWarning,
 			Message:  fmt.Sprintf("node %q uses unknown model %q for provider %q", n.ID, model, provider),
 			Location: n.Source,
-			Help:     fmt.Sprintf("known models for %s: %s", provider, knownModelList(provider)),
+			Help:     fmt.Sprintf("known models for %s: %s", provider, knownModelList(provider, extra)),
 		}}
 	}
 	return nil
@@ -295,22 +295,37 @@ func modelKnown(provider, model string, extra ExtraModels) bool {
 	return knownModelProviders[provider][model] || extra[provider][model]
 }
 
-// knownProviderList returns a sorted comma-separated list of known providers.
-func knownProviderList() string {
-	providers := make([]string, 0, len(knownModelProviders))
+// knownProviderList returns a sorted comma-separated list of known providers,
+// merging the base catalog with the scoped extra catalog.
+func knownProviderList(extra ExtraModels) string {
+	seen := map[string]bool{}
 	for p := range knownModelProviders {
-		providers = append(providers, p)
+		seen[p] = true
 	}
-	sort.Strings(providers)
-	return strings.Join(providers, ", ")
+	for p := range extra {
+		seen[p] = true
+	}
+	return sortedJoin(seen)
 }
 
-// knownModelList returns a sorted comma-separated list of known models for a provider.
-func knownModelList(provider string) string {
-	models := knownModelProviders[provider]
-	list := make([]string, 0, len(models))
-	for m := range models {
-		list = append(list, m)
+// knownModelList returns a sorted comma-separated list of known models for a
+// provider, merging the base catalog with the scoped extra catalog.
+func knownModelList(provider string, extra ExtraModels) string {
+	seen := map[string]bool{}
+	for m := range knownModelProviders[provider] {
+		seen[m] = true
+	}
+	for m := range extra[provider] {
+		seen[m] = true
+	}
+	return sortedJoin(seen)
+}
+
+// sortedJoin returns the keys of seen as a sorted, comma-separated string.
+func sortedJoin(seen map[string]bool) string {
+	list := make([]string, 0, len(seen))
+	for k := range seen {
+		list = append(list, k)
 	}
 	sort.Strings(list)
 	return strings.Join(list, ", ")
