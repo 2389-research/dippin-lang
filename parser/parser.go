@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -12,12 +13,14 @@ type Parser struct {
 	filename    string
 	diagnostics []string // Simple for now
 	workflow    *ir.Workflow
+	version     int // .dip format version; defaults to 1 when no `dip N` declaration is present
 }
 
 func NewParser(input string, filename string) *Parser {
 	return &Parser{
 		lexer:    NewLexer(input, filename),
 		filename: filename,
+		version:  1,
 		workflow: &ir.Workflow{
 			SourceMap: &ir.SourceMap{},
 		},
@@ -25,6 +28,7 @@ func NewParser(input string, filename string) *Parser {
 }
 
 func (p *Parser) Parse() (*ir.Workflow, error) {
+	p.parseVersionDeclaration()
 	p.parseTopLevel()
 	if len(p.diagnostics) > 0 {
 		return p.workflow, fmt.Errorf("parsing errors: %s", strings.Join(p.diagnostics, "; "))
@@ -35,6 +39,46 @@ func (p *Parser) Parse() (*ir.Workflow, error) {
 // Diagnostics returns the accumulated diagnostic messages.
 func (p *Parser) Diagnostics() []string {
 	return p.diagnostics
+}
+
+// parseVersionDeclaration consumes an optional leading `dip N` format-version
+// line. It runs before any body parsing so later edge-parsing routines can
+// branch on p.version. Absent a declaration the version stays 1. The parsed
+// value is mirrored into Workflow.Version as its string form.
+func (p *Parser) parseVersionDeclaration() {
+	for p.lexer.PeekToken().Type == TokenNewline {
+		p.lexer.NextToken()
+	}
+	t := p.lexer.PeekToken()
+	if t.Type != TokenIdentifier || t.Value != "dip" {
+		p.workflow.Version = strconv.Itoa(p.version)
+		return
+	}
+	p.lexer.NextToken() // dip
+	p.consumeVersionNumber()
+	p.expect(TokenNewline)
+	p.workflow.Version = strconv.Itoa(p.version)
+}
+
+// consumeVersionNumber reads and validates the numeric operand of a `dip N`
+// declaration, leaving the trailing newline for the caller. A missing operand
+// (`dip` then end-of-line) is reported without consuming the newline, so the
+// caller's newline expectation still holds and no spurious second diagnostic
+// follows. Versions below 1 are rejected: the formatter only emits `dip N` for
+// N > 1, so accepting `dip 0` would let formatting silently drop the line.
+func (p *Parser) consumeVersionNumber() {
+	num := p.lexer.PeekToken()
+	if num.Type == TokenNewline {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf("invalid version declaration: expected integer after 'dip' at %d:%d", num.Location.Line, num.Location.Column))
+		return
+	}
+	p.lexer.NextToken() // operand
+	n, err := strconv.Atoi(num.Value)
+	if err != nil || n < 1 {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf("invalid version declaration: expected integer >= 1 after 'dip', got %q at %d:%d", num.Value, num.Location.Line, num.Location.Column))
+		return
+	}
+	p.version = n
 }
 
 // parseTopLevel consumes top-level tokens looking for workflow declarations.

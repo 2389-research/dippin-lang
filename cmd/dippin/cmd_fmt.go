@@ -13,16 +13,18 @@ import (
 //   - Default: print formatted output to stdout
 //   - --check: exit 1 if input is not already canonical (for CI)
 //   - --write: write formatted output back to the file in-place
+//   - --migrate: re-emit in the current .dip format version (v1→v1 identity)
 func (c *CLI) CmdFmt(args []string) ExitCode {
 	fs := flag.NewFlagSet("fmt", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 	check := fs.Bool("check", false, "exit 1 if not canonically formatted")
 	write := fs.Bool("write", false, "write formatted output back to source file")
+	migrate := fs.Bool("migrate", false, "re-emit in the current .dip format version (identity for already-current files)")
 	if err := fs.Parse(args); err != nil {
 		return ExitUsageError
 	}
 	if fs.NArg() < 1 {
-		fmt.Fprintln(c.Stderr, "usage: dippin fmt [--check] [--write] <file>")
+		fmt.Fprintln(c.Stderr, "usage: dippin fmt [--check] [--write] [--migrate] <file>")
 		return ExitUsageError
 	}
 
@@ -31,12 +33,18 @@ func (c *CLI) CmdFmt(args []string) ExitCode {
 	if code != ExitCode(-1) {
 		return code
 	}
+	return c.emitFmt(path, string(data), formatted, *check, *write, *migrate)
+}
 
-	if *check {
-		return c.fmtCheck(path, string(data), formatted)
+// emitFmt routes formatted output to --check, --write, or stdout.
+// --migrate re-emits in the current .dip format version; it is a no-op identity
+// pass for already-current files (v1→v2 transforms land with #134) and so
+// suppresses the --check comparison.
+func (c *CLI) emitFmt(path, original, formatted string, check, write, migrate bool) ExitCode {
+	if check && !migrate {
+		return c.fmtCheck(path, original, formatted)
 	}
-
-	return writeOutput(c.Stdout, c.Stderr, boolToPath(*write, path), formatted)
+	return writeOutput(c.Stdout, c.Stderr, boolToPath(write, path), formatted)
 }
 
 // boolToPath returns path if cond is true, otherwise empty string.

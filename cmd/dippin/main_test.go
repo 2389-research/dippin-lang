@@ -505,6 +505,40 @@ func TestCmdFmt_Check_NotCanonical(t *testing.T) {
 	}
 }
 
+func TestCmdFmt_Migrate_IdentityForCurrentFile(t *testing.T) {
+	// --migrate is a no-op identity pass for already-current (v1) files:
+	// formatting a canonical file then re-migrating yields the same output.
+	canonical, _, code := runCLI(t, "fmt", testdata("valid_minimal.dip"))
+	if code != ExitOK {
+		t.Fatalf("fmt failed: exit %d", code)
+	}
+	migrated, _, code := runCLI(t, "fmt", "--migrate", testdata("valid_minimal.dip"))
+	if code != ExitOK {
+		t.Fatalf("fmt --migrate failed: exit %d", code)
+	}
+	if migrated != canonical {
+		t.Errorf("--migrate not identity for current file:\nfmt:\n%s\nmigrate:\n%s", canonical, migrated)
+	}
+	if strings.Contains(migrated, "dip ") {
+		t.Errorf("v1 file gained a dip declaration after --migrate:\n%s", migrated)
+	}
+}
+
+func TestCmdFmt_MigrateSuppressesCheck(t *testing.T) {
+	// --migrate suppresses the --check comparison (emitFmt: `check && !migrate`).
+	// A non-canonical file under plain --check exits 1; adding --migrate must not.
+	if _, _, code := runCLI(t, "fmt", "--check", testdata("needs_formatting.dip")); code != ExitError {
+		t.Fatalf("--check on non-canonical file: expected exit 1, got %d", code)
+	}
+	out, _, code := runCLI(t, "fmt", "--check", "--migrate", testdata("needs_formatting.dip"))
+	if code != ExitOK {
+		t.Fatalf("--check --migrate: expected check suppressed (exit 0), got %d", code)
+	}
+	if out == "" {
+		t.Error("--check --migrate produced no formatted output on stdout")
+	}
+}
+
 func TestCmdFmt_Write(t *testing.T) {
 	// Create a temp copy so we don't mutate the fixture.
 	data, err := os.ReadFile(testdata("needs_formatting.dip"))

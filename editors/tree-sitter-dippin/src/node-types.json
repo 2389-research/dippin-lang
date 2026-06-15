@@ -485,9 +485,13 @@
     "root": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "version_decl",
+          "named": true
+        },
         {
           "type": "workflow_decl",
           "named": true
@@ -582,6 +586,21 @@
     "fields": {},
     "children": {
       "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "version_decl",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
       "required": true,
       "types": [
         {
@@ -734,6 +753,10 @@
   },
   {
     "type": "defaults",
+    "named": false
+  },
+  {
+    "type": "dip",
     "named": false
   },
   {

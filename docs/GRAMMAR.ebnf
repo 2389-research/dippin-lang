@@ -20,7 +20,13 @@
 (* Top-Level Structure                                        *)
 (* ═══════════════════════════════════════════════════════════ *)
 
-workflow_file   = workflow_decl ;
+workflow_file   = [ version_decl ] workflow_decl ;
+
+(* Optional leading format-version declaration, before workflow_decl.  *)
+(* Absent => version 1. Leading blank/comment lines are permitted.     *)
+(* The formatter only emits this line when the version is > 1, so a v1  *)
+(* file never gains a declaration (byte-identical only if canonical).   *)
+version_decl    = "dip" INTEGER NEWLINE ;
 
 workflow_decl   = "workflow" IDENTIFIER NEWLINE
                   INDENT workflow_body OUTDENT ;

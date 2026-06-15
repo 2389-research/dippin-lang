@@ -4,6 +4,23 @@ Edges define the connections between nodes in a Dippin workflow. They control th
 
 ---
 
+## Format Version Declaration
+
+A `.dip` file may declare its format version at the top of the file, before the `workflow` declaration (leading blank and comment lines are allowed):
+
+```dippin
+dip 2
+
+workflow Example
+  ...
+```
+
+The declaration is `dip` followed by an integer. A file with **no** declaration defaults to version **1**. The formatter only emits the `dip N` line when the version is greater than 1, so a v1 file never gains a declaration. (As with any `fmt` run, byte-identical output is only guaranteed when the input is already canonical.)
+
+The version is parsed before the workflow body, which lets later format versions change edge syntax wholesale. `dippin fmt --migrate` re-emits a file in its current format version; today it is a no-op identity pass for already-current files. (v1→v2 edge transforms land in a later release.)
+
+---
+
 ## Edge Syntax
 
 All edges are defined in the `edges` block at the bottom of a workflow:

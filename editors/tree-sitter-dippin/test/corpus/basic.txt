@@ -1,4 +1,37 @@
 ================================================================================
+Format version declaration
+================================================================================
+
+dip 2
+
+workflow Hello
+  start: Begin
+  exit: End
+
+  agent Begin
+    prompt: hi
+
+  edges
+    Begin -> End
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (version_decl
+    (identifier))
+  (workflow_decl
+    (identifier)
+    (workflow_body
+      (workflow_field (field_value (raw_inline)))
+      (workflow_field (field_value (raw_inline)))
+      (node_decl
+        (agent_node
+          (identifier)
+          (node_field (field_name (identifier)) (field_value (raw_inline)))))
+      (edges_section
+        (edge_entry (identifier) (identifier))))))
+
+================================================================================
 Minimal workflow
 ================================================================================
 
