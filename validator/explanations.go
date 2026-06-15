@@ -152,6 +152,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Add a `-> <node> when ctx.outcome = fail` edge, set fallback_target, add retry_target with max_retries, or declare a workflow-level on_failure.",
 			Example: "agent Implement\n  prompt: \"build it\"\nImplement -> Test  // DIP144: no route if Implement fails",
 		},
+		DIP149: {
+			Code:    DIP149,
+			Summary: "ambiguous routing: multiple unconditional outgoing edges",
+			Trigger: "A node has two or more unconditional (no `when`) outgoing edges, so which one fires is resolved only by the lexical tiebreak on target node IDs — renaming a target can silently change routing.",
+			Fix:     "Keep at most one unconditional edge per node as the default fallback; guard the others with a `when` condition, or remove the extra edge.",
+			Example: "agent Route\n  prompt: \"decide\"\nRoute -> A\nRoute -> B  // DIP149: A and B are both unconditional; the tiebreak alone picks one",
+		},
 	}
 }
 

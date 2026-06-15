@@ -383,7 +383,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP147) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP149) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -512,6 +512,7 @@ The primary loop for authoring .dip files:
 | DIP145 | Graph budget default is negative | Use a positive cap, or omit the field / set `0` to mean no limit |
 | DIP146 | Referenced subgraph child restricts no agent's `tool_access` while a workflow on the path does (cross-file) | Set `tool_access` on the child's agents; native `dippin lint` resolves the child and supersedes DIP143 |
 | DIP147 | A `tool_access: none` agent `writes:` a context key that a downstream tool-bearing agent `reads:` (chain-attack / info-flow) | Confirm the restricted agent's input is trusted; if not, give the consumer `tool_access: none` too or insert a sanitizing step. Detection only — the runtime enforces |
+| DIP149 | A node has 2+ unconditional outgoing edges — which one fires is decided only by the lexical (alphabetical) tiebreak on target node ID | Keep at most one unconditional edge as the default fallback; guard the others with `when`. Restart/`loop` back-edges are exempt |
 
 ## Best Practices
 

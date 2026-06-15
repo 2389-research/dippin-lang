@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP148).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP149).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -53,6 +53,7 @@ const (
 	DIP146 = "DIP146" // child subgraph re-grants tools the parent restricted (cross-file)
 	DIP147 = "DIP147" // restricted (tool_access:none) agent output flows into a tool-bearing agent (chain-attack / info-flow)
 	DIP148 = "DIP148" // last_response_truncate is negative
+	DIP149 = "DIP149" // ambiguous routing: 2+ unconditional outgoing edges resolved only by the lexical tiebreak
 )
 
 func init() {
@@ -105,4 +106,5 @@ func init() {
 	CodeDescription[DIP146] = "child subgraph re-grants tools the parent restricted (cross-file)"
 	CodeDescription[DIP147] = "restricted agent output flows into a tool-bearing agent (chain-attack)"
 	CodeDescription[DIP148] = "last_response_truncate is negative"
+	CodeDescription[DIP149] = "ambiguous routing: multiple unconditional outgoing edges"
 }

@@ -56,7 +56,7 @@ dippin-lang/
 │
 ├── validator/          # Graph validation + semantic linting
 │   ├── codes.go        # Error code constants (DIP001–DIP010)
-│   ├── lint_codes.go   # Warning code constants (DIP101–DIP148)
+│   ├── lint_codes.go   # Warning code constants (DIP101–DIP149)
 │   ├── diagnostic.go   # Diagnostic type, Result, Severity
 │   ├── validate.go     # 10 structural checks
 │   ├── lint.go         # Lint orchestration
