@@ -21,7 +21,8 @@ module.exports = grammar({
     source_file: ($) =>
       seq(repeat($._newline), optional($.version_decl), $.workflow_decl),
 
-    // Optional line-1 format-version declaration (e.g. `dip 2`). Absent => v1.
+    // Optional leading format-version declaration (e.g. `dip 2`), before the
+    // workflow declaration; leading blank/comment lines are allowed. Absent => v1.
     // The version number lexes as an identifier (digits are valid identifiers).
     version_decl: ($) => seq("dip", $.identifier, $._newline),
 

@@ -22,7 +22,8 @@
 
 workflow_file   = [ version_decl ] workflow_decl ;
 
-(* Optional line-1 format-version declaration. Absent => version 1.    *)
+(* Optional leading format-version declaration, before workflow_decl.  *)
+(* Absent => version 1. Leading blank/comment lines are permitted.     *)
 (* The formatter only emits this line when the version is > 1, so       *)
 (* existing v1 files round-trip byte-identical (no line injected).      *)
 version_decl    = "dip" INTEGER NEWLINE ;

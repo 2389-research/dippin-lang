@@ -6,7 +6,7 @@ Edges define the connections between nodes in a Dippin workflow. They control th
 
 ## Format Version Declaration
 
-A `.dip` file may declare its format version on the first line:
+A `.dip` file may declare its format version at the top of the file, before the `workflow` declaration (leading blank and comment lines are allowed):
 
 ```dippin
 dip 2

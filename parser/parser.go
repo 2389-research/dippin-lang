@@ -55,17 +55,27 @@ func (p *Parser) parseVersionDeclaration() {
 		return
 	}
 	p.lexer.NextToken() // dip
-	p.consumeVersionNumber(t)
+	p.consumeVersionNumber()
 	p.expect(TokenNewline)
 	p.workflow.Version = strconv.Itoa(p.version)
 }
 
-// consumeVersionNumber reads the numeric operand of a `dip N` declaration.
-func (p *Parser) consumeVersionNumber(declTok Token) {
-	num := p.lexer.NextToken()
+// consumeVersionNumber reads and validates the numeric operand of a `dip N`
+// declaration, leaving the trailing newline for the caller. A missing operand
+// (`dip` then end-of-line) is reported without consuming the newline, so the
+// caller's newline expectation still holds and no spurious second diagnostic
+// follows. Versions below 1 are rejected: the formatter only emits `dip N` for
+// N > 1, so accepting `dip 0` would let formatting silently drop the line.
+func (p *Parser) consumeVersionNumber() {
+	num := p.lexer.PeekToken()
+	if num.Type == TokenNewline {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf("invalid version declaration: expected integer after 'dip' at %d:%d", num.Location.Line, num.Location.Column))
+		return
+	}
+	p.lexer.NextToken() // operand
 	n, err := strconv.Atoi(num.Value)
-	if err != nil {
-		p.diagnostics = append(p.diagnostics, fmt.Sprintf("invalid version declaration: expected integer after 'dip', got %q at %d:%d", num.Value, declTok.Location.Line, declTok.Location.Column))
+	if err != nil || n < 1 {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf("invalid version declaration: expected integer >= 1 after 'dip', got %q at %d:%d", num.Value, num.Location.Line, num.Location.Column))
 		return
 	}
 	p.version = n

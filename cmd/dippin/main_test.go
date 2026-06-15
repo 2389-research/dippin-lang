@@ -524,6 +524,21 @@ func TestCmdFmt_Migrate_IdentityForCurrentFile(t *testing.T) {
 	}
 }
 
+func TestCmdFmt_MigrateSuppressesCheck(t *testing.T) {
+	// --migrate suppresses the --check comparison (emitFmt: `check && !migrate`).
+	// A non-canonical file under plain --check exits 1; adding --migrate must not.
+	if _, _, code := runCLI(t, "fmt", "--check", testdata("needs_formatting.dip")); code != ExitError {
+		t.Fatalf("--check on non-canonical file: expected exit 1, got %d", code)
+	}
+	out, _, code := runCLI(t, "fmt", "--check", "--migrate", testdata("needs_formatting.dip"))
+	if code != ExitOK {
+		t.Fatalf("--check --migrate: expected check suppressed (exit 0), got %d", code)
+	}
+	if out == "" {
+		t.Error("--check --migrate produced no formatted output on stdout")
+	}
+}
+
 func TestCmdFmt_Write(t *testing.T) {
 	// Create a temp copy so we don't mutate the fixture.
 	data, err := os.ReadFile(testdata("needs_formatting.dip"))

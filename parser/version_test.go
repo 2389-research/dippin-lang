@@ -54,6 +54,32 @@ func TestParseDipDeclarationInvalidVersion(t *testing.T) {
 	}
 }
 
+func TestParseDipDeclarationRejectsZero(t *testing.T) {
+	// `dip 0` is below the v1 floor; the formatter only emits `dip N` for N > 1,
+	// so accepting 0 would let formatting silently drop the line. (Negative
+	// literals aren't reachable — the lexer drops a leading `-`.)
+	_, err := NewParser("dip 0\n\n"+versionBody, "test.dip").Parse()
+	if err == nil {
+		t.Fatal("expected error for version below 1, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid version declaration") {
+		t.Errorf("error = %q, want it to mention invalid version declaration", err.Error())
+	}
+}
+
+func TestParseDipDeclarationMissingOperandSingleDiagnostic(t *testing.T) {
+	// `dip` with no operand must not consume the newline and then mis-report the
+	// following token — exactly one diagnostic should result.
+	p := NewParser("dip\n\n"+versionBody, "test.dip")
+	_, _ = p.Parse()
+	if got := len(p.Diagnostics()); got != 1 {
+		t.Fatalf("missing operand produced %d diagnostics, want 1: %v", got, p.Diagnostics())
+	}
+	if !strings.Contains(p.Diagnostics()[0], "expected integer after 'dip'") {
+		t.Errorf("diagnostic = %q, want missing-operand message", p.Diagnostics()[0])
+	}
+}
+
 func TestParserVersionReachableFromEdges(t *testing.T) {
 	// The acceptance criterion for #134: p.version is set before edge parsing.
 	p := NewParser("dip 2\n\n"+versionBody, "test.dip")
