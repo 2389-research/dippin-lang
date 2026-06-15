@@ -163,6 +163,41 @@ func TestLint_DIP149_HumanChoiceGateNotFlagged(t *testing.T) {
 	}
 }
 
+// TestLint_DIP149_AmbiguousFanInFlagged: a fan_in's own outgoing edges route by
+// the ordinary cascade (ir.EdgesFrom synthesizes edges *into* a fan_in, never
+// out of it). Two unconditional outgoing edges from a fan_in are genuinely
+// ambiguous, so DIP149 MUST warn — fan_in is not a structural-router exemption.
+func TestLint_DIP149_AmbiguousFanInFlagged(t *testing.T) {
+	src := `workflow X
+  start: Fan
+  exit: Done
+
+  parallel Fan -> B, C
+
+  agent B
+    prompt: "x"
+
+  agent C
+    prompt: "x"
+
+  fan_in Join <- B, C
+
+  agent D
+    prompt: "x"
+
+  agent Done
+    prompt: "x"
+
+  edges
+    Join -> Done
+    Join -> D
+    D -> Done
+`
+	if !hasCode(lintSrc(t, src), DIP149) {
+		t.Errorf("expected DIP149 for a fan_in with two unconditional outgoing edges, got: %v", codes(lintSrc(t, src)))
+	}
+}
+
 // TestLint_DIP149_MessageNamesNode: the diagnostic must name the source node so
 // the author can find it, and carry a real source location.
 func TestLint_DIP149_MessageNamesNode(t *testing.T) {

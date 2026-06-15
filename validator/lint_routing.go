@@ -18,11 +18,15 @@ import (
 //   - A guarded edge plus a single unconditional fallback is the intended
 //     pattern and is not flagged.
 //   - Duplicate same-variable/same-value guards are already covered by DIP103.
-//   - parallel / fan_in source nodes are excluded: their multiple unconditional
-//     outgoing edges are structural fan-out (synthesized by ir.EdgesFrom), all
-//     fired together rather than chosen by a tiebreak.
-//   - human source nodes are excluded: they route on the human's label choice,
-//     not the cascade tiebreak (see ir.OutcomeChannel's human-gate note).
+//   - parallel source nodes are excluded: their multiple unconditional outgoing
+//     edges are structural fan-out (synthesized by ir.EdgesFrom), all fired
+//     together rather than chosen by a tiebreak. (fan_in nodes are NOT excluded:
+//     ir.EdgesFrom synthesizes edges *into* a fan_in, never out of it, so a
+//     fan_in's own outgoing edges route by the ordinary cascade.)
+//   - human source nodes are excluded: a choice/yes_no gate routes on the
+//     human's label selection, not the cascade tiebreak (see ir.OutcomeChannel's
+//     human-gate note). This is conservative for non-choice modes (interview /
+//     freeform), which do route by the cascade — a deliberate false-negative.
 func lintAmbiguousRouting(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
@@ -38,11 +42,13 @@ func lintAmbiguousRouting(w *ir.Workflow) []Diagnostic {
 
 // isStructuralOrChoiceRouter reports whether a source node's outgoing edges are
 // resolved by something other than the cascade's unconditional-edge tiebreak:
-// parallel / fan_in fan-out (all edges fire) or a human choice gate (the human
-// picks). DIP149 does not apply to these.
+// parallel fan-out (all edges fire) or a human choice gate (the human picks).
+// DIP149 does not apply to these. fan_in is intentionally absent — its outgoing
+// edges route by the ordinary cascade (ir.EdgesFrom only synthesizes fan-out
+// edges for parallel nodes, never for fan_in).
 func isStructuralOrChoiceRouter(k ir.NodeKind) bool {
 	switch k {
-	case ir.NodeParallel, ir.NodeFanIn, ir.NodeHuman:
+	case ir.NodeParallel, ir.NodeHuman:
 		return true
 	}
 	return false
