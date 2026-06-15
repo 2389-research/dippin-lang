@@ -20,7 +20,12 @@
 (* Top-Level Structure                                        *)
 (* ═══════════════════════════════════════════════════════════ *)
 
-workflow_file   = workflow_decl ;
+workflow_file   = [ version_decl ] workflow_decl ;
+
+(* Optional line-1 format-version declaration. Absent => version 1.    *)
+(* The formatter only emits this line when the version is > 1, so       *)
+(* existing v1 files round-trip byte-identical (no line injected).      *)
+version_decl    = "dip" INTEGER NEWLINE ;
 
 workflow_decl   = "workflow" IDENTIFIER NEWLINE
                   INDENT workflow_body OUTDENT ;

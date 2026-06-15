@@ -116,6 +116,10 @@ func (wr *writer) String() string {
 // --- Section emitters ---
 
 func writeWorkflowHeader(wr *writer, w *ir.Workflow) {
+	if v, err := strconv.Atoi(w.Version); err == nil && v > 1 {
+		wr.line("dip %d", v)
+		wr.blank()
+	}
 	wr.line("workflow %s", w.Name)
 	wr.push()
 	if w.Goal != "" {
