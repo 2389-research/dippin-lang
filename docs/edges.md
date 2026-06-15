@@ -15,7 +15,7 @@ workflow Example
   ...
 ```
 
-The declaration is `dip` followed by an integer. A file with **no** declaration defaults to version **1**. The formatter only emits the `dip N` line when the version is greater than 1, so existing v1 files round-trip byte-for-byte unchanged and never gain a declaration.
+The declaration is `dip` followed by an integer. A file with **no** declaration defaults to version **1**. The formatter only emits the `dip N` line when the version is greater than 1, so a v1 file never gains a declaration. (As with any `fmt` run, byte-identical output is only guaranteed when the input is already canonical.)
 
 The version is parsed before the workflow body, which lets later format versions change edge syntax wholesale. `dippin fmt --migrate` re-emits a file in its current format version; today it is a no-op identity pass for already-current files. (v1→v2 edge transforms land in a later release.)
 

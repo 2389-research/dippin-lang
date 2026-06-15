@@ -56,8 +56,10 @@ func TestParseDipDeclarationInvalidVersion(t *testing.T) {
 
 func TestParseDipDeclarationRejectsZero(t *testing.T) {
 	// `dip 0` is below the v1 floor; the formatter only emits `dip N` for N > 1,
-	// so accepting 0 would let formatting silently drop the line. (Negative
-	// literals aren't reachable — the lexer drops a leading `-`.)
+	// so accepting 0 would let formatting silently drop the line. Note `dip -2`
+	// is not a *negative* operand here: the lexer skips a bare leading `-`
+	// (general tokenization, not version-specific), so it collapses to `dip 2`.
+	// Below-floor rejection therefore only concerns 0.
 	_, err := NewParser("dip 0\n\n"+versionBody, "test.dip").Parse()
 	if err == nil {
 		t.Fatal("expected error for version below 1, got nil")
