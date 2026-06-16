@@ -13,7 +13,7 @@ A flat index of every page on this site, grouped for agent consumption. The cano
 - [Language Reference](https://dippin.org/language.html) — Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets.
 - [Playground](https://dippin.org/playground.html) — Try Dippin in your browser. Write, lint, parse, and format workflows live.
 - [Scenario Testing](https://dippin.org/testing.html) — Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.
-- [Validation & Linting](https://dippin.org/validation.html) — 59 diagnostic codes for AI pipeline workflows. 10 structural errors and 49 semantic warnings catch bugs before runtime.
+- [Validation & Linting](https://dippin.org/validation.html) — 60 diagnostic codes for AI pipeline workflows. 10 structural errors and 50 semantic warnings catch bugs before runtime.
 
 ## Blog
 
