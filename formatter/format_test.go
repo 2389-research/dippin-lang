@@ -406,6 +406,52 @@ func TestFormatEdgeOverrideRoundtrip(t *testing.T) {
 	}
 }
 
+// TestFormatEdgeChoiceRoundtrip: a human-gate routing key written as `choice:`
+// survives parse -> format -> parse as the same Choice field, the formatter emits
+// `choice:` immediately after `label:`, and formatting is idempotent (#130).
+func TestFormatEdgeChoiceRoundtrip(t *testing.T) {
+	input := `workflow ChoiceRT
+  start: Gate
+  exit: Done
+
+  human Gate
+    prompt: "Decide."
+
+  agent Done
+    prompt: "Ship it."
+
+  edges
+    Gate -> Done  label: "Approve"  choice: "yes"
+`
+	w1, err := parser.NewParser(input, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse failed: %v", err)
+	}
+	if w1.Edges[0].Choice != "yes" {
+		t.Fatalf("choice not parsed: got %q", w1.Edges[0].Choice)
+	}
+
+	formatted := Format(w1)
+	assertContains(t, formatted, "choice: yes")
+	// label: must precede choice: in canonical output.
+	if li, ci := strings.Index(formatted, "label:"), strings.Index(formatted, "choice:"); li < 0 || ci < 0 || li > ci {
+		t.Errorf("expected label: before choice:, got:\n%s", formatted)
+	}
+
+	w2, err := parser.NewParser(formatted, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse failed: %v\nformatted:\n%s", err, formatted)
+	}
+	if w2.Edges[0].Choice != "yes" {
+		t.Error("choice not preserved through format round-trip")
+	}
+
+	reformatted := Format(w2)
+	if formatted != reformatted {
+		t.Errorf("formatter not idempotent\nfirst:\n%s\nsecond:\n%s", formatted, reformatted)
+	}
+}
+
 // TestFormatLoopRoundtrip: a back-edge written as `loop` survives parse -> format
 // -> parse as the same Restart field, the formatter emits the `loop` keyword, and
 // formatting is idempotent.

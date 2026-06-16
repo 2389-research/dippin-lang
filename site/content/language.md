@@ -270,7 +270,7 @@ Conditional nodes accept only common fields (`label`, `class`, `reads`, `writes`
 The `edges` block defines connections between nodes. Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop]
 ```
 
 ### Basic and Conditional Edges
@@ -289,7 +289,8 @@ The `edges` block defines connections between nodes. Each edge is a single line:
 |-----------|------|-------------|
 | `on <token>` | Token | Shorthand for an equality guard against the source node's outcome channel — agent (`ctx.outcome`) or tool + `marker_grep` (`ctx.tool_marker`) |
 | `when <expr>` | Condition | Boolean guard — edge only traversed if true |
-| `label: <text>` | String | Human-readable label (used for human gate choices) |
+| `label: <text>` | String | Human-readable label (used for human gate choices when no `choice:` is set) |
+| `choice: <key>` | String | Carried, not interpreted by dippin — explicit human-gate routing key the paired runtime matches the user's selection against, leaving `label:` for display. Wins over `label:` when present; runtime falls back to `label:` when absent |
 | `weight: <int>` | Integer | Priority hint — higher wins among competing edges |
 | `loop` | Flag | Bare keyword marking a back-edge (loop restart). Legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop` |
 | `override: true` | Boolean | Carried, not interpreted by dippin — marks a human-authored validation override for a paired runtime to act on |

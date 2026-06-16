@@ -867,6 +867,9 @@ func convertEdge(de dotEdge) (*ir.Edge, error) {
 	if v, ok := de.Attrs["label"]; ok {
 		e.Label = v
 	}
+	if v, ok := de.Attrs["choice"]; ok {
+		e.Choice = v
+	}
 	if err := applyEdgeCondition(e, de.Attrs); err != nil {
 		return nil, err
 	}

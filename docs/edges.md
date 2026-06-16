@@ -35,7 +35,7 @@ All edges are defined in the `edges` block at the bottom of a workflow:
 Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop] [override: true]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
 ```
 
 ---
@@ -48,7 +48,8 @@ Each edge is a single line:
 | `To` | Node ID | Yes | Target node — where the edge leads |
 | `on` | Token | No | Shorthand for an equality guard against the source node's outcome channel — agent (`ctx.outcome`) or tool+`marker_grep` (`ctx.tool_marker`) (see [Outcome Shorthand](#outcome-shorthand-on)). |
 | `when` | Condition | No | Boolean guard expression. Edge is only traversed if true at runtime. |
-| `label` | String | No | Human-readable text. Displayed on the edge in DOT exports. Also used for human gate choice matching. |
+| `label` | String | No | Human-readable text. Displayed on the edge in DOT exports. Also used for human gate choice matching when no `choice:` is set (see [Choice keys vs display labels](#choice-keys-vs-display-labels)). |
+| `choice` | String | No | Carried, not interpreted by dippin. Explicit human-gate routing key the paired runtime matches the user's selection against; lets `label:` stay display-only. When set it is the routing key; when absent the runtime falls back to `label:`. |
 | `weight` | Integer | No | Priority hint. Higher values win when multiple edges are candidates. |
 | `loop` | Flag | No | Bare keyword marking this as a back-edge that triggers a loop restart. The legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop`. |
 | `override` | Boolean | No | Carried, not interpreted by dippin. Marks an edge as a human-authored validation override for a paired runtime to act on (e.g. tracker's `validation_overridden` flow); dippin does not assign it any execution semantics. |
@@ -106,6 +107,32 @@ Labels serve dual purpose — display text and human gate routing:
     Approve -> Ship    label: "yes"
     Approve -> Revise  label: "no"
 ```
+
+### Choice keys vs display labels
+
+On a human gate, `label:` is overloaded: it is the DOT display text **and** the
+routing key the runtime matches the user's selection against. Nothing in the
+syntax tells a reader whether deleting a `label:` is cosmetic or breaks routing.
+The `choice:` attribute makes the routing-key intent explicit, leaving `label:`
+free for display:
+
+```dippin
+    # choice: is the routing key; label: is display-only here
+    Approve -> Ship    label: "Ship it 🚀"  choice: "yes"
+    Approve -> Revise  label: "Send back"    choice: "no"
+```
+
+`choice:` is **carried, not interpreted** by dippin — a paired runtime acts on
+it. The Phase-0 routing contract is:
+
+- **`choice:` present** → `choice` is the routing key; `label:` is display only.
+- **only `label:` present** → `label` still serves as the routing key, so
+  existing human-choice workflows route unchanged.
+
+i.e. prefer `choice` when set, fall back to `label` when absent. A human-gate
+edge that routes by `label:` with no `choice:` raises the
+[DIP150](validation.md#dip150-human-gate-routes-by-label) Hint suggesting the
+explicit key.
 
 ### Weighted Edges
 

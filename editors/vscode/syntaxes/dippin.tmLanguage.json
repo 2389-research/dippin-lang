@@ -123,6 +123,12 @@
             "1": { "name": "keyword.other.edge-attr.dippin" }
           }
         },
+        {
+          "match": "\\b(choice)\\s*:",
+          "captures": {
+            "1": { "name": "keyword.other.edge-attr.dippin" }
+          }
+        },
         { "include": "#condition" }
       ]
     },

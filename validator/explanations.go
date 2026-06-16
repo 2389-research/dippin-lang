@@ -159,6 +159,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Keep at most one unconditional edge per node as the default fallback; guard the others with a `when` condition, or remove the extra edge.",
 			Example: "agent Route\n  prompt: \"decide\"\nRoute -> A\nRoute -> B  // DIP149: A and B are both unconditional; the tiebreak alone picks one",
 		},
+		DIP150: {
+			Code:    DIP150,
+			Summary: "human gate routes by label; use choice: to mark the routing key",
+			Trigger: "An outgoing edge from a label-routing human node (mode choice, yes_no, or the unset default) sets a non-empty label: but no choice:. In Phase 0 such a label doubles as the routing key the runtime matches the user's selection against, so nothing in the syntax signals that the label is load-bearing. freeform and interview gates route by text/answers, not labels, and are exempt.",
+			Fix:     "Add choice: \"<key>\" to mark the routing key explicitly, leaving label: for display. choice: wins when present; label: still routes when choice: is absent (Phase 0 fallback).",
+			Example: "human Approve\n  mode: choice\nApprove -> Ship label: \"yes\"  // DIP150: add choice: \"yes\" to mark the routing key",
+		},
 	}
 }
 

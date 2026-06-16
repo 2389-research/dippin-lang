@@ -121,6 +121,7 @@ module.exports = grammar({
         seq("on", $.identifier),
         "loop",
         seq("label", ":", $.field_value),
+        seq("choice", ":", $.field_value),
         seq("weight", ":", $.field_value),
         seq("restart", ":", $.field_value),
         seq("override", ":", $.field_value)

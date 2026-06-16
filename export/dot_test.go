@@ -618,6 +618,23 @@ func TestExportDOTEdgeOverride(t *testing.T) {
 	assertContains(t, out, `override="true"`)
 }
 
+func TestExportDOTEdgeChoice(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "test",
+		Start: "A",
+		Exit:  "B",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeHuman, Config: ir.HumanConfig{Prompt: "decide."}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done."}},
+		},
+		Edges: []*ir.Edge{
+			{From: "A", To: "B", Label: "Approve", Choice: "yes"},
+		},
+	}
+	out := ExportDOT(w, ExportOptions{})
+	assertContains(t, out, `choice="yes"`)
+}
+
 func TestExportDOTEdgeWeight(t *testing.T) {
 	w := &ir.Workflow{
 		Name:  "test",

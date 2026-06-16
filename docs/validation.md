@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 59 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (58 documented sections):
+Dippin registers 60 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (59 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP149): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP150): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP149<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP150<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP149)
+## Semantic Lint Warnings (DIP101–DIP150)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1304,6 +1304,40 @@ covered by [DIP103](#dip103-overlapping-or-contradictory-conditions) instead.
 
 ---
 
+### DIP150: Human gate routes by label
+
+**Severity**: Hint
+
+An outgoing edge from a `human` node sets a non-empty `label:` but no `choice:`.
+In Phase 0 such a label is overloaded: besides being the DOT display text, it is
+also the **routing key** the runtime matches the user's selection against — on a
+human gate the labels are load-bearing and even order-sensitive. Nothing in the
+syntax tells a reader whether deleting that `label:` is cosmetic or breaks
+routing. `choice:` makes the routing-key intent explicit while leaving `label:`
+for display.
+
+```text
+hint[DIP150]: human gate "Approve" routes by label "yes"; use choice: "yes" to mark the routing key (label: stays for display)
+```
+
+**Trigger:** A **label-routing** `human` node — mode `choice`, `yes_no`, or the
+unset default (a mode-less human gate with labeled edges is the canonical
+multi-choice gate) — has an outgoing edge with a non-empty `label:` and no
+`choice:`. It does **not** fire when `choice:` is already present, for an edge
+whose source node is not a `human` node, or for `freeform` and `interview` gates
+(they route by open text / collected answers, not edge labels).
+
+**Fix:** Add `choice: "<key>"` to mark the routing key explicitly, leaving
+`label:` for display. This is a Hint, not a Warning — these workflows route
+correctly today, so `choice:` is a clarity upgrade rather than a defect.
+
+**Phase-0 fallback rule (runtime contract):** `choice:` wins as the routing key
+when present; when it is absent, `label:` still serves as the routing key, so
+existing human-choice workflows route unchanged. See
+[choice keys vs display labels](edges.md#choice-keys-vs-display-labels).
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1320,7 +1354,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP149 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP150 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

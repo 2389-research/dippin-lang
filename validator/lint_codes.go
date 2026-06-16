@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP149).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP150).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -54,6 +54,7 @@ const (
 	DIP147 = "DIP147" // restricted (tool_access:none) agent output flows into a tool-bearing agent (chain-attack / info-flow)
 	DIP148 = "DIP148" // last_response_truncate is negative
 	DIP149 = "DIP149" // ambiguous routing: 2+ unconditional outgoing edges resolved only by the lexical tiebreak
+	DIP150 = "DIP150" // human gate routes by label: which doubles as the routing key — use choice: to mark it explicitly
 )
 
 func init() {
@@ -107,4 +108,5 @@ func init() {
 	CodeDescription[DIP147] = "restricted agent output flows into a tool-bearing agent (chain-attack)"
 	CodeDescription[DIP148] = "last_response_truncate is negative"
 	CodeDescription[DIP149] = "ambiguous routing: multiple unconditional outgoing edges"
+	CodeDescription[DIP150] = "human gate routes by label; use choice: to mark the routing key"
 }
