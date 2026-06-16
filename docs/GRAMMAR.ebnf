@@ -218,6 +218,7 @@ edge_attr       = "when" condition
                                     (* or ctx.tool_marker (tool+marker_grep);   *)
                                     (* desugars to when. Not for human gates.   *)
                 | "label"   ":" field_value
+                | "choice"  ":" field_value        (* carried human-gate route key*)
                 | "weight"  ":" INTEGER
                 | "loop"                           (* back-edge; canonical form  *)
                 | "restart" ":" BOOLEAN            (* legacy alias; fmt → loop   *)
@@ -396,4 +397,4 @@ digit           = "0" | "1" | ... | "9" ;
 (* workflow, agent, human, tool, subgraph, conditional,       *)
 (* parallel, fan_in, manager_loop, edges, defaults, vars,     *)
 (* when, and, or, not, contains, startswith, endswith, in,    *)
-(* true, false, restart, loop, override, label, weight        *)
+(* true, false, restart, loop, override, label, choice, weight*)

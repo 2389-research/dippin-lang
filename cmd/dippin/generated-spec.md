@@ -192,10 +192,10 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-59 diagnostic codes across two categories:
+60 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
-- **DIP101–DIP149** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges)
+- **DIP101–DIP150** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice)
 
 ---
 
@@ -565,7 +565,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP149) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP150) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -695,6 +695,7 @@ The primary loop for authoring .dip files:
 | DIP146 | Referenced subgraph child restricts no agent's `tool_access` while a workflow on the path does (cross-file) | Set `tool_access` on the child's agents; native `dippin lint` resolves the child and supersedes DIP143 |
 | DIP147 | A `tool_access: none` agent `writes:` a context key that a downstream tool-bearing agent `reads:` (chain-attack / info-flow) | Confirm the restricted agent's input is trusted; if not, give the consumer `tool_access: none` too or insert a sanitizing step. Detection only — the runtime enforces |
 | DIP149 | A node has 2+ unconditional outgoing edges — which one fires is decided only by the lexical (alphabetical) tiebreak on target node ID | Keep at most one unconditional edge as the default fallback; guard the others with `when`. Restart/`loop` back-edges are exempt |
+| DIP150 | A `human` gate's outgoing edge routes by `label:` with no explicit `choice:` — the label doubles as the routing key, so nothing signals it is load-bearing (Hint) | Add `choice: "<key>"` to mark the routing key, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent |
 
 ## Best Practices
 

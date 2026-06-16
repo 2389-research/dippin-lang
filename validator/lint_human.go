@@ -67,6 +67,39 @@ func lintInterviewLabeledEdges(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
+// lintHumanChoiceKey flags outgoing edges from human nodes that route by a
+// display label: with no explicit choice: key. In Phase 0 such a label is the
+// routing key the runtime matches the user's selection against — load-bearing
+// and even order-sensitive — yet nothing in the syntax says so. A Hint (not a
+// Warning): these files route correctly today, so choice: is a clarity upgrade,
+// not a defect.
+func lintHumanChoiceKey(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	for _, e := range w.Edges {
+		if !humanLabelRoutesWithoutChoice(w, e) {
+			continue
+		}
+		diags = append(diags, Diagnostic{
+			Code:     DIP150,
+			Severity: SeverityHint,
+			Message:  fmt.Sprintf("human gate %q routes by label %q; use choice: %q to mark the routing key (label: stays for display)", e.From, e.Label, e.Label),
+			Location: e.Source,
+			Help:     "add choice: \"<key>\" to mark the routing key explicitly; choice: wins when present, label: still routes when it is absent",
+		})
+	}
+	return diags
+}
+
+// humanLabelRoutesWithoutChoice reports whether edge e routes a human gate by a
+// display label: with no explicit choice: key — the condition DIP150 flags.
+func humanLabelRoutesWithoutChoice(w *ir.Workflow, e *ir.Edge) bool {
+	if e.Label == "" || e.Choice != "" {
+		return false
+	}
+	n := w.Node(e.From)
+	return n != nil && n.Kind == ir.NodeHuman
+}
+
 func checkInterviewLabels(n *ir.Node, edges []*ir.Edge) *Diagnostic {
 	labelCount := 0
 	for _, e := range edges {

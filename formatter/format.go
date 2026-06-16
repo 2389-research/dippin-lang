@@ -806,13 +806,11 @@ func onShorthand(text, channel string) (string, bool) {
 	return "", false
 }
 
-// appendEdgeAttrs appends label, weight, loop (back-edge), and override parts.
-// A restart edge is emitted as the canonical `loop` keyword, which also migrates
-// hand-written `restart: true` to the scannable form.
+// appendEdgeAttrs appends label, choice, weight, loop (back-edge), and override
+// parts. A restart edge is emitted as the canonical `loop` keyword, which also
+// migrates hand-written `restart: true` to the scannable form.
 func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
-	if e.Label != "" {
-		parts = append(parts, fmt.Sprintf("label: %s", quoteValue(e.Label)))
-	}
+	parts = appendEdgeLabelParts(parts, e)
 	if e.Weight != 0 {
 		parts = append(parts, fmt.Sprintf("weight: %d", e.Weight))
 	}
@@ -821,6 +819,18 @@ func appendEdgeAttrs(parts []string, e *ir.Edge) []string {
 	}
 	if e.Override {
 		parts = append(parts, "override: true")
+	}
+	return parts
+}
+
+// appendEdgeLabelParts emits the label-family attributes — `label` (display) then
+// `choice` (the carried human-gate routing key) — in canonical order.
+func appendEdgeLabelParts(parts []string, e *ir.Edge) []string {
+	if e.Label != "" {
+		parts = append(parts, fmt.Sprintf("label: %s", quoteValue(e.Label)))
+	}
+	if e.Choice != "" {
+		parts = append(parts, fmt.Sprintf("choice: %s", quoteValue(e.Choice)))
 	}
 	return parts
 }

@@ -532,6 +532,7 @@ func writeEdgeDOT(b *strings.Builder, e *ir.Edge) {
 	if e.Label != "" {
 		attrs["label"] = e.Label
 	}
+	addEdgeChoice(attrs, e)
 	addEdgeConditionAttrs(attrs, e)
 	addEdgeWeightAndRestart(attrs, e)
 	addEdgeOverride(attrs, e)
@@ -586,6 +587,15 @@ func addEdgeWeightAndRestart(attrs map[string]string, e *ir.Edge) {
 func addEdgeOverride(attrs map[string]string, e *ir.Edge) {
 	if e.Override {
 		attrs["override"] = "true"
+	}
+}
+
+// addEdgeChoice adds the choice attribute (carried, not interpreted: the explicit
+// human-gate routing key) as a distinct DOT edge attribute so a DOT round-trip is
+// faithful.
+func addEdgeChoice(attrs map[string]string, e *ir.Edge) {
+	if e.Choice != "" {
+		attrs["choice"] = e.Choice
 	}
 }
 

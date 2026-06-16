@@ -497,6 +497,29 @@ func TestMigrateOverrideEdge(t *testing.T) {
 	}
 }
 
+func TestMigrateChoiceEdge(t *testing.T) {
+	dot := `digraph G {
+		Start [shape=Mdiamond];
+		A [shape=box];
+		B [shape=box];
+		Exit [shape=Msquare];
+		Start -> A;
+		A -> B [label="Approve", choice="yes"];
+		B -> Exit;
+	}`
+	w, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	edges := w.EdgesFrom("A")
+	if len(edges) != 1 {
+		t.Fatalf("edges = %d, want 1", len(edges))
+	}
+	if edges[0].Choice != "yes" {
+		t.Errorf("expected choice=yes on edge, got %q", edges[0].Choice)
+	}
+}
+
 func TestMigrateGraphDefaults(t *testing.T) {
 	dot := `digraph G {
 		graph [goal="Test the system", default_max_retry=3, max_restarts=7, default_fidelity="summary:high"];

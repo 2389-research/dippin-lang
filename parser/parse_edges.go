@@ -63,7 +63,7 @@ func (p *Parser) emitBracketSyntaxError() {
 // edgeAttrKeywords contains the value-bearing edge attribute keywords (each of the
 // form "<name>: value"). They terminate condition parsing only when followed by ':'.
 var edgeAttrKeywords = map[string]bool{
-	"label": true, "weight": true, "restart": true, "override": true,
+	"label": true, "choice": true, "weight": true, "restart": true, "override": true,
 }
 
 // applyEdgeAttribute dispatches a single edge attribute by its structural form:
@@ -195,15 +195,15 @@ func (p *Parser) discardOnValue() {
 }
 
 // applyEdgeValueAttribute applies the uniform "<keyword>: value" edge attributes:
-// the string `label`, the integer `weight`, and the booleans `restart` and
+// the strings `label` and `choice` (the latter a carried, not interpreted
+// human-gate routing key), the integer `weight`, and the booleans `restart` and
 // `override` (carried, not interpreted). `restart` is the legacy spelling of the
 // `loop` flag. An unrecognized attribute is diagnosed once rather than silently
 // swallowed.
 func (p *Parser) applyEdgeValueAttribute(edge *ir.Edge, attr Token) {
 	switch attr.Value {
-	case "label":
-		p.expect(TokenColon)
-		edge.Label = p.lexer.NextToken().Value
+	case "label", "choice":
+		p.applyEdgeStringAttribute(edge, attr.Value)
 	case "weight":
 		p.expect(TokenColon)
 		wt := p.lexer.NextToken()
@@ -217,6 +217,19 @@ func (p *Parser) applyEdgeValueAttribute(edge *ir.Edge, attr Token) {
 	default:
 		p.emitUnknownEdgeAttribute(attr)
 	}
+}
+
+// applyEdgeStringAttribute reads a "<name>: value" string edge attribute and
+// stores it on the matching field: `label` (display text) or `choice` (the
+// carried, not interpreted human-gate routing key).
+func (p *Parser) applyEdgeStringAttribute(edge *ir.Edge, name string) {
+	p.expect(TokenColon)
+	v := p.lexer.NextToken().Value
+	if name == "choice" {
+		edge.Choice = v
+		return
+	}
+	edge.Label = v
 }
 
 // emitUnknownEdgeAttribute records a located diagnostic for an unrecognized edge

@@ -56,6 +56,8 @@
 (edge_attr
   "label" @property)
 (edge_attr
+  "choice" @property)
+(edge_attr
   "weight" @property)
 (edge_attr
   "restart" @property)

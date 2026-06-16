@@ -526,3 +526,43 @@ workflow SQEdge
                     (operand (string)))))))
           (edge_attr
             (field_value (string))))))))
+
+================================================================================
+Edge with choice routing key
+================================================================================
+
+workflow Choice
+  start: Gate
+  exit: Done
+
+  human Gate
+    mode: choice
+
+  agent Done
+    prompt: done
+
+  edges
+    Gate -> Done  label: "Approve"  choice: "yes"
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (workflow_decl
+    (identifier)
+    (workflow_body
+      (workflow_field (field_value (raw_inline)))
+      (workflow_field (field_value (raw_inline)))
+      (node_decl
+        (human_node
+          (identifier)
+          (node_field (field_name (identifier)) (field_value (raw_inline)))))
+      (node_decl
+        (agent_node
+          (identifier)
+          (node_field (field_name (identifier)) (field_value (raw_inline)))))
+      (edges_section
+        (edge_entry
+          (identifier)
+          (identifier)
+          (edge_attr (field_value (string)))
+          (edge_attr (field_value (string))))))))

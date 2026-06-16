@@ -5,6 +5,7 @@ type Edge struct {
 	From      string
 	To        string
 	Label     string     // Display label / human choice text
+	Choice    string     // Carried, not interpreted: explicit human-gate routing key (preferred over Label when set; #130)
 	Condition *Condition // Parsed condition (not raw string)
 	Weight    int        // Priority hint for edge selection
 	Restart   bool       // Back-edge: triggers downstream clear + re-execution

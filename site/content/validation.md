@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "59 diagnostic codes for AI pipeline workflows. 10 structural errors and 49 semantic warnings catch bugs before runtime."
+description: "60 diagnostic codes for AI pipeline workflows. 10 structural errors and 50 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "59 diagnostic codes — 10 structural errors and 49 semantic warnings — to catch problems before runtime."
+subtitle: "60 diagnostic codes — 10 structural errors and 50 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP149): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP150): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP149)
+## Semantic Warnings (DIP101-DIP150)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -328,4 +328,14 @@ A node has two or more **unconditional** (no `when`) outgoing forward edges. Bot
 warning[DIP149]: node "Route" has multiple unconditional outgoing edges; which one fires is decided only by the lexical tiebreak
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP149) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+### DIP150 — Human gate routes by label
+
+**Severity:** Hint
+
+An outgoing edge from a `human` node sets a non-empty `label:` but no `choice:`. In Phase 0 the label is overloaded — besides being display text, it is the routing key the runtime matches the user's selection against, so nothing in the syntax signals that the label is load-bearing. Add `choice: "<key>"` to mark the routing key explicitly, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent, so existing workflows route unchanged. Does not fire when `choice:` is already set or for non-`human` source nodes.
+
+```text
+hint[DIP150]: human gate "Approve" routes by label "yes"; use choice: "yes" to mark the routing key (label: stays for display)
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP150) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
