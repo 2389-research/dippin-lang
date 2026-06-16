@@ -16,8 +16,9 @@ func TestLint_DIP151_WeightFires(t *testing.T) {
   edges
     A -> B weight: 5
 `
-	if !hasCode(lintSrc(t, src), DIP151) {
-		t.Errorf("expected DIP151, got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if !hasCode(diags, DIP151) {
+		t.Errorf("expected DIP151, got: %v", codes(diags))
 	}
 }
 
@@ -35,8 +36,9 @@ func TestLint_DIP151_NoWeightSilent(t *testing.T) {
   edges
     A -> B
 `
-	if hasCode(lintSrc(t, src), DIP151) {
-		t.Errorf("did not expect DIP151, got: %v", codes(lintSrc(t, src)))
+	diags := lintSrc(t, src)
+	if hasCode(diags, DIP151) {
+		t.Errorf("did not expect DIP151, got: %v", codes(diags))
 	}
 }
 
@@ -59,13 +61,14 @@ func TestLint_DIP151_TwoWeightedEdgesTwoDiagnostics(t *testing.T) {
     A -> C weight: 5
     B -> C
 `
+	diags := lintSrc(t, src)
 	n := 0
-	for _, d := range lintSrc(t, src) {
+	for _, d := range diags {
 		if d.Code == DIP151 {
 			n++
 		}
 	}
 	if n != 2 {
-		t.Errorf("expected 2 DIP151 diagnostics, got %d: %v", n, codes(lintSrc(t, src)))
+		t.Errorf("expected 2 DIP151 diagnostics, got %d: %v", n, codes(diags))
 	}
 }
