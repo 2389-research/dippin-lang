@@ -4,18 +4,28 @@
   "scopeName": "source.dippin",
   "patterns": [
     { "include": "#comment" },
+    { "include": "#version" },
     { "include": "#workflow" },
     { "include": "#node-declaration" },
     { "include": "#section-keyword" },
     { "include": "#parallel-fanin" },
     { "include": "#edge" },
     { "include": "#field" },
-    { "include": "#string" }
+    { "include": "#string" },
+    { "include": "#string-single" }
   ],
   "repository": {
     "comment": {
       "match": "#.*$",
       "name": "comment.line.number-sign.dippin"
+    },
+
+    "version": {
+      "match": "^(dip)\\s+(\\d+)\\b",
+      "captures": {
+        "1": { "name": "keyword.control.version.dippin" },
+        "2": { "name": "constant.numeric.integer.dippin" }
+      }
     },
 
     "workflow": {
@@ -88,6 +98,14 @@
           "name": "keyword.control.when.dippin"
         },
         {
+          "match": "\\b(on)\\b",
+          "name": "keyword.control.on.dippin"
+        },
+        {
+          "match": "\\b(loop)\\b",
+          "name": "keyword.control.loop.dippin"
+        },
+        {
           "match": "\\b(restart)\\s*:",
           "captures": {
             "1": { "name": "keyword.other.edge-attr.dippin" }
@@ -95,6 +113,12 @@
         },
         {
           "match": "\\b(weight)\\s*:",
+          "captures": {
+            "1": { "name": "keyword.other.edge-attr.dippin" }
+          }
+        },
+        {
+          "match": "\\b(override)\\s*:",
           "captures": {
             "1": { "name": "keyword.other.edge-attr.dippin" }
           }
@@ -176,6 +200,23 @@
       "patterns": [
         {
           "match": "\\\\[\"\\\\]",
+          "name": "constant.character.escape.dippin"
+        },
+        {
+          "match": "\\$\\{[^}]+\\}",
+          "name": "variable.other.interpolation.dippin"
+        }
+      ]
+    },
+
+    "string-single": {
+      "begin": "(?<!\\w)'",
+      "end": "'",
+      "name": "string.quoted.single.dippin",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "match": "''",
           "name": "constant.character.escape.dippin"
         },
         {

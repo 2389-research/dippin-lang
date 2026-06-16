@@ -26,6 +26,10 @@
   "not"
 ] @keyword.operator
 
+; Format version declaration
+(version_decl
+  "dip" @keyword)
+
 ; Comparison operators
 (compare_op) @operator
 
@@ -55,6 +59,12 @@
   "weight" @property)
 (edge_attr
   "restart" @property)
+(edge_attr
+  "override" @property)
+(edge_attr
+  "on" @keyword.operator)
+(edge_attr
+  "loop" @keyword)
 
 ; Identifiers in declarations
 (workflow_decl

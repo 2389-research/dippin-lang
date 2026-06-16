@@ -2,7 +2,7 @@
   "name": "dippin-lang",
   "displayName": "Dippin",
   "description": "Language support for Dippin (.dip) AI pipeline workflow files",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "2389-research",
   "repository": {
     "type": "git",

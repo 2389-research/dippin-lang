@@ -56,7 +56,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>lint</h3>
   <div class="cmd-usage">dippin lint [--extra-models &lt;spec&gt;] &lt;file&gt;</div>
-  <p>Run both structural validation and semantic linting (DIP001-DIP010 + DIP101-DIP146). All 55 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
+  <p>Run both structural validation and semantic linting (DIP001-DIP010 + DIP101-DIP149). All 59 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
   <dl>
     <dt><code>--extra-models "provider:model1,model2;provider2:model3"</code></dt>
     <dd>Extend the DIP108 model catalog at runtime for private or newly-released models.</dd>
@@ -71,8 +71,8 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 
 <div class="cmd-card">
   <h3>fmt</h3>
-  <div class="cmd-usage">dippin fmt [--check] [--write] &lt;file&gt;</div>
-  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting.</p>
+  <div class="cmd-usage">dippin fmt [--check] [--write] [--migrate] &lt;file&gt;</div>
+  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting. <code>--migrate</code> re-emits a file in its current format version, still formatting it to canonical form; the v1→v1 migration itself is an identity pass today — no version transform — and scaffolding for future version migrations.</p>
 </div>
 
 <div class="cmd-card">
