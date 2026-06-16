@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "60 diagnostic codes for AI pipeline workflows. 10 structural errors and 50 semantic warnings catch bugs before runtime."
+description: "61 diagnostic codes for AI pipeline workflows. 10 structural errors and 51 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "60 diagnostic codes — 10 structural errors and 50 semantic warnings — to catch problems before runtime."
+subtitle: "61 diagnostic codes — 10 structural errors and 51 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP150): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP151): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP150)
+## Semantic Warnings (DIP101-DIP151)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -338,4 +338,14 @@ An outgoing edge from a **label-routing** `human` node (mode `choice`, `yes_no`,
 hint[DIP150]: human gate "Approve" routes by label "yes"; use choice: "yes" to mark the routing key (label: stays for display)
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP150) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+### DIP151 — Edge weight is unused by routing
+
+**Severity:** Warning
+
+An edge carries a `weight:` attribute. `weight:` was tier 4 of the routing cascade — a speculative priority hint — but the cascade never consults it and no real workflow uses it. It still **parses** (carry-only, no breakage in Phase 0), but both the keyword and the cascade tier are slated for removal under `dip 2`. Remove `weight:` and express priority with conditions instead — guard edges with `when` / `on`, or rely on a single unconditional fallback.
+
+```text
+warning[DIP151]: edge "Route" -> "A" sets weight: 5, which routing does not use; guard edges with when / on or rely on a single unconditional fallback instead
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP151) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
