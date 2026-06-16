@@ -255,7 +255,7 @@ dippin fmt [--check] [--write] [--migrate] <file>
 |------|-------------|
 | `--check` | Don't output anything. Exit 1 if the file is not already in canonical format. Useful for CI checks. |
 | `--write` | Write the formatted output back to the source file in-place. |
-| `--migrate` | Re-emit the file in its current format version. Reuses the parse → format machinery; today a no-op v1→v1 identity pass — the foundation for future format-version migrations (v1→v2 transforms land later). |
+| `--migrate` | Re-emit the file in its current format version. It still formats to canonical form (it reuses the `fmt` machinery, so a non-canonical v1 file is reformatted); the v1→v1 migration itself is an identity pass today — no version transform — and is the foundation for future format-version migrations (v1→v2 transforms land later). |
 
 **Default behavior** (no flags): Print the canonically formatted output to stdout.
 

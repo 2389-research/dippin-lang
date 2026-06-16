@@ -218,6 +218,10 @@
         {
           "match": "''",
           "name": "constant.character.escape.dippin"
+        },
+        {
+          "match": "\\$\\{[^}]+\\}",
+          "name": "variable.other.interpolation.dippin"
         }
       ]
     }

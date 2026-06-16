@@ -25,7 +25,7 @@ Every `.dip` file contains exactly one workflow. The top-level structure has up 
 
 Dippin uses indentation-sensitive syntax (like Python). Use 2 spaces or tabs consistently. The canonical formatter always outputs 2-space indentation.
 
-A `.dip` file may optionally declare its **format version** on the first line, before the `workflow` declaration — e.g. `dip 2`. With no declaration the version defaults to **1**, and the formatter only emits the `dip N` line for versions greater than 1 (a v1 file never gains one). The version is parsed before the workflow body so future format versions can change edge syntax wholesale; `dippin fmt --migrate` re-emits a file in its current format version, which today is a no-op identity pass for v1.
+A `.dip` file may optionally declare its **format version** on the first line, before the `workflow` declaration — e.g. `dip 2`. With no declaration the version defaults to **1**, and the formatter only emits the `dip N` line for versions greater than 1 (a v1 file never gains one). The version is parsed before the workflow body so future format versions can change edge syntax wholesale; `dippin fmt --migrate` re-emits a file in its current format version, still formatting it to canonical form — today the v1→v1 migration itself is an identity pass with no version transform.
 
 ## Workflow Header
 
