@@ -4,6 +4,20 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.42.0] — 2026-06-16
+
+Routing-syntax **Phase 0 complete** — the human-gate `choice:` routing key and the `weight:` soft-deprecation lint. All changes are dippin-side only; no behavior is gated on a paired runtime (per `never-gate-dippin-on-tracker`). Non-breaking: every valid v1 `.dip` file parses, validates, and formats unchanged — `weight:` still parses (carry-only) and merely warns now.
+
+### Added
+- `choice:` edge attribute — a dedicated human-gate routing key that disambiguates the routing intent from a display-only `label:` ([#130](https://github.com/2389-research/dippin-lang/issues/130), [#151](https://github.com/2389-research/dippin-lang/pull/151)). **Carry-only**: dippin parses, validates, formats, exports (a distinct DOT attribute), and round-trips `choice:` (`ir.Edge.Choice`) but assigns it no execution semantics — a paired runtime interprets it. Mirrors the carry-only `override:` shape (#125). `DIP150` (Hint) flags a label-routing human gate (mode `choice`, `yes_no`, or the unset default) whose outgoing edge sets a non-empty `label:` but no `choice:` — in Phase 0 that label doubles as the load-bearing routing key, so the hint suggests marking it explicitly; `freeform`/`interview` gates (which route by text/answers, not labels) are exempt. **Phase-0 source-compatibility (no `dip 2` bump)**: `label:` is NOT made display-only — `choice:` wins as the routing key when present, and when absent `label:` still serves as the routing key, so existing human-choice workflows route unchanged. Editor surfaces (tree-sitter grammar + highlights, zed, vscode tmLanguage) updated.
+- `DIP151` (Warning) — soft-deprecation of the `weight:` edge attribute ([#131](https://github.com/2389-research/dippin-lang/issues/131), [#152](https://github.com/2389-research/dippin-lang/pull/152)). `weight:` was tier 4 of the 5-level routing cascade — a speculative priority hint — but the cascade never consults it and no real `.dip` workflow uses it. The lint fires one diagnostic per edge with a non-zero `weight:`, steering authors toward conditions / `on` / a single unconditional fallback. **Carry-only / no breakage**: `weight:` still parses exactly as before — dippin only now warns. Removing the keyword and the cascade tier is deferred to `dip 2` ([#134](https://github.com/2389-research/dippin-lang/issues/134)). Surfaces in lint/check/watch/doctor.
+
+### Runtime pairing (requires an enforcing runtime)
+- `choice:` unblocks the tracker's `convertEdge` follow-up: once this is tagged, the engine prefers `ir.Edge.Choice` over `Label` as the human-gate matching key (falling back to `Label` when `choice:` is absent). Inert on the dippin side until the paired runtime reads it.
+
+### Docs
+- Website, editor, and grammar surfaces resynced to the v0.41.0 language surface ([#150](https://github.com/2389-research/dippin-lang/pull/150)) — content-only, no behavior change: `site/content/{validation,language,cli}.md` counts/ranges and the DIP148/DIP149 entries, `on`/`loop`/`dip N`/single-quote notes, tree-sitter/zed/vscode keyword highlighting, and the single-quoted `STRING` alternative in `GRAMMAR.ebnf`.
+
 ## [v0.41.0] — 2026-06-16
 
 Routing-syntax Phase 0 plus the `dip 2` version foundation. All changes are dippin-side only — no behavior is gated on a paired runtime (per `never-gate-dippin-on-tracker`). Non-breaking: every valid v1 `.dip` file parses, validates, and formats unchanged (the one intentional rejection is a previously-silently-dropped unknown edge attribute, now diagnosed — see below).
