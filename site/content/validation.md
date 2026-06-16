@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "57 diagnostic codes for AI pipeline workflows. 10 structural errors and 47 semantic warnings catch bugs before runtime."
+description: "59 diagnostic codes for AI pipeline workflows. 10 structural errors and 49 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "57 diagnostic codes — 10 structural errors and 47 semantic warnings — to catch problems before runtime."
+subtitle: "59 diagnostic codes — 10 structural errors and 49 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP147): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP149): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP147)
+## Semantic Warnings (DIP101-DIP149)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -308,4 +308,24 @@ A `tool_access: none` agent declares a context key in `writes:`, and a downstrea
 hint[DIP147]: restricted agent "Summarize" (tool_access: none) writes context key "summary" that tool-bearing agent "Act" reads — its output reaches a privileged prompt
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP147) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+### DIP148 — Negative `last_response_truncate`
+
+**Severity:** Warning
+
+An agent node (or a parallel-branch override) sets `last_response_truncate` to a negative value. The field is a character cap on the prior node's response before it is auto-injected into this agent's prompt (a mitigation for the `${ctx.last_response}` flow); a negative cap is meaningless. On an agent, `0` (or unset) means no truncation; on a parallel-branch override, `0` (or unset) inherits the target agent's cap. Detection only — dippin carries and lints the field; a runtime enforces the truncation.
+
+```text
+warning[DIP148]: agent "Writer" last_response_truncate is -1; cannot be negative
+```
+
+### DIP149 — Ambiguous routing
+
+**Severity:** Warning
+
+A node has two or more **unconditional** (no `when`) outgoing forward edges. Both are equally eligible, so which one fires is decided only by the routing cascade's lexical tiebreak — the alphabetical order of the target node ID. That is silent action-at-a-distance: renaming a target node can change which edge fires with no other change. Restart/`loop` back-edges are excluded, and `parallel` fan-out and `human` choice gates are exempt. Keep one unconditional edge as the default fallback and guard the others with a `when` condition.
+
+```text
+warning[DIP149]: node "Route" has multiple unconditional outgoing edges; which one fires is decided only by the lexical tiebreak
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP149) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.

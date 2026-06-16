@@ -316,10 +316,16 @@ IDENTIFIER      = ( letter | digit ) { letter | digit | "_" | "-" | "." | "/" } 
 (* (enforced by ir.IsOutcomeToken). A "." / "/" / quoted value needs a `when`. *)
 OUTCOME_TOKEN   = ( letter | digit ) { letter | digit | "_" | "-" } ;
 
-STRING          = '"' { string_char } '"' ;
+STRING          = '"' { string_char } '"'
+                | "'" { single_string_char } "'" ;
 
 string_char     = ? any character except '"' and '\' ?
                 | '\' ( '"' | '\' ) ;
+
+(* Single-quoted strings are literal: backslashes are not escapes.  *)
+(* The only escape is a doubled '' which produces one '. (YAML-style) *)
+single_string_char = ? any character except "'" ?
+                | "'" "'" ;
 
 INTEGER         = digit { digit } ;
 

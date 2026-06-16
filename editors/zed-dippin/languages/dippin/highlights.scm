@@ -15,6 +15,7 @@
   "conditional"
   "parallel"
   "fan_in"
+  "manager_loop"
 ] @type
 
 ; Edge / condition keywords
@@ -24,6 +25,10 @@
   "or"
   "not"
 ] @keyword.operator
+
+; Format version declaration
+(version_decl
+  "dip" @keyword)
 
 ; Comparison operators
 (compare_op) @operator
@@ -54,6 +59,12 @@
   "weight" @property)
 (edge_attr
   "restart" @property)
+(edge_attr
+  "override" @property)
+(edge_attr
+  "on" @keyword.operator)
+(edge_attr
+  "loop" @keyword)
 
 ; Identifiers in declarations
 (workflow_decl
@@ -71,6 +82,8 @@
 (parallel_node
   (identifier) @function)
 (fan_in_node
+  (identifier) @function)
+(manager_loop_node
   (identifier) @function)
 
 ; Edge source/target

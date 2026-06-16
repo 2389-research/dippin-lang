@@ -25,6 +25,8 @@ Every `.dip` file contains exactly one workflow. The top-level structure has up 
 
 Dippin uses indentation-sensitive syntax (like Python). Use 2 spaces or tabs consistently. The canonical formatter always outputs 2-space indentation.
 
+A `.dip` file may optionally declare its **format version** on the first line, before the `workflow` declaration — e.g. `dip 2`. With no declaration the version defaults to **1**, and the formatter only emits the `dip N` line for versions greater than 1 (a v1 file never gains one). The version is parsed before the workflow body so future format versions can change edge syntax wholesale; `dippin fmt --migrate` re-emits a file in its current format version, which today is a no-op identity pass for v1.
+
 ## Workflow Header
 
 The workflow declaration is the first line, followed by required and optional header fields:
@@ -268,7 +270,7 @@ Conditional nodes accept only common fields (`label`, `class`, `reads`, `writes`
 The `edges` block defines connections between nodes. Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [when <condition>] [label: <text>] [weight: <int>] [restart: true]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop]
 ```
 
 ### Basic and Conditional Edges
@@ -285,22 +287,39 @@ The `edges` block defines connections between nodes. Each edge is a single line:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
+| `on <token>` | Token | Shorthand for an equality guard against the source node's outcome channel — agent (`ctx.outcome`) or tool + `marker_grep` (`ctx.tool_marker`) |
 | `when <expr>` | Condition | Boolean guard — edge only traversed if true |
 | `label: <text>` | String | Human-readable label (used for human gate choices) |
 | `weight: <int>` | Integer | Priority hint — higher wins among competing edges |
-| `restart: true` | Boolean | Marks this as a back-edge (loop restart) |
+| `loop` | Flag | Bare keyword marking a back-edge (loop restart). Legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop` |
 
-### Restart Edges
+### Outcome Shorthand (`on`)
 
-Restart edges create controlled loops. When followed, the engine increments a restart counter (max controlled by `max_restarts`), clears downstream nodes, resets retry budgets, and resumes from the target.
+The most common condition is an equality test against the source node's *natural outcome channel*. `on <token>` is shorthand for exactly that:
 
 ```
-    Task -> Start when ctx.outcome = fail label: "retry" restart: true
+    Review -> Approve  on success      # = when ctx.outcome = success
+    Review -> Reject   on fail         # = when ctx.outcome = fail
+    Tests  -> Ship     on tests_green  # = when ctx.tool_marker = tests_green
 ```
+
+The channel comes from the source node's kind: **agent** nodes use `ctx.outcome`; **tool** nodes that declare `marker_grep` use `ctx.tool_marker`. `on` is pure sugar — it produces the identical condition, is non-breaking, and `dippin fmt` rewrites eligible `when` edges into `on` form. Sources without an outcome channel — human gates, `conditional` nodes, and tools without `marker_grep` — have no `on` channel; use `when` there, as well as for anything that isn't a single equality (`and`/`or`, `contains`, `!=`, etc.).
+
+### Loop Edges
+
+A `loop` edge creates a controlled back-edge. When followed, the engine increments a restart counter (max controlled by `max_restarts`), clears downstream nodes, resets retry budgets, and resumes from the target.
+
+```
+    Validate -> Implement when ctx.outcome = fail loop
+```
+
+`loop` is a bare keyword; the legacy `restart: true` still parses and `dippin fmt` rewrites it to `loop`. Because `loop` is a reserved bare keyword, write `when ctx.x = "loop"` (quoted) for the literal value on a condition's right-hand side.
 
 ## Conditions
 
 Conditions appear on edges after the `when` keyword. All operators perform string comparison.
+
+String values in conditions and `label:` may be **unquoted** (`success`), **double-quoted** (`"needs review"`, supporting `\"` and `\\` escapes), or **single-quoted** (YAML-style literal, where `''` is the only escape — handy for regex-like values: `'^(green|red)$'`). A single-quoted edge value normalizes to double quotes on `dippin fmt`.
 
 ### Comparison Operators
 

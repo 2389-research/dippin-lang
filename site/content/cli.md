@@ -71,8 +71,8 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 
 <div class="cmd-card">
   <h3>fmt</h3>
-  <div class="cmd-usage">dippin fmt [--check] [--write] &lt;file&gt;</div>
-  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting.</p>
+  <div class="cmd-usage">dippin fmt [--check] [--write] [--migrate] &lt;file&gt;</div>
+  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting. <code>--migrate</code> re-emits a file in its current format version — today a no-op v1→v1 identity pass, scaffolding for future version migrations.</p>
 </div>
 
 <div class="cmd-card">
