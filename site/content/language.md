@@ -292,6 +292,7 @@ The `edges` block defines connections between nodes. Each edge is a single line:
 | `label: <text>` | String | Human-readable label (used for human gate choices) |
 | `weight: <int>` | Integer | Priority hint — higher wins among competing edges |
 | `loop` | Flag | Bare keyword marking a back-edge (loop restart). Legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop` |
+| `override: true` | Boolean | Carried, not interpreted by dippin — marks a human-authored validation override for a paired runtime to act on |
 
 ### Outcome Shorthand (`on`)
 
