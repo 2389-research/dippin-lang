@@ -213,6 +213,7 @@
       "begin": "'",
       "end": "'",
       "name": "string.quoted.single.dippin",
+      "applyEndPatternLast": 1,
       "patterns": [
         {
           "match": "''",
