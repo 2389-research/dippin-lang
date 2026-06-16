@@ -11,7 +11,8 @@
     { "include": "#parallel-fanin" },
     { "include": "#edge" },
     { "include": "#field" },
-    { "include": "#string" }
+    { "include": "#string" },
+    { "include": "#string-single" }
   ],
   "repository": {
     "comment": {
@@ -204,6 +205,18 @@
         {
           "match": "\\$\\{[^}]+\\}",
           "name": "variable.other.interpolation.dippin"
+        }
+      ]
+    },
+
+    "string-single": {
+      "begin": "'",
+      "end": "'",
+      "name": "string.quoted.single.dippin",
+      "patterns": [
+        {
+          "match": "''",
+          "name": "constant.character.escape.dippin"
         }
       ]
     }

@@ -322,8 +322,8 @@ STRING          = '"' { string_char } '"'
 string_char     = ? any character except '"' and '\' ?
                 | '\' ( '"' | '\' ) ;
 
-(* Single-quoted strings are literal: backslashes are not escapes.  *)
-(* The only escape is a doubled '' which produces one '. (YAML-style) *)
+(* Single-quoted strings are literal: backslashes are not escapes.   *)
+(* The only escape is a doubled '' which produces a single ' (YAML-style). *)
 single_string_char = ? any character except "'" ?
                 | "'" "'" ;
 
