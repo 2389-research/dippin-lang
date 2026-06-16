@@ -1320,9 +1320,12 @@ for display.
 hint[DIP150]: human gate "Approve" routes by label "yes"; use choice: "yes" to mark the routing key (label: stays for display)
 ```
 
-**Trigger:** A `human` node has an outgoing edge with a non-empty `label:` and no
-`choice:`. It does **not** fire when `choice:` is already present, or for an edge
-whose source node is not a `human` node.
+**Trigger:** A **label-routing** `human` node — mode `choice`, `yes_no`, or the
+unset default (a mode-less human gate with labeled edges is the canonical
+multi-choice gate) — has an outgoing edge with a non-empty `label:` and no
+`choice:`. It does **not** fire when `choice:` is already present, for an edge
+whose source node is not a `human` node, or for `freeform` and `interview` gates
+(they route by open text / collected answers, not edge labels).
 
 **Fix:** Add `choice: "<key>"` to mark the routing key explicitly, leaving
 `label:` for display. This is a Hint, not a Warning — these workflows route

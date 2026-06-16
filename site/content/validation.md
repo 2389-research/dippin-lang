@@ -332,7 +332,7 @@ warning[DIP149]: node "Route" has multiple unconditional outgoing edges; which o
 
 **Severity:** Hint
 
-An outgoing edge from a `human` node sets a non-empty `label:` but no `choice:`. In Phase 0 the label is overloaded — besides being display text, it is the routing key the runtime matches the user's selection against, so nothing in the syntax signals that the label is load-bearing. Add `choice: "<key>"` to mark the routing key explicitly, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent, so existing workflows route unchanged. Does not fire when `choice:` is already set or for non-`human` source nodes.
+An outgoing edge from a **label-routing** `human` node (mode `choice`, `yes_no`, or the unset default) sets a non-empty `label:` but no `choice:`. In Phase 0 the label is overloaded — besides being display text, it is the routing key the runtime matches the user's selection against, so nothing in the syntax signals that the label is load-bearing. Add `choice: "<key>"` to mark the routing key explicitly, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent, so existing workflows route unchanged. Does not fire when `choice:` is already set, for non-`human` source nodes, or for `freeform`/`interview` gates (which route by text/answers, not labels).
 
 ```text
 hint[DIP150]: human gate "Approve" routes by label "yes"; use choice: "yes" to mark the routing key (label: stays for display)

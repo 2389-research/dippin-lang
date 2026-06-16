@@ -90,14 +90,35 @@ func lintHumanChoiceKey(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
+// nonRoutingHumanModes are the human gate modes whose outgoing edge labels are
+// display text, not the routing key the runtime matches a selection against:
+// freeform takes open text, and interview collects answers (the same reason
+// DIP129 says "interview does not route by label"). DIP150 does not flag their
+// labeled edges. Every other mode — choice, yes_no, and the unset default (a
+// mode-less human gate with labeled edges is the canonical multi-choice gate) —
+// routes by label/selection in Phase 0.
+var nonRoutingHumanModes = map[string]bool{
+	"freeform":  true,
+	"interview": true,
+}
+
 // humanLabelRoutesWithoutChoice reports whether edge e routes a human gate by a
 // display label: with no explicit choice: key — the condition DIP150 flags.
 func humanLabelRoutesWithoutChoice(w *ir.Workflow, e *ir.Edge) bool {
 	if e.Label == "" || e.Choice != "" {
 		return false
 	}
-	n := w.Node(e.From)
-	return n != nil && n.Kind == ir.NodeHuman
+	return sourceIsLabelRoutingHuman(w.Node(e.From))
+}
+
+// sourceIsLabelRoutingHuman reports whether n is a human gate whose mode routes
+// by edge label (see nonRoutingHumanModes for the exclusions).
+func sourceIsLabelRoutingHuman(n *ir.Node) bool {
+	if n == nil || n.Kind != ir.NodeHuman {
+		return false
+	}
+	cfg, ok := n.Config.(ir.HumanConfig)
+	return ok && !nonRoutingHumanModes[cfg.Mode]
 }
 
 func checkInterviewLabels(n *ir.Node, edges []*ir.Edge) *Diagnostic {
