@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 60 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (59 documented sections):
+Dippin registers 61 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (60 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP150): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP151): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP150<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP151<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP150)
+## Semantic Lint Warnings (DIP101–DIP151)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1338,6 +1338,30 @@ existing human-choice workflows route unchanged. See
 
 ---
 
+### DIP151: Edge weight is unused by routing
+
+**Severity**: Warning
+
+An edge carries a `weight:` attribute. `weight:` was tier 4 of the 5-level
+routing cascade — a speculative priority hint meant to break ties when conditions
+and labels don't resolve a choice. In practice the cascade never consults it and
+no real workflow uses it. The keyword still **parses** (carry-only, no breakage
+in Phase 0), but both the keyword and the cascade tier are slated for removal
+under `dip 2`. This warning is the soft-deprecation signal.
+
+```text
+warning[DIP151]: edge "Route" -> "A" sets weight: 5, which routing does not use; guard edges with when / on or rely on a single unconditional fallback instead
+```
+
+**Trigger:** Any edge with a non-zero `weight:` value (`weight:` defaults to 0
+when unset). One diagnostic per offending edge.
+
+**Fix:** Remove `weight:`. Express edge priority with conditions instead — guard
+edges with `when` / `on`, or rely on a single unconditional fallback to make
+routing explicit and deterministic.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1354,7 +1378,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP150 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP151 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

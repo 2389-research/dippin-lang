@@ -50,7 +50,7 @@ Each edge is a single line:
 | `when` | Condition | No | Boolean guard expression. Edge is only traversed if true at runtime. |
 | `label` | String | No | Human-readable text. Displayed on the edge in DOT exports. Also used for human gate choice matching when no `choice:` is set (see [Choice keys vs display labels](#choice-keys-vs-display-labels)). |
 | `choice` | String | No | Carried, not interpreted by dippin. Explicit human-gate routing key the paired runtime matches the user's selection against; lets `label:` stay display-only. When set it is the routing key; when absent the runtime falls back to `label:`. |
-| `weight` | Integer | No | Priority hint. Higher values win when multiple edges are candidates. |
+| `weight` | Integer | No | **Soft-deprecated.** Parsed but **unused by routing**; slated for removal in `dip 2`. Raises [DIP151](validation.md#dip151-edge-weight-is-unused-by-routing). Historically a priority hint (higher values win when multiple edges are candidates), but the cascade never consults it — guard edges with `when` / `on` instead. |
 | `loop` | Flag | No | Bare keyword marking this as a back-edge that triggers a loop restart. The legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop`. |
 | `override` | Boolean | No | Carried, not interpreted by dippin. Marks an edge as a human-authored validation override for a paired runtime to act on (e.g. tracker's `validation_overridden` flow); dippin does not assign it any execution semantics. |
 
@@ -136,6 +136,8 @@ explicit key.
 
 ### Weighted Edges
 
+> **Soft-deprecated (raises [DIP151](validation.md#dip151-edge-weight-is-unused-by-routing)).** `weight:` still parses (carry-only — no breakage), but routing never consults it and no real workflow uses it. Both the keyword and the cascade tier are slated for removal in `dip 2`. Express priority with conditions instead — guard edges with `when` / `on`, or rely on a single unconditional fallback. The description below is retained for historical context.
+
 Weight provides a priority hint when multiple edges compete:
 
 ```dippin
@@ -180,7 +182,7 @@ When a node completes, the engine selects the next edge using this cascade (firs
 | 1 | **Condition match** | First edge whose `when` condition evaluates to true |
 | 2 | **Handler preference** | Edge whose label matches the node's `PreferredLabel` from its outcome |
 | 3 | **Handler suggestion** | Edge leading to a node in the handler's `SuggestedNextNodes` |
-| 4 | **Weight** | Highest `weight` value among remaining edges |
+| 4 | **Weight** | _Soft-deprecated ([DIP151](validation.md#dip151-edge-weight-is-unused-by-routing)) — parsed but unused by routing; slated for removal in `dip 2`._ Historically: highest `weight` value among remaining edges |
 | 5 | **Lexical** | Alphabetically first by target node ID |
 
 This means conditions always take precedence over labels, and labels over weights. The lexical fallback ensures deterministic behavior.
@@ -361,6 +363,8 @@ graph LR
 ```
 
 ### Weighted fallback
+
+> **Soft-deprecated ([DIP151](validation.md#dip151-edge-weight-is-unused-by-routing)).** `weight:` is parsed but unused by routing and slated for removal in `dip 2`. Prefer conditions / `on` or a single unconditional fallback. Shown here for historical context.
 
 ```mermaid
 graph LR

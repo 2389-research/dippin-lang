@@ -69,6 +69,29 @@ func checkAmbiguousRouting(n *ir.Node, edges []*ir.Edge) (Diagnostic, bool) {
 	}, true
 }
 
+// lintUnusedWeight checks DIP151: an edge carrying a `weight:` attribute. The
+// routing cascade does not consult weights, so the keyword is dead machinery —
+// speculative tier-4 priority that no real workflow uses. weight: still parses
+// (carry-only, no breakage in Phase 0), but the keyword and the cascade tier are
+// slated for removal under `dip 2`. The lint steers authors toward conditions,
+// `on`, or a single unconditional fallback before that removal lands.
+func lintUnusedWeight(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	for _, e := range w.Edges {
+		if e.Weight == 0 {
+			continue
+		}
+		diags = append(diags, Diagnostic{
+			Code:     DIP151,
+			Severity: SeverityWarning,
+			Message:  fmt.Sprintf("edge %q -> %q sets weight: %d, which routing does not use; guard edges with when / on or rely on a single unconditional fallback instead", e.From, e.To, e.Weight),
+			Location: e.Source,
+			Help:     "weight: is parsed but unused by routing and is slated for removal in dip 2; remove it or express priority with conditions",
+		})
+	}
+	return diags
+}
+
 // countUnconditionalForwardEdges counts edges with no condition that are not
 // restart back-edges.
 func countUnconditionalForwardEdges(edges []*ir.Edge) int {

@@ -166,6 +166,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Add choice: \"<key>\" to mark the routing key explicitly, leaving label: for display. choice: wins when present; label: still routes when choice: is absent (Phase 0 fallback).",
 			Example: "human Approve\n  mode: choice\nApprove -> Ship label: \"yes\"  // DIP150: add choice: \"yes\" to mark the routing key",
 		},
+		DIP151: {
+			Code:    DIP151,
+			Summary: "edge weight: is unused by routing (soft-deprecated)",
+			Trigger: "An edge carries a `weight:` attribute. weight: was tier 4 of the routing cascade — a speculative priority hint — but the cascade never consults it, and no real workflow uses it. It still parses (carry-only, no breakage), but the keyword and the cascade tier are slated for removal under `dip 2`.",
+			Fix:     "Remove weight:. Express edge priority with conditions instead — guard edges with `when` / `on`, or rely on a single unconditional fallback to make routing explicit.",
+			Example: "agent Route\n  prompt: \"decide\"\nRoute -> A weight: 5  // DIP151: weight: is unused by routing; guard with when or drop it\nRoute -> B",
+		},
 	}
 }
 
