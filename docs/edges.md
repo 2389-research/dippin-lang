@@ -171,6 +171,42 @@ Loop edges are **not** counted as cycles by DIP005 validation — they are the i
 
 In DOT export, loop edges are styled with dashed lines.
 
+### Section-level default (`else`)
+
+A single `else -> <node>` line, written at the bottom of the `edges` block, is the
+graph's **success-side default destination**: any node whose guard edges all fail to
+match, and which has no explicit unconditional edge of its own, routes here.
+
+```dippin
+  edges
+    SetupRun -> FetchIssues  on setup-ok
+    SetupRun -> Done         on setup-resume-required
+    RunTests -> Package      on tests-ok
+    else -> Cleanup
+```
+
+It exists to collapse the **error funnel** — the dominant line-count cost in real
+workflows, where a tool succeeds (exit 0) but emits a `…-failed` marker and so every
+such marker had to be hand-routed to one shared handler, one edge at a time. `else`
+states "everything not handled above goes here" once.
+
+- **At most one `else` per edges block.** A second is a parse error.
+- **Success-side only.** `else` never intercepts a genuine node *failure* (a tool exit
+  ≠ 0, an agent error). Failures route via the failure cascade (`on fail` edge →
+  `defaults.on_failure`); `else` catches *unmatched non-failure outcomes*, including the
+  exit-0 `…-failed` marker the engine sees as success. The two are distinct channels that
+  never compete — see [Failure Handling](#failure-handling).
+- **It is the node's unconditional default for lint purposes.** A node covered by `else`
+  is not flagged [DIP102](validation.md#dip102) (no default edge) or
+  [DIP101](validation.md#dip101) (reachable only via conditional edges) — `else` is its
+  fallback.
+- A node that *does* declare its own unconditional edge uses that; `else` applies only to
+  nodes without one.
+
+dippin validates that the `else` target node exists (DIP003) and treats it as reachable
+(DIP004); the runtime resolves an unmatched node to the `else` target. See
+[the error-funnel decision](proposals/2026-06-16-error-funnel-default.md).
+
 ---
 
 ## Routing Priority
@@ -186,6 +222,10 @@ When a node completes, the engine selects the next edge using this cascade (firs
 | 5 | **Lexical** | Alphabetically first by target node ID |
 
 This means conditions always take precedence over labels, and labels over weights. The lexical fallback ensures deterministic behavior.
+
+When no guarded edge matches and the node has no unconditional edge of its own, a
+section-level [`else -> <node>`](#section-level-default-else), if declared, is the node's
+default destination (success-side only — see [Failure Handling](#failure-handling)).
 
 > **Don't rely on the lexical tiebreak.** Priority 5 resolves ties by the
 > *spelling* of the target node ID, so renaming a target can silently change
@@ -221,6 +261,17 @@ Graph-level `on_failure` is declared in the `defaults` block — it is a workflo
 A loop edge (`loop`) tagged with `when ctx.outcome = fail` falls under priority 1 and carries its own `max_restarts` budget rather than `max_retries`.
 
 **Separation of concerns:** dippin validates that the `on_failure` target node exists (DIP003) and is reachable (DIP004); the runtime owns the evaluation ordering shown above. DIP144 warns when an agent node has no failure route at any level of this cascade; any of priorities 1–4 suppresses the warning.
+
+**`else` vs `on_failure` — two channels, never competing.** The section-level
+[`else`](#section-level-default-else) default and `defaults.on_failure` fire on *different
+triggers* and resolve separately:
+
+- A **genuine node failure** (tool exit ≠ 0, agent/human error) takes the failure cascade
+  above — `on fail` edge → bounded retry → `fallback_target` → `defaults.on_failure` → halt.
+  `else` is **not** in this path; a hard failure is never swallowed by `else`.
+- A **non-failure outcome with no matching guard** (the funnel case — including an exit-0
+  `…-failed` marker the engine sees as success) takes the node's own unconditional edge if
+  present, otherwise the section `else`, otherwise halt.
 
 ---
 
@@ -386,8 +437,8 @@ graph LR
 
 | Code | Rule | Severity |
 |------|------|----------|
-| DIP003 | Edge endpoints or on_failure target must reference an existing node | Error |
-| DIP004 | All nodes (including the on_failure target) must be reachable from start | Error |
+| DIP003 | Edge endpoints, `on_failure`, or `else` target must reference an existing node | Error |
+| DIP004 | All nodes (including the `on_failure` and `else` targets) must be reachable from start | Error |
 | DIP005 | No unconditional cycles (loop edges are exempt) | Error |
 | DIP006 | Exit node must have zero outgoing edges | Error |
 | DIP009 | No duplicate edges (same from, to, and condition) | Error |

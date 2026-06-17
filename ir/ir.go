@@ -9,18 +9,25 @@ import "time"
 
 // Workflow is the top-level IR structure representing a complete pipeline.
 type Workflow struct {
-	Name       string
-	Version    string            // Dippin format version
-	Goal       string            // Human-readable objective
-	Start      string            // Explicit entry node ID (required)
-	Exit       string            // Explicit exit node ID (required)
-	Defaults   WorkflowDefaults  // Graph-level config
-	Vars       map[string]string // User-defined workflow variables
-	Requires   []string          // Environmental dependencies (e.g. ["git", "docker"]); semantics live in consumers
-	Nodes      []*Node           // Ordered for deterministic processing
-	Edges      []*Edge
-	Stylesheet []StylesheetRule // Theme/styling rules
-	SourceMap  *SourceMap       // File/line mapping for diagnostics
+	Name     string
+	Version  string            // Dippin format version
+	Goal     string            // Human-readable objective
+	Start    string            // Explicit entry node ID (required)
+	Exit     string            // Explicit exit node ID (required)
+	Defaults WorkflowDefaults  // Graph-level config
+	Vars     map[string]string // User-defined workflow variables
+	Requires []string          // Environmental dependencies (e.g. ["git", "docker"]); semantics live in consumers
+	Nodes    []*Node           // Ordered for deterministic processing
+	Edges    []*Edge
+	// ElseTarget is the section-level `else -> <node>` default of the edges block:
+	// the destination for any node whose guard edges all fail to match and which
+	// has no explicit unconditional edge of its own. It is the success-side default
+	// (it never intercepts a genuine node failure, which routes via Defaults.OnFailure).
+	// Empty when no `else` is declared. See docs/proposals/2026-06-16-error-funnel-default.md.
+	ElseTarget       string
+	ElseTargetSource SourceLocation   // Source location of the `else` entry, for diagnostics
+	Stylesheet       []StylesheetRule // Theme/styling rules
+	SourceMap        *SourceMap       // File/line mapping for diagnostics
 }
 
 // StylesheetRule pairs a selector with a set of properties.

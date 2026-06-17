@@ -23,8 +23,39 @@ func (p *Parser) parseEdgesBody() {
 			p.lexer.NextToken()
 			continue
 		}
-		p.parseSingleEdge()
+		p.parseEdgeOrElse(t)
 	}
+}
+
+// parseEdgeOrElse dispatches a non-blank edges-block entry: the section-level
+// `else -> <node>` default, or an ordinary `from -> to` edge.
+func (p *Parser) parseEdgeOrElse(t Token) {
+	if t.Type == TokenIdentifier && t.Value == "else" {
+		p.parseElseDefault()
+		return
+	}
+	p.parseSingleEdge()
+}
+
+// parseElseDefault parses a section-level `else -> <node>` entry — the graph's
+// success-side default destination. It populates Workflow.ElseTarget rather than
+// appending an ir.Edge (the funnel default has no source node, so it is not a
+// normal edge). A second `else` in the same block is diagnosed and ignored.
+func (p *Parser) parseElseDefault() {
+	tok := p.lexer.NextToken() // 'else'
+	p.expect(TokenArrow)
+	to := p.lexer.NextToken().Value
+	p.consumeUntilNewline() // tolerate (and discard) any trailing tokens; else takes no attributes
+	p.expect(TokenNewline)
+	if p.workflow.ElseTarget != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"duplicate `else` default at %d:%d; an edges block may declare at most one `else`",
+			tok.Location.Line, tok.Location.Column,
+		))
+		return
+	}
+	p.workflow.ElseTarget = to
+	p.workflow.ElseTargetSource = tok.Location
 }
 
 // parseSingleEdge parses a single edge declaration: "from -> to [attributes...]"

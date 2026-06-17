@@ -1,0 +1,41 @@
+workflow ErrorFunnel
+  goal: "Collapse the per-marker failure funnel with a section-level else default"
+  start: SetupRun
+  exit: Done
+
+  defaults
+    model: claude-sonnet-4-6
+    provider: anthropic
+
+  tool SetupRun
+    label: "Set up the worktree"
+    marker_grep: "^(setup-ok|setup-failed)$"
+    command: ./setup.sh
+
+  tool RunBuild
+    label: "Build the project"
+    marker_grep: "^(build-ok|build-failed)$"
+    command: ./build.sh
+
+  tool RunTests
+    label: "Run the test suite"
+    marker_grep: "^(tests-ok|tests-failed)$"
+    command: ./test.sh
+
+  tool Cleanup
+    label: "Tear down the worktree on any failure"
+    marker_grep: "^(cleanup-done)$"
+    command: ./cleanup.sh
+
+  agent Done
+    prompt: "Summarize the run outcome."
+
+  edges
+    SetupRun -> RunBuild  on setup-ok
+    RunBuild -> RunTests  on build-ok
+    RunTests -> Done      on tests-ok
+    Cleanup  -> Done      on cleanup-done
+    # Every *-failed marker (setup-failed, build-failed, tests-failed) has no
+    # matching guard above, so it falls through to this single funnel default
+    # instead of being hand-routed one edge at a time.
+    else -> Cleanup

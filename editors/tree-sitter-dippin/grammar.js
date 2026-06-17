@@ -110,10 +110,14 @@ module.exports = grammar({
 
     // ── Edges ─────────────────────────────────────────────────
     edges_section: ($) =>
-      seq("edges", $._indent, repeat1(choice($.edge_entry, $._newline)), $._dedent),
+      seq("edges", $._indent, repeat1(choice($.edge_entry, $.else_default, $._newline)), $._dedent),
 
     edge_entry: ($) =>
       seq($.identifier, "->", $.identifier, repeat($.edge_attr)),
+
+    // Section-level error-funnel default: `else -> <node>`. The destination for
+    // any node whose guards all fail and which has no explicit unconditional edge.
+    else_default: ($) => seq("else", "->", $.identifier),
 
     edge_attr: ($) =>
       choice(

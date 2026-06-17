@@ -208,9 +208,15 @@ common_field    = "label"           ":" field_value
 (* Edges Section                                              *)
 (* ═══════════════════════════════════════════════════════════ *)
 
-edges_section   = "edges" NEWLINE INDENT { edge_entry } OUTDENT ;
+edges_section   = "edges" NEWLINE INDENT { edge_entry | else_default } OUTDENT ;
 
 edge_entry      = IDENTIFIER "->" IDENTIFIER { edge_attr } NEWLINE ;
+
+(* Section-level error-funnel default: the destination for any node whose  *)
+(* guards all fail to match and which has no explicit unconditional edge.   *)
+(* Success-side only — a genuine node failure routes via on_failure, never  *)
+(* through else. At most one per edges block.                               *)
+else_default    = "else" "->" IDENTIFIER NEWLINE ;
 
 edge_attr       = "when" condition
                 | "on" OUTCOME_TOKEN (* sugar: equality vs the source node's  *)

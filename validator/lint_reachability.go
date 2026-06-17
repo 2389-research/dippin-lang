@@ -60,9 +60,13 @@ func allSourcesSafe(w *ir.Workflow, edges []*ir.Edge, outgoing map[string][]*ir.
 }
 
 // sourceIsSafe returns true if a source node guarantees its conditional
-// destinations are intentional: via exhaustive conditions, an unconditional
-// outgoing edge (mixed routing), or marker_grep-driven typed routing.
+// destinations are intentional: via a section `else` default that covers any
+// unmatched guard, exhaustive conditions, an unconditional outgoing edge (mixed
+// routing), or marker_grep-driven typed routing.
 func sourceIsSafe(w *ir.Workflow, nodeID string, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
+	if w.ElseTarget != "" {
+		return true
+	}
 	if exhaustive[nodeID] {
 		return true
 	}
@@ -146,9 +150,13 @@ func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 }
 
 // nodeIsSafeRouter returns true if the node's outgoing conditional edges
-// are intentional routing — either because the conditions are exhaustive
-// or because the node is a tool with marker_grep-driven typed routing.
+// are intentional routing — because a section `else` default covers any
+// unmatched guard, the conditions are exhaustive, or the node is a tool with
+// marker_grep-driven typed routing.
 func nodeIsSafeRouter(w *ir.Workflow, exhaustive map[string]bool, nodeID string) bool {
+	if w.ElseTarget != "" {
+		return true // a section `else` default is this node's unconditional fallback
+	}
 	return exhaustive[nodeID] || toolHasMarkerRouting(w, nodeID)
 }
 

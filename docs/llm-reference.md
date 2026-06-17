@@ -39,6 +39,7 @@ workflow <Name>
 
   edges
     <From> -> <To> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop] [override: true]
+    [else -> <NodeID>]   # success-side default for any node with no matching guard / unconditional edge; at most one per block
 ```
 
 ---

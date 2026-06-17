@@ -1,0 +1,60 @@
+package parser
+
+import (
+	"strings"
+	"testing"
+)
+
+// buildElseDip produces a workflow whose edges block contains the given lines
+// (each already indented relative to the block), so a section-level `else`
+// default can be exercised.
+func buildElseDip(edgeLines string) string {
+	return "workflow X\n" +
+		"  goal: \"Test else\"\n" +
+		"  start: A\n" +
+		"  exit: C\n" +
+		"\n" +
+		"  agent A\n" +
+		"    prompt: \"Do A.\"\n" +
+		"\n" +
+		"  agent B\n" +
+		"    prompt: \"Do B.\"\n" +
+		"\n" +
+		"  agent C\n" +
+		"    prompt: \"Do C.\"\n" +
+		"\n" +
+		"  edges\n" + edgeLines
+}
+
+// TestParseElseTarget: a section-level `else -> X` populates Workflow.ElseTarget
+// and does not create a normal edge.
+func TestParseElseTarget(t *testing.T) {
+	src := buildElseDip("    A -> B when ctx.outcome = success\n    else -> C\n")
+	p := NewParser(src, "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if w.ElseTarget != "C" {
+		t.Fatalf("ElseTarget = %q, want %q", w.ElseTarget, "C")
+	}
+	for _, e := range w.Edges {
+		if e.From == "else" || e.To == "else" {
+			t.Fatalf("else produced a spurious edge: %+v", e)
+		}
+	}
+	if len(w.Edges) != 1 {
+		t.Fatalf("got %d edges, want 1 (the A -> B edge only)", len(w.Edges))
+	}
+}
+
+// TestParseElseDuplicate: a second `else` in the same edges block is a diagnostic.
+func TestParseElseDuplicate(t *testing.T) {
+	src := buildElseDip("    A -> B when ctx.outcome = success\n    else -> C\n    else -> B\n")
+	p := NewParser(src, "test.dip")
+	_, _ = p.Parse()
+	diags := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(diags, "else") {
+		t.Fatalf("expected a duplicate-else diagnostic, got: %q", diags)
+	}
+}

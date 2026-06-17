@@ -193,6 +193,25 @@
         {
           "type": "edge_entry",
           "named": true
+        },
+        {
+          "type": "else_default",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "else_default",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
         }
       ]
     }
@@ -765,6 +784,10 @@
   },
   {
     "type": "edges",
+    "named": false
+  },
+  {
+    "type": "else",
     "named": false
   },
   {
