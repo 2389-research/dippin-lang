@@ -19,8 +19,9 @@ ships here — those land under the implementation issue this doc opens.
 *optional, engine-side* root-cause fix that needs no dippin syntax).
 
 On a faithful 6-node funnel fixture, (a) collapses the failure funnel from **7 hand-routed
-`-> Cleanup` edges (each with an audit `label:`) to 1 line**, taking the whole `edges` block
-from **14 edges → 8** and deleting **all 7 audit labels**. It generalizes across tool, agent,
+`-> Cleanup` edges (each with an audit `label:`) to 1 line**, taking the edges *out of the funnel
+nodes* from **14 → 8** (excluding the unchanged terminal `Cleanup -> Done`; see §2) and deleting
+**all 7 audit labels**. It generalizes across tool, agent,
 and human nodes; it lives entirely inside the `edges` block, so it stays consistent with
 [#134](https://github.com/2389-research/dippin-lang/issues/134) ("edges own destinations")
 instead of fighting it; and it has the smaller, cleaner runtime contract of the two.
@@ -337,9 +338,10 @@ brand-new lint and still leaves the looseness to fix separately.**
 
 ## 6. Runtime-contract implications
 
-Per standing policy, dippin ships the syntax/IR + spec delta now and **never gates on the tracker
-runtime** (see `never-gate-dippin-on-tracker`); this section documents the engine delta, it does
-not make dippin wait.
+Per standing project policy, dippin's implementation lands the syntax/IR plus a spec delta and
+**never gates on the tracker runtime**: the engine converges on the documented contract on its own
+schedule. This section records that engine-side delta so the spec can describe it; it does not make
+dippin's implementation wait on the engine.
 
 **(a) `else ->`.** The engine's routing resolution gains one terminal step, and `else` is the
 **non-failure** default — it must **not** intercept a genuine node failure on its way to
