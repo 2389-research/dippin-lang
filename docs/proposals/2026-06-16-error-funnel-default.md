@@ -317,12 +317,17 @@ hides unrouted markers today.
    `Cleanup`) is not falsely flagged once its incoming per-marker edges are replaced by `else`.
 
 **For (b):** no DIP102/coverage *rule* change is needed for the failure markers themselves — once a
-marker listed in `fail_markers:` is a node failure, the node's failure route is governed by the
-**DIP144** (`lintAgentFailureRoute`, `lint_failure_route.go:14`) family / `defaults.on_failure`,
-not DIP102. But (b) introduces a **new** validation obligation: `fail_markers:` values must be a
-subset of the `marker_grep` enum (a `fail_markers:` value the regex can never emit is dead config) — a new
-lint of its own. And the blanket `toolHasMarkerRouting` exemption still needs tightening
-independently, because (b) does nothing for non-failure unrouted markers like `filter-empty`.
+marker listed in `fail_markers:` is a node failure, the node's failure route is the ordinary
+runtime failure path (`on fail` guard / `defaults.on_failure`), not DIP102. But (b) needs **two**
+new pieces of lint, not one. First, `fail_markers:` values must be a subset of the `marker_grep`
+enum (a `fail_markers:` value the regex can never emit is dead config). Second — and this is a
+hidden cost — (b) creates *tool* failures that nothing currently lints: **DIP144**
+(`lintAgentFailureRoute`, `lint_failure_route.go:14`, via `needsFailureRoute` at `:31`) is scoped
+to **agent** nodes only and explicitly does **not** fire on tool nodes, so a tool whose
+`fail_markers:` failure has no `on fail` edge and no `defaults.on_failure` becomes a silent
+dead-end. (b) would therefore have to *extend* DIP144 (or add a tool analog) to stay safe. And the
+blanket `toolHasMarkerRouting` exemption still needs tightening independently, because (b) does
+nothing for non-failure unrouted markers like `filter-empty`.
 
 Net: **(a)'s lint change is smaller and strictly corrective** (it tightens an exemption that is
 already too loose, and reuses the existing unconditional-default machinery), whereas **(b) adds a
@@ -344,11 +349,13 @@ it"* (`hasFailEdge`, `validator/lint_failure_route.go:65`). `else` is exactly su
 unconditional success-side edge, so a hard failure must skip it. The two channels are therefore
 resolved **separately, by node result**:
 
-- **Genuine node failure** (tool exit ≠ 0, agent/human error): retry budget → first matching
-  `on fail` guard → **`defaults.on_failure`** → halt. `else` is **not** in this path.
+- **Genuine node failure** (tool exit ≠ 0, agent/human error): consult the node's retry budget; if
+  exhausted, take the first matching `on fail` guard edge; if none matches, route to
+  **`defaults.on_failure`** if it is set; otherwise halt. `else` is **not** in this path.
 - **Non-failure outcome with no matching guard** (the funnel case — incl. an exit-0 `…-failed`
-  marker, which the engine sees as *success*): node's own unconditional edge → section **`else`**
-  → halt.
+  marker, which the engine sees as *success*): these are mutually exclusive fallbacks — if the node
+  has its own unconditional edge, that fires and `else` is never consulted; only a node *without*
+  one falls through to the section **`else`**; if neither exists, halt.
 
 So `else` (fires on any unmatched *non-failure* outcome) and `defaults.on_failure` (fires only on a
 genuine node failure) have **distinct triggers and never compete** — a failure can never be
