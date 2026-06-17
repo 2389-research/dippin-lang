@@ -21,7 +21,7 @@ ships here — those land under the implementation issue this doc opens.
 On a faithful 6-node funnel fixture, (a) collapses the failure funnel from **7 hand-routed
 `-> Cleanup` edges (each with an audit `label:`) to 1 line**, taking the edges *out of the funnel
 nodes* from **14 → 8** (excluding the unchanged terminal `Cleanup -> Done`; see §2) and deleting
-**all 7 audit labels**. It generalizes across tool, agent,
+**all 7 funnel audit labels**. It generalizes across tool, agent,
 and human nodes; it lives entirely inside the `edges` block, so it stays consistent with
 [#134](https://github.com/2389-research/dippin-lang/issues/134) ("edges own destinations")
 instead of fighting it; and it has the smaller, cleaner runtime contract of the two.
@@ -139,7 +139,10 @@ workflow ErrorFunnelBaseline
 
 **Baseline counts:** the six funnel **source** nodes emit **14 outgoing edges** (7 happy/outcome +
 7 funnel) — of which **7 are funnel `-> Cleanup` edges** (6 `…-failed` failures + the non-error
-`filter-empty`) carrying **7 audit `label:` tags**. (The
+`filter-empty`), each carrying a mechanical funnel audit `label:` — **7 funnel `label:` tags** in
+all. (The snippet carries one further `label:` — `resume_required` on the non-funnel
+`SetupRun -> Done` edge — which is a real display label, not funnel noise, and the metrics below
+deliberately exclude it.) (The
 counts throughout this doc are edges *out of the funnel nodes*; they exclude the terminal
 `Cleanup -> Done` edge, which is the handler's own exit and is unchanged by either design.) This is
 the DRY tax the spike targets.
@@ -190,7 +193,7 @@ but compounds the win.)
 | Metric | Baseline | (a) `else ->` | Δ |
 |---|---|---|---|
 | Funnel edges to `Cleanup` | 7 | **1** | −6 |
-| Audit `label:` tags | 7 | **0** | −7 |
+| Funnel audit `label:` tags | 7 | **0** | −7 |
 | Edges out of funnel nodes (excl. terminal `Cleanup -> Done`) | 14 | **8** | −6 |
 
 **Readability.** The 7 mechanically-named labels (`setup_failed`, `fetch_failed`, …) vanish —
@@ -254,7 +257,7 @@ failures that flow through the existing failure path (`on fail` edge / `defaults
 | Metric | Baseline | (b) `fail_markers:` | Δ |
 |---|---|---|---|
 | Funnel edges to `Cleanup` | 7 | **1** (`filter-empty`, still not a failure) | −6 |
-| Audit `label:` tags | 7 | **0** | −7 |
+| Funnel audit `label:` tags | 7 | **0** | −7 |
 | New per-node `fail_markers:` lines | 0 | **6** | +6 |
 | New `defaults.on_failure` line | 0 | 1 | +1 |
 | Net new/removed source lines | — | ≈ **break-even** | ~0 |
