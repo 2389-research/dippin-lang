@@ -68,13 +68,14 @@ node-name + `_failed`).
 ## 2. Baseline fixture — "today, verbose"
 
 A faithful, condensed funnel: six `tool` nodes, each `marker_grep`-ing an `…-ok` / `…-failed`
-pair (some with an extra non-failure outcome), each succeeding on exit 0, each hand-routing its
-`…-failed` marker to a single shared `Cleanup` handler with a per-marker audit label. Marker
+pair (some with an extra non-failure outcome), each succeeding on exit 0, each hand-routing every
+non-happy-path marker — the `…-failed` failures plus one non-error "no work" outcome
+(`filter-empty`) — to a single shared `Cleanup` handler with a per-marker audit label. Marker
 mechanics mirror the in-repo canonical [`examples/marker_routing.dip`](../../examples/marker_routing.dip).
 
 ```dippin
 workflow ErrorFunnelBaseline
-  goal: "Condensed dev-loop funnel: every tool failure marker hand-routed to Cleanup"
+  goal: "Condensed dev-loop funnel: every non-happy-path marker hand-routed to Cleanup"
   start: SetupRun
   exit: Done
 
@@ -123,7 +124,7 @@ workflow ErrorFunnelBaseline
     RunTests   -> Package      when ctx.tool_marker = tests-ok
     Package    -> Done         when ctx.tool_marker = pkg-ok
 
-    # --- the error funnel: 7 near-identical hand-routed failure edges ---
+    # --- the error funnel: 7 near-identical hand-routed mop-up edges (6 failures + filter-empty) ---
     SetupRun   -> Cleanup      when ctx.tool_marker = setup-failed            label: setup_failed
     FetchIssues-> Cleanup      when ctx.tool_marker = fetch-failed            label: fetch_failed
     PreFilter  -> Cleanup      when ctx.tool_marker = filter-empty            label: no_candidates
@@ -136,7 +137,8 @@ workflow ErrorFunnelBaseline
 ```
 
 **Baseline counts:** the six funnel **source** nodes emit **14 outgoing edges** (7 happy/outcome +
-7 failure) — of which **7 are funnel `-> Cleanup` edges** carrying **7 audit `label:` tags**. (The
+7 funnel) — of which **7 are funnel `-> Cleanup` edges** (6 `…-failed` failures + the non-error
+`filter-empty`) carrying **7 audit `label:` tags**. (The
 counts throughout this doc are edges *out of the funnel nodes*; they exclude the terminal
 `Cleanup -> Done` edge, which is the handler's own exit and is unchanged by either design.) This is
 the DRY tax the spike targets.
@@ -186,7 +188,7 @@ but compounds the win.)
 
 | Metric | Baseline | (a) `else ->` | Δ |
 |---|---|---|---|
-| Funnel failure edges | 7 | **1** | −6 |
+| Funnel edges to `Cleanup` | 7 | **1** | −6 |
 | Audit `label:` tags | 7 | **0** | −7 |
 | Edges out of funnel nodes (excl. terminal `Cleanup -> Done`) | 14 | **8** | −6 |
 
@@ -250,7 +252,7 @@ failures that flow through the existing failure path (`on fail` edge / `defaults
 
 | Metric | Baseline | (b) `fail_markers:` | Δ |
 |---|---|---|---|
-| Funnel failure edges | 7 | **1** (`filter-empty`, still not a failure) | −6 |
+| Funnel edges to `Cleanup` | 7 | **1** (`filter-empty`, still not a failure) | −6 |
 | Audit `label:` tags | 7 | **0** | −7 |
 | New per-node `fail_markers:` lines | 0 | **6** | +6 |
 | New `defaults.on_failure` line | 0 | 1 | +1 |
@@ -315,10 +317,10 @@ hides unrouted markers today.
    `Cleanup`) is not falsely flagged once its incoming per-marker edges are replaced by `else`.
 
 **For (b):** no DIP102/coverage *rule* change is needed for the failure markers themselves — once a
-`fail_marker` is a node failure, the node's failure route is governed by the **DIP144**
-(`lintAgentFailureRoute`, `lint_failure_route.go:14`) family / `defaults.on_failure`, not DIP102.
-But (b) introduces a **new** validation obligation: `fail_markers:` values must be a subset of the
-`marker_grep` enum (a typo'd `fail_marker` that the regex can never emit is dead config) — a new
+marker listed in `fail_markers:` is a node failure, the node's failure route is governed by the
+**DIP144** (`lintAgentFailureRoute`, `lint_failure_route.go:14`) family / `defaults.on_failure`,
+not DIP102. But (b) introduces a **new** validation obligation: `fail_markers:` values must be a
+subset of the `marker_grep` enum (a `fail_markers:` value the regex can never emit is dead config) — a new
 lint of its own. And the blanket `toolHasMarkerRouting` exemption still needs tightening
 independently, because (b) does nothing for non-failure unrouted markers like `filter-empty`.
 
