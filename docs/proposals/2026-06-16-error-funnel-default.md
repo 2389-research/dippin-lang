@@ -364,10 +364,9 @@ genuine node failure) have **distinct triggers and never compete** — a failure
 swallowed by `else`. This is a small, local addition to the resolver — one lookup of a
 graph-level field on the success side — with no change to how a marker is classified.
 
-> *(Earlier drafts of this section listed a single linear cascade with `else` ahead of
-> `defaults.on_failure`; that ordering would have let a hard failure with no `on fail` guard hit
-> `else` first and bypass the dedicated failure handler — the bug flagged by Codex's P2 review.
-> The two-channel resolution above is the corrected contract, and it is also the
+> *(A single linear cascade with `else` ahead of `defaults.on_failure` is tempting but wrong: it
+> would let a hard failure with no `on fail` guard hit `else` first and bypass the dedicated
+> failure handler. The two-channel resolution above is the correct contract, and it is also the
 > failure-routing contract #134 must adopt.)*
 
 **(b) `fail_markers:`.** The engine must, after a tool exits 0, check whether the emitted marker is
