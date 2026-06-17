@@ -33,9 +33,11 @@ the *failure* subset of unmatched markers, and pushes routing intent back onto t
 captured below as a runtime-contract note — the engine *may* reclassify markers as failures on
 its own, with no `.dip` surface.
 
-This unblocks #134: a node's failure now has one answer — *guards, then the node's own
-unconditional edge, then the section `else`, then `defaults.on_failure`* — which is exactly the
-contract `on fail` edges and `defaults.on_failure` must agree with.
+This unblocks #134 by settling failure flow into **two non-competing channels** (see §6): a
+*genuine node failure* takes the retry budget → `on fail` guard → `defaults.on_failure`, while a
+*non-failure unmatched outcome* (the funnel case) takes the node's unconditional edge → section
+`else`. `else` never intercepts a hard failure — exactly the contract `on fail` edges and
+`defaults.on_failure` must agree with.
 
 ---
 
@@ -133,8 +135,11 @@ workflow ErrorFunnelBaseline
     Cleanup    -> Done         when ctx.tool_marker = cleanup-done
 ```
 
-**Baseline counts:** 14 outgoing edges in the funnel region (7 happy/outcome + 7 failure),
-**7 funnel `-> Cleanup` edges**, **7 audit `label:` tags**. This is the DRY tax the spike targets.
+**Baseline counts:** the six funnel **source** nodes emit **14 outgoing edges** (7 happy/outcome +
+7 failure) — of which **7 are funnel `-> Cleanup` edges** carrying **7 audit `label:` tags**. (The
+counts throughout this doc are edges *out of the funnel nodes*; they exclude the terminal
+`Cleanup -> Done` edge, which is the handler's own exit and is unchanged by either design.) This is
+the DRY tax the spike targets.
 
 > **A finding that corrects the proposal's framing.** The parent proposal (§1b, §4 Phase 1.3)
 > says the explicit catch-alls are "required to silence DIP102 and keep marker coverage green."
@@ -183,7 +188,7 @@ but compounds the win.)
 |---|---|---|---|
 | Funnel failure edges | 7 | **1** | −6 |
 | Audit `label:` tags | 7 | **0** | −7 |
-| Total edges in block | 14 | **8** | −6 |
+| Edges out of funnel nodes (excl. terminal `Cleanup -> Done`) | 14 | **8** | −6 |
 
 **Readability.** The 7 mechanically-named labels (`setup_failed`, `fetch_failed`, …) vanish —
 they were only ever node-name + `_failed`, pure noise that `else` makes structural. Each tool node
@@ -329,14 +334,30 @@ Per standing policy, dippin ships the syntax/IR + spec delta now and **never gat
 runtime** (see `never-gate-dippin-on-tracker`); this section documents the engine delta, it does
 not make dippin wait.
 
-**(a) `else ->`.** The engine's routing resolution gains one terminal step. For a node that just
-finished, after evaluating guard edges in source order and finding no match, and finding no
-node-local unconditional edge, the engine routes to the **section `else` target**. Ordering of the
-full cascade becomes: *(1) first matching guard, (2) node's own unconditional edge, (3) section
-`else`, (4) `defaults.on_failure` (failures only), (5) halt.* Note `else` (step 3, fires on any
-unmatched outcome incl. exit-0-`…-failed` markers) and `defaults.on_failure` (step 4, fires only on
-genuine node failure) have **distinct triggers** and coexist. This is a small, local addition to
-the resolver — one lookup of a graph-level field — with no change to how a marker is classified.
+**(a) `else ->`.** The engine's routing resolution gains one terminal step, and `else` is the
+**non-failure** default — it must **not** intercept a genuine node failure on its way to
+`defaults.on_failure`. This is not a free choice: the existing failure-route lint already encodes
+the rule that *"an unconditional/success edge does NOT count — a hard failure does not traverse
+it"* (`hasFailEdge`, `validator/lint_failure_route.go:65`). `else` is exactly such an
+unconditional success-side edge, so a hard failure must skip it. The two channels are therefore
+resolved **separately, by node result**:
+
+- **Genuine node failure** (tool exit ≠ 0, agent/human error): retry budget → first matching
+  `on fail` guard → **`defaults.on_failure`** → halt. `else` is **not** in this path.
+- **Non-failure outcome with no matching guard** (the funnel case — incl. an exit-0 `…-failed`
+  marker, which the engine sees as *success*): node's own unconditional edge → section **`else`**
+  → halt.
+
+So `else` (fires on any unmatched *non-failure* outcome) and `defaults.on_failure` (fires only on a
+genuine node failure) have **distinct triggers and never compete** — a failure can never be
+swallowed by `else`. This is a small, local addition to the resolver — one lookup of a
+graph-level field on the success side — with no change to how a marker is classified.
+
+> *(Earlier drafts of this section listed a single linear cascade with `else` ahead of
+> `defaults.on_failure`; that ordering would have let a hard failure with no `on fail` guard hit
+> `else` first and bypass the dedicated failure handler — the bug flagged by Codex's P2 review.
+> The two-channel resolution above is the corrected contract, and it is also the
+> failure-routing contract #134 must adopt.)*
 
 **(b) `fail_markers:`.** The engine must, after a tool exits 0, check whether the emitted marker is
 in the node's `fail_markers` set and, if so, **reclassify the node result as a failure** before
@@ -363,8 +384,9 @@ decision must not reintroduce node-side routing.
   blesses as "the one acceptable second place." The parent proposal flagged a "second implicit
   routing mechanism" tension for (a); the prototype dissolves it: `else` is *explicit* (written in
   the block) and merely graph-scoped rather than node-scoped, so it adds **no new locus on the
-  node** and reads as "the edges block's default arm." It composes cleanly with `on fail` (a guard
-  edge, tried first) and `defaults.on_failure` (failure-only default, tried after `else`).
+  node** and reads as "the edges block's success-side default arm." It composes cleanly with
+  `on fail` (a guard edge, tried first) and `defaults.on_failure` (the failure-side default, in a
+  separate channel that `else` never intercepts — see §6).
 
 - **(b) pushes against #134.** It puts new routing-relevant config (`fail_markers:`) **back onto the
   node**, partially re-coupling node and routing at the same moment #134 is decoupling them. Not
