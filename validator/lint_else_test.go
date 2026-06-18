@@ -47,6 +47,26 @@ func TestLintElseSuppressesDefaultAndReachability(t *testing.T) {
 	}
 }
 
+// TestLintElseCountsAsSuccessPath verifies DIP105 (no forward path start→exit)
+// does not fire when the success-side route to exit is the section `else`
+// default. else is a forward routing path, so the success-path walk must see it.
+func TestLintElseToExit(t *testing.T) {
+	src := `workflow ElseToExit
+  start: Work
+  exit: Done
+  agent Work
+    prompt: "do work, loop until ready"
+  agent Done
+    prompt: "finish"
+  edges
+    Work -> Work when ctx.outcome = retry loop
+    else -> Done
+`
+	if codes := lintCodes(t, src); hasAny(codes, validator.DIP105) {
+		t.Fatalf("else route to exit should satisfy DIP105, but it fired: %v", codes)
+	}
+}
+
 func lintCodes(t *testing.T, src string) []string {
 	t.Helper()
 	p := parser.NewParser(src, "test.dip")

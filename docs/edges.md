@@ -191,6 +191,12 @@ such marker had to be hand-routed to one shared handler, one edge at a time. `el
 states "everything not handled above goes here" once.
 
 - **At most one `else` per edges block.** A second is a parse error.
+- **`else -> ` requires a target node.** A bare `else ->` with no destination is a parse error.
+- **`else` is reserved as the first token of an edges-block line.** Unlike the other
+  contextual keywords (`when`, `on`, `loop`, which are only special *after* `->` and remain
+  usable as node IDs), a line beginning with `else` in the `edges` block is always the
+  section default — so a node may not be used as an edge *source* under the ID `else`. (Other
+  contextual keywords are unaffected: `when -> X` is still an edge from a node named `when`.)
 - **Success-side only.** `else` never intercepts a genuine node *failure* (a tool exit
   ≠ 0, an agent error). Failures route via the failure cascade (`on fail` edge →
   `defaults.on_failure`); `else` catches *unmatched non-failure outcomes*, including the

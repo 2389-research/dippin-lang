@@ -58,3 +58,29 @@ func TestParseElseDuplicate(t *testing.T) {
 		t.Fatalf("expected a duplicate-else diagnostic, got: %q", diags)
 	}
 }
+
+// TestParseElseMissingTarget: `else ->` with no destination is a clear parse
+// diagnostic, and must not desync the parser by swallowing the newline as the
+// target (which would leak a confusing downstream DIP003).
+func TestParseElseMissingTarget(t *testing.T) {
+	src := buildElseDip("    A -> B when ctx.outcome = success\n    else ->\n    B -> C\n")
+	p := NewParser(src, "test.dip")
+	w, _ := p.Parse()
+	diags := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(diags, "else") || !strings.Contains(diags, "target") {
+		t.Fatalf("expected an else-missing-target diagnostic, got: %q", diags)
+	}
+	if w.ElseTarget != "" {
+		t.Fatalf("ElseTarget should be empty on missing target, got %q", w.ElseTarget)
+	}
+	// Parser must have recovered: the following B -> C edge still parses.
+	foundBC := false
+	for _, e := range w.Edges {
+		if e.From == "B" && e.To == "C" {
+			foundBC = true
+		}
+	}
+	if !foundBC {
+		t.Fatalf("parser desynced after `else ->`; B -> C edge missing. Edges: %+v", w.Edges)
+	}
+}

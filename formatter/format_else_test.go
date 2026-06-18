@@ -25,9 +25,10 @@ func TestFormatElseDefault(t *testing.T) {
     T -> D when ctx.outcome = success
     else -> Cleanup
 `
-	w, err := parser.NewParser(src, "t.dip").Parse()
+	p := parser.NewParser(src, "t.dip")
+	w, err := p.Parse()
 	if err != nil {
-		t.Fatalf("parse: %v (%v)", err, parser.NewParser(src, "t.dip").Diagnostics())
+		t.Fatalf("parse: %v (%v)", err, p.Diagnostics())
 	}
 	out := Format(w)
 	if !strings.Contains(out, "else -> Cleanup") {

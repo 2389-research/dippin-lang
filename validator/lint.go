@@ -120,5 +120,6 @@ var knownNamespaces = map[string]bool{
 func buildForwardAdjacency(w *ir.Workflow) map[string][]string {
 	adj := buildNonRestartAdjacency(w)
 	addParallelFanInEdges(adj, w)
+	addElseEdge(adj, w) // the section `else` default is a success-side forward route
 	return adj
 }

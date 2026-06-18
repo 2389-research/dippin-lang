@@ -44,6 +44,14 @@ func (p *Parser) parseEdgeOrElse(t Token) {
 func (p *Parser) parseElseDefault() {
 	tok := p.lexer.NextToken() // 'else'
 	p.expect(TokenArrow)
+	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`else ->` at %d:%d requires a target node (e.g. `else -> Cleanup`)",
+			tok.Location.Line, tok.Location.Column,
+		))
+		p.expect(TokenNewline) // recover at the line boundary; do not consume it as the target
+		return
+	}
 	to := p.lexer.NextToken().Value
 	p.consumeUntilNewline() // tolerate (and discard) any trailing tokens; else takes no attributes
 	p.expect(TokenNewline)
