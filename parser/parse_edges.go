@@ -43,7 +43,16 @@ func (p *Parser) parseEdgeOrElse(t Token) {
 // normal edge). A second `else` in the same block is diagnosed and ignored.
 func (p *Parser) parseElseDefault() {
 	tok := p.lexer.NextToken() // 'else'
-	p.expect(TokenArrow)
+	if p.lexer.PeekToken().Type != TokenArrow {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"`else` at %d:%d must be followed by `-> <node>` (e.g. `else -> Cleanup`)",
+			tok.Location.Line, tok.Location.Column,
+		))
+		p.consumeUntilNewline() // skip the malformed remainder; recover at the line boundary
+		p.expect(TokenNewline)
+		return
+	}
+	p.lexer.NextToken() // consume '->'
 	if t := p.lexer.PeekToken().Type; t == TokenNewline || t == TokenEOF {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
 			"`else ->` at %d:%d requires a target node (e.g. `else -> Cleanup`)",

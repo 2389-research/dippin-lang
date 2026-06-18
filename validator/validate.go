@@ -153,8 +153,9 @@ func checkElseTarget(w *ir.Workflow) []Diagnostic {
 }
 
 // buildAllEdgeAdjacency builds an adjacency map including all edges (including restart).
-// It also includes implicit parallel/fan_in edges and the graph-level on_failure route,
-// so a recovery node reachable only via on_failure is not falsely flagged DIP004.
+// It also includes implicit parallel/fan_in edges, the graph-level on_failure route,
+// and the section-level else default, so a node reachable only via on_failure or else
+// is not falsely flagged DIP004.
 func buildAllEdgeAdjacency(w *ir.Workflow) map[string][]string {
 	adj := make(map[string][]string)
 	for _, e := range w.Edges {

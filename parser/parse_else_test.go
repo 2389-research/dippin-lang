@@ -87,3 +87,34 @@ func TestParseElseMissingTarget(t *testing.T) {
 		t.Fatalf("parser desynced after `else ->`; B -> C edge missing. Edges: %+v", w.Edges)
 	}
 }
+
+// TestParseElseMissingArrow: `else <node>` (missing the arrow) gives one clear
+// diagnostic about the missing `->`, does NOT consume the target and then
+// misreport it as a missing target, leaves ElseTarget empty, and recovers so
+// the following edge still parses.
+func TestParseElseMissingArrow(t *testing.T) {
+	src := buildElseDip("    A -> B when ctx.outcome = success\n    else C\n    B -> C\n")
+	p := NewParser(src, "test.dip")
+	w, _ := p.Parse()
+	diags := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(diags, "else") || !strings.Contains(diags, "->") {
+		t.Fatalf("expected an else-missing-arrow diagnostic mentioning `->`, got: %q", diags)
+	}
+	// The target WAS present, so the misleading "requires a target node" message
+	// must not appear.
+	if strings.Contains(diags, "requires a target node") {
+		t.Fatalf("misleading missing-target diagnostic on a missing-arrow line: %q", diags)
+	}
+	if w.ElseTarget != "" {
+		t.Fatalf("ElseTarget should be empty on malformed else, got %q", w.ElseTarget)
+	}
+	foundBC := false
+	for _, e := range w.Edges {
+		if e.From == "B" && e.To == "C" {
+			foundBC = true
+		}
+	}
+	if !foundBC {
+		t.Fatalf("parser desynced after `else C`; B -> C edge missing. Edges: %+v", w.Edges)
+	}
+}
