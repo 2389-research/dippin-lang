@@ -212,7 +212,13 @@ common_field    = "label"           ":" field_value
 (* it last). A second else is diagnosed, not silently accepted.               *)
 edges_section   = "edges" NEWLINE INDENT { edge_entry } [ else_default { edge_entry } ] OUTDENT ;
 
-edge_entry      = IDENTIFIER "->" IDENTIFIER { edge_attr } NEWLINE ;
+edge_entry      = edge_source "->" IDENTIFIER { edge_attr } NEWLINE ;
+
+(* An ordinary edge source is any identifier EXCEPT "else" (ISO EBNF "-" =    *)
+(* except): a line beginning with "else" is the section default, so a node    *)
+(* may not be used as an edge source under the ID "else". The target position *)
+(* and all other identifier positions are unrestricted.                       *)
+edge_source     = IDENTIFIER - "else" ;
 
 (* Section-level error-funnel default: the destination for any node whose  *)
 (* guards all fail to match and which has no explicit unconditional edge.   *)
