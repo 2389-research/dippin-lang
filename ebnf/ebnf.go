@@ -1,34 +1,44 @@
-// Package ebnf provides a structural well-formedness validator for the
-// dippin grammar specification (docs/GRAMMAR.ebnf).
+// Package ebnf validates the dippin grammar specification (docs/GRAMMAR.ebnf)
+// against the W3C EBNF notation (the XML-spec / bottlecaps dialect).
 //
-// It validates the grammar's actual dialect — relaxed/W3C-style EBNF with
-// space concatenation (not ISO/IEC 14977 comma concatenation, which the spec
-// deliberately omits for readability): `(* *)` comments, `"..."`/`'...'`
-// terminals, UPPERCASE lexer terminals, lowercase nonterminals, the metasymbols
-// `= ; | ( ) [ ] { } -`, and `;`-terminated rules.
+// It is, in effect, a parser for the W3C "EBNF of EBNF":
 //
-// Validate reports: unterminated comments, unclosed string terminals, malformed
-// rule heads (`name = ...`), unbalanced/mismatched grouping brackets, an
-// unterminated final rule, and nonterminals referenced but never defined.
+//	Grammar    ::= Production*
+//	Production ::= Name '::=' Choice
+//	Choice     ::= Sequence ('|' Sequence)*
+//	Sequence   ::= Difference*
+//	Difference ::= Item ('-' Item)?
+//	Item       ::= Primary ('?' | '*' | '+')*
+//	Primary    ::= Name | Terminal | '(' Choice ')'
+//	Terminal   ::= StringLiteral | CharCode | CharClass
+//
+// where a production whose RHS reaches a `Name '::='` lookahead has ended.
+// Validate reports lexical errors (unterminated comment / string / char class),
+// structural errors (missing `::=`, unbalanced `()`, stray tokens), and
+// nonterminals referenced but never defined (UPPERCASE names are lexer
+// terminals and need no production).
 package ebnf
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 )
 
-// Validate returns a list of well-formedness errors in the EBNF source.
-// An empty slice means the grammar is well-formed.
+// Validate returns a list of well-formedness errors. Empty means well-formed.
 func Validate(src string) []string {
 	toks, errs := scan(src)
 	if len(errs) > 0 {
 		return errs
 	}
-	return checkRules(toks)
+	p := &parser{toks: toks, defined: map[string]bool{}}
+	p.grammar()
+	p.checkUndefined()
+	return p.errs
 }
 
-// token is a lexical unit. kind is 'n' (name), 's' (string), or the literal
-// metasymbol byte for '=', ';', '|', '-', '(', ')', '[', ']', '{', '}'.
+// token kinds: 'n' name, 't' terminal (string/charcode/charclass),
+// 'd' '::=', and the literal bytes '|', '-', '?', '*', '+', '(', ')'.
 type token struct {
 	kind byte
 	text string
@@ -59,13 +69,15 @@ func (s *scanner) peek(n int) rune {
 }
 
 func (s *scanner) step() {
-	c := s.r[s.i]
-	if s.tryDelimited(c) {
+	if s.tryDelimited() {
 		return
 	}
+	c := s.r[s.i]
 	switch {
 	case unicode.IsSpace(c):
 		s.i++
+	case s.atCharCode():
+		s.scanCharCode()
 	case isNameStart(c):
 		s.scanName()
 	default:
@@ -73,18 +85,18 @@ func (s *scanner) step() {
 	}
 }
 
-// tryDelimited consumes a comment `(* *)`, an ISO special sequence `? ?`, or a
-// string terminal — the three constructs whose bodies are skipped wholesale so
-// arbitrary text inside them (apostrophes, brackets) does not perturb the scan.
-// Returns false if the current rune starts none of them.
-func (s *scanner) tryDelimited(c rune) bool {
+// tryDelimited consumes a comment, string terminal, or char class — the
+// constructs whose bodies are skipped/captured wholesale. Returns false if the
+// current rune starts none of them.
+func (s *scanner) tryDelimited() bool {
+	c := s.r[s.i]
 	switch {
 	case s.atComment():
 		s.skipComment()
-	case c == '?':
-		s.skipSpecial()
 	case isQuote(c):
 		s.scanString(c)
+	case c == '[':
+		s.scanCharClass()
 	default:
 		return false
 	}
@@ -92,33 +104,23 @@ func (s *scanner) tryDelimited(c rune) bool {
 }
 
 func (s *scanner) atComment() bool {
-	return s.r[s.i] == '(' && s.peek(1) == '*'
+	return s.r[s.i] == '/' && s.peek(1) == '*'
 }
 
-// skipSpecial consumes an ISO/IEC 14977 special sequence: ? ... ? (its content
-// is implementation-defined prose and is ignored).
-func (s *scanner) skipSpecial() {
-	s.i++ // opening '?'
-	for s.i < len(s.r) {
-		if s.r[s.i] == '?' {
-			s.i++
-			return
-		}
-		s.i++
-	}
-	s.err = append(s.err, "unterminated special sequence (missing closing `?`)")
+func (s *scanner) atCharCode() bool {
+	return s.r[s.i] == '#' && s.peek(1) == 'x'
 }
 
 func (s *scanner) skipComment() {
-	s.i += 2 // consume "(*"
+	s.i += 2 // "/*"
 	for s.i < len(s.r) {
-		if s.r[s.i] == '*' && s.peek(1) == ')' {
+		if s.r[s.i] == '*' && s.peek(1) == '/' {
 			s.i += 2
 			return
 		}
 		s.i++
 	}
-	s.err = append(s.err, "unterminated comment (missing `*)`)")
+	s.err = append(s.err, "unterminated comment (missing `*/`)")
 }
 
 func (s *scanner) scanString(q rune) {
@@ -128,7 +130,7 @@ func (s *scanner) scanString(q rune) {
 		switch s.r[s.i] {
 		case q:
 			s.i++
-			s.out = append(s.out, token{'s', string(s.r[start:s.i])})
+			s.out = append(s.out, token{'t', string(s.r[start:s.i])})
 			return
 		case '\n':
 			s.err = append(s.err, "unclosed string literal (newline before closing quote)")
@@ -137,6 +139,32 @@ func (s *scanner) scanString(q rune) {
 		s.i++
 	}
 	s.err = append(s.err, "unclosed string literal (missing closing quote at end of file)")
+}
+
+func (s *scanner) scanCharClass() {
+	start := s.i
+	s.i++ // '['
+	for s.i < len(s.r) {
+		if s.r[s.i] == ']' {
+			s.i++
+			s.out = append(s.out, token{'t', string(s.r[start:s.i])})
+			return
+		}
+		if s.r[s.i] == '\n' {
+			break
+		}
+		s.i++
+	}
+	s.err = append(s.err, "unterminated character class (missing `]`)")
+}
+
+func (s *scanner) scanCharCode() {
+	start := s.i
+	s.i += 2 // "#x"
+	for s.i < len(s.r) && isHex(s.r[s.i]) {
+		s.i++
+	}
+	s.out = append(s.out, token{'t', string(s.r[start:s.i])})
 }
 
 func (s *scanner) scanName() {
@@ -148,123 +176,156 @@ func (s *scanner) scanName() {
 }
 
 func (s *scanner) scanSymbol(c rune) {
+	if c == ':' && s.peek(1) == ':' && s.peek(2) == '=' {
+		s.i += 3
+		s.out = append(s.out, token{'d', "::="})
+		return
+	}
 	s.i++
 	switch c {
-	case '=', ';', '|', '-', '(', ')', '[', ']', '{', '}':
+	case '|', '-', '?', '*', '+', '(', ')':
 		s.out = append(s.out, token{byte(c), string(c)})
+	default:
+		s.err = append(s.err, fmt.Sprintf("unexpected character %q", string(c)))
 	}
-	// Any other punctuation (e.g. an ISO concatenation comma) is ignored — it
-	// does not affect rule shape or bracket balance.
 }
 
-// --- structural checker ---
+// --- parser ---
 
-type checker struct {
+type parser struct {
+	toks    []token
+	i       int
 	defined map[string]bool
 	refs    []string
 	errs    []string
 }
 
-func checkRules(toks []token) []string {
-	c := &checker{defined: map[string]bool{}}
-	var rule []token
-	for _, t := range toks {
-		if t.kind == ';' {
-			c.rule(rule)
-			rule = nil
-			continue
-		}
-		rule = append(rule, t)
+var eofToken = token{kind: 0}
+
+func (p *parser) peekN(n int) token {
+	if p.i+n < len(p.toks) {
+		return p.toks[p.i+n]
 	}
-	if len(rule) > 0 {
-		c.errs = append(c.errs, fmt.Sprintf("unterminated rule (missing `;`): starts with %q", rule[0].text))
-	}
-	c.checkUndefined()
-	return c.errs
+	return eofToken
 }
 
-func (c *checker) rule(toks []token) {
-	if len(toks) < 2 || toks[0].kind != 'n' || toks[1].kind != '=' {
-		c.errs = append(c.errs, malformedHead(toks))
+func (p *parser) cur() token  { return p.peekN(0) }
+func (p *parser) next() token { t := p.cur(); p.i++; return t }
+func (p *parser) at(k byte) bool {
+	return p.cur().kind == k
+}
+
+func (p *parser) grammar() {
+	for p.i < len(p.toks) {
+		p.production()
+	}
+}
+
+func (p *parser) production() {
+	head := p.next()
+	if head.kind != 'n' {
+		p.errs = append(p.errs, fmt.Sprintf("expected a rule name to start a production, got %q", head.text))
 		return
 	}
-	c.defined[toks[0].text] = true
-	c.checkBody(toks[0].text, toks[2:])
+	if !p.at('d') {
+		p.errs = append(p.errs, fmt.Sprintf("rule %q: expected `::=` after the name", head.text))
+		return
+	}
+	p.next() // '::='
+	p.defined[head.text] = true
+	p.choice()
 }
 
-func malformedHead(toks []token) string {
-	if len(toks) == 0 {
-		return "empty rule (stray `;`)"
-	}
-	return fmt.Sprintf("rule %q is malformed: expected `name = ...`", toks[0].text)
-}
-
-func (c *checker) checkBody(name string, body []token) {
-	var stack []byte
-	for _, t := range body {
-		c.bodyToken(name, t, &stack)
-	}
-	if len(stack) > 0 {
-		c.errs = append(c.errs, fmt.Sprintf("rule %q: unclosed group (missing closing bracket)", name))
+func (p *parser) choice() {
+	p.sequence()
+	for p.at('|') {
+		p.next()
+		p.sequence()
 	}
 }
 
-func (c *checker) bodyToken(name string, t token, stack *[]byte) {
-	switch t.kind {
-	case '(', '[', '{':
-		*stack = append(*stack, t.kind)
-	case ')', ']', '}':
-		if !popMatches(stack, t.kind) {
-			c.errs = append(c.errs, fmt.Sprintf("rule %q: unbalanced %q", name, t.text))
-		}
+func (p *parser) sequence() {
+	for p.startsItem() {
+		p.difference()
+	}
+}
+
+// startsItem reports whether the current token begins another item in the
+// current sequence. A name that is the head of the next production (Name '::=')
+// ends the sequence instead.
+func (p *parser) startsItem() bool {
+	switch p.cur().kind {
 	case 'n':
-		c.refs = append(c.refs, t.text)
-	}
-}
-
-func popMatches(stack *[]byte, closing byte) bool {
-	n := len(*stack)
-	if n == 0 {
-		return false
-	}
-	open := (*stack)[n-1]
-	*stack = (*stack)[:n-1]
-	return bracketsMatch(open, closing)
-}
-
-func bracketsMatch(open, closing byte) bool {
-	switch open {
-	case '(':
-		return closing == ')'
-	case '[':
-		return closing == ']'
-	case '{':
-		return closing == '}'
+		return !(p.peekN(1).kind == 'd')
+	case 't', '(':
+		return true
 	}
 	return false
 }
 
-func (c *checker) checkUndefined() {
+func (p *parser) difference() {
+	p.item()
+	if p.at('-') {
+		p.next()
+		p.item()
+	}
+}
+
+func (p *parser) item() {
+	p.primary()
+	for p.atPostfix() {
+		p.next()
+	}
+}
+
+func (p *parser) atPostfix() bool {
+	switch p.cur().kind {
+	case '?', '*', '+':
+		return true
+	}
+	return false
+}
+
+func (p *parser) primary() {
+	t := p.next()
+	switch t.kind {
+	case 'n':
+		p.refs = append(p.refs, t.text)
+	case 't':
+		// terminal — needs no definition
+	case '(':
+		p.group()
+	default:
+		p.errs = append(p.errs, fmt.Sprintf("unexpected token %q in expression", t.text))
+	}
+}
+
+func (p *parser) group() {
+	p.choice()
+	if !p.at(')') {
+		p.errs = append(p.errs, "unbalanced group (missing `)`)")
+		return
+	}
+	p.next() // ')'
+}
+
+func (p *parser) checkUndefined() {
 	seen := map[string]bool{}
-	for _, r := range c.refs {
-		if seen[r] || !isNonterminal(r) || c.defined[r] {
+	for _, r := range p.refs {
+		if seen[r] || !isNonterminal(r) || p.defined[r] {
 			continue
 		}
 		seen[r] = true
-		c.errs = append(c.errs, fmt.Sprintf("undefined nonterminal %q (referenced but no rule defines it)", r))
+		p.errs = append(p.errs, fmt.Sprintf("undefined nonterminal %q (referenced but no rule defines it)", r))
 	}
 }
 
 // --- character classes ---
 
 // isNonterminal reports whether a name is a grammar nonterminal (lowercase
-// first letter). UPPERCASE names are lexer terminals and need no definition.
+// first letter). UPPERCASE names are lexer terminals and need no production.
 func isNonterminal(name string) bool {
 	return name != "" && name[0] >= 'a' && name[0] <= 'z'
-}
-
-func isQuote(c rune) bool {
-	return c == '"' || c == '\''
 }
 
 func isNameStart(c rune) bool {
@@ -273,4 +334,12 @@ func isNameStart(c rune) bool {
 
 func isNamePart(c rune) bool {
 	return isNameStart(c) || (c >= '0' && c <= '9')
+}
+
+func isQuote(c rune) bool {
+	return c == '"' || c == '\''
+}
+
+func isHex(c rune) bool {
+	return strings.ContainsRune("0123456789abcdefABCDEF", c)
 }

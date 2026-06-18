@@ -1,417 +1,318 @@
-(* Dippin Language Grammar — EBNF Notation *)
-(* This is the canonical syntax specification for .dip files. *)
-(* Reference implementation: parser/lexer.go, parser/parser.go *)
-(*                                                             *)
-(* Implementation notes:                                       *)
-(* - BOOLEAN, INTEGER, and DURATION are not distinct token     *)
-(*   types in the lexer. They are parsed from identifier       *)
-(*   tokens using strconv.Atoi and time.ParseDuration.         *)
-(* - Condition expressions are currently stored as raw text    *)
-(*   (Condition.Raw), not parsed into an AST by the parser.    *)
-(*   The simulator has its own condition parser. The grammar    *)
-(*   below describes the intended condition syntax.            *)
-(* - Keywords are not reserved — they can be used as node IDs. *)
-(*   The parser distinguishes by context, not by token type.   *)
-(* - Unrecognized fields on any node type now emit a           *)
-(*   diagnostic suggesting the user put the field under        *)
-(*   params: instead.                                          *)
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Top-Level Structure                                        *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-workflow_file   = [ version_decl ] workflow_decl ;
-
-(* Optional leading format-version declaration, before workflow_decl.  *)
-(* Absent => version 1. Leading blank/comment lines are permitted.     *)
-(* The formatter only emits this line when the version is > 1, so a v1  *)
-(* file never gains a declaration (byte-identical only if canonical).   *)
-version_decl    = "dip" INTEGER NEWLINE ;
-
-workflow_decl   = "workflow" IDENTIFIER NEWLINE
-                  INDENT workflow_body OUTDENT ;
-
-workflow_body   = { workflow_field | defaults_section | vars_section
-                  | node_decl | edges_section
-                  | stylesheet_section | NEWLINE } ;
-
-workflow_field  = "goal"     ":" field_value
-                | "start"    ":" IDENTIFIER
-                | "exit"     ":" IDENTIFIER
-                | "requires" ":" identifier_list ;
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Defaults Section                                           *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-defaults_section = "defaults" NEWLINE INDENT { defaults_field } OUTDENT ;
-
-defaults_field   = "model"            ":" field_value
-                 | "provider"         ":" field_value
-                 | "retry_policy"     ":" field_value
-                 | "max_retries"      ":" INTEGER
-                 | "fidelity"         ":" field_value
-                 | "max_restarts"     ":" INTEGER
-                 | "restart_target"   ":" IDENTIFIER
-                 | "on_failure"       ":" IDENTIFIER    (* default failure route node *)
-                 | "cache_tools"      ":" BOOLEAN
-                 | "compaction"       ":" field_value
-                 | "on_resume"        ":" field_value
-                 | "max_total_tokens" ":" INTEGER       (* hard token budget ceiling *)
-                 | "max_cost_cents"   ":" INTEGER       (* hard cost ceiling in USD cents *)
-                 | "max_wall_time"    ":" DURATION      (* hard wall-clock ceiling *)
-                 | "stall_timeout"    ":" DURATION      (* abort/route after no-progress span; 0 = disabled *)
-                 | "tool_commands_allow" ":" field_value (* comma-separated glob allowlist for tool-node commands *)
-                 | "tool_denylist_add"   ":" field_value ; (* comma-separated globs appended to runtime denylist *)
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Vars Section                                               *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-vars_section     = "vars" NEWLINE INDENT { vars_field } OUTDENT ;
-
-vars_field       = IDENTIFIER ":" field_value ;
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Node Declarations                                          *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-node_decl       = agent_node | human_node | tool_node
-                | subgraph_node | conditional_node
-                | parallel_node | fan_in_node
-                | manager_loop_node ;
-
-(* --- Agent Node ------------------------------------------- *)
-
-agent_node      = "agent" IDENTIFIER NEWLINE
-                  INDENT { agent_field | common_field } OUTDENT ;
-
-agent_field     = "prompt"              ":" field_value
-                | "prompt_file"        ":" field_value    (* path relative to .dip dir; mutually exclusive with prompt *)
-                | "system_prompt"      ":" field_value
-                | "system_prompt_file" ":" field_value    (* path relative to .dip dir; mutually exclusive with system_prompt *)
-                | "model"              ":" field_value
-                | "provider"          ":" field_value
-                | "backend"           ":" field_value
-                | "working_dir"       ":" field_value
-                | "tool_access"       ":" field_value
-                | "writable_paths"    ":" field_value    (* comma-separated path globs, e.g. workspace/**; non-empty required *)
-                | "max_turns"         ":" INTEGER
-                | "cmd_timeout"       ":" DURATION
-                | "goal_gate"         ":" BOOLEAN
-                | "auto_status"       ":" BOOLEAN
-                | "reasoning_effort"  ":" field_value
-                | "fidelity"          ":" field_value
-                | "cache_tools"       ":" BOOLEAN
-                | "compaction"        ":" field_value
-                | "compaction_threshold" ":" FLOAT
-                | "response_format"   ":" field_value    (* "json_object" | "json_schema" *)
-                | "response_schema"   ":" field_value    (* multiline JSON Schema block *)
-                | "params"            ":" params_block ; (* pass-through key-value map *)
+/* Dippin Language Grammar — W3C EBNF Notation                 */
+/* This is the canonical syntax specification for .dip files.   */
+/* Notation: W3C EBNF (the XML-spec / bottlecaps dialect) —      */
+/*   `::=`, space concatenation, `?` `*` `+`, `[char classes]`,  */
+/*   `-` exception, `#xHH` char codes, block comments.          */
+/* Reference implementation: parser/lexer.go, parser/parser.go.  */
+/*                                                               */
+/* Significant-whitespace caveat: INDENT, OUTDENT, NEWLINE and   */
+/* the raw multiline blocks (RAW_INLINE, RAW_CONTENT) are tokens */
+/* produced by the indentation-aware lexer. They are NOT         */
+/* expressible in a context-free grammar, so they appear here as */
+/* terminal symbols (no production) — see the Lexical section.   */
+/*                                                               */
+/* Implementation notes:                                         */
+/* - BOOLEAN, INTEGER, FLOAT and DURATION are not distinct token */
+/*   types in the lexer; all are lexed as IDENTIFIER tokens and  */
+/*   parsed by the consumer (strconv / time.ParseDuration).      */
+/* - Conditions are stored as raw text (Condition.Raw); the AST  */
+/*   is populated later by EnsureConditionsParsed.               */
+/* - Keywords are contextual, not reserved (usable as node IDs), */
+/*   except "else" at the start of an edges-block line.          */
+
+/* ============================================================ */
+/* Top-Level Structure                                          */
+/* ============================================================ */
+
+workflow_file ::= version_decl? workflow_decl
+
+/* Optional leading format-version declaration. Absent => v1.   */
+version_decl ::= "dip" INTEGER NEWLINE
+
+workflow_decl ::= "workflow" IDENTIFIER NEWLINE INDENT workflow_body OUTDENT
+
+workflow_body ::= ( workflow_field | defaults_section | vars_section
+                  | node_decl | edges_section | stylesheet_section | NEWLINE )*
+
+workflow_field ::= "goal" ":" field_value
+                 | "start" ":" IDENTIFIER
+                 | "exit" ":" IDENTIFIER
+                 | "requires" ":" identifier_list
+
+/* ============================================================ */
+/* Defaults Section                                             */
+/* ============================================================ */
+
+defaults_section ::= "defaults" NEWLINE INDENT defaults_field* OUTDENT
+
+defaults_field ::= "model" ":" field_value
+                 | "provider" ":" field_value
+                 | "retry_policy" ":" field_value
+                 | "max_retries" ":" INTEGER
+                 | "fidelity" ":" field_value
+                 | "max_restarts" ":" INTEGER
+                 | "restart_target" ":" IDENTIFIER
+                 | "on_failure" ":" IDENTIFIER       /* default failure route node */
+                 | "cache_tools" ":" BOOLEAN
+                 | "compaction" ":" field_value
+                 | "on_resume" ":" field_value
+                 | "max_total_tokens" ":" INTEGER    /* hard token budget ceiling */
+                 | "max_cost_cents" ":" INTEGER      /* hard cost ceiling in USD cents */
+                 | "max_wall_time" ":" DURATION      /* hard wall-clock ceiling */
+                 | "stall_timeout" ":" DURATION      /* abort/route after no-progress span; 0 = disabled */
+                 | "tool_commands_allow" ":" field_value  /* comma-separated glob allowlist */
+                 | "tool_denylist_add" ":" field_value    /* comma-separated globs appended to denylist */
+
+/* ============================================================ */
+/* Vars Section                                                 */
+/* ============================================================ */
+
+vars_section ::= "vars" NEWLINE INDENT vars_field* OUTDENT
+
+vars_field ::= IDENTIFIER ":" field_value
+
+/* ============================================================ */
+/* Node Declarations                                            */
+/* ============================================================ */
+
+node_decl ::= agent_node | human_node | tool_node
+            | subgraph_node | conditional_node
+            | parallel_node | fan_in_node | manager_loop_node
+
+agent_node ::= "agent" IDENTIFIER NEWLINE INDENT ( agent_field | common_field )* OUTDENT
+
+agent_field ::= "prompt" ":" field_value
+              | "prompt_file" ":" field_value         /* path relative to .dip dir; mutually exclusive with prompt */
+              | "system_prompt" ":" field_value
+              | "system_prompt_file" ":" field_value  /* path relative to .dip dir; mutually exclusive with system_prompt */
+              | "model" ":" field_value
+              | "provider" ":" field_value
+              | "backend" ":" field_value
+              | "working_dir" ":" field_value
+              | "tool_access" ":" field_value
+              | "writable_paths" ":" field_value      /* comma-separated path globs; non-empty required */
+              | "max_turns" ":" INTEGER
+              | "cmd_timeout" ":" DURATION
+              | "goal_gate" ":" BOOLEAN
+              | "auto_status" ":" BOOLEAN
+              | "reasoning_effort" ":" field_value
+              | "fidelity" ":" field_value
+              | "cache_tools" ":" BOOLEAN
+              | "compaction" ":" field_value
+              | "compaction_threshold" ":" FLOAT
+              | "response_format" ":" field_value     /* "json_object" | "json_schema" */
+              | "response_schema" ":" field_value     /* multiline JSON Schema block */
+              | "params" ":" params_block             /* pass-through key-value map */
+
+human_node ::= "human" IDENTIFIER NEWLINE INDENT ( human_field | common_field )* OUTDENT
+
+human_field ::= "mode" ":" field_value               /* "freeform" | "choice" | "interview" | "yes_no" */
+              | "default" ":" field_value
+              | "prompt" ":" field_value              /* instructions shown to the human */
+              | "questions_key" ":" IDENTIFIER        /* context key read for questions (interview mode) */
+              | "answers_key" ":" IDENTIFIER          /* context key written with answers (interview mode) */
+              | "timeout" ":" DURATION                /* per-gate timeout; 0 = none */
+              | "timeout_action" ":" field_value      /* "fail" | "default" */
+
+tool_node ::= "tool" IDENTIFIER NEWLINE INDENT ( tool_field | common_field )* OUTDENT
+
+tool_field ::= "command" ":" field_value
+             | "command_file" ":" field_value
+             | "outputs" ":" identifier_list
+             | "marker_grep" ":" field_value          /* regex matched line-by-line against stdout */
+             | "route_required" ":" BOOLEAN           /* fail node if no routing signal emitted */
+             | "output_limit" ":" INTEGER             /* byte cap on stdout; >0 overrides engine default */
+             | "timeout" ":" DURATION
+
+subgraph_node ::= "subgraph" IDENTIFIER NEWLINE INDENT ( subgraph_field | common_field )* OUTDENT
 
-(* --- Human Node ------------------------------------------- *)
+subgraph_field ::= "ref" ":" field_value
+                 | "params" ":" params_block
 
-human_node      = "human" IDENTIFIER NEWLINE
-                  INDENT { human_field | common_field } OUTDENT ;
+params_block ::= NEWLINE INDENT ( IDENTIFIER ":" field_value )* OUTDENT
 
-human_field     = "mode"           ":" field_value (* "freeform" | "choice" | "interview" | "yes_no" *)
-                | "default"        ":" field_value
-                | "prompt"         ":" field_value (* instructions shown to the human *)
-                | "questions_key"  ":" IDENTIFIER  (* context key read for questions (interview mode) *)
-                | "answers_key"    ":" IDENTIFIER  (* context key written with answers (interview mode) *)
-                | "timeout"        ":" DURATION    (* per-gate timeout; 0 = none *)
-                | "timeout_action" ":" field_value ; (* "fail" | "default" *)
+conditional_node ::= "conditional" IDENTIFIER NEWLINE INDENT common_field* OUTDENT
 
-(* --- Tool Node -------------------------------------------- *)
+/* manager_loop supervises a child subgraph with polling and optional       */
+/* mid-run context injection. Maps to DOT shape=house.                      */
+manager_loop_node ::= "manager_loop" IDENTIFIER NEWLINE INDENT ( manager_loop_field | common_field )* OUTDENT
 
-tool_node       = "tool" IDENTIFIER NEWLINE
-                  INDENT { tool_field | common_field } OUTDENT ;
+manager_loop_field ::= "subgraph_ref" ":" field_value
+                     | "poll_interval" ":" DURATION
+                     | "max_cycles" ":" INTEGER
+                     | "stop_condition" ":" field_value   /* condition expression, stored raw */
+                     | "steer_condition" ":" field_value  /* condition expression, stored raw */
+                     | "steer_context" ":" steer_context_value
 
-tool_field      = "command"        ":" field_value
-                | "command_file"  ":" field_value
-                | "outputs"       ":" identifier_list
-                | "marker_grep"   ":" field_value      (* regex matched line-by-line against stdout *)
-                | "route_required" ":" BOOLEAN          (* fail node if no routing signal emitted *)
-                | "output_limit"  ":" INTEGER           (* byte cap on stdout; >0 overrides engine default *)
-                | "timeout"       ":" DURATION ;
-
-(* --- Subgraph Node ---------------------------------------- *)
-
-subgraph_node   = "subgraph" IDENTIFIER NEWLINE
-                  INDENT { subgraph_field | common_field } OUTDENT ;
-
-subgraph_field  = "ref"    ":" field_value
-                | "params" ":" params_block ;
-
-params_block    = NEWLINE INDENT { IDENTIFIER ":" field_value } OUTDENT ;
-
-(* --- Conditional Node ------------------------------------- *)
-
-conditional_node = "conditional" IDENTIFIER NEWLINE
-                   INDENT { common_field } OUTDENT ;
-
-(* --- Manager Loop Node ------------------------------------ *)
-
-(* manager_loop supervises a child subgraph with polling and optional     *)
-(* mid-run context injection. Maps to DOT shape=house.                    *)
-
-manager_loop_node = "manager_loop" IDENTIFIER NEWLINE
-                    INDENT { manager_loop_field | common_field } OUTDENT ;
-
-manager_loop_field = "subgraph_ref"    ":" field_value
-                   | "poll_interval"   ":" DURATION
-                   | "max_cycles"      ":" INTEGER
-                   | "stop_condition"  ":" field_value    (* condition expression, stored raw *)
-                   | "steer_condition" ":" field_value    (* condition expression, stored raw *)
-                   | "steer_context"   ":" steer_context_value ;
-
-(* steer_context accepts inline "k=v, k=v" CSV or a block of "k: v" lines. *)
-(* Inline form does not support values containing commas — use block form. *)
-steer_context_value = field_value                        (* inline "k=v, k=v" *)
-                    | params_block ;                     (* block of k: v lines *)
-
-(* --- Parallel / Fan-In (inline syntax) -------------------- *)
-
-parallel_node   = parallel_inline | parallel_block ;
+/* steer_context accepts inline "k=v, k=v" CSV or a block of "k: v" lines.   */
+steer_context_value ::= field_value | params_block
 
-parallel_inline = "parallel" IDENTIFIER "->" identifier_list NEWLINE ;
+parallel_node ::= parallel_inline | parallel_block
 
-parallel_block  = "parallel" IDENTIFIER NEWLINE
-                  INDENT { branch_decl } OUTDENT ;
+parallel_inline ::= "parallel" IDENTIFIER "->" identifier_list NEWLINE
 
-branch_decl     = "branch" ":" IDENTIFIER NEWLINE
-                  [ INDENT { branch_field } OUTDENT ] ;
+parallel_block ::= "parallel" IDENTIFIER NEWLINE INDENT branch_decl* OUTDENT
 
-branch_field    = "model"          ":" field_value
-                | "provider"       ":" field_value
-                | "fidelity"       ":" field_value
-                | "tool_access"    ":" field_value       (* "" = inherit agent's; "none" = strip tools *)
-                | "writable_paths" ":" field_value ;     (* per-branch override of path globs; "" inherits agent's *)
+branch_decl ::= "branch" ":" IDENTIFIER NEWLINE ( INDENT branch_field* OUTDENT )?
 
-fan_in_node     = "fan_in" IDENTIFIER "<-" identifier_list NEWLINE ;
+branch_field ::= "model" ":" field_value
+               | "provider" ":" field_value
+               | "fidelity" ":" field_value
+               | "tool_access" ":" field_value          /* "" = inherit agent's; "none" = strip tools */
+               | "writable_paths" ":" field_value        /* per-branch override of path globs */
 
-identifier_list = IDENTIFIER { "," IDENTIFIER } ;
+fan_in_node ::= "fan_in" IDENTIFIER "<-" identifier_list NEWLINE
 
-(* --- Common Fields (all node types) ----------------------- *)
+identifier_list ::= IDENTIFIER ( "," IDENTIFIER )*
 
-common_field    = "label"           ":" field_value
-                | "class"           ":" identifier_list
-                | "reads"           ":" identifier_list
-                | "writes"          ":" identifier_list
-                | "retry_policy"    ":" field_value
-                | "max_retries"     ":" INTEGER
-                | "base_delay"      ":" DURATION
-                | "retry_target"    ":" IDENTIFIER
-                | "fallback_target" ":" IDENTIFIER ;
+common_field ::= "label" ":" field_value
+               | "class" ":" identifier_list
+               | "reads" ":" identifier_list
+               | "writes" ":" identifier_list
+               | "retry_policy" ":" field_value
+               | "max_retries" ":" INTEGER
+               | "base_delay" ":" DURATION
+               | "retry_target" ":" IDENTIFIER
+               | "fallback_target" ":" IDENTIFIER
 
-(* ═══════════════════════════════════════════════════════════ *)
-(* Edges Section                                              *)
-(* ═══════════════════════════════════════════════════════════ *)
+/* ============================================================ */
+/* Edges Section                                                */
+/* ============================================================ */
 
-(* At most one else_default per block, position-flexible (the formatter emits *)
-(* it last). A second else is diagnosed, not silently accepted.               *)
-edges_section   = "edges" NEWLINE INDENT { edge_entry } [ else_default { edge_entry } ] OUTDENT ;
+/* At most one else_default per block, position-flexible (the formatter      */
+/* emits it last). A second else is diagnosed, not silently accepted.        */
+edges_section ::= "edges" NEWLINE INDENT edge_entry* ( else_default edge_entry* )? OUTDENT
 
-edge_entry      = edge_source "->" IDENTIFIER { edge_attr } NEWLINE ;
+edge_entry ::= edge_source "->" IDENTIFIER edge_attr* NEWLINE
 
-(* An ordinary edge source is any identifier EXCEPT "else" (ISO EBNF "-" =    *)
-(* except): a line beginning with "else" is the section default, so a node    *)
-(* may not be used as an edge source under the ID "else". The target position *)
-(* and all other identifier positions are unrestricted.                       *)
-edge_source     = IDENTIFIER - "else" ;
+/* An ordinary edge source is any identifier EXCEPT "else" (W3C "-" =         */
+/* exception): a line beginning with "else" is the section default, so a      */
+/* node may not be used as an edge source under the ID "else". The target     */
+/* position and all other identifier positions are unrestricted.             */
+edge_source ::= IDENTIFIER - "else"
 
-(* Section-level error-funnel default: the destination for any node whose  *)
-(* guards all fail to match and which has no explicit unconditional edge.   *)
-(* Success-side only — a genuine node failure routes via on_failure, never  *)
-(* through else. At most one per edges block; the target is required.       *)
-(* "else" is reserved as the FIRST token of an edges-block line (so a node  *)
-(* cannot be an edge source under the ID "else"); other contextual keywords *)
-(* (when/on/loop) are only special after "->" and remain usable as node IDs.*)
-else_default    = "else" "->" IDENTIFIER NEWLINE ;
+/* Section-level error-funnel default: the destination for any node whose     */
+/* guards all fail to match and which has no explicit unconditional edge.     */
+/* Success-side only — a genuine node failure routes via on_failure, never    */
+/* through else. At most one per edges block; the target is required.         */
+else_default ::= "else" "->" IDENTIFIER NEWLINE
 
-edge_attr       = "when" condition
-                | "on" OUTCOME_TOKEN (* sugar: equality vs the source node's  *)
-                                    (* outcome channel — ctx.outcome (agent)   *)
-                                    (* or ctx.tool_marker (tool+marker_grep);   *)
-                                    (* desugars to when. Not for human gates.   *)
-                | "label"   ":" field_value
-                | "choice"  ":" field_value        (* carried human-gate route key*)
-                | "weight"  ":" INTEGER
-                | "loop"                           (* back-edge; canonical form  *)
-                | "restart" ":" BOOLEAN            (* legacy alias; fmt → loop   *)
-                | "override" ":" BOOLEAN ;         (* carried human-override mark*)
+edge_attr ::= "when" condition
+            | "on" OUTCOME_TOKEN     /* sugar: equality vs the source node's outcome channel */
+            | "label" ":" field_value
+            | "choice" ":" field_value    /* carried human-gate route key */
+            | "weight" ":" INTEGER
+            | "loop"                  /* back-edge; canonical form */
+            | "restart" ":" BOOLEAN   /* legacy alias; fmt -> loop */
+            | "override" ":" BOOLEAN  /* carried human-override mark */
 
-(* ═══════════════════════════════════════════════════════════ *)
-(* Stylesheet Section                                         *)
-(* ═══════════════════════════════════════════════════════════ *)
+/* ============================================================ */
+/* Stylesheet Section                                           */
+/* ============================================================ */
 
-(* The stylesheet uses "stylesheet:" syntax (with colon) so   *)
-(* the lexer captures the entire body as a raw block. This    *)
-(* avoids conflict between # comments and #id selectors.      *)
+stylesheet_section ::= "stylesheet" ":" NEWLINE INDENT raw_stylesheet OUTDENT
 
-stylesheet_section = "stylesheet" ":" NEWLINE INDENT raw_stylesheet OUTDENT ;
+raw_stylesheet ::= stylesheet_rule*
 
-raw_stylesheet  = { stylesheet_rule } ;
+stylesheet_rule ::= selector NEWLINE INDENT ( IDENTIFIER ":" field_value )* OUTDENT
 
-stylesheet_rule = selector NEWLINE
-                  INDENT { IDENTIFIER ":" field_value } OUTDENT ;
+selector ::= "*"                  /* universal */
+           | IDENTIFIER           /* kind: agent, tool, etc */
+           | "." IDENTIFIER       /* class */
+           | "#" IDENTIFIER       /* node ID */
 
-selector        = "*"                              (* universal *)
-                | IDENTIFIER                       (* kind: agent, tool, etc *)
-                | "." IDENTIFIER                   (* class *)
-                | "#" IDENTIFIER ;                 (* node ID *)
+/* ============================================================ */
+/* Condition Expressions                                        */
+/* ============================================================ */
 
-(* Specificity order: * (0) < kind (1) < .class (2) < #id (3) *)
+condition ::= or_expr
 
-(* ═══════════════════════════════════════════════════════════ *)
-(* Condition Expressions                                      *)
-(* ═══════════════════════════════════════════════════════════ *)
+or_expr ::= and_expr ( "or" and_expr )*
 
-(* Note: the parser stores conditions as raw text (Condition.Raw).     *)
-(* The AST (Condition.Parsed) is populated by EnsureConditionsParsed  *)
-(* before lint checks run and before simulation.                      *)
+and_expr ::= unary_expr ( "and" unary_expr )*
 
-condition       = or_expr ;
+unary_expr ::= "not" unary_expr | compare_expr
 
-or_expr         = and_expr { "or" and_expr } ;
+/* Infix negation: "ctx.outcome not contains val" is equivalent to            */
+/* "not (ctx.outcome contains val)".                                          */
+compare_expr ::= operand "not"? compare_op operand
 
-and_expr        = unary_expr { "and" unary_expr } ;
+/* All operators perform string comparison — no numeric coercion.            */
+compare_op ::= "==" | "!=" | "="
+             | "contains" | "startswith" | "endswith" | "in"
 
-unary_expr      = "not" unary_expr
-                | compare_expr ;
+operand ::= variable | STRING | IDENTIFIER
 
-(* Infix negation: "ctx.outcome not contains val" is equivalent to   *)
-(* "not (ctx.outcome contains val)". Both prefix and infix forms     *)
-(* produce CondNot{Inner: CondCompare{...}} in the AST.              *)
-compare_expr    = operand [ "not" ] compare_op operand ;
+/* Variables use dotted namespaces, e.g. ctx.outcome, graph.goal.             */
+variable ::= IDENTIFIER "." IDENTIFIER
 
-(* All operators perform string comparison — no numeric coercion.    *)
-compare_op      = "==" | "!=" | "="
-                | "contains" | "startswith" | "endswith" | "in" ;
+/* ============================================================ */
+/* Field Values                                                 */
+/* ============================================================ */
 
-operand         = variable | STRING | IDENTIFIER ;
+field_value ::= inline_value | multiline_block
 
-(* Variables use dotted namespaces. Bare identifiers (e.g., "outcome" *)
-(* instead of "ctx.outcome") are accepted but trigger DIP120.         *)
-variable        = IDENTIFIER "." IDENTIFIER ;  (* e.g., ctx.outcome, graph.goal *)
+inline_value ::= STRING | RAW_INLINE
 
-(* ═══════════════════════════════════════════════════════════ *)
-(* Field Values                                               *)
-(* ═══════════════════════════════════════════════════════════ *)
+multiline_block ::= NEWLINE INDENT RAW_CONTENT OUTDENT
 
-(* A field value is either inline (same line) or a multiline  *)
-(* block (next line, indented deeper). Multiline blocks are   *)
-(* captured as raw text — no further tokenization occurs.     *)
+/* ============================================================ */
+/* Lexical Elements                                             */
+/* ============================================================ */
 
-field_value     = inline_value | multiline_block ;
+IDENTIFIER ::= [A-Za-z0-9] [A-Za-z0-9_./-]*
 
-inline_value    = STRING | raw_inline ;
+/* The `on` shorthand value is stricter than IDENTIFIER: no "." or "/".       */
+OUTCOME_TOKEN ::= [A-Za-z0-9] [A-Za-z0-9_-]*
 
-raw_inline      = ? all characters from colon to end of line,
-                    excluding trailing whitespace ? ;
+STRING ::= '"' dq_char* '"'
+         | "'" sq_char* "'"
 
-multiline_block = NEWLINE INDENT raw_content OUTDENT ;
+dq_char ::= Char - ( '"' | '\' )
+          | '\' ( '"' | '\' )
 
-raw_content     = ? verbatim text lines at block indentation,
-                    including blank lines, until indentation
-                    returns to or below the field's level.
-                    The block's base indentation is stripped.
-                    No tokenization — shell scripts, markdown,
-                    JSON, code, anything is preserved as-is. ? ;
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Lexical Elements                                           *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-(* Note: the lexer does not distinguish INTEGER, BOOLEAN, or  *)
-(* DURATION as separate token types. All are lexed as         *)
-(* IDENTIFIER tokens and parsed by the consumer.              *)
-
-IDENTIFIER      = ( letter | digit ) { letter | digit | "_" | "-" | "." | "/" } ;
-
-(* The `on` shorthand value is stricter than IDENTIFIER: no "." or "/", so it  *)
-(* round-trips as one token in both the .dip lexer and the tree-sitter grammar *)
-(* (enforced by ir.IsOutcomeToken). A "." / "/" / quoted value needs a `when`. *)
-OUTCOME_TOKEN   = ( letter | digit ) { letter | digit | "_" | "-" } ;
-
-STRING          = '"' { string_char } '"'
-                | "'" { single_string_char } "'" ;
-
-string_char     = ? any character except '"' and '\' ?
-                | '\' ( '"' | '\' ) ;
-
-(* Single-quoted strings are literal: backslashes are not escapes.   *)
-(* The only escape is a doubled '' which produces a single ' (YAML-style). *)
-single_string_char = ? any character except "'" ?
-                | "'" "'" ;
-
-INTEGER         = digit { digit } ;
-
-BOOLEAN         = "true" | "false" ;
-
-DURATION        = ? parsed by Go's time.ParseDuration, accepts
-                    combinations like "30s", "5m", "1h30m",
-                    "100ms", "1.5h" ? ;
-
-COMMENT         = "#" { ? any character except newline ? } ;
-
-NEWLINE         = ? newline character ? ;
-
-INDENT          = ? increase in leading whitespace from previous line ? ;
-
-OUTDENT         = ? decrease in leading whitespace to previous indent level ? ;
-
-letter          = "A" | "B" | ... | "Z" | "a" | "b" | ... | "z" ;
-
-digit           = "0" | "1" | ... | "9" ;
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Whitespace and Comment Rules                               *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-(* - Indentation is significant (like Python/YAML)            *)
-(* - Spaces are the standard indent character (2-space)       *)
-(* - Tabs are treated as one byte of indentation (not 8)      *)
-(* - Blank lines are ignored for indentation tracking         *)
-(* - Comment-only lines (# ...) are ignored for indentation   *)
-(* - Inline comments require preceding whitespace             *)
-(* - Comments inside multiline blocks are literal content     *)
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Canonical Field Ordering (enforced by formatter)           *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-(* Workflow header: goal, requires, start, exit               *)
-(* Defaults: model, provider, retry_policy, max_retries,      *)
-(*   fidelity, max_restarts, restart_target, on_failure,      *)
-(*   cache_tools, compaction, on_resume,                      *)
-(*   max_total_tokens, max_cost_cents, max_wall_time,         *)
-(*   stall_timeout                                            *)
-(* Agent: label, class, model, provider, reasoning_effort,    *)
-(*   fidelity, backend, working_dir, tool_access,             *)
-(*   writable_paths, response_format, response_schema,        *)
-(*   goal_gate, auto_status, max_turns, cmd_timeout,          *)
-(*   cache_tools, compaction, compaction_threshold, params,   *)
-(*   retry_policy, max_retries, base_delay, retry_target,     *)
-(*   fallback_target, reads, writes, system_prompt,           *)
-(*   system_prompt_file, prompt, prompt_file                  *)
-(* Human: label, mode, default, reads, writes                 *)
-(* Tool: label, outputs, marker_grep, route_required,         *)
-(*   output_limit, timeout, reads, writes, command            *)
-(* Subgraph: label, ref                                       *)
-(* Manager loop: label, retry, reads, writes, subgraph_ref,   *)
-(*   poll_interval, max_cycles, stop_condition,               *)
-(*   steer_condition, steer_context                           *)
-(* Note: multiline fields (prompt, system_prompt, command)     *)
-(*   are always last in their node type                       *)
-
-(* ═══════════════════════════════════════════════════════════ *)
-(* Keywords (contextual, not reserved)                        *)
-(* ═══════════════════════════════════════════════════════════ *)
-
-(* These identifiers have special meaning in context but can  *)
-(* be used as node IDs without conflict:                      *)
-(* workflow, agent, human, tool, subgraph, conditional,       *)
-(* parallel, fan_in, manager_loop, edges, defaults, vars,     *)
-(* when, and, or, not, contains, startswith, endswith, in,    *)
-(* true, false, restart, loop, override, label, choice, weight*)
+/* Single-quoted strings are literal (no backslash escapes); a doubled ''     */
+/* produces a single ' (YAML-style).                                          */
+sq_char ::= Char - "'"
+          | "'" "'"
+
+INTEGER ::= [0-9]+
+
+FLOAT ::= [0-9]+ "." [0-9]+
+
+BOOLEAN ::= "true" | "false"
+
+COMMENT ::= "#" ( Char - #xA )*
+
+Char ::= [#x9#xA#xD#x20-#x10FFFF]
+
+/* Lexer-produced tokens with no context-free production (significant         */
+/* whitespace / raw capture): they are terminals supplied by the lexer.       */
+/*   NEWLINE     — end of a logical line.                                      */
+/*   INDENT      — increase in leading whitespace from the previous line.      */
+/*   OUTDENT     — decrease in leading whitespace to a previous indent level.  */
+/*   DURATION    — Go time.ParseDuration form, e.g. "30s", "5m", "1h30m".      */
+/*   RAW_INLINE  — all characters from ':' to end of line (trimmed).           */
+/*   RAW_CONTENT — verbatim block text at the field's indentation, captured    */
+/*                 with no tokenization (shell, markdown, JSON, code, ...).    */
+
+/* ============================================================ */
+/* Whitespace and Comments                                      */
+/* ============================================================ */
+
+/* - Indentation is significant (like Python/YAML); 2-space indent.           */
+/* - Tabs count as one byte of indentation.                                   */
+/* - Blank lines and comment-only (# ...) lines are ignored for indentation.  */
+/* - Inline comments require preceding whitespace.                            */
+/* - Comments inside multiline blocks are literal content.                    */
+
+/* ============================================================ */
+/* Keywords (contextual, not reserved)                          */
+/* ============================================================ */
+
+/* These identifiers have special meaning in context but can be used as node  */
+/* IDs without conflict: workflow, agent, human, tool, subgraph, conditional,  */
+/* parallel, fan_in, manager_loop, edges, defaults, vars, when, on, and, or,   */
+/* not, contains, startswith, endswith, in, true, false, restart, loop,        */
+/* override, label, choice, weight. The sole exception is "else", which is     */
+/* reserved as the first token of an edges-block line (the section default).   */

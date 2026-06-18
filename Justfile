@@ -76,11 +76,12 @@ pack-examples: build
         ./dippin pack -o "$(mktemp -u).dipx" "$f"
     done
 
-# Validate that docs/GRAMMAR.ebnf is well-formed (closed comments/strings,
-# `name = ... ;` rule shape, balanced groups, all nonterminals defined)
+# Validate that docs/GRAMMAR.ebnf is valid W3C EBNF (the bottlecaps/XML-spec
+# dialect): `name ::= ...` productions, balanced groups, closed comments/strings/
+# char-classes, and all nonterminals defined.
 validate-grammar:
     go test ./ebnf/ -count=1
-    @echo "GRAMMAR.ebnf well-formed."
+    @echo "GRAMMAR.ebnf is valid W3C EBNF."
 
 # Check cyclomatic complexity (max 5 per function, excluding tests)
 complexity:
