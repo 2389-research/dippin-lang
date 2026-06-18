@@ -18,9 +18,10 @@ func lintConditionalReachability(w *ir.Workflow) []Diagnostic {
 	incoming := buildIncomingEdgeMap(w)
 	outgoing := buildOutgoingEdgeMap(w)
 	exhaustiveSources := findExhaustiveSources(w)
+	elseValid := hasValidElseDefault(w) // O(N) once per pass, not per edge
 
 	for _, n := range w.Nodes {
-		if d, ok := checkConditionalReachability(w, n, w.Start, incoming, outgoing, exhaustiveSources); ok {
+		if d, ok := checkConditionalReachability(w, n, w.Start, incoming, outgoing, exhaustiveSources, elseValid); ok {
 			diags = append(diags, d)
 		}
 	}
@@ -28,7 +29,7 @@ func lintConditionalReachability(w *ir.Workflow) []Diagnostic {
 }
 
 // checkConditionalReachability checks a single node for DIP101.
-func checkConditionalReachability(w *ir.Workflow, n *ir.Node, start string, incoming, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) (Diagnostic, bool) {
+func checkConditionalReachability(w *ir.Workflow, n *ir.Node, start string, incoming, outgoing map[string][]*ir.Edge, exhaustive map[string]bool, elseValid bool) (Diagnostic, bool) {
 	if n.ID == start {
 		return Diagnostic{}, false
 	}
@@ -36,7 +37,7 @@ func checkConditionalReachability(w *ir.Workflow, n *ir.Node, start string, inco
 	if len(edges) == 0 {
 		return Diagnostic{}, false
 	}
-	if allEdgesConditional(edges) && !allSourcesSafe(w, edges, outgoing, exhaustive) {
+	if allEdgesConditional(edges) && !allSourcesSafe(w, edges, outgoing, exhaustive, elseValid) {
 		return Diagnostic{
 			Code:     DIP101,
 			Severity: SeverityWarning,
@@ -50,9 +51,9 @@ func checkConditionalReachability(w *ir.Workflow, n *ir.Node, start string, inco
 
 // allSourcesSafe returns true if every source node feeding these edges
 // is a "safe source" — see sourceIsSafe.
-func allSourcesSafe(w *ir.Workflow, edges []*ir.Edge, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
+func allSourcesSafe(w *ir.Workflow, edges []*ir.Edge, outgoing map[string][]*ir.Edge, exhaustive map[string]bool, elseValid bool) bool {
 	for _, e := range edges {
-		if !sourceIsSafe(w, e.From, outgoing, exhaustive) {
+		if !sourceIsSafe(w, e.From, outgoing, exhaustive, elseValid) {
 			return false
 		}
 	}
@@ -60,9 +61,13 @@ func allSourcesSafe(w *ir.Workflow, edges []*ir.Edge, outgoing map[string][]*ir.
 }
 
 // sourceIsSafe returns true if a source node guarantees its conditional
-// destinations are intentional: via exhaustive conditions, an unconditional
-// outgoing edge (mixed routing), or marker_grep-driven typed routing.
-func sourceIsSafe(w *ir.Workflow, nodeID string, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
+// destinations are intentional: via a section `else` default that covers any
+// unmatched guard, exhaustive conditions, an unconditional outgoing edge (mixed
+// routing), or marker_grep-driven typed routing.
+func sourceIsSafe(w *ir.Workflow, nodeID string, outgoing map[string][]*ir.Edge, exhaustive map[string]bool, elseValid bool) bool {
+	if elseValid {
+		return true
+	}
 	if exhaustive[nodeID] {
 		return true
 	}
@@ -126,13 +131,14 @@ func allEdgesConditional(edges []*ir.Edge) bool {
 func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	exhaustiveSources := findExhaustiveSources(w)
+	elseValid := hasValidElseDefault(w) // O(N) once per pass, not per node
 
 	for _, n := range w.Nodes {
 		outgoing := w.EdgesFrom(n.ID)
 		if len(outgoing) == 0 {
 			continue
 		}
-		if hasMissingDefault(outgoing) && !nodeIsSafeRouter(w, exhaustiveSources, n.ID) {
+		if hasMissingDefault(outgoing) && !nodeIsSafeRouter(w, exhaustiveSources, n.ID, elseValid) {
 			diags = append(diags, Diagnostic{
 				Code:     DIP102,
 				Severity: SeverityWarning,
@@ -146,10 +152,23 @@ func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 }
 
 // nodeIsSafeRouter returns true if the node's outgoing conditional edges
-// are intentional routing — either because the conditions are exhaustive
-// or because the node is a tool with marker_grep-driven typed routing.
-func nodeIsSafeRouter(w *ir.Workflow, exhaustive map[string]bool, nodeID string) bool {
+// are intentional routing — because a section `else` default covers any
+// unmatched guard, the conditions are exhaustive, or the node is a tool with
+// marker_grep-driven typed routing.
+func nodeIsSafeRouter(w *ir.Workflow, exhaustive map[string]bool, nodeID string, elseValid bool) bool {
+	if elseValid {
+		return true // a section `else` default is this node's unconditional fallback
+	}
 	return exhaustive[nodeID] || toolHasMarkerRouting(w, nodeID)
+}
+
+// hasValidElseDefault reports whether the workflow declares a section `else`
+// default that points at an existing node. Suppression of DIP101/DIP102 is
+// gated on the target existing so an invalid `else` (a structural DIP003 error)
+// does not silently hide routing problems — Lint runs independently of Validate,
+// mirroring how DIP144 gates on_failure on node existence.
+func hasValidElseDefault(w *ir.Workflow) bool {
+	return w.ElseTarget != "" && w.Node(w.ElseTarget) != nil
 }
 
 // hasMissingDefault returns true if edges contain conditional edges but no unconditional one.
@@ -175,6 +194,11 @@ func lintSuccessPath(w *ir.Workflow) []Diagnostic {
 	}
 
 	adj := buildForwardAdjacency(w)
+	// The section `else` default is a success-side forward route. Seed it only
+	// for this reachability walk (a fresh adjacency map) — it must NOT enter the
+	// shared buildForwardAdjacency, whose consumers (DIP112) derive in-degrees
+	// from w.Edges and would mis-order their topo traversal.
+	addElseEdge(adj, w)
 	visited := bfsReachable(w.Start, adj)
 
 	if visited[w.Exit] {

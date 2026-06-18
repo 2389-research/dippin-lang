@@ -21,6 +21,7 @@ func Validate(w *ir.Workflow) Result {
 	diags = append(diags, checkExitExists(w)...)
 	diags = append(diags, checkEdgeEndpoints(w)...)
 	diags = append(diags, checkOnFailureTarget(w)...)
+	diags = append(diags, checkElseTarget(w)...)
 	diags = append(diags, checkExitNoOutgoing(w)...)
 	diags = append(diags, checkNoDuplicateEdges(w)...)
 	diags = append(diags, checkReachability(w)...)
@@ -129,9 +130,32 @@ func checkOnFailureTarget(w *ir.Workflow) []Diagnostic {
 	return []Diagnostic{d}
 }
 
+// checkElseTarget verifies DIP003: the section-level `else` default route, if set,
+// references an existing node. `else` is a node reference like an edge endpoint or
+// on_failure, so it reuses the DIP003 code.
+func checkElseTarget(w *ir.Workflow) []Diagnostic {
+	target := w.ElseTarget
+	if target == "" || w.Node(target) != nil {
+		return nil
+	}
+	d := Diagnostic{
+		Code:     DIP003,
+		Severity: SeverityError,
+		Message:  fmt.Sprintf("else default references unknown node %q", target),
+		Location: w.ElseTargetSource,
+	}
+	if suggestion := closestNodeID(w, target); suggestion != "" {
+		d.Help = fmt.Sprintf("did you mean %q?", suggestion)
+	} else {
+		d.Help = fmt.Sprintf("declare a node with ID %q or fix the else target", target)
+	}
+	return []Diagnostic{d}
+}
+
 // buildAllEdgeAdjacency builds an adjacency map including all edges (including restart).
-// It also includes implicit parallel/fan_in edges and the graph-level on_failure route,
-// so a recovery node reachable only via on_failure is not falsely flagged DIP004.
+// It also includes implicit parallel/fan_in edges, the graph-level on_failure route,
+// and the section-level else default, so a node reachable only via on_failure or else
+// is not falsely flagged DIP004.
 func buildAllEdgeAdjacency(w *ir.Workflow) map[string][]string {
 	adj := make(map[string][]string)
 	for _, e := range w.Edges {
@@ -139,7 +163,17 @@ func buildAllEdgeAdjacency(w *ir.Workflow) map[string][]string {
 	}
 	addParallelFanInEdges(adj, w)
 	addOnFailureEdge(adj, w)
+	addElseEdge(adj, w)
 	return adj
+}
+
+// addElseEdge adds the section-level else target as reachable from start.
+// One path suffices for reachability; else is conceptually reachable from any
+// node whose guards do not match, and start is always reachable.
+func addElseEdge(adj map[string][]string, w *ir.Workflow) {
+	if w.ElseTarget != "" {
+		adj[w.Start] = append(adj[w.Start], w.ElseTarget)
+	}
 }
 
 // addOnFailureEdge adds the graph-level on_failure target as reachable from start.

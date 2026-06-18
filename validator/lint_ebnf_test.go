@@ -51,8 +51,8 @@ func TestEBNFInfixNegationDocumented(t *testing.T) {
 	}
 	content := string(ebnf)
 
-	// The EBNF should document infix negation.
-	if !strings.Contains(content, `[ "not" ]`) {
+	// The EBNF should document infix negation (W3C optional: `"not"?`).
+	if !strings.Contains(content, `"not"?`) {
 		t.Error("GRAMMAR.ebnf does not document infix negation syntax")
 	}
 

@@ -584,6 +584,10 @@
               },
               {
                 "type": "SYMBOL",
+                "name": "else_default"
+              },
+              {
+                "type": "SYMBOL",
                 "name": "_newline"
               }
             ]
@@ -616,6 +620,23 @@
             "type": "SYMBOL",
             "name": "edge_attr"
           }
+        }
+      ]
+    },
+    "else_default": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "else"
+        },
+        {
+          "type": "STRING",
+          "value": "->"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
         }
       ]
     },

@@ -76,6 +76,13 @@ pack-examples: build
         ./dippin pack -o "$(mktemp -u).dipx" "$f"
     done
 
+# Validate that docs/GRAMMAR.ebnf is valid W3C EBNF (the bottlecaps/XML-spec
+# dialect): `name ::= ...` productions, balanced groups, closed comments/strings/
+# char-classes, and all nonterminals defined.
+validate-grammar:
+    go test ./ebnf/ -count=1
+    @echo "GRAMMAR.ebnf is valid W3C EBNF."
+
 # Check cyclomatic complexity (max 5 per function, excluding tests)
 complexity:
     @violations=$( gocyclo -over 5 . | grep -v _test.go ); \
@@ -102,7 +109,7 @@ releasecheck:
     go test ./releasecheck/ -count=1 -race
 
 # Run the full pre-commit check suite (mirrors CI exactly)
-check: spec-check build vet fmt-check lint-go test-race releasecheck complexity validate-examples pack-examples tree-sitter-test
+check: spec-check build vet fmt-check lint-go test-race releasecheck complexity validate-examples validate-grammar pack-examples tree-sitter-test
     @echo "All checks passed."
 
 # Generate test coverage report (excludes untestable files: main.go, cmd_lsp.go)

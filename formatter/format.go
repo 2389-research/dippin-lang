@@ -46,7 +46,7 @@ func writeWorkflowTailSections(wr *writer, w *ir.Workflow) {
 		wr.blank()
 		writeStylesheet(wr, w.Stylesheet)
 	}
-	if len(w.Edges) > 0 {
+	if len(w.Edges) > 0 || w.ElseTarget != "" {
 		wr.blank()
 		writeEdges(wr, w)
 	}
@@ -746,6 +746,9 @@ func writeEdges(wr *writer, w *ir.Workflow) {
 	wr.push()
 	for _, e := range w.Edges {
 		writeEdge(wr, w, e)
+	}
+	if w.ElseTarget != "" {
+		wr.line("else -> %s", w.ElseTarget)
 	}
 	wr.pop()
 }

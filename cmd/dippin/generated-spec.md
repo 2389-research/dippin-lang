@@ -41,7 +41,10 @@ workflow <Name>
 
   edges
     <From> -> <To> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop] [override: true]
+    [else -> <NodeID>]   # success-side default for any node with no matching guard / unconditional edge; at most one per block
 ```
+
+`else` is reserved as the first token of an edges-block line, so a node cannot be used as an edge *source* under the ID `else` (the other contextual keywords `on`/`when`/`loop` are only special after `->` and remain usable as node IDs).
 
 ---
 
@@ -155,6 +158,8 @@ workflow ReviewPipeline
 **Identifiers:** `[a-zA-Z0-9][a-zA-Z0-9_\-./]*` — letters, digits, underscore, dash, dot, slash.
 
 **Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `override`, `label`, `weight`.
+
+**Position-reserved keyword:** `else` is the one exception — it is reserved *only* as the first token of an `edges`-block line (where it introduces the section default), so it cannot be an edge *source* node ID there. Everywhere else `else` is an ordinary identifier and may be used as a node ID.
 
 ---
 
