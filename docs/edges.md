@@ -191,7 +191,7 @@ such marker had to be hand-routed to one shared handler, one edge at a time. `el
 states "everything not handled above goes here" once.
 
 - **At most one `else` per edges block.** A second is a parse error.
-- **`else -> ` requires a target node.** A bare `else ->` with no destination is a parse error.
+- **`else ->` requires a target node.** A bare `else ->` with no destination is a parse error.
 - **`else` is reserved as the first token of an edges-block line.** Unlike the other
   contextual keywords (`when`, `on`, `loop`, which are only special *after* `->` and remain
   usable as node IDs), a line beginning with `else` in the `edges` block is always the

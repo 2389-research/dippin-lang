@@ -208,7 +208,9 @@ common_field    = "label"           ":" field_value
 (* Edges Section                                              *)
 (* ═══════════════════════════════════════════════════════════ *)
 
-edges_section   = "edges" NEWLINE INDENT { edge_entry | else_default } OUTDENT ;
+(* At most one else_default per block, position-flexible (the formatter emits *)
+(* it last). A second else is diagnosed, not silently accepted.               *)
+edges_section   = "edges" NEWLINE INDENT { edge_entry } [ else_default { edge_entry } ] OUTDENT ;
 
 edge_entry      = IDENTIFIER "->" IDENTIFIER { edge_attr } NEWLINE ;
 

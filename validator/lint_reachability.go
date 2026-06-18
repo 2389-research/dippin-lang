@@ -64,7 +64,7 @@ func allSourcesSafe(w *ir.Workflow, edges []*ir.Edge, outgoing map[string][]*ir.
 // unmatched guard, exhaustive conditions, an unconditional outgoing edge (mixed
 // routing), or marker_grep-driven typed routing.
 func sourceIsSafe(w *ir.Workflow, nodeID string, outgoing map[string][]*ir.Edge, exhaustive map[string]bool) bool {
-	if w.ElseTarget != "" {
+	if hasValidElseDefault(w) {
 		return true
 	}
 	if exhaustive[nodeID] {
@@ -154,10 +154,19 @@ func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 // unmatched guard, the conditions are exhaustive, or the node is a tool with
 // marker_grep-driven typed routing.
 func nodeIsSafeRouter(w *ir.Workflow, exhaustive map[string]bool, nodeID string) bool {
-	if w.ElseTarget != "" {
+	if hasValidElseDefault(w) {
 		return true // a section `else` default is this node's unconditional fallback
 	}
 	return exhaustive[nodeID] || toolHasMarkerRouting(w, nodeID)
+}
+
+// hasValidElseDefault reports whether the workflow declares a section `else`
+// default that points at an existing node. Suppression of DIP101/DIP102 is
+// gated on the target existing so an invalid `else` (a structural DIP003 error)
+// does not silently hide routing problems — Lint runs independently of Validate,
+// mirroring how DIP144 gates on_failure on node existence.
+func hasValidElseDefault(w *ir.Workflow) bool {
+	return w.ElseTarget != "" && w.Node(w.ElseTarget) != nil
 }
 
 // hasMissingDefault returns true if edges contain conditional edges but no unconditional one.
@@ -183,6 +192,11 @@ func lintSuccessPath(w *ir.Workflow) []Diagnostic {
 	}
 
 	adj := buildForwardAdjacency(w)
+	// The section `else` default is a success-side forward route. Seed it only
+	// for this reachability walk (a fresh adjacency map) — it must NOT enter the
+	// shared buildForwardAdjacency, whose consumers (DIP112) derive in-degrees
+	// from w.Edges and would mis-order their topo traversal.
+	addElseEdge(adj, w)
 	visited := bfsReachable(w.Start, adj)
 
 	if visited[w.Exit] {

@@ -42,6 +42,8 @@ workflow <Name>
     [else -> <NodeID>]   # success-side default for any node with no matching guard / unconditional edge; at most one per block
 ```
 
+`else` is reserved as the first token of an edges-block line, so a node cannot be used as an edge *source* under the ID `else` (the other contextual keywords `on`/`when`/`loop` are only special after `->` and remain usable as node IDs).
+
 ---
 
 ## Node Kinds

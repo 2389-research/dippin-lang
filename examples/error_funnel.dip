@@ -24,7 +24,6 @@ workflow ErrorFunnel
 
   tool Cleanup
     label: "Tear down the worktree on any failure"
-    marker_grep: "^(cleanup-done)$"
     command: ./cleanup.sh
 
   agent Done
@@ -34,7 +33,10 @@ workflow ErrorFunnel
     SetupRun -> RunBuild  on setup-ok
     RunBuild -> RunTests  on build-ok
     RunTests -> Done      on tests-ok
-    Cleanup  -> Done      on cleanup-done
+    # Cleanup has its own unconditional edge to Done, so it is NOT subject to the
+    # else default below — otherwise an unexpected Cleanup outcome would route
+    # back to Cleanup and stall.
+    Cleanup  -> Done
     # Every *-failed marker (setup-failed, build-failed, tests-failed) has no
     # matching guard above, so it falls through to this single funnel default
     # instead of being hand-routed one edge at a time.

@@ -35,6 +35,9 @@ func TestParseElseTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
 	}
+	if diags := p.Diagnostics(); len(diags) > 0 {
+		t.Fatalf("valid else workflow produced parser diagnostics: %v", diags)
+	}
 	if w.ElseTarget != "C" {
 		t.Fatalf("ElseTarget = %q, want %q", w.ElseTarget, "C")
 	}
