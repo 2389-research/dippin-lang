@@ -37,8 +37,8 @@ func (b *Bundle) Identity() [32]byte {
 
 // ByteTotal returns the sum of uncompressed file sizes across every entry
 // in the bundle. Only valid when the bundle was opened with full hash
-// verification (i.e., via Open / OpenReader); a manifest-only inspection
-// path (OpenManifest, Bundle 2 / Task 3) does not populate fileBytes and
+// verification (i.e., via Open); a manifest-only inspection path
+// (OpenManifest, Bundle 2 / Task 3) does not populate fileBytes and
 // would return 0.
 func (b *Bundle) ByteTotal() int64 {
 	var total int64
@@ -51,21 +51,6 @@ func (b *Bundle) ByteTotal() int64 {
 // Entry returns the entry workflow.
 func (b *Bundle) Entry() *ir.Workflow {
 	return b.workflows[b.manifest.Entry]
-}
-
-// Lookup returns the parsed workflow at a bundle-relative path. The path is
-// re-canonicalized on every call (defense-in-depth: the bundle's internal map
-// is keyed by canonical paths, but callers may pass arbitrary strings).
-func (b *Bundle) Lookup(bundlePath string) (*ir.Workflow, error) {
-	canonical, err := Canonicalize(bundlePath)
-	if err != nil {
-		return nil, err
-	}
-	wf, ok := b.workflows[canonical]
-	if !ok {
-		return nil, newError(ErrFileMissing, canonical, "", nil)
-	}
-	return wf, nil
 }
 
 // Resolve takes a parent's bundle-relative path and a ref string, and returns
@@ -97,21 +82,4 @@ func (b *Bundle) Workflow(ctx context.Context, refPath, relativeTo string) (*ir.
 		return nil, err
 	}
 	return b.workflows[resolved], nil
-}
-
-// ReadFile returns the raw bytes of any file in the bundle. The path is
-// re-canonicalized on every call (defense-in-depth: see Lookup).
-func (b *Bundle) ReadFile(bundlePath string) ([]byte, error) {
-	canonical, err := Canonicalize(bundlePath)
-	if err != nil {
-		return nil, err
-	}
-	data, ok := b.fileBytes[canonical]
-	if !ok {
-		return nil, newError(ErrFileMissing, canonical, "", nil)
-	}
-	// Defensive copy to preserve immutability.
-	out := make([]byte, len(data))
-	copy(out, data)
-	return out, nil
 }

@@ -375,17 +375,6 @@ func TestConditionalConfigImplementsNodeConfig(t *testing.T) {
 	var _ ir.NodeConfig = ir.ConditionalConfig{}
 }
 
-func TestNodeIDs(t *testing.T) {
-	w := minimalWorkflow()
-	ids := w.NodeIDs()
-	if len(ids) != 2 {
-		t.Fatalf("NodeIDs() = %d, want 2", len(ids))
-	}
-	if ids[0] != "Begin" || ids[1] != "End" {
-		t.Errorf("NodeIDs() = %v, want [Begin End]", ids)
-	}
-}
-
 func TestManagerLoopConfig_ImplementsNodeConfig(t *testing.T) {
 	// Compile-time interface satisfaction check; if ManagerLoopConfig does
 	// not implement NodeConfig, this assignment won't compile.

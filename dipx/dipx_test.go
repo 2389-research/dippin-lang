@@ -37,7 +37,7 @@ func buildHappyDipx(t *testing.T) []byte {
 
 func TestOpen_Happy(t *testing.T) {
 	raw := buildHappyDipx(t)
-	b, err := OpenReader(context.Background(), bytes.NewReader(raw), int64(len(raw)))
+	b, err := openFromReader(context.Background(), bytes.NewReader(raw), int64(len(raw)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestOpen_HashMismatch(t *testing.T) {
 	writeUTF8Entry(t, w, "manifest.json", []byte(manifestSrc))
 	writeUTF8Entry(t, w, "workflows/hello.dip", body)
 	w.Close()
-	_, err := OpenReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	_, err := openFromReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len()))
 	if !errors.Is(err, ErrHashMismatch) {
 		t.Fatalf("err = %v, want ErrHashMismatch", err)
 	}
@@ -68,7 +68,7 @@ func TestOpen_ContextCancelled(t *testing.T) {
 	raw := buildHappyDipx(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel immediately
-	_, err := OpenReader(ctx, bytes.NewReader(raw), int64(len(raw)))
+	_, err := openFromReader(ctx, bytes.NewReader(raw), int64(len(raw)))
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %v, want context.Canceled", err)
 	}
@@ -114,7 +114,7 @@ func TestOpen_FormatVersionRejected(t *testing.T) {
 	writeUTF8Entry(t, w, "manifest.json", []byte(manifestSrc))
 	writeUTF8Entry(t, w, "workflows/hello.dip", body)
 	w.Close()
-	_, err := OpenReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	_, err := openFromReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len()))
 	if !errors.Is(err, ErrUnsupportedFormatVersion) {
 		t.Fatalf("err = %v, want ErrUnsupportedFormatVersion", err)
 	}
@@ -159,7 +159,7 @@ func TestPack_RoundTrip(t *testing.T) {
 		t.Fatalf("files = %d", len(manifest.Files))
 	}
 	// Open the resulting bundle.
-	b, err := OpenReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	b, err := openFromReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,7 +210,7 @@ func TestPack_RejectsOversizedSource(t *testing.T) {
 func TestOpen_RejectsTooManyFiles(t *testing.T) {
 	// Verify the maxFiles cap fires with ErrCapExceeded.
 	//
-	// We exercise verifyAllHashesCtx directly rather than going through OpenReader:
+	// We exercise verifyAllHashesCtx directly rather than going through openFromReader:
 	// constructing a manifest with maxFiles+1 entries serialized as JSON would
 	// always exceed maxManifestSize (1MB) regardless of how short the paths
 	// are — 10001 entries each containing a 64-char SHA-256 plus the minimal
@@ -235,13 +235,12 @@ func TestOpen_RejectsTooManyFiles(t *testing.T) {
 
 func TestBundle_ConcurrentReads(t *testing.T) {
 	raw := buildHappyDipx(t)
-	b, err := OpenReader(context.Background(), bytes.NewReader(raw), int64(len(raw)))
+	b, err := openFromReader(context.Background(), bytes.NewReader(raw), int64(len(raw)))
 	if err != nil {
 		t.Fatal(err)
 	}
-	const entryPath = "workflows/hello.dip"
 	// firstErr captures the first non-nil error any goroutine sees on the
-	// shared lookup/read paths, so a race-induced failure can't pass silently.
+	// shared Workflow read path, so a race-induced failure can't pass silently.
 	var (
 		errMu    sync.Mutex
 		firstErr error
@@ -261,16 +260,14 @@ func TestBundle_ConcurrentReads(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// Exercise the shared read accessors concurrently — these are
+			// what the concurrency contract actually covers. Workflow is part
+			// of the dipx.Source contract, which promises concurrent-read
+			// safety, so it must be exercised here too (see dipx/source.go).
 			_ = b.Entry()
 			_ = b.Manifest()
 			_ = b.Identity()
-			// Exercise the shared lookup/read paths — these are what the
-			// concurrency contract actually covers.
-			_, err := b.Lookup(entryPath)
-			record(err)
-			_, err = b.Workflow(context.Background(), "hello.dip", entryPath)
-			record(err)
-			_, err = b.ReadFile(entryPath)
+			_, err := b.Workflow(context.Background(), "hello.dip", "workflows/hello.dip")
 			record(err)
 		}()
 	}

@@ -10,29 +10,9 @@ import (
 	"github.com/2389-research/dippin-lang/ir"
 )
 
-// openMode selects strict vs lax behavior on extra zip entries.
-type openMode int
-
-const (
-	modeStrict openMode = iota
-	modeLax
-)
-
 // Open reads a .dipx from disk in strict mode (the default).
 func Open(ctx context.Context, path string) (*Bundle, error) {
-	return openFile(ctx, path, modeStrict)
-}
-
-// OpenLax is Open with extra zip file entries silently tolerated. For
-// hand-edited bundles only. NEVER call OpenLax on bytes obtained from any
-// non-local source.
-func OpenLax(ctx context.Context, path string) (*Bundle, error) {
-	return openFile(ctx, path, modeLax)
-}
-
-// OpenReader is Open from any io.ReaderAt of known size.
-func OpenReader(ctx context.Context, r io.ReaderAt, size int64) (*Bundle, error) {
-	return openFromReader(ctx, r, size, modeStrict)
+	return openFile(ctx, path)
 }
 
 // OpenManifest performs only Open's structural-admission steps (zip open,
@@ -62,19 +42,13 @@ func OpenManifest(ctx context.Context, path string) (Manifest, [32]byte, error) 
 	return manifest, sha256.Sum256(manifestBytes), nil
 }
 
-// Validate is Open-and-discard.
-func Validate(ctx context.Context, path string) error {
-	_, err := Open(ctx, path)
-	return err
-}
-
 // openFile opens path on disk and delegates to openFromReader. Errors
 // returned by openFromReader are enriched with the bundle path so external
 // callers observe case (a) Path semantics per spec § "Per-sentinel error
 // context": ErrManifestInvalid and ErrUnsupportedFormatVersion errors
 // originating in the manifest decoder (which has no bundle path in scope)
 // are rewritten to carry the bundle path here.
-func openFile(ctx context.Context, path string, mode openMode) (*Bundle, error) {
+func openFile(ctx context.Context, path string) (*Bundle, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, newError(ErrManifestMissing, path, "file not readable", err)
@@ -84,7 +58,7 @@ func openFile(ctx context.Context, path string, mode openMode) (*Bundle, error) 
 	if err != nil {
 		return nil, newError(ErrManifestMissing, path, "stat failed", err)
 	}
-	bundle, err := openFromReader(ctx, f, stat.Size(), mode)
+	bundle, err := openFromReader(ctx, f, stat.Size())
 	if err != nil {
 		return nil, enrichBundlePath(err, path)
 	}
@@ -95,12 +69,12 @@ func openFile(ctx context.Context, path string, mode openMode) (*Bundle, error) 
 // decode → manifest shape → strict-extras check → hash verify → parse →
 // walkRefs → normalize → build. ctx is checked before each disk-/CPU-bound
 // stage.
-func openFromReader(ctx context.Context, r io.ReaderAt, size int64, mode openMode) (*Bundle, error) {
+func openFromReader(ctx context.Context, r io.ReaderAt, size int64) (*Bundle, error) {
 	cz, manifest, manifestBytes, err := openAndReadManifest(ctx, r, size)
 	if err != nil {
 		return nil, err
 	}
-	if err := checkExtraEntriesCtx(ctx, cz, manifest, mode); err != nil {
+	if err := checkExtraEntriesCtx(ctx, cz, manifest); err != nil {
 		return nil, err
 	}
 	verified, err := verifyHashesCtx(ctx, cz, manifest)
@@ -150,11 +124,11 @@ func readAndDecodeManifest(cz *constrainedZip) ([]byte, Manifest, error) {
 }
 
 // checkExtraEntriesCtx checks ctx then runs the strict-extras check.
-func checkExtraEntriesCtx(ctx context.Context, cz *constrainedZip, m Manifest, mode openMode) error {
+func checkExtraEntriesCtx(ctx context.Context, cz *constrainedZip, m Manifest) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	return checkExtraEntries(cz, m, mode)
+	return checkExtraEntries(cz, m)
 }
 
 // verifyHashesCtx verifies every file's SHA-256, with per-entry ctx
@@ -379,10 +353,7 @@ func writeOneFile(ctx context.Context, root, path string, raw []byte) error {
 // checkExtraEntries enforces strict mode: any non-directory zip entry not
 // listed in files[] is rejected. Directory entries are always ignored
 // (already filtered out at constrainedZip construction).
-func checkExtraEntries(cz *constrainedZip, m Manifest, mode openMode) error {
-	if mode == modeLax {
-		return nil
-	}
+func checkExtraEntries(cz *constrainedZip, m Manifest) error {
 	listed := make(map[string]struct{}, len(m.Files)+1)
 	listed["manifest.json"] = struct{}{}
 	for _, e := range m.Files {

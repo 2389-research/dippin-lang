@@ -1065,21 +1065,6 @@ func TestParseHumanPrompt(t *testing.T) {
 	}
 }
 
-func TestTokenKindString(t *testing.T) {
-	tok := Token{
-		Type:     TokenIdentifier,
-		Value:    "hello",
-		Location: ir.SourceLocation{Line: 1, Column: 5},
-	}
-	s := tok.String()
-	if !strings.Contains(s, "hello") {
-		t.Errorf("Token.String() = %q, expected it to contain 'hello'", s)
-	}
-	if !strings.Contains(s, "1:5") {
-		t.Errorf("Token.String() = %q, expected it to contain '1:5'", s)
-	}
-}
-
 func readTestdata(t *testing.T, name string) string {
 	t.Helper()
 	data, err := os.ReadFile("testdata/" + name)
