@@ -112,9 +112,10 @@ func assertIdempotent(t *testing.T, w *ir.Workflow) {
 	}
 }
 
-// parsedCondition builds a condition whose AST is populated exactly as
-// validate/simulate would (Parsed only, Raw left empty) so tests exercise the
-// parsed-AST formatting path against real parser output.
+// parsedCondition builds a condition with a real parser-produced AST in Parsed.
+// In production, validate/simulate populate Parsed *alongside* the non-empty Raw
+// they parsed from; this helper deliberately leaves Raw empty to force the
+// formatter down its Parsed-fallback path against real parser output.
 func parsedCondition(t *testing.T, raw string) *ir.Condition {
 	t.Helper()
 	expr, err := simulate.ParseCondition(raw)
