@@ -210,7 +210,10 @@ states "everything not handled above goes here" once.
   nodes without one.
 
 dippin validates that the `else` target node exists (DIP003) and treats it as reachable
-(DIP004); the runtime resolves an unmatched node to the `else` target. See
+(DIP004); the runtime resolves an unmatched node to the `else` target. Note: `dippin
+simulate` / `dippin test` do not yet traverse the `else` default (tracked in
+[#158](https://github.com/2389-research/dippin-lang/issues/158)); a paired runtime
+resolves it. See
 [the error-funnel decision](proposals/2026-06-16-error-funnel-default.md).
 
 ---

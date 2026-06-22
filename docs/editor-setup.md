@@ -89,6 +89,7 @@ Or use a generic LSP client extension (like vscode-languageclient) with this con
 | Comments | `# comment` | comment |
 | Arrows | `->`, `<-` | operator |
 | Conditions | `when`, `and`, `or`, `not` | keyword |
+| Edge keywords | `on`, `loop`, `choice:`, `weight:`, `override:`, `restart:`, `else` | keyword |
 | Variables | `ctx.outcome`, `graph.goal` | variable |
 | Interpolation | `${ctx.var}` | variable |
 | Booleans | `true`, `false` | constant |

@@ -551,12 +551,12 @@ $ dippin explain DIP101
   unreachable node after conditional branches
 
   Trigger: A node follows conditional branches that already cover all outcomes.
-  Fix:     Route the node through a condition, or remove it if unreachable.
+  Fix:     Route the node through a condition, add a section `else -> <node>` default that covers it, or remove it if unreachable.
 
   Example:
-    A -> B [success]
-    A -> C [failure]
-    A -> D  // unreachable
+    A -> B when ctx.outcome = success
+    A -> C when ctx.outcome = fail
+    A -> D  # unreachable
 ```
 
 In JSON mode, outputs the `Explanation` struct with `code`, `summary`, `trigger`, `fix`, and `example` fields.

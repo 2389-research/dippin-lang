@@ -120,6 +120,7 @@ Agent nodes invoke an LLM. They are the most configurable node kind.
 | `cache_tools` | Boolean | workflow default | Whether to cache tool call results for this agent. Useful for expensive, deterministic tools. |
 | `compaction` | String | workflow default | Context compaction mode for managing long context windows. |
 | `compaction_threshold` | Float | — | Threshold value that triggers compaction (provider-specific semantics). |
+| `last_response_truncate` | Integer | — | Caps how much of the prior node's response is carried into this agent's context, in characters. `0`/unset = no truncation. Bounds the context-chaining attack surface; a negative value raises DIP148. |
 | `reasoning_effort` | String | — | Extended thinking effort level (provider-specific, e.g., `"none"`, `"minimal"`, `"low"`, `"medium"`, `"high"`, `"xhigh"`, `"max"`). Controls how much reasoning budget the LLM spends. |
 | `fidelity` | String | workflow default | Checkpoint fidelity level for this node's state. |
 | `auto_status` | Boolean | false | When true, the engine parses `STATUS: <status>` from the LLM response to set `ctx.outcome`. This enables automatic routing based on the agent's self-assessment. |
@@ -176,7 +177,7 @@ If you use a field name that is not recognized for the current node type, the pa
 
 ## Human Nodes
 
-Human nodes pause execution and wait for human input. They support three interaction modes.
+Human nodes pause execution and wait for human input. They support four interaction modes.
 
 ```dippin
   human Approve
@@ -193,6 +194,8 @@ Human nodes pause execution and wait for human input. They support three interac
 | `default` | String | — | Default selection if no input. Only meaningful for `"choice"` mode. |
 | `questions_key` | String | `interview_questions` | Context key to read questions from. Interview mode only. |
 | `answers_key` | String | `interview_answers` | Context key to write answers to. Interview mode only. |
+| `timeout` | Duration | — | How long to wait for human input before the `timeout_action` fires (e.g. `5m`, `30s`). `0`/unset = wait indefinitely. |
+| `timeout_action` | String | — | What to do when `timeout` elapses: `fail` (the node fails), `default` (use the `default` selection), or empty. Empty falls back to the node's `default` answer if one is set, otherwise fails. Any other value is a parse error. |
 
 ### Choice Mode
 

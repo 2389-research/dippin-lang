@@ -60,7 +60,7 @@ All expectation fields are optional. Only specified fields are checked.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Expected simulation status: `"success"` (reached exit), `"fail"`, or `"dead_end"` |
+| `status` | string | Expected simulation status: `"success"` (reached exit) or `"dead_end"` |
 | `visited` | string[] | Node IDs that must appear in the execution path |
 | `not_visited` | string[] | Node IDs that must NOT appear in the execution path |
 | `path_contains` | string[] | Node IDs that must appear in order (non-contiguous matches allowed) |
@@ -182,16 +182,17 @@ The `scenario` object maps context keys to values. The simulator resolves condit
 
 ## Coverage Flag
 
-Use `--coverage` to report node and edge coverage across all test scenarios:
+Use `--coverage` to report edge coverage across all test scenarios:
 
 ```
 $ dippin test --coverage gate.dip
   PASS  success path
   PASS  failure path
-  Coverage: 4/4 nodes (100%), 4/4 edges (100%)
+─── Edge Coverage ───
+  4/4 edges covered (100.0%)
 ```
 
-This helps identify nodes or edges that no test scenario exercises.
+This helps identify edges that no test scenario exercises. (Coverage is edge-only; there is no node-coverage report.)
 
 ## CI Integration
 
@@ -202,7 +203,7 @@ $ dippin --format json test pipeline.dip
 {
   "results": [
     {"name": "happy path", "passed": true, "path": ["Start", "Gate", "Pass", "Exit"]},
-    {"name": "error path", "passed": false, "errors": ["expected status \"fail\", got \"success\""]}
+    {"name": "error path", "passed": false, "errors": ["expected status \"dead_end\", got \"success\""]}
   ],
   "passed": 1,
   "failed": 1,

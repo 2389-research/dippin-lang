@@ -11,9 +11,17 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 **Node** — A step in the pipeline. Every node has an ID and a kind. Kinds include `agent`, `human`, `tool`, `conditional`, `parallel`, `fan_in`, `subgraph`, and `manager_loop`.
 
-**Edge** — A connection between two nodes, written `A -> B` in the `edges` block. May carry a `when` condition, a label, a weight, and a `restart:` flag.
+**Edge** — A connection between two nodes, written `A -> B` in the `edges` block. May carry a `when` condition (or the `on <token>` shorthand), a `loop` keyword for back-edges, a `label:`, a `choice:` routing key, a `restart:` flag, and an `override:` flag. (`weight:` is still parsed but soft-deprecated — DIP151.)
 
-**Condition** — A predicate attached to an edge using the `when` keyword. Syntax: `ctx.<field> <op> <value>` with operators `=`, `!=`, `contains`, and `not contains`. Complementary pairs (success/fail, contains/not-contains) are detected as exhaustive automatically.
+**Condition** — A predicate attached to an edge using the `when` keyword. Syntax: `ctx.<field> <op> <value>` with operators `=`, `==` (synonym for `=`), `!=`, `contains`, `not contains`, `startswith`, `endswith`, and `in`. Complementary pairs (success/fail, contains/not-contains) are detected as exhaustive automatically.
+
+**on / loop** — Edge shorthand keywords. `on <token>` desugars into an equality test against the source node's outcome channel (`ctx.outcome` for agents, `ctx.tool_marker` for tools with `marker_grep`) — equivalent to the matching `when`. `loop` marks a back-edge (a deliberate cycle) so reachability lint treats it as intentional.
+
+**else** — A section-level funnel default in the `edges` block, written `else -> <NodeID>`. Provides the success-side default route when no other outbound edge from the current section matches. At most one `else` per edges block; it takes no source node and no attributes (#154 / #157).
+
+**choice:** — An edge attribute carrying a human-gate routing key, written `choice: <key>`. The value is carried, not interpreted — it marks the load-bearing routing key so a `label:` can stay display-only (DIP150). Distinct from a `human` node's `mode: choice`, which selects the gate's interaction style.
+
+**marker_grep / ctx.tool_marker** — `marker_grep` is a regex on a `tool` node, matched line-by-line against the command's stdout; the matched value populates `ctx.tool_marker`, the tool's outcome channel for routing (e.g. via `on` or `when`).
 
 **Defaults** — A workflow-wide block setting values inherited by all nodes unless overridden. Common keys: `model`, `provider`, `fidelity`, `retry`, `tool_commands_allow`, `tool_denylist_add`.
 
@@ -45,13 +53,15 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 **.dip** — The source file extension. Plain text, indentation-based, parsed by the `dippin` CLI.
 
+**dip N** — An optional leading format-version declaration (e.g. `dip 1`) at the top of a `.dip` file. Defaults to version 1 when absent.
+
 **.dipx** — A bundle format introduced in v0.24 that packs a workflow tree (root .dip + referenced subgraphs) into a single verifiable file. Created with `dippin pack`, expanded with `dippin unpack`.
 
 **.test.json** — A scenario test file. Injects context values, asserts on execution paths, and reports edge coverage. Run with `dippin test`.
 
 ## Diagnostics
 
-**DIP code** — A diagnostic identifier emitted by `dippin lint` and `dippin validate`. DIP001–DIP010 are structural errors (parse / shape failures). DIP101–DIP146 are semantic warnings (style, correctness hints, model catalog issues).
+**DIP code** — A diagnostic identifier emitted by `dippin lint` and `dippin validate`. DIP001–DIP010 are structural errors (parse / shape failures). DIP101–DIP151 are semantic warnings (style, correctness hints, model catalog issues).
 
 **Exhaustive conditions** — A pair of edge conditions detected as covering all outcomes (e.g., `when ctx.status = success` + `when ctx.status = fail`). Suppresses DIP101 / DIP102 warnings.
 

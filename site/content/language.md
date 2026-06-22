@@ -72,8 +72,13 @@ The optional `defaults` block sets graph-level configuration that applies to all
 | `max_retries` | Integer | Default max retry attempts per node |
 | `fidelity` | String | Default checkpoint fidelity level |
 | `max_restarts` | Integer | Max loop restarts before pipeline failure (default: 5) |
+| `restart_target` | String | Node ID to jump to on restart loops |
 | `cache_tools` | Boolean | Whether to cache tool call results |
 | `compaction` | String | Context compaction mode for long pipelines |
+| `on_resume` | String | Fidelity behavior when a run resumes: `preserve` (keep the checkpoint fidelity level) or `degrade` (downgrade on resume). Only meaningful when `fidelity` is also set. |
+| `max_total_tokens` | Integer | Hard ceiling on total tokens across the run. `0`/unset = no limit. |
+| `max_cost_cents` | Integer | Hard ceiling on total cost, in **US cents** (e.g. `1000` = $10.00). `0`/unset = no limit. |
+| `max_wall_time` | Duration | Hard ceiling on **wall-clock** run time (e.g. `30m`, `2h`). `0`/unset = no limit. |
 | `stall_timeout` | Duration | Abort/route when no forward progress is made for a wall-clock span (e.g. `30s`, `5m`); `0`/unset = no limit. Enforced by the runtime. |
 | `on_failure` | NodeID | Graph-level catch-all failure route — the runtime sends a failing node here when no more specific route (fail edge → bounded retry → `fallback_target`) matches. Carried + linted by dippin; enforced by the runtime. |
 
@@ -129,6 +134,22 @@ There are 8 node kinds, each with its own syntax and configuration:
   <div class="pipeline-box lavender">manager_loop<br>Child supervisor</div>
 </div>
 
+### Common Fields
+
+These fields (`label`, `class`, `reads`, `writes`, and the retry fields) are accepted by **all** block-style node kinds — agent, human, tool, subgraph, `conditional`, and `manager_loop` — since they share the node-field parser:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `label` | String | Human-readable display name. Defaults to the node ID if omitted. |
+| `class` | CSV | Comma-separated stylesheet class names for theming (reserved for post-v1). |
+| `reads` | CSV | Context keys this node expects to read. Advisory — used for linting (DIP112), not enforced at runtime. |
+| `writes` | CSV | Context keys this node will produce. Advisory — used for linting (DIP107), not enforced at runtime. |
+| `retry_policy` | String | Named retry strategy: `standard`, `aggressive`, `patient`, `linear`, `none`. Overrides the workflow default. |
+| `max_retries` | Integer | Maximum retry attempts before giving up. Overrides the workflow default. |
+| `base_delay` | Duration | Override the retry policy's default base delay (e.g. `500ms`, `2s`, `1m`). |
+| `retry_target` | String | Node ID to jump to when retrying (instead of re-executing the current node). |
+| `fallback_target` | String | Node ID to jump to if all retries are exhausted. |
+
 ### agent
 
 Agent nodes invoke an LLM. They are the most configurable node kind. Key fields include `model`, `provider`, `prompt`, `system_prompt`, `max_turns`, `auto_status`, and `goal_gate`.
@@ -154,14 +175,22 @@ Agent nodes invoke an LLM. They are the most configurable node kind. Key fields 
 | `backend` | String | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
 | `working_dir` | String | Per-node working directory override for isolated execution. |
 | `prompt` | Block | Multiline prompt text sent to the model |
+| `prompt_file` | String | Path (relative to the `.dip` dir) to an external file whose contents become the prompt. Mutually exclusive with `prompt:` — setting both is a parse error. |
 | `system_prompt` | Block | System-level instructions prepended before the prompt |
+| `system_prompt_file` | String | Path (relative to the `.dip` dir) to an external file whose contents become the system prompt. Mutually exclusive with `system_prompt:` — setting both is a parse error. |
+| `tool_access` | String | LLM tool-catalog gate. Set to `none` to strip the model's tool registry on this agent. DIP139 warns on unknown values; the runtime fail-closes. |
+| `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded; a present-but-empty value is rejected by `dippin validate`/`pack`. Enforced by the runtime. |
+| `last_response_truncate` | Integer | Caps how much of the prior node's response is carried into this agent's context, in characters. `0`/unset = no truncation (a negative value raises DIP148). |
 | `reasoning_effort` | String | Extended thinking effort level: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. Controls how much reasoning budget the LLM spends. |
 | `fidelity` | String | Checkpoint fidelity level for state persistence. |
 | `max_turns` | Integer | Maximum conversation turns before the node exits |
 | `auto_status` | Boolean | Automatically extract `STATUS: success/fail` from model output into `ctx.outcome` |
 | `goal_gate` | Boolean | Marks this node as a goal gate — requires `retry_target` or `fallback_target` for recovery |
-| `reads` | String | Context key this node reads as input (advisory metadata) |
-| `writes` | String | Context key this node writes as output (advisory metadata) |
+| `cache_tools` | Boolean | Whether to cache tool call results for this agent. Overrides the workflow default. |
+| `compaction` | String | Context compaction mode for managing long context windows. Overrides the workflow default. |
+| `compaction_threshold` | Float | Threshold value that triggers compaction (provider-specific semantics). |
+| `reads` | CSV | Context keys this node reads as input (advisory metadata) |
+| `writes` | CSV | Context keys this node writes as output (advisory metadata) |
 | `response_format` | String | Structured output mode: `json_object` or `json_schema`. Instructs the model to return valid JSON. |
 | `response_schema` | Block | JSON Schema definition enforced when `response_format: json_schema` is set. Must be valid JSON. |
 | `params` | Block | Arbitrary key-value pairs forwarded to the provider API. Keys must not duplicate first-class fields (see DIP133). |
@@ -169,7 +198,7 @@ Agent nodes invoke an LLM. They are the most configurable node kind. Key fields 
 
 ### human
 
-Human nodes pause execution and wait for human input. Two modes: `choice` (predefined options from edge labels) and `freeform` (open text input).
+Human nodes pause execution and wait for human input. Four modes: `choice` (predefined options from edge labels), `freeform` (open text input), `interview` (structured Q&A from upstream agent output), and `yes_no` (binary Y/N prompt).
 
 ```
   human Approve
@@ -177,6 +206,16 @@ Human nodes pause execution and wait for human input. Two modes: `choice` (prede
     mode: choice
     default: "yes"
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mode` | String | Interaction mode: `choice`, `freeform`, `interview`, or `yes_no`. |
+| `default` | String | Default selection if no input. Only meaningful for `choice` mode. |
+| `prompt` | Block | Prompt text shown to the human (also the interview fallback when no questions are detected). |
+| `questions_key` | String | Context key to read questions from. Interview mode only (default `interview_questions`). |
+| `answers_key` | String | Context key to write answers to. Interview mode only (default `interview_answers`). |
+| `timeout` | Duration | How long to wait for input before `timeout_action` fires (e.g. `5m`). `0`/unset = wait indefinitely. |
+| `timeout_action` | String | What to do when `timeout` elapses: `fail` (the node fails), `default` (use the `default` selection), or empty. Empty falls back to the node's `default` answer if one is set, otherwise fails. Any other value is a parse error. |
 
 ### tool
 
@@ -192,7 +231,7 @@ Tool nodes execute shell commands. The command's stdout is captured as `ctx.tool
       pytest --tb=short
 ```
 
-Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes the node fail if the command emits no routing signal recognized by the runtime; `output_limit` overrides the captured-stdout byte cap.
+Declare `marker_grep` for typed routing (populates `ctx.tool_marker`); `route_required: true` makes the node fail if the command emits no routing signal recognized by the runtime; `output_limit` overrides the captured-stdout byte cap. Use `command_file` (a path relative to the `.dip` dir) instead of inline `command:` to load the script from an external file — the two are mutually exclusive.
 
 ### parallel
 
@@ -200,6 +239,20 @@ Parallel nodes fan execution out to multiple branches that run concurrently. Eve
 
 ```
   parallel FanOut -> TaskA, TaskB, TaskC
+```
+
+Use **block form** when branches need different models, providers, fidelity levels, or tool access. Each `branch:` entry declares a fan-out target (equivalent to an inline `->` target) and attaches per-branch overrides for `model`, `provider`, `fidelity`, `tool_access`, `writable_paths`, and `last_response_truncate`. The fan-in node must still list the same target IDs. An omitted branch `tool_access` or `writable_paths` inherits the target agent's setting — it never re-grants the full catalog or resets to unbounded.
+
+```
+  parallel split
+    branch: fast
+      model: claude-haiku-4-5
+      provider: anthropic
+      fidelity: summary
+    branch: accurate
+      model: claude-opus-4-7
+      provider: anthropic
+      fidelity: full
 ```
 
 ### fan_in
@@ -270,7 +323,7 @@ Conditional nodes accept only common fields (`label`, `class`, `reads`, `writes`
 The `edges` block defines connections between nodes. Each edge is a single line:
 
 ```
-<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
 ```
 
 ### Basic and Conditional Edges
@@ -291,7 +344,7 @@ The `edges` block defines connections between nodes. Each edge is a single line:
 | `when <expr>` | Condition | Boolean guard — edge only traversed if true |
 | `label: <text>` | String | Human-readable label (used for human gate choices when no `choice:` is set) |
 | `choice: <key>` | String | Carried, not interpreted by dippin — explicit human-gate routing key the paired runtime matches the user's selection against, leaving `label:` for display. Wins over `label:` when present; runtime falls back to `label:` when absent |
-| `weight: <int>` | Integer | Priority hint — higher wins among competing edges |
+| `weight: <int>` | Integer | **Soft-deprecated** (raises DIP151). Parsed but **unused by routing**; slated for removal in `dip 2`. Historically a priority hint, but the cascade never consults it — guard edges with `when` / `on` instead |
 | `loop` | Flag | Bare keyword marking a back-edge (loop restart). Legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop` |
 | `override: true` | Boolean | Carried, not interpreted by dippin — marks a human-authored validation override for a paired runtime to act on |
 
@@ -316,6 +369,21 @@ A `loop` edge creates a controlled back-edge. When followed, the engine incremen
 ```
 
 `loop` is a bare keyword; the legacy `restart: true` still parses and `dippin fmt` rewrites it to `loop`. Because `loop` is a reserved bare keyword, write `when ctx.x = "loop"` (quoted) for the literal value on a condition's right-hand side.
+
+### Section-Level Default (`else`)
+
+A single `else -> <node>` line, written at the bottom of the `edges` block, is the graph's **success-side default destination**: any node whose guard edges all fail to match, and which has no explicit unconditional edge of its own, routes there.
+
+```
+  edges
+    SetupRun -> FetchIssues  on setup-ok
+    RunTests -> Package      on tests-ok
+    else -> Cleanup
+```
+
+At most one `else` per edges block (a second is a parse error), and `else ->` requires a target node. It has no source node. `else` is success-side only — it never intercepts a genuine node *failure*, which routes via the failure cascade (`on fail` edge → `defaults.on_failure`). A node covered by `else` is not flagged DIP101 or DIP102.
+
+> **Note:** `dippin simulate` / `dippin test` do not yet traverse the `else` default (tracked in [#158](https://github.com/2389-research/dippin-lang/issues/158)); a paired runtime resolves it.
 
 ## Conditions
 

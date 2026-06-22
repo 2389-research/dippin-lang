@@ -11,7 +11,7 @@ The built-in LSP server (`dippin lsp`) provides rich editing features for any LS
 
 | Feature | Description |
 |---------|-------------|
-| **Diagnostics** | Parse errors and lint warnings published on every change (DIP001-DIP126) |
+| **Diagnostics** | Parse errors and lint warnings published on every change (DIP001-DIP010 structural, DIP101-DIP151 semantic) |
 | **Hover** | Tooltip showing node kind, model, provider, prompt preview, and field summary |
 | **Go-to-definition** | Jump from a node reference in an edge to the node's declaration |
 | **Autocomplete** | Node IDs in edges, field names within node blocks, keywords |
@@ -69,10 +69,11 @@ Or use a generic LSP client extension with this configuration:
 | Keywords | `workflow`, `agent`, `tool`, `human`, `edges` | keyword |
 | Node names | `agent MyNode` | function |
 | Field keys | `model:`, `prompt:`, `timeout:` | tag |
-| Strings | `"quoted value"` | string |
+| Strings | `"quoted value"`, `'quoted value'` | string |
 | Comments | `# comment` | comment |
 | Arrows | `->`, `<-` | operator |
 | Conditions | `when`, `and`, `or`, `not` | keyword |
+| Edge keywords | `on`, `loop`, `choice:`, `weight:`, `override:`, `restart:`, `else` | keyword |
 | Variables | `ctx.outcome`, `graph.goal` | variable |
 | Interpolation | `${ctx.var}` | variable |
 | Booleans | `true`, `false` | constant |

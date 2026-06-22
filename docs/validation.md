@@ -357,20 +357,20 @@ warning[DIP105]: no success path from start to exit
 
 ---
 
-### DIP106: Undefined Variable in Prompt
+### DIP106: Unrecognized variable reference
 
 **Severity**: Warning
 
-A prompt references a variable that no upstream node is known to produce.
+A prompt template has a `${...}` reference that lacks a known namespace prefix or isn't a valid node-scoped ref.
 
 ```
-warning[DIP106]: undefined variable reference in prompt
+warning[DIP106]: unrecognized variable reference ${user}
   --> pipeline.dip:22:5
 ```
 
-**What triggers it**: The prompt contains `${ctx.something}` or `${params.key}` where `something` is not a reserved key and no upstream node declares it in `writes`.
+**What triggers it**: A prompt contains a `${...}` reference that lacks a known namespace prefix (`ctx.`, `graph.`, `params.`, `stack.`) and is not a recognized node-scoped ref (`node.<id>.<key>` or `ctx.node.<id>.<key>` pointing at an existing node). This is a shape/namespace check only — it does **not** verify the key was actually written upstream.
 
-**How to fix**: Either add the key to an upstream node's `writes`, or verify the variable name is correct.
+**How to fix**: Namespace the reference (e.g. `${ctx.user}`), or for a node-scoped ref use `${node.<id>.<key>}` with an existing node ID.
 
 ---
 
@@ -408,20 +408,20 @@ warning[DIP108]: unknown model/provider combination
 
 ---
 
-### DIP109: Namespace Collision in Imports
+### DIP109: Duplicate Subgraph Reference
 
 **Severity**: Warning
 
-A subgraph parameter name conflicts with an existing context key.
+Two `subgraph` nodes reference the same `ref:` file, which can collide their context keys.
 
 ```
-warning[DIP109]: namespace collision in imports
+warning[DIP109]: duplicate subgraph reference
   --> pipeline.dip:28:5
 ```
 
-**What triggers it**: A `subgraph` node's `params` map contains a key that shadows an existing context variable.
+**What triggers it**: Two `subgraph` nodes reference the same `ref:` file. The rule keys only on the `ref:` value, so distinct params do **not** silence it.
 
-**How to fix**: Rename the parameter to avoid the collision.
+**How to fix**: Use a different `ref:` for each, or consolidate the duplicate subgraph nodes into one.
 
 ---
 
@@ -617,7 +617,7 @@ warning[DIP118]: stylesheet references node ID "Analize" which does not exist
 A node specifies a `reasoning_effort` value that isn't recognized.
 
 ```
-warning[DIP119]: node "Analyze" has reasoning_effort "max" which is not a recognized level
+warning[DIP119]: node "Analyze" has reasoning_effort "extreme" which is not a recognized level
   --> pipeline.dip:12:3
   = help: valid levels: none, minimal, low, medium, high, xhigh, max
 ```
@@ -1300,7 +1300,7 @@ re-execution channel, not a forward-routing competitor.
 guard the others with a `when` condition, or remove the extra edge. A guarded
 edge plus a single unconditional fallback is the intended pattern and is **not**
 flagged. Conservative by design — duplicate same-variable/same-value guards are
-covered by [DIP103](#dip103-overlapping-or-contradictory-conditions) instead.
+covered by [DIP103](#dip103-overlapping-conditions) instead.
 
 ---
 
