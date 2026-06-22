@@ -588,7 +588,7 @@ func TestRunAllPaths_Conditional(t *testing.T) {
 	ResetRunCounter()
 	w := conditionalWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -621,7 +621,7 @@ func TestRunAllPaths_Minimal(t *testing.T) {
 	ResetRunCounter()
 	w := minimalWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -1182,7 +1182,7 @@ func TestRunAllPaths_OrCondition(t *testing.T) {
 	ResetRunCounter()
 	w := orConditionWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -1196,7 +1196,7 @@ func TestRunAllPaths_InCondition(t *testing.T) {
 	ResetRunCounter()
 	w := inConditionWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -1209,7 +1209,7 @@ func TestRunAllPaths_ComplexCondition(t *testing.T) {
 	ResetRunCounter()
 	w := complexConditionWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -1222,7 +1222,7 @@ func TestRunAllPaths_RestartLoop(t *testing.T) {
 	ResetRunCounter()
 	w := restartWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -1236,7 +1236,7 @@ func TestRunAllPaths_Parallel(t *testing.T) {
 	ResetRunCounter()
 	w := parallelWorkflow()
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}
@@ -1266,7 +1266,7 @@ func TestRunAllPaths_Parallel(t *testing.T) {
 func TestRunAllPaths_MissingStart(t *testing.T) {
 	ResetRunCounter()
 	w := &ir.Workflow{Name: "bad", Exit: "Done"}
-	_, err := RunAllPaths(w, Options{})
+	_, err := RunAllPaths(w, nil)
 	if err == nil {
 		t.Fatal("expected error for missing start node")
 	}
@@ -1667,7 +1667,7 @@ func TestRunAllPaths_NotCondition(t *testing.T) {
 		},
 	}
 
-	results, err := RunAllPaths(w, Options{})
+	results, err := RunAllPaths(w, nil)
 	if err != nil {
 		t.Fatalf("RunAllPaths() error: %v", err)
 	}

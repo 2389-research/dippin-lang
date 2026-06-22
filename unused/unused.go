@@ -38,7 +38,7 @@ func buildReport(w *ir.Workflow, sinks []string, costs *cost.Report) *Report {
 	for _, id := range sinks {
 		node := buildUnusedNode(w, id, costs)
 		r.UnusedNodes = append(r.UnusedNodes, node)
-		r.TotalWasted = addCostRange(r.TotalWasted, node.WastedCost)
+		r.TotalWasted = cost.AddCostRange(r.TotalWasted, node.WastedCost)
 	}
 	return r
 }
@@ -54,13 +54,4 @@ func buildUnusedNode(w *ir.Workflow, id string, costs *cost.Report) UnusedNode {
 		un.WastedCost = nc.Cost
 	}
 	return un
-}
-
-// addCostRange sums two CostRange values.
-func addCostRange(a, b cost.CostRange) cost.CostRange {
-	return cost.CostRange{
-		Min:      a.Min + b.Min,
-		Expected: a.Expected + b.Expected,
-		Max:      a.Max + b.Max,
-	}
 }

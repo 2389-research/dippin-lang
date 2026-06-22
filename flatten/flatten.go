@@ -4,6 +4,7 @@ package flatten
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -125,7 +126,7 @@ func processNode(n *ir.Node, resolve Resolver, maxDepth, depth int, seen []strin
 
 // inlineSubgraph resolves a subgraph ref and splices the child's nodes/edges into out.
 func inlineSubgraph(n *ir.Node, cfg ir.SubgraphConfig, resolve Resolver, maxDepth, depth int, seen []string, out *ir.Workflow) (*rewire, error) {
-	if containsStr(seen, cfg.Ref) {
+	if slices.Contains(seen, cfg.Ref) {
 		return nil, fmt.Errorf("flatten: cycle detected: %s", formatCycle(seen, cfg.Ref))
 	}
 
@@ -187,16 +188,6 @@ func rewireParentEdges(edges []*ir.Edge, rewires map[string]rewire, out *ir.Work
 		}
 		out.Edges = append(out.Edges, &ne)
 	}
-}
-
-// containsStr returns true if s is in the slice ss.
-func containsStr(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 // formatCycle formats the seen path plus the cyclic ref for error messages.

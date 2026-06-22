@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/2389-research/dippin-lang/cost"
 	"github.com/2389-research/dippin-lang/doctor"
 )
 
@@ -28,7 +27,7 @@ func (c *CLI) CmdDoctor(args []string) ExitCode {
 	// effect is minor (a DIP143 vs DIP146 hint is counted the same; only a
 	// fully-restricted child differs by one hint). `dippin lint`/`check`/`watch`
 	// carry the precise DIP146 behavior. (#89)
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), lintOptions(extraModels))
+	report := doctor.DiagnoseWithOptions(w, lintOptions(extraModels))
 	return c.renderDoctorReport(report)
 }
 

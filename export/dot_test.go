@@ -1217,33 +1217,6 @@ func TestFormatConditionExport(t *testing.T) {
 	}
 }
 
-func TestSortStrings(t *testing.T) {
-	tests := []struct {
-		input []string
-		want  []string
-	}{
-		{[]string{"c", "a", "b"}, []string{"a", "b", "c"}},
-		{[]string{"z"}, []string{"z"}},
-		{nil, nil},
-		{[]string{}, []string{}},
-		{[]string{"a", "a"}, []string{"a", "a"}},
-	}
-	for _, tt := range tests {
-		got := make([]string, len(tt.input))
-		copy(got, tt.input)
-		sortStrings(got)
-		if len(got) != len(tt.want) {
-			t.Errorf("sortStrings(%v) length = %d, want %d", tt.input, len(got), len(tt.want))
-			continue
-		}
-		for i := range got {
-			if got[i] != tt.want[i] {
-				t.Errorf("sortStrings(%v)[%d] = %q, want %q", tt.input, i, got[i], tt.want[i])
-			}
-		}
-	}
-}
-
 func TestIsSimpleDOTID(t *testing.T) {
 	tests := []struct {
 		input string

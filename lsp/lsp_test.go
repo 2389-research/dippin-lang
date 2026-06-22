@@ -623,10 +623,11 @@ func TestResolveDefinition_MissingDoc(t *testing.T) {
 }
 
 func TestTruncateStr(t *testing.T) {
-	if got := truncateStr("hello", 10); got != "hello" {
+	if got := truncateStr("hello"); got != "hello" {
 		t.Errorf("expected hello, got %s", got)
 	}
-	if got := truncateStr("hello world this is long", 5); got != "hello..." {
-		t.Errorf("expected hello..., got %s", got)
+	long := strings.Repeat("x", 100)
+	if got := truncateStr(long); got != long[:80]+"..." {
+		t.Errorf("expected first 80 chars + ..., got %s", got)
 	}
 }

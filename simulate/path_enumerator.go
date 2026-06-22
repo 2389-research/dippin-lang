@@ -8,10 +8,19 @@ import (
 	"github.com/2389-research/dippin-lang/ir"
 )
 
+// All-paths enumeration bounds. De-facto constants: every instance used these
+// literals. They mirror the single-path simulator's maxSteps safety valve.
+const (
+	maxPathDepth   = 200
+	maxPathResults = 100
+)
+
 // RunAllPaths enumerates all distinct execution paths through the workflow.
 // Each Result represents one complete path from start to exit (or a dead end).
-// Each path has a unique run ID.
-func RunAllPaths(w *ir.Workflow, opts Options) ([]*Result, error) {
+// Each path has a unique run ID. Only the scenario context is honored; the
+// single-path Options (interactivity, visit caps, branch selection) do not
+// apply to exhaustive enumeration.
+func RunAllPaths(w *ir.Workflow, scenario map[string]string) ([]*Result, error) {
 	if err := validateSimInput(w); err != nil {
 		return nil, err
 	}
@@ -22,10 +31,8 @@ func RunAllPaths(w *ir.Workflow, opts Options) ([]*Result, error) {
 	}
 
 	e := &pathEnumerator{
-		workflow:   w,
-		opts:       opts,
-		maxDepth:   200,
-		maxResults: 100,
+		workflow: w,
+		scenario: scenario,
 	}
 
 	return e.enumerate()
@@ -34,12 +41,10 @@ func RunAllPaths(w *ir.Workflow, opts Options) ([]*Result, error) {
 // pathEnumerator performs depth-first search over all graph edges to enumerate
 // every distinct execution path from start to exit (or dead end).
 type pathEnumerator struct {
-	workflow   *ir.Workflow
-	opts       Options
-	maxDepth   int
-	maxResults int
-	results    []*Result
-	pathCount  int // used to assign unique run IDs
+	workflow  *ir.Workflow
+	scenario  map[string]string
+	results   []*Result
+	pathCount int // used to assign unique run IDs
 }
 
 // pathState is an immutable snapshot of simulator state passed down the DFS tree.
@@ -68,7 +73,7 @@ func (pe *pathEnumerator) enumerate() ([]*Result, error) {
 	}
 
 	// Seed context with scenario values.
-	for k, v := range pe.opts.Scenario {
+	for k, v := range pe.scenario {
 		initial.ctx[k] = v
 	}
 
@@ -118,10 +123,10 @@ func (pe *pathEnumerator) explore(state *pathState) {
 
 // shouldExplore checks whether the path should continue to be explored.
 func (pe *pathEnumerator) shouldExplore(state *pathState) bool {
-	if len(pe.results) >= pe.maxResults {
+	if len(pe.results) >= maxPathResults {
 		return false
 	}
-	if state.depth > pe.maxDepth {
+	if state.depth > maxPathDepth {
 		return false
 	}
 	// Loop detection: allow revisiting a node up to 2 times (for retry loops).

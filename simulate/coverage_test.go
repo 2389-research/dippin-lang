@@ -277,7 +277,7 @@ func TestHumanInteractive_NilStderr(t *testing.T) {
 func TestRunAllPaths_NoExit(t *testing.T) {
 	ResetRunCounter()
 	w := &ir.Workflow{Name: "bad2", Start: "A"}
-	_, err := RunAllPaths(w, Options{})
+	_, err := RunAllPaths(w, nil)
 	if err == nil {
 		t.Fatal("expected error for missing exit node")
 	}
@@ -297,7 +297,7 @@ func TestRunAllPaths_BadCondition(t *testing.T) {
 			{From: "A", To: "B", Condition: &ir.Condition{Raw: "bad missing op"}},
 		},
 	}
-	_, err := RunAllPaths(w, Options{})
+	_, err := RunAllPaths(w, nil)
 	if err == nil {
 		t.Fatal("expected error for invalid condition")
 	}
@@ -400,17 +400,17 @@ func TestAssignRunID_NoPipelineStartEvt(t *testing.T) {
 // --- shouldExplore ---
 
 func TestShouldExplore_Limits(t *testing.T) {
-	pe := &pathEnumerator{maxResults: 1, results: make([]*Result, 1), maxDepth: 200}
+	pe := &pathEnumerator{results: make([]*Result, maxPathResults)}
 	if pe.shouldExplore(&pathState{nodeID: "A", depth: 0, visited: make(map[string]int)}) {
-		t.Error("should not explore when maxResults reached")
+		t.Error("should not explore when maxPathResults reached")
 	}
 
-	pe2 := &pathEnumerator{maxResults: 100, maxDepth: 5}
-	if pe2.shouldExplore(&pathState{nodeID: "A", depth: 6, visited: make(map[string]int)}) {
-		t.Error("should not explore when maxDepth exceeded")
+	pe2 := &pathEnumerator{}
+	if pe2.shouldExplore(&pathState{nodeID: "A", depth: maxPathDepth + 1, visited: make(map[string]int)}) {
+		t.Error("should not explore when maxPathDepth exceeded")
 	}
 
-	pe3 := &pathEnumerator{maxResults: 100, maxDepth: 200}
+	pe3 := &pathEnumerator{}
 	if pe3.shouldExplore(&pathState{nodeID: "A", depth: 0, visited: map[string]int{"A": 2}}) {
 		t.Error("should not explore when node visited 2 times")
 	}

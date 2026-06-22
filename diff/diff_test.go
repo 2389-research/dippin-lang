@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/2389-research/dippin-lang/cost"
 	"github.com/2389-research/dippin-lang/diff"
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/parser"
@@ -28,7 +27,7 @@ func TestCompare_V1toV2(t *testing.T) {
 	v1 := loadFixture(t, "testdata/v1.dip")
 	v2 := loadFixture(t, "testdata/v2.dip")
 
-	report := diff.Compare(v1, v2, cost.DefaultPricing())
+	report := diff.Compare(v1, v2)
 
 	// Review was added in v2.
 	if len(report.NodesAdded) != 1 || report.NodesAdded[0] != "Review" {
@@ -59,7 +58,7 @@ func TestCompare_EdgesChanged(t *testing.T) {
 	v1 := loadFixture(t, "testdata/v1.dip")
 	v2 := loadFixture(t, "testdata/v2.dip")
 
-	report := diff.Compare(v1, v2, cost.DefaultPricing())
+	report := diff.Compare(v1, v2)
 
 	// Process -> Done was removed, Process -> Review and Review -> Done added.
 	if len(report.EdgesAdded) < 1 {
@@ -74,7 +73,7 @@ func TestCompare_CostDelta(t *testing.T) {
 	v1 := loadFixture(t, "testdata/v1.dip")
 	v2 := loadFixture(t, "testdata/v2.dip")
 
-	report := diff.Compare(v1, v2, cost.DefaultPricing())
+	report := diff.Compare(v1, v2)
 
 	// v2 has an extra node and downgraded Process, cost should change.
 	if report.CostDelta.OldCost.Expected == 0 && report.CostDelta.NewCost.Expected == 0 {
@@ -85,7 +84,7 @@ func TestCompare_CostDelta(t *testing.T) {
 func TestCompare_Identical(t *testing.T) {
 	v1 := loadFixture(t, "testdata/v1.dip")
 
-	report := diff.Compare(v1, v1, cost.DefaultPricing())
+	report := diff.Compare(v1, v1)
 
 	if len(report.NodesAdded) != 0 {
 		t.Errorf("expected no nodes added, got %v", report.NodesAdded)
@@ -108,7 +107,7 @@ func TestCompare_FieldChanges(t *testing.T) {
 	v1 := loadFixture(t, "testdata/v1.dip")
 	v2 := loadFixture(t, "testdata/v2.dip")
 
-	report := diff.Compare(v1, v2, cost.DefaultPricing())
+	report := diff.Compare(v1, v2)
 
 	for _, nd := range report.NodesModified {
 		for _, c := range nd.Changes {
@@ -143,7 +142,7 @@ func TestCompare_NodeModifiedConfigChanges(t *testing.T) {
 		Edges: []*ir.Edge{{From: "A", To: "B"}},
 	}
 
-	report := diff.Compare(old, new, cost.DefaultPricing())
+	report := diff.Compare(old, new)
 
 	if len(report.NodesModified) != 1 {
 		t.Fatalf("expected 1 modified node, got %d", len(report.NodesModified))
@@ -178,7 +177,7 @@ func TestCompare_LabelChange(t *testing.T) {
 		},
 	}
 
-	report := diff.Compare(old, new, cost.DefaultPricing())
+	report := diff.Compare(old, new)
 	if len(report.NodesModified) != 1 {
 		t.Fatalf("expected 1 modified node, got %d", len(report.NodesModified))
 	}
@@ -207,7 +206,7 @@ func TestCompare_KindChange(t *testing.T) {
 		},
 	}
 
-	report := diff.Compare(old, new, cost.DefaultPricing())
+	report := diff.Compare(old, new)
 	if len(report.NodesModified) != 1 {
 		t.Fatalf("expected 1 modified node, got %d", len(report.NodesModified))
 	}
@@ -244,7 +243,7 @@ func TestCompare_EdgeWithConditions(t *testing.T) {
 		},
 	}
 
-	report := diff.Compare(old, new, cost.DefaultPricing())
+	report := diff.Compare(old, new)
 	// Old edge removed, new edge added (different condition = different key).
 	if len(report.EdgesAdded) != 1 {
 		t.Errorf("expected 1 edge added, got %d", len(report.EdgesAdded))
@@ -268,7 +267,7 @@ func TestCompare_NonAgentConfigNotCompared(t *testing.T) {
 		},
 	}
 
-	report := diff.Compare(old, new, cost.DefaultPricing())
+	report := diff.Compare(old, new)
 	// compareConfigFields only handles AgentConfig, so ToolConfig diffs are not reported.
 	if len(report.NodesModified) != 0 {
 		t.Errorf("expected 0 modified nodes for tool config change, got %d", len(report.NodesModified))
@@ -295,7 +294,7 @@ func TestCompare_MultipleModifiedNodesSorted(t *testing.T) {
 		Edges: []*ir.Edge{{From: "A", To: "B"}, {From: "B", To: "C"}},
 	}
 
-	report := diff.Compare(old, new, cost.DefaultPricing())
+	report := diff.Compare(old, new)
 	if len(report.NodesModified) != 2 {
 		t.Fatalf("expected 2 modified nodes, got %d", len(report.NodesModified))
 	}

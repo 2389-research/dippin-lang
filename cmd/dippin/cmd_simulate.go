@@ -38,7 +38,7 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 	}
 
 	path := fs.Arg(0)
-	w, opts, code := c.prepareSimulation(path, scenarios.values, *interactive, *allPaths)
+	w, opts, code := c.prepareSimulation(path, scenarios.values, *interactive)
 	if code != ExitCode(-1) {
 		return code
 	}
@@ -50,7 +50,7 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 }
 
 // prepareSimulation loads and validates the workflow, then builds simulation options.
-func (c *CLI) prepareSimulation(path string, scenario map[string]string, interactive, allPaths bool) (*ir.Workflow, simulate.Options, ExitCode) {
+func (c *CLI) prepareSimulation(path string, scenario map[string]string, interactive bool) (*ir.Workflow, simulate.Options, ExitCode) {
 	w, err := loadWorkflow(path)
 	if err != nil {
 		c.renderError(err, path)
@@ -66,7 +66,6 @@ func (c *CLI) prepareSimulation(path string, scenario map[string]string, interac
 	opts := simulate.Options{
 		Scenario:    scenario,
 		Interactive: interactive,
-		AllPaths:    allPaths,
 	}
 	if interactive {
 		opts.Stdin = os.Stdin
@@ -90,7 +89,7 @@ func (c *CLI) emitPathResult(i int, res *simulate.Result) error {
 
 // simulateAllPaths runs simulation in all-paths mode and renders results.
 func (c *CLI) simulateAllPaths(w *ir.Workflow, opts simulate.Options) ExitCode {
-	results, err := simulate.RunAllPaths(w, opts)
+	results, err := simulate.RunAllPaths(w, opts.Scenario)
 	if err != nil {
 		fmt.Fprintf(c.Stderr, "simulation error: %v\n", err)
 		return ExitError

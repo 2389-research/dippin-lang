@@ -1,5 +1,7 @@
 package ir
 
+import "slices"
+
 // Node returns the node with the given ID, or nil if not found.
 func (w *Workflow) Node(id string) *Node {
 	for _, n := range w.Nodes {
@@ -193,22 +195,12 @@ func (w *Workflow) parallelEdgesTo(id string, out []*Edge, seen map[string]bool)
 		if !ok {
 			continue
 		}
-		if w.parallelTargetsNode(cfg.Targets, id) && !seen[n.ID] {
+		if slices.Contains(cfg.Targets, id) && !seen[n.ID] {
 			out = append(out, &Edge{From: n.ID, To: id})
 			seen[n.ID] = true
 		}
 	}
 	return out
-}
-
-// parallelTargetsNode returns true if targets contains id.
-func (w *Workflow) parallelTargetsNode(targets []string, id string) bool {
-	for _, t := range targets {
-		if t == id {
-			return true
-		}
-	}
-	return false
 }
 
 // fanInEdgesTo adds implicit edges from fan-in sources to id, if id is a fan-in node.

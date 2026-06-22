@@ -45,7 +45,7 @@ func (c *CLI) renderExplanation(exp validator.Explanation) ExitCode {
 
 func renderExplanationText(w io.Writer, exp validator.Explanation) {
 	header := fmt.Sprintf("═══ %s ", exp.Code)
-	header += strings.Repeat("═", maxInt(0, 58-len(header)))
+	header += strings.Repeat("═", max(0, 58-len(header)))
 	fmt.Fprintln(w, header)
 	fmt.Fprintf(w, "  %s\n", exp.Summary)
 	fmt.Fprintln(w)
@@ -65,11 +65,4 @@ func printValidCodes(w io.Writer) {
 	}
 	sort.Strings(codes)
 	fmt.Fprintf(w, "valid codes: %s\n", strings.Join(codes, ", "))
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

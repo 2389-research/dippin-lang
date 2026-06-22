@@ -143,14 +143,14 @@ func TestDetectCycle_Acyclic(t *testing.T) {
 		"c": {"d"},
 		"d": {},
 	}
-	if err := detectCycles(graph, "a", 64); err != nil {
+	if err := detectCycles(graph, "a"); err != nil {
 		t.Fatalf("expected acyclic, got %v", err)
 	}
 }
 
 func TestDetectCycle_SelfLoop(t *testing.T) {
 	graph := map[string][]string{"a": {"a"}}
-	err := detectCycles(graph, "a", 64)
+	err := detectCycles(graph, "a")
 	if !errors.Is(err, ErrRefCycle) {
 		t.Fatalf("err = %v, want ErrRefCycle", err)
 	}
@@ -162,7 +162,7 @@ func TestDetectCycle_ThreeCycle(t *testing.T) {
 		"b": {"c"},
 		"c": {"a"},
 	}
-	err := detectCycles(graph, "a", 64)
+	err := detectCycles(graph, "a")
 	if !errors.Is(err, ErrRefCycle) {
 		t.Fatalf("err = %v, want ErrRefCycle", err)
 	}
@@ -178,7 +178,7 @@ func TestDetectCycle_DepthCap(t *testing.T) {
 		}
 		graph[key(i)] = next
 	}
-	err := detectCycles(graph, key(0), 64)
+	err := detectCycles(graph, key(0))
 	if !errors.Is(err, ErrCapExceeded) {
 		t.Fatalf("err = %v, want ErrCapExceeded", err)
 	}
@@ -192,7 +192,7 @@ func TestDetectCycle_FullCyclePath(t *testing.T) {
 		"b": {"c"},
 		"c": {"a"},
 	}
-	err := detectCycles(graph, "a", 64)
+	err := detectCycles(graph, "a")
 	if err == nil {
 		t.Fatal("expected ErrRefCycle")
 	}
@@ -219,13 +219,13 @@ func TestDetectCycle_AtCapDepthSucceeds(t *testing.T) {
 		}
 		graph[key(i)] = next
 	}
-	if err := detectCycles(graph, key(0), 64); err != nil {
+	if err := detectCycles(graph, key(0)); err != nil {
 		t.Fatalf("expected at-cap chain to succeed, got %v", err)
 	}
 }
 
 func TestDetectCycle_EmptyGraph(t *testing.T) {
-	if err := detectCycles(map[string][]string{}, "any", 64); err != nil {
+	if err := detectCycles(map[string][]string{}, "any"); err != nil {
 		t.Fatalf("expected empty graph to succeed, got %v", err)
 	}
 }

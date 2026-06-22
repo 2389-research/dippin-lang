@@ -56,7 +56,7 @@ func TestVerifyAllHashes_Happy(t *testing.T) {
 		"workflows/b.dip": contentB,
 		"manifest.json":   []byte("{}"),
 	})
-	verified, totalBytes, err := verifyAllHashes(cz, manifest, 100<<20)
+	verified, totalBytes, err := verifyAllHashesCtx(context.Background(), cz, manifest, 100<<20)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestVerifyAllHashes_TotalCap(t *testing.T) {
 		"workflows/b.dip": content,
 		"manifest.json":   []byte("{}"),
 	})
-	_, _, err := verifyAllHashes(cz, manifest, 15) // total cap below sum
+	_, _, err := verifyAllHashesCtx(context.Background(), cz, manifest, 15) // total cap below sum
 	if !errors.Is(err, ErrCapExceeded) {
 		t.Fatalf("err = %v, want ErrCapExceeded", err)
 	}

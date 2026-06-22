@@ -32,11 +32,6 @@ type Options struct {
 	// (via Stdin) rather than auto-succeeding.
 	Interactive bool
 
-	// AllPaths enumerates all possible execution paths through the graph
-	// rather than following a single path. Each path is a separate run
-	// reported with a distinct run ID suffix.
-	AllPaths bool
-
 	// MaxNodeVisits limits how many times a single node can be visited.
 	// When exceeded, the simulator forces the loop-exit edge (the first
 	// conditional edge that doesn't match). 0 means unlimited (use maxSteps only).
