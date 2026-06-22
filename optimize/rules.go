@@ -124,13 +124,11 @@ func savingsRatio(current, suggested cost.ModelPrice) float64 {
 	return ratio
 }
 
-// estimateNodeCost gets the cost range for a node from a fresh cost analysis.
+// estimateNodeCost gets the cost range for a node from the precomputed report.
+// cost.Analyze writes a NodeCost for every node in the workflow, and ctx.node
+// is iterated from that same workflow, so the lookup always succeeds.
 func estimateNodeCost(ctx ruleContext) cost.CostRange {
-	report := cost.Analyze(ctx.workflow, ctx.pricing)
-	if nc, ok := report.Nodes[ctx.node.ID]; ok {
-		return nc.Cost
-	}
-	return cost.CostRange{}
+	return ctx.costReport.Nodes[ctx.node.ID].Cost
 }
 
 // lookupPrice finds pricing for a provider/model pair.

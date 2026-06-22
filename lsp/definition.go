@@ -25,7 +25,7 @@ func (s *Server) handleDefinition(ctx context.Context, reply jsonrpc2.Replier, r
 // resolveDefinition finds the definition location for the word at the cursor.
 func (s *Server) resolveDefinition(params protocol.DefinitionParams) *protocol.Location {
 	doc := s.store.get(string(params.TextDocument.URI))
-	if doc == nil || doc.Parsed == nil {
+	if doc == nil {
 		return nil
 	}
 	word := wordAtPosition(doc.Content, params.Position)

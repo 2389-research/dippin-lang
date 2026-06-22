@@ -54,11 +54,11 @@ type Suggestion struct {
 // DiagnoseWithOptions produces a health Report, threading per-invocation lint
 // options (e.g. a scoped extra-models catalog) into the lint pass so doctor's
 // DIP108 summary matches `dippin lint --extra-models`.
-func DiagnoseWithOptions(w *ir.Workflow, pricing cost.PricingTable, opts validator.Options) *Report {
+func DiagnoseWithOptions(w *ir.Workflow, opts validator.Options) *Report {
 	valResult := validator.Validate(w)
 	lintResult := validator.LintWithOptions(w, opts)
 	covReport := coverage.Analyze(w)
-	costReport := cost.Analyze(w, pricing)
+	costReport := cost.Analyze(w, cost.DefaultPricing())
 
 	r := &Report{}
 	r.Lint = buildLintSummary(valResult, lintResult)

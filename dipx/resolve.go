@@ -199,27 +199,31 @@ const (
 	colorBlack = 2
 )
 
+// maxRefDepth bounds the ref-graph DFS depth. A de-facto constant: every
+// caller used the literal 64.
+const maxRefDepth = 64
+
 // detectCycles runs a tri-color DFS over the ref graph rooted at start.
 // Returns ErrRefCycle on the first cycle found, ErrCapExceeded when depth
-// exceeds maxDepth.
-func detectCycles(graph map[string][]string, start string, maxDepth int) error {
+// exceeds maxRefDepth.
+func detectCycles(graph map[string][]string, start string) error {
 	color := make(map[string]int, len(graph))
 	stack := make([]string, 0, 16)
-	return dfsVisit(graph, color, &stack, start, 0, maxDepth)
+	return dfsVisit(graph, color, &stack, start, 0)
 }
 
 // dfsVisit is the recursive worker for detectCycles. Hoisted to a top-level
 // helper so detectCycles stays under the project's complexity caps. The
 // stack tracks the active DFS path so cycle errors can include the full
 // path from the cycle entry node back to itself.
-func dfsVisit(graph map[string][]string, color map[string]int, stack *[]string, node string, depth, maxDepth int) error {
-	if depth > maxDepth {
-		return newError(ErrCapExceeded, node, fmt.Sprintf("ref-graph depth exceeds %d", maxDepth), nil)
+func dfsVisit(graph map[string][]string, color map[string]int, stack *[]string, node string, depth int) error {
+	if depth > maxRefDepth {
+		return newError(ErrCapExceeded, node, fmt.Sprintf("ref-graph depth exceeds %d", maxRefDepth), nil)
 	}
 	color[node] = colorGray
 	*stack = append(*stack, node)
 	for _, next := range graph[node] {
-		if err := dfsVisitEdge(graph, color, stack, next, depth, maxDepth); err != nil {
+		if err := dfsVisitEdge(graph, color, stack, next, depth); err != nil {
 			return err
 		}
 	}
@@ -232,20 +236,21 @@ func dfsVisit(graph map[string][]string, color map[string]int, stack *[]string, 
 // is unvisited and reporting a cycle when next is on the active path.
 // The reported error's Path field is the cycle entry node (next, where the
 // back-edge points), and Detail is the full cycle path "n1 -> n2 -> ... -> n1".
-func dfsVisitEdge(graph map[string][]string, color map[string]int, stack *[]string, next string, depth, maxDepth int) error {
+func dfsVisitEdge(graph map[string][]string, color map[string]int, stack *[]string, next string, depth int) error {
 	switch color[next] {
 	case colorGray:
 		return newError(ErrRefCycle, next, formatCycle(*stack, next), nil)
 	case colorWhite:
-		return dfsVisit(graph, color, stack, next, depth+1, maxDepth)
+		return dfsVisit(graph, color, stack, next, depth+1)
 	}
 	return nil
 }
 
 // formatCycle renders the active DFS stack as "n1 -> n2 -> ... -> nk -> n1"
-// where n1 is the cycle entry node (where the back-edge points). The target
-// is expected to appear in the stack; if not (which would indicate an
-// invariant violation), the function falls back to the closing edge.
+// where n1 is the cycle entry node (where the back-edge points). The caller
+// (dfsVisitEdge) only invokes this when target is colorGray, which the tri-color
+// DFS sets exactly while target is on the active stack — so target is always
+// found. A miss would be an invariant violation, hence the panic.
 func formatCycle(stack []string, target string) string {
 	idx := -1
 	for i, n := range stack {
@@ -255,10 +260,7 @@ func formatCycle(stack []string, target string) string {
 		}
 	}
 	if idx < 0 {
-		if len(stack) > 0 {
-			return stack[len(stack)-1] + " -> " + target
-		}
-		return target
+		panic(fmt.Sprintf("formatCycle: target %q not on active DFS stack %v", target, stack))
 	}
 	cycle := append([]string{}, stack[idx:]...)
 	cycle = append(cycle, target)

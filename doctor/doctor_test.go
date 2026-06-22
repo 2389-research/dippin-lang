@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/2389-research/dippin-lang/cost"
 	"github.com/2389-research/dippin-lang/doctor"
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/parser"
@@ -27,7 +26,7 @@ func loadFixture(t *testing.T, path string) *ir.Workflow {
 
 func TestDiagnose_Healthy(t *testing.T) {
 	w := loadFixture(t, "testdata/healthy.dip")
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Grade != "A" {
 		t.Errorf("expected grade A, got %s (score=%d)", report.Grade, report.Score)
@@ -42,7 +41,7 @@ func TestDiagnose_Healthy(t *testing.T) {
 
 func TestDiagnose_Unhealthy(t *testing.T) {
 	w := loadFixture(t, "testdata/unhealthy.dip")
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Score >= 90 {
 		t.Errorf("expected score < 90 for unhealthy workflow, got %d", report.Score)
@@ -54,7 +53,7 @@ func TestDiagnose_Unhealthy(t *testing.T) {
 
 func TestScoreFloor(t *testing.T) {
 	w := loadFixture(t, "testdata/unhealthy.dip")
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Score < 0 {
 		t.Errorf("score should not go below 0, got %d", report.Score)
@@ -63,7 +62,7 @@ func TestScoreFloor(t *testing.T) {
 
 func TestReportHasAllFields(t *testing.T) {
 	w := loadFixture(t, "testdata/healthy.dip")
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Grade == "" {
 		t.Error("grade should not be empty")
@@ -75,7 +74,7 @@ func TestReportHasAllFields(t *testing.T) {
 
 func TestDiagnose_SevereWorkflow(t *testing.T) {
 	w := loadFixture(t, "testdata/severe.dip")
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	// Severe workflow has orphan nodes and dead ends — should score low.
 	if report.Score >= 80 {
@@ -122,7 +121,7 @@ func TestDiagnose_WithUncoveredTools(t *testing.T) {
 			}},
 		},
 	}
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Coverage.UncoveredTools == 0 {
 		t.Error("expected uncovered tools > 0 for partial tool coverage")
@@ -162,7 +161,7 @@ func TestDiagnose_GradeRanges(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			report := doctor.DiagnoseWithOptions(tt.w, cost.DefaultPricing(), validator.Options{})
+			report := doctor.DiagnoseWithOptions(tt.w, validator.Options{})
 			if report.Grade != tt.wantGrade {
 				t.Errorf("grade = %q (score=%d), want %q", report.Grade, report.Score, tt.wantGrade)
 			}
@@ -178,7 +177,7 @@ func TestDiagnose_LintErrorsDeductScore(t *testing.T) {
 			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "Do."}},
 		},
 	}
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Lint.Errors == 0 {
 		t.Error("expected lint errors for workflow missing start/exit")
@@ -210,7 +209,7 @@ func TestDiagnose_LintWarnings(t *testing.T) {
 			{From: "A", To: "B"},
 		},
 	}
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Lint.Warnings == 0 {
 		t.Error("expected lint warnings for empty prompt / no timeout")
@@ -231,7 +230,7 @@ func TestDiagnose_ScoreFloorAtZero(t *testing.T) {
 			{ID: "F", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "Do."}},
 		},
 	}
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Score != 0 {
 		t.Errorf("score should be floored at 0, got %d", report.Score)
@@ -243,7 +242,7 @@ func TestDiagnose_ScoreFloorAtZero(t *testing.T) {
 
 func TestDiagnose_SuggestionsAreSorted(t *testing.T) {
 	w := loadFixture(t, "testdata/unhealthy.dip")
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	for i := 1; i < len(report.Suggestions); i++ {
 		if report.Suggestions[i-1].Category > report.Suggestions[i].Category {
@@ -269,7 +268,7 @@ func TestDiagnose_GradeBWorkflow(t *testing.T) {
 	}
 	// Instead of trying to precisely control score, just verify the severe.dip
 	// fixture produces a grade between B and D to cover those scoreToGrade branches.
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	// This healthy workflow should be A. The actual B/C/D tests are below.
 	if report.Grade != "A" {
@@ -278,7 +277,7 @@ func TestDiagnose_GradeBWorkflow(t *testing.T) {
 
 	// Now test severe workflow for B/C/D grade coverage.
 	severe := loadFixture(t, "testdata/severe.dip")
-	severeReport := doctor.DiagnoseWithOptions(severe, cost.DefaultPricing(), validator.Options{})
+	severeReport := doctor.DiagnoseWithOptions(severe, validator.Options{})
 	// Severe should be below A.
 	if severeReport.Grade == "A" {
 		t.Errorf("expected grade below A for severe workflow, got %s (score=%d)", severeReport.Grade, severeReport.Score)
@@ -308,7 +307,7 @@ func TestDiagnose_GradeCDWorkflow(t *testing.T) {
 			{From: "F", To: "G"},
 		},
 	}
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	// Should be C or D (score 60-79).
 	if report.Grade == "A" || report.Grade == "B" || report.Grade == "F" {
@@ -327,7 +326,7 @@ func TestDiagnose_GradeDWithManyIssues(t *testing.T) {
 		},
 		Edges: []*ir.Edge{{From: "A", To: "B"}},
 	}
-	report := doctor.DiagnoseWithOptions(w, cost.DefaultPricing(), validator.Options{})
+	report := doctor.DiagnoseWithOptions(w, validator.Options{})
 
 	if report.Lint.Errors == 0 {
 		t.Error("expected lint errors")

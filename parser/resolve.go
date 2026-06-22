@@ -70,10 +70,11 @@ func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string) error
 }
 
 // loadDirectiveInto reads path (relative to baseDir) into *dst, no-op if path
-// is empty. The *dst != "" guard preserves an inline value if one is already
-// set, defensive against the parser's mutual-exclusion check getting bypassed.
+// is empty. When path is non-empty, *dst is always empty: the parser rejects a
+// node declaring both an inline value and its *_file directive, and the CLI
+// bails on that parse error before reaching the resolver.
 func loadDirectiveInto(dst *string, path, baseDir, nodeID, directive string) error {
-	if path == "" || *dst != "" {
+	if path == "" {
 		return nil
 	}
 	contents, err := loadDirectiveFile(baseDir, path)

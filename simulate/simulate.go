@@ -32,11 +32,6 @@ type Options struct {
 	// (via Stdin) rather than auto-succeeding.
 	Interactive bool
 
-	// AllPaths enumerates all possible execution paths through the graph
-	// rather than following a single path. Each path is a separate run
-	// reported with a distinct run ID suffix.
-	AllPaths bool
-
 	// MaxNodeVisits limits how many times a single node can be visited.
 	// When exceeded, the simulator forces the loop-exit edge (the first
 	// conditional edge that doesn't match). 0 means unlimited (use maxSteps only).
@@ -148,12 +143,7 @@ const maxSteps = 500 // safety valve against infinite loops
 func (s *simulator) run() (*Result, error) {
 	runID := generateRunID()
 
-	s.emit(event.PipelineStart{
-		Event:     event.TypePipelineStart,
-		RunID:     runID,
-		Workflow:  s.workflow.Name,
-		Timestamp: event.Now(),
-	})
+	s.emit(buildPipelineStartEvent(runID, s.workflow.Name))
 
 	current := s.workflow.Start
 	for s.steps < maxSteps {
@@ -208,12 +198,7 @@ func (s *simulator) advanceToNext(node *ir.Node) (string, *Result, error) {
 
 // finishRun emits a PipelineEnd event and returns the final Result.
 func (s *simulator) finishRun(status string) *Result {
-	s.emit(event.PipelineEnd{
-		Event:        event.TypePipelineEnd,
-		Status:       status,
-		NodesVisited: len(s.visited),
-		Timestamp:    event.Now(),
-	})
+	s.emit(buildPipelineEndEvent(status, len(s.visited)))
 	return &Result{
 		Events:       s.events,
 		NodesVisited: len(s.visited),
@@ -243,13 +228,7 @@ func (s *simulator) visitNode(node *ir.Node) error {
 		return err
 	}
 
-	s.emit(event.NodeExit{
-		Event:      event.TypeNodeExit,
-		Node:       node.ID,
-		Status:     "success",
-		DurationMs: 0,
-		Timestamp:  event.Now(),
-	})
+	s.emit(newNodeExitSuccess(node.ID))
 
 	return nil
 }

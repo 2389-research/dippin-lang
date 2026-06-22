@@ -116,16 +116,16 @@ func walkRefs(parsed map[string]*ir.Workflow, m Manifest) error {
 	if err := verifyRefsListed(graph, m); err != nil {
 		return err
 	}
-	return detectCyclesAll(graph, m, 64)
+	return detectCyclesAll(graph, m)
 }
 
 // detectCyclesAll runs detectCycles rooted at every manifest-listed
 // workflow. Each call uses a fresh color map; overlap across roots is
 // re-explored, which is acceptable at manifest-cap scale (≤ a few
 // hundred workflows in practice).
-func detectCyclesAll(graph map[string][]string, m Manifest, maxDepth int) error {
+func detectCyclesAll(graph map[string][]string, m Manifest) error {
 	for _, e := range m.Files {
-		if err := detectCycles(graph, e.Path, maxDepth); err != nil {
+		if err := detectCycles(graph, e.Path); err != nil {
 			return err
 		}
 	}

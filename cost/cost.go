@@ -78,7 +78,7 @@ func Analyze(w *ir.Workflow, pricing PricingTable) *Report {
 
 	r.Total = aggregateTotal(r.Nodes)
 	r.ByProvider = aggregateByProvider(r.Nodes)
-	r.TopCosts = sortTopCosts(r.Nodes, 5)
+	r.TopCosts = sortTopCosts(r.Nodes)
 	return r
 }
 
@@ -86,7 +86,7 @@ func Analyze(w *ir.Workflow, pricing PricingTable) *Report {
 func aggregateTotal(nodes map[string]NodeCost) CostRange {
 	var total CostRange
 	for _, nc := range nodes {
-		total = addCostRange(total, nc.Cost)
+		total = AddCostRange(total, nc.Cost)
 	}
 	return total
 }
@@ -98,13 +98,13 @@ func aggregateByProvider(nodes map[string]NodeCost) map[string]CostRange {
 		if nc.Provider == "" {
 			continue
 		}
-		byProv[nc.Provider] = addCostRange(byProv[nc.Provider], nc.Cost)
+		byProv[nc.Provider] = AddCostRange(byProv[nc.Provider], nc.Cost)
 	}
 	return byProv
 }
 
-// addCostRange adds two CostRange values.
-func addCostRange(a, b CostRange) CostRange {
+// AddCostRange adds two CostRange values.
+func AddCostRange(a, b CostRange) CostRange {
 	return CostRange{
 		Min:      a.Min + b.Min,
 		Expected: a.Expected + b.Expected,
@@ -112,8 +112,11 @@ func addCostRange(a, b CostRange) CostRange {
 	}
 }
 
-// sortTopCosts returns the top N nodes sorted by max cost descending.
-func sortTopCosts(nodes map[string]NodeCost, limit int) []NodeCost {
+// topCostLimit caps how many of the most expensive nodes Analyze reports.
+const topCostLimit = 5
+
+// sortTopCosts returns the topCostLimit nodes sorted by max cost descending.
+func sortTopCosts(nodes map[string]NodeCost) []NodeCost {
 	all := make([]NodeCost, 0, len(nodes))
 	for _, nc := range nodes {
 		all = append(all, nc)
@@ -121,8 +124,8 @@ func sortTopCosts(nodes map[string]NodeCost, limit int) []NodeCost {
 	sort.Slice(all, func(i, j int) bool {
 		return all[i].Cost.Max > all[j].Cost.Max
 	})
-	if len(all) > limit {
-		all = all[:limit]
+	if len(all) > topCostLimit {
+		all = all[:topCostLimit]
 	}
 	return all
 }
@@ -139,7 +142,7 @@ func estimateNodeCost(n *ir.Node, w *ir.Workflow, pricing PricingTable, r *Repor
 		return nc // non-agent nodes have zero cost
 	}
 
-	nc.Model, nc.Provider = getModelProvider(n, w)
+	nc.Model, nc.Provider = getModelProvider(ac, w)
 	nc.Tokens = estimateTokens(ac, nc.Model)
 	nc.Turns = estimateTurns(ac)
 
@@ -155,12 +158,8 @@ func estimateNodeCost(n *ir.Node, w *ir.Workflow, pricing PricingTable, r *Repor
 	return nc
 }
 
-// getModelProvider resolves the model and provider for a node.
-func getModelProvider(n *ir.Node, w *ir.Workflow) (string, string) {
-	ac, ok := n.Config.(ir.AgentConfig)
-	if !ok {
-		return w.Defaults.Model, w.Defaults.Provider
-	}
+// getModelProvider resolves the model and provider for an agent node.
+func getModelProvider(ac ir.AgentConfig, w *ir.Workflow) (string, string) {
 	model := ac.Model
 	if model == "" {
 		model = w.Defaults.Model

@@ -18,7 +18,7 @@ func (s *Server) handleDocumentSymbol(ctx context.Context, reply jsonrpc2.Replie
 	}
 
 	doc := s.store.get(string(params.TextDocument.URI))
-	if doc == nil || doc.Parsed == nil {
+	if doc == nil {
 		return reply(ctx, nil, nil)
 	}
 

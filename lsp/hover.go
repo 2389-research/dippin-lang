@@ -20,7 +20,7 @@ func (s *Server) handleHover(ctx context.Context, reply jsonrpc2.Replier, req js
 	}
 
 	doc := s.store.get(string(params.TextDocument.URI))
-	if doc == nil || doc.Parsed == nil {
+	if doc == nil {
 		return reply(ctx, nil, nil)
 	}
 
@@ -90,7 +90,7 @@ func formatNodeConfig(n *ir.Node, w *ir.Workflow) string {
 // formatToolHover formats tool-specific hover info.
 func formatToolHover(cfg ir.ToolConfig) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Command: `%s`\n", truncateStr(cfg.Command, 80))
+	fmt.Fprintf(&b, "Command: `%s`\n", truncateStr(cfg.Command))
 	if cfg.MarkerGrep != "" {
 		fmt.Fprintf(&b, "marker_grep: `%s`\n", cfg.MarkerGrep)
 	}
@@ -121,10 +121,13 @@ func formatAgentHover(cfg ir.AgentConfig, w *ir.Workflow) string {
 	return b.String()
 }
 
+// hoverCommandMaxLen bounds the command preview shown in tool hovers.
+const hoverCommandMaxLen = 80
+
 // truncateStr shortens a string for display.
-func truncateStr(s string, max int) string {
-	if len(s) <= max {
+func truncateStr(s string) string {
+	if len(s) <= hoverCommandMaxLen {
 		return s
 	}
-	return s[:max] + "..."
+	return s[:hoverCommandMaxLen] + "..."
 }

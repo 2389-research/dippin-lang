@@ -124,7 +124,7 @@ func (p *Parser) applyDefaultComplexField(key, val string, loc ir.SourceLocation
 	case "max_restarts":
 		p.workflow.Defaults.MaxRestarts = p.parseInt(val, key, loc)
 	case "cache_tools":
-		p.workflow.Defaults.CacheTools = (val == "true")
+		p.workflow.Defaults.CacheTools = p.parseBoolAttr(val, key, loc)
 	default:
 		p.applyDefaultBudgetField(key, val, loc)
 	}

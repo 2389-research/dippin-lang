@@ -24,25 +24,10 @@ func (s *Server) publishDiagnostics(ctx context.Context, doc *document) {
 	_ = conn.Notify(ctx, "textDocument/publishDiagnostics", params)
 }
 
-// collectDiagnostics gathers all diagnostics for a document.
+// collectDiagnostics gathers all diagnostics for a document. parser.Parse()
+// always returns a non-nil *ir.Workflow, so doc.Parsed is never nil here.
 func collectDiagnostics(doc *document) []protocol.Diagnostic {
-	if doc.Parsed == nil {
-		return parseErrorDiagnostic(doc)
-	}
 	return lintDiagnostics(doc)
-}
-
-// parseErrorDiagnostic returns a single diagnostic for a parse error.
-func parseErrorDiagnostic(doc *document) []protocol.Diagnostic {
-	if doc.Err == nil {
-		return nil
-	}
-	return []protocol.Diagnostic{{
-		Range:    zeroRange(),
-		Severity: protocol.DiagnosticSeverityError,
-		Source:   "dippin",
-		Message:  doc.Err.Error(),
-	}}
 }
 
 // lintDiagnostics runs validator and lint, converting results to LSP diagnostics.

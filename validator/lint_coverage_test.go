@@ -229,20 +229,3 @@ func TestStripNamespace(t *testing.T) {
 		}
 	}
 }
-
-// --- slicesEqual edge case ---
-
-func TestSlicesEqual_BothEmpty(t *testing.T) {
-	if !slicesEqual(nil, nil) {
-		t.Error("nil slices should be equal")
-	}
-	if !slicesEqual([]string{}, []string{}) {
-		t.Error("empty slices should be equal")
-	}
-}
-
-func TestSlicesEqual_DifferentLength(t *testing.T) {
-	if slicesEqual([]string{"a"}, []string{"a", "b"}) {
-		t.Error("different length slices should not be equal")
-	}
-}

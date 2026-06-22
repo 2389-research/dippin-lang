@@ -38,8 +38,8 @@ func Analyze(w *ir.Workflow, pricing cost.PricingTable) *Report {
 		if !ok {
 			continue
 		}
-		model, provider := resolveModelProvider(n, w)
-		ctx := ruleContext{node: n, config: ac, model: model, provider: provider, workflow: w, pricing: pricing}
+		model, provider := resolveModelProvider(ac, w)
+		ctx := ruleContext{node: n, config: ac, model: model, provider: provider, workflow: w, pricing: pricing, costReport: costReport}
 		r.Suggestions = append(r.Suggestions, applyRules(ctx)...)
 	}
 
@@ -50,20 +50,17 @@ func Analyze(w *ir.Workflow, pricing cost.PricingTable) *Report {
 
 // ruleContext bundles the data each rule needs.
 type ruleContext struct {
-	node     *ir.Node
-	config   ir.AgentConfig
-	model    string
-	provider string
-	workflow *ir.Workflow
-	pricing  cost.PricingTable
+	node       *ir.Node
+	config     ir.AgentConfig
+	model      string
+	provider   string
+	workflow   *ir.Workflow
+	pricing    cost.PricingTable
+	costReport *cost.Report
 }
 
-// resolveModelProvider gets the effective model and provider for a node.
-func resolveModelProvider(n *ir.Node, w *ir.Workflow) (string, string) {
-	ac, ok := n.Config.(ir.AgentConfig)
-	if !ok {
-		return w.Defaults.Model, w.Defaults.Provider
-	}
+// resolveModelProvider gets the effective model and provider for an agent node.
+func resolveModelProvider(ac ir.AgentConfig, w *ir.Workflow) (string, string) {
 	model := ac.Model
 	if model == "" {
 		model = w.Defaults.Model

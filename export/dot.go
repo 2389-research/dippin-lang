@@ -7,6 +7,7 @@ package export
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -141,7 +142,7 @@ func addGraphVarsAttrs(attrs *[]string, vars map[string]string) {
 			keys = append(keys, k)
 		}
 	}
-	sortStrings(keys)
+	sort.Strings(keys)
 	for _, k := range keys {
 		*attrs = append(*attrs, fmt.Sprintf("%s=%s", dotID(k), dotQuote(vars[k])))
 	}
@@ -611,7 +612,7 @@ func formatDOTAttrs(attrs map[string]string) string {
 	for k := range attrs {
 		keys = append(keys, k)
 	}
-	sortStrings(keys)
+	sort.Strings(keys)
 
 	parts := make([]string, 0, len(keys))
 	for _, k := range keys {
@@ -790,16 +791,6 @@ func appendDurationParts(parts []string, d time.Duration) ([]string, time.Durati
 	return parts, d
 }
 
-// sortStrings sorts a string slice in place. Avoids importing sort for this
-// single use.
-func sortStrings(s []string) {
-	for i := 1; i < len(s); i++ {
-		for j := i; j > 0 && s[j] < s[j-1]; j-- {
-			s[j], s[j-1] = s[j-1], s[j]
-		}
-	}
-}
-
 // applyManagerLoopScalarAttrs writes scalar manager_loop config fields as DOT node attributes.
 func applyManagerLoopScalarAttrs(attrs map[string]string, cfg ir.ManagerLoopConfig) {
 	if cfg.SubgraphRef != "" {
@@ -882,7 +873,7 @@ func flattenSteerContext(m map[string]string) string {
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sortStrings(keys)
+	sort.Strings(keys)
 	parts := make([]string, 0, len(keys))
 	for _, k := range keys {
 		parts = append(parts, encodeSteerContextToken(k)+"="+encodeSteerContextToken(m[k]))
