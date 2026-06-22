@@ -143,8 +143,8 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 
 <div class="cmd-card">
   <h3>watch</h3>
-  <div class="cmd-usage">dippin watch [--lint] [--test] &lt;file.dip&gt;</div>
-  <p>Watch a workflow file for changes and re-run validation automatically. Use <code>--lint</code> to include semantic linting on each change, or <code>--test</code> to re-run scenario tests. Debounces rapid saves.</p>
+  <div class="cmd-usage">dippin watch &lt;file-or-dir&gt; [...]</div>
+  <p>Watch <code>.dip</code> files or directories for changes. On each change it parses, validates, and lints the affected file. Debounces rapid saves (200ms).</p>
 </div>
 
 ## Bundle Commands
@@ -165,6 +165,6 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 
 <div class="cmd-card">
   <h3>inspect</h3>
-  <div class="cmd-usage">dippin inspect [--format text|json] &lt;bundle.dipx&gt;</div>
-  <p>Print a bundle's manifest, identity hash (SHA-256 over the manifest bytes-as-stored), and per-file checksums. Always integrity-verifies in v1.</p>
+  <div class="cmd-usage">dippin inspect [--no-verify] [--format text|json] &lt;bundle.dipx&gt;</div>
+  <p>Print a bundle's manifest, identity hash (SHA-256 over the manifest bytes-as-stored), and per-file checksums. Integrity-verifies by default; <code>--no-verify</code> skips hash verification (forensic mode).</p>
 </div>
