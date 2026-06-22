@@ -255,7 +255,7 @@ Add `when <expression>` to gate an edge on a runtime condition:
 | `loop` | Flag | Bare keyword marking a back-edge (loop restart). Legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop` |
 | `override: true` | Boolean | Carried, not interpreted by dippin — marks a human-authored validation override for a paired runtime to act on |
 
-A single `else -> <node>` line at the bottom of the `edges` block sets the graph's success-side default destination — any node whose guard edges all fail to match, and which has no unconditional edge of its own, routes there. At most one per edges block; it has no source node. See [edges.md](edges.md).
+A single `else -> <node>` line at the bottom of the `edges` block sets the graph's success-side default destination — any node whose guard edges all fail to match, and which has no unconditional edge of its own, routes there. At most one per edges block; it has no source node. See [edges.md](edges.md). Note: `dippin simulate` / `dippin test` do not yet traverse the `else` default (tracked in [#158](https://github.com/2389-research/dippin-lang/issues/158)); a paired runtime resolves it.
 
 Attributes can be combined on a single line:
 

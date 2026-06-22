@@ -177,7 +177,7 @@ If you use a field name that is not recognized for the current node type, the pa
 
 ## Human Nodes
 
-Human nodes pause execution and wait for human input. They support three interaction modes.
+Human nodes pause execution and wait for human input. They support four interaction modes.
 
 ```dippin
   human Approve
@@ -195,7 +195,7 @@ Human nodes pause execution and wait for human input. They support three interac
 | `questions_key` | String | `interview_questions` | Context key to read questions from. Interview mode only. |
 | `answers_key` | String | `interview_answers` | Context key to write answers to. Interview mode only. |
 | `timeout` | Duration | — | How long to wait for human input before the `timeout_action` fires (e.g. `5m`, `30s`). `0`/unset = wait indefinitely. |
-| `timeout_action` | String | — | What to do when `timeout` elapses: `fail` (the node fails) or `default` (use the `default` selection). Empty = no timeout behavior. Any other value is a parse error. |
+| `timeout_action` | String | — | What to do when `timeout` elapses: `fail` (the node fails), `default` (use the `default` selection), or empty. Empty falls back to the node's `default` answer if one is set, otherwise fails. Any other value is a parse error. |
 
 ### Choice Mode
 

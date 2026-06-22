@@ -556,7 +556,7 @@ $ dippin explain DIP101
   Example:
     A -> B when ctx.outcome = success
     A -> C when ctx.outcome = fail
-    A -> D  // unreachable
+    A -> D  # unreachable
 ```
 
 In JSON mode, outputs the `Explanation` struct with `code`, `summary`, `trigger`, `fix`, and `example` fields.

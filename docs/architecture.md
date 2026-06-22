@@ -72,10 +72,10 @@ dippin-lang/
 │   ├── lint_subgraph_tool_access.go # DIP143 (subgraph tool_access inheritance)
 │   ├── lint_failure_route.go # DIP144 (agent node missing failure route)
 │   ├── lint_budget.go        # DIP145 (negative budget default)
-│   ├── lint_chain_attack.go  # DIP146, DIP147 (response-injection chain attack)
-│   ├── lint_last_response_truncate.go # DIP148 (last_response truncation mitigation)
-│   ├── lint_routing.go       # DIP149, DIP151 (edge routing / unused weight)
-│   ├── lint_human.go         # DIP150 (human-gate choice keys)
+│   ├── lint_chain_attack.go  # DIP112, DIP139, DIP143, DIP146, DIP147 (response-injection chain attack)
+│   ├── lint_last_response_truncate.go # DIP147, DIP148 (last_response truncation mitigation)
+│   ├── lint_routing.go       # DIP103, DIP149, DIP151 (edge routing / unused weight)
+│   ├── lint_human.go         # DIP127, DIP128, DIP129, DIP150 (human-gate modes + choice keys)
 │   └── ...                   # further lint_*.go files cover DIP110–DIP134 (response, subgraph, tool_cmd, etc.)
 │
 ├── formatter/          # Canonical .dip source formatter
@@ -370,12 +370,14 @@ Checks semantic quality — patterns that are likely bugs. Decomposed into focus
 - **Subgraph tool access** (`lint_subgraph_tool_access.go`): DIP143 — subgraph does not inherit parent tool_access restrictions
 - **Failure route** (`lint_failure_route.go`): DIP144 — agent node missing failure route
 - **Budget** (`lint_budget.go`): DIP145 — negative graph budget default
-- **Chain attack** (`lint_chain_attack.go`): DIP146, DIP147 — response-injection / cross-node chain-attack detection
-- **Last-response truncate** (`lint_last_response_truncate.go`): DIP148 — `last_response_truncate` mitigation hint
-- **Routing** (`lint_routing.go`): DIP149, DIP151 — edge routing validity and unused `weight:` soft-deprecation
-- **Human** (`lint_human.go`): DIP150 — human-gate `choice:` edge keys
+- **Chain attack** (`lint_chain_attack.go`): DIP112, DIP139, DIP143, DIP146, DIP147 — response-injection / cross-node chain-attack detection
+- **Last-response truncate** (`lint_last_response_truncate.go`): DIP147, DIP148 — `last_response_truncate` mitigation hint
+- **Routing** (`lint_routing.go`): DIP103, DIP149, DIP151 — edge routing validity and unused `weight:` soft-deprecation
+- **Human** (`lint_human.go`): DIP127, DIP128, DIP129, DIP150 — human-gate interaction modes + `choice:` edge keys
 
 (Further modules — `lint_response.go`, `lint_subgraph.go`, `lint_tool_cmd.go`, etc. — cover DIP110–DIP134.)
+
+**DIP138 is reserved** — it has no firing logic and is excluded by `lint.go`'s `Lint()`, so it is never emitted.
 
 ### The Diagnostic Type
 
@@ -491,7 +493,7 @@ The `event` package defines the canonical event types (`pipeline_start`, `node_e
 
 ## The Analysis Packages
 
-Six packages provide analysis over IR workflows. They compose each other:
+Seven packages provide analysis over IR workflows. They compose each other:
 
 ```mermaid
 graph BT
@@ -504,6 +506,8 @@ graph BT
     optimize["optimize"] --> cost
     diff["diff"] --> cost
     feedback["feedback"] --> cost
+    unused["unused"] --> cost
+    unused --> coverage
 ```
 
 - **cost** — Heuristic token counting, turn estimation, per-model pricing. Pure analysis, no side effects.
@@ -512,6 +516,7 @@ graph BT
 - **optimize** — Rule-based model substitution. Identifies simple prompts, retry-loop nodes, and bookkeeping tasks that can use cheaper models.
 - **diff** — Structural comparison between two workflows with field-level change tracking and cost delta.
 - **feedback** — Reads CSV telemetry, compares against predicted costs, flags outliers.
+- **unused** — Detects dead-branch nodes (reachable from start but with no path to exit) and estimates their wasted cost by combining coverage and cost analysis.
 
 See [analysis.md](analysis.md) for output formats and JSON schemas.
 

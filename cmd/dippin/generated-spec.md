@@ -488,7 +488,7 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | condition | `when <expr>` | Guard expression |
 | outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
-| choice | `choice: <key>` | Human-gate routing key; carried, not interpreted — marks the load-bearing routing key so `label:` stays display-only (DIP150) |
+| choice | `choice: <key>` | Human-gate routing key; carried, not interpreted — `choice:` is preferred when present, and `label:` remains the fallback routing key when `choice:` is absent (DIP150) |
 | weight | `weight: <int>` | Soft-deprecated (DIP151) — parsed but ignored by routing; removal slated for dip 2 |
 | override | `override: true` | Carried, not interpreted by the parser |
 | else default | `else -> <NodeID>` | Section-level success-side default route; at most one per `edges` block; no source node and no attributes (#157) |

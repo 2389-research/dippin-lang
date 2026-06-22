@@ -136,7 +136,7 @@ There are 8 node kinds, each with its own syntax and configuration:
 
 ### Common Fields
 
-These fields are available on **all** block-style node kinds (agent, human, tool, subgraph):
+These fields (`label`, `class`, `reads`, `writes`, and the retry fields) are accepted by **all** block-style node kinds — agent, human, tool, subgraph, `conditional`, and `manager_loop` — since they share the node-field parser:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -215,7 +215,7 @@ Human nodes pause execution and wait for human input. Four modes: `choice` (pred
 | `questions_key` | String | Context key to read questions from. Interview mode only (default `interview_questions`). |
 | `answers_key` | String | Context key to write answers to. Interview mode only (default `interview_answers`). |
 | `timeout` | Duration | How long to wait for input before `timeout_action` fires (e.g. `5m`). `0`/unset = wait indefinitely. |
-| `timeout_action` | String | What to do when `timeout` elapses: `fail` (the node fails) or `default` (use the `default` selection). Empty = no timeout behavior. |
+| `timeout_action` | String | What to do when `timeout` elapses: `fail` (the node fails), `default` (use the `default` selection), or empty. Empty falls back to the node's `default` answer if one is set, otherwise fails. Any other value is a parse error. |
 
 ### tool
 
@@ -382,6 +382,8 @@ A single `else -> <node>` line, written at the bottom of the `edges` block, is t
 ```
 
 At most one `else` per edges block (a second is a parse error), and `else ->` requires a target node. It has no source node. `else` is success-side only — it never intercepts a genuine node *failure*, which routes via the failure cascade (`on fail` edge → `defaults.on_failure`). A node covered by `else` is not flagged DIP101 or DIP102.
+
+> **Note:** `dippin simulate` / `dippin test` do not yet traverse the `else` default (tracked in [#158](https://github.com/2389-research/dippin-lang/issues/158)); a paired runtime resolves it.
 
 ## Conditions
 
