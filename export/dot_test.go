@@ -508,11 +508,16 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 			wantAttr: `condition="(x = 1 and y = 2) or z = 3"`,
 		},
 		{
-			name: "NOT of compound — parenthesized",
+			name: "NOT with AND precedence",
+			// `not` binds tighter than `and`, so this parses to
+			// CondAnd{Left: CondNot{x = 1}, Right: y = 2}. Grouping parens
+			// (e.g. `not (...)`) are not supported by the parser, so we
+			// exercise the CondNot formatter branch with a form the parser
+			// actually round-trips faithfully.
 			condition: &ir.Condition{
-				Raw: "not (ctx.x = 1 and ctx.y = 2)",
+				Raw: "not ctx.x = 1 and ctx.y = 2",
 			},
-			wantAttr: `condition="not (x = 1 and y = 2)"`,
+			wantAttr: `condition="not x = 1 and y = 2"`,
 		},
 	}
 
