@@ -138,12 +138,7 @@ func (pe *pathEnumerator) cloneState(state *pathState) (map[string]string, map[s
 
 	// At the root of the traversal (no events yet), add PipelineStart.
 	if len(events) == 0 {
-		events = append(events, event.PipelineStart{
-			Event:     event.TypePipelineStart,
-			RunID:     "sim-path-pending",
-			Workflow:  pe.workflow.Name,
-			Timestamp: event.Now(),
-		})
+		events = append(events, buildPipelineStartEvent("sim-path-pending", pe.workflow.Name))
 	}
 
 	return ctx, visited, events, path
@@ -152,39 +147,12 @@ func (pe *pathEnumerator) cloneState(state *pathState) (map[string]string, map[s
 // appendNodeEvents adds the node_enter (with kind-specific events) and node_exit events.
 func (pe *pathEnumerator) appendNodeEvents(node *ir.Node, events []event.Event) []event.Event {
 	enterEvt := buildNodeEnterEvent(node, pe.workflow)
-
-	switch cfg := node.Config.(type) {
-	case ir.ParallelConfig:
-		events = append(events, enterEvt)
-		events = append(events, event.ParallelStart{
-			Event: event.TypeParallelStart, Node: node.ID,
-			Targets: cfg.Targets, Timestamp: event.Now(),
-		})
-	case ir.FanInConfig:
-		events = append(events, enterEvt)
-		events = append(events, event.ParallelEnd{
-			Event: event.TypeParallelEnd, Node: node.ID,
-			Sources: cfg.Sources, Timestamp: event.Now(),
-		})
-	default:
-		events = append(events, enterEvt)
-	}
-
-	events = append(events, event.NodeExit{
-		Event: event.TypeNodeExit, Node: node.ID,
-		Status: "success", DurationMs: 0, Timestamp: event.Now(),
-	})
-	return events
+	return append(events, buildNodeEventSequence(node, enterEvt)...)
 }
 
 // recordPath records a completed or dead-end path as a result.
 func (pe *pathEnumerator) recordPath(events []event.Event, visited map[string]int, path []string, status string) {
-	events = append(events, event.PipelineEnd{
-		Event:        event.TypePipelineEnd,
-		Status:       status,
-		NodesVisited: len(visited),
-		Timestamp:    event.Now(),
-	})
+	events = append(events, buildPipelineEndEvent(status, len(visited)))
 	pe.pathCount++
 	events = assignRunID(events, fmt.Sprintf("sim-path-%03d", pe.pathCount))
 	pe.results = append(pe.results, &Result{

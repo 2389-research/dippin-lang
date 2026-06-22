@@ -43,6 +43,17 @@ var complexityIndicators = []complexityIndicator{
 	{keywordCounter([]string{"code", "implement", "refactor", "debug", "architect"}, 4)},
 }
 
+// containsAny reports whether the lowercased s contains any of subs as a substring.
+func containsAny(s string, subs []string) bool {
+	lower := strings.ToLower(s)
+	for _, sub := range subs {
+		if strings.Contains(lower, sub) {
+			return true
+		}
+	}
+	return false
+}
+
 // keywordCounter returns a scoring function that adds points per keyword match.
 func keywordCounter(keywords []string, points int) func(string) int {
 	return func(prompt string) int {
@@ -59,35 +70,17 @@ func keywordCounter(keywords []string, points int) func(string) int {
 
 // isExpensiveModel returns true for high-tier models.
 func isExpensiveModel(model string) bool {
-	lower := strings.ToLower(model)
-	for _, pattern := range expensiveModels {
-		if strings.Contains(lower, pattern) {
-			return true
-		}
-	}
-	return false
+	return containsAny(model, expensiveModels)
 }
 
 // isCheapModel returns true for budget-tier models.
 func isCheapModel(model string) bool {
-	lower := strings.ToLower(model)
-	for _, pattern := range cheapModels {
-		if strings.Contains(lower, pattern) {
-			return true
-		}
-	}
-	return false
+	return containsAny(model, cheapModels)
 }
 
 // isBookkeepingPrompt detects prompts that are simple bookkeeping tasks.
 func isBookkeepingPrompt(prompt string) bool {
-	lower := strings.ToLower(prompt)
-	for _, kw := range bookkeepingKeywords {
-		if strings.Contains(lower, kw) {
-			return true
-		}
-	}
-	return false
+	return containsAny(prompt, bookkeepingKeywords)
 }
 
 // suggestCheaperModel returns a budget model for the given provider.
