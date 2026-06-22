@@ -7,6 +7,7 @@ package diff
 
 import (
 	"sort"
+	"strconv"
 
 	"github.com/2389-research/dippin-lang/cost"
 	"github.com/2389-research/dippin-lang/ir"
@@ -50,11 +51,11 @@ type CostDelta struct {
 }
 
 // Compare produces a semantic diff between old and new workflows.
-func Compare(old, new *ir.Workflow, pricing cost.PricingTable) *Report {
+func Compare(old, new *ir.Workflow) *Report {
 	r := &Report{}
 	compareNodes(old, new, r)
 	compareEdges(old, new, r)
-	r.CostDelta = compareCosts(old, new, pricing)
+	r.CostDelta = compareCosts(old, new)
 	return r
 }
 
@@ -155,8 +156,8 @@ func agentFieldTable(old, new ir.AgentConfig) []agentField {
 	return []agentField{
 		{"model", old.Model, new.Model},
 		{"provider", old.Provider, new.Provider},
-		{"prompt", truncate(old.Prompt, 50), truncate(new.Prompt, 50)},
-		{"max_turns", itoa(old.MaxTurns), itoa(new.MaxTurns)},
+		{"prompt", truncate(old.Prompt), truncate(new.Prompt)},
+		{"max_turns", strconv.Itoa(old.MaxTurns), strconv.Itoa(new.MaxTurns)},
 		{"reasoning_effort", old.ReasoningEffort, new.ReasoningEffort},
 		{"fidelity", old.Fidelity, new.Fidelity},
 	}
@@ -207,7 +208,8 @@ func findAddedEdges(a, b map[string]EdgeSummary) []EdgeSummary {
 }
 
 // compareCosts computes cost delta between workflows.
-func compareCosts(old, new *ir.Workflow, pricing cost.PricingTable) CostDelta {
+func compareCosts(old, new *ir.Workflow) CostDelta {
+	pricing := cost.DefaultPricing()
 	oldCost := cost.Analyze(old, pricing).Total
 	newCost := cost.Analyze(new, pricing).Total
 	return CostDelta{
@@ -221,28 +223,13 @@ func compareCosts(old, new *ir.Workflow, pricing cost.PricingTable) CostDelta {
 	}
 }
 
-// truncate shortens a string to maxLen, adding "..." if truncated.
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
+// promptDiffMaxLen bounds the prompt preview shown in field-change tables.
+const promptDiffMaxLen = 50
+
+// truncate shortens a string to promptDiffMaxLen, adding "..." if truncated.
+func truncate(s string) string {
+	if len(s) <= promptDiffMaxLen {
 		return s
 	}
-	return s[:maxLen] + "..."
-}
-
-// itoa converts an int to a string without importing strconv.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	return intToStr(n)
-}
-
-func intToStr(n int) string {
-	if n < 0 {
-		return "-" + intToStr(-n)
-	}
-	if n < 10 {
-		return string(rune('0' + n))
-	}
-	return intToStr(n/10) + string(rune('0'+n%10))
+	return s[:promptDiffMaxLen] + "..."
 }

@@ -35,7 +35,7 @@ func RunCase(w *ir.Workflow, tc TestCase) CaseResult {
 	result, err := simulate.Run(w, simulate.Options{
 		Scenario:      tc.Scenario,
 		MaxNodeVisits: defaultMaxNodeVisits,
-		Branch:        toBoolMap(tc.Branch),
+		Branch:        toSet(tc.Branch),
 	})
 	if err != nil {
 		cr.Errors = append(cr.Errors, fmt.Sprintf("simulation error: %v", err))
@@ -154,17 +154,6 @@ func findInPath(path []string, target string, offset int) int {
 		}
 	}
 	return -1
-}
-
-func toBoolMap(items []string) map[string]bool {
-	if len(items) == 0 {
-		return nil
-	}
-	m := make(map[string]bool, len(items))
-	for _, item := range items {
-		m[item] = true
-	}
-	return m
 }
 
 func toSet(items []string) map[string]bool {

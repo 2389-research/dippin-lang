@@ -442,20 +442,20 @@ func promptsEqual(a, b string) bool {
 // compareDefaults reports differences between workflow defaults.
 func compareDefaults(a, b ir.WorkflowDefaults) []Difference {
 	var diffs []Difference
-	diffs = append(diffs, compareDefaultField(a.Model, b.Model, "defaults.model", "%q")...)
-	diffs = append(diffs, compareDefaultField(a.Provider, b.Provider, "defaults.provider", "%q")...)
+	diffs = append(diffs, compareDefaultField(a.Model, b.Model, "defaults.model")...)
+	diffs = append(diffs, compareDefaultField(a.Provider, b.Provider, "defaults.provider")...)
 	diffs = append(diffs, compareDefaultIntField(a.MaxRetries, b.MaxRetries, "defaults.max_retries")...)
 	diffs = append(diffs, compareDefaultIntField(a.MaxRestarts, b.MaxRestarts, "defaults.max_restarts")...)
-	diffs = append(diffs, compareDefaultField(a.Fidelity, b.Fidelity, "defaults.fidelity", "%q")...)
+	diffs = append(diffs, compareDefaultField(a.Fidelity, b.Fidelity, "defaults.fidelity")...)
 	return diffs
 }
 
 // compareDefaultField compares a single string field in workflow defaults.
-func compareDefaultField(a, b string, field, format string) []Difference {
+func compareDefaultField(a, b string, field string) []Difference {
 	if a == b {
 		return nil
 	}
-	fmtStr := field + ": " + format + " vs " + format
+	fmtStr := field + ": %q vs %q"
 	return []Difference{{
 		Kind:    "defaults_mismatch",
 		Message: fmt.Sprintf(fmtStr, a, b),

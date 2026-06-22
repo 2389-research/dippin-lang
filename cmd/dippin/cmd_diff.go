@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/2389-research/dippin-lang/cost"
 	"github.com/2389-research/dippin-lang/diff"
 )
 
@@ -33,7 +32,7 @@ func (c *CLI) CmdDiff(args []string) ExitCode {
 		return ExitError
 	}
 
-	report := diff.Compare(oldW, newW, cost.DefaultPricing())
+	report := diff.Compare(oldW, newW)
 	return c.renderDiffReport(report)
 }
 

@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -346,20 +347,13 @@ func reconstructCycle(parent map[string]string, from, to string) []string {
 		maxSteps--
 	}
 	path = append(path, to)
-	reversePath(path)
+	slices.Reverse(path)
 	return path
 }
 
 // canWalk checks whether the cycle reconstruction loop should continue.
 func canWalk(curr, target string, seen map[string]bool, maxSteps int) bool {
 	return curr != target && curr != "" && !seen[curr] && maxSteps > 0
-}
-
-// reversePath reverses a string slice in place.
-func reversePath(path []string) {
-	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-		path[i], path[j] = path[j], path[i]
-	}
 }
 
 // checkExitNoOutgoing verifies DIP006: the exit node has no outgoing edges.
@@ -425,7 +419,7 @@ func collectParallelFanIn(w *ir.Workflow) (parallels, fanIns []nodeTargets) {
 // hasMatch checks if any entry in candidates has sorted list equal to target.
 func hasMatch(target []string, candidates []nodeTargets) bool {
 	for _, c := range candidates {
-		if slicesEqual(target, c.sorted) {
+		if slices.Equal(target, c.sorted) {
 			return true
 		}
 	}
@@ -577,33 +571,8 @@ func fillLevenshteinRow(a, b string, i int, prev, curr []int) {
 		if a[i-1] == b[j-1] {
 			cost = 0
 		}
-		curr[j] = min3(curr[j-1]+1, prev[j]+1, prev[j-1]+cost)
+		curr[j] = min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost)
 	}
-}
-
-// min3 returns the minimum of three integers.
-func min3(a, b, c int) int {
-	m := a
-	if b < m {
-		m = b
-	}
-	if c < m {
-		m = c
-	}
-	return m
-}
-
-// slicesEqual returns true if two sorted string slices are element-wise equal.
-func slicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // locFile returns the file from a SourceLocation, defaulting to "<unknown>".

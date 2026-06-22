@@ -70,6 +70,52 @@ func TestParseBoolAttrFields(t *testing.T) {
 	}
 }
 
+// TestDefaultCacheToolsBool verifies the workflow-level cache_tools default
+// routes through parseBoolAttr: it accepts the same truthy/falsy forms as the
+// node-level field and emits a diagnostic on invalid input.
+func TestDefaultCacheToolsBool(t *testing.T) {
+	cases := []struct {
+		name        string
+		val         string
+		wantBool    bool
+		wantDiagSub string
+	}{
+		{"yes", "yes", true, ""},
+		{"on", "on", true, ""},
+		{"1", "1", true, ""},
+		{"off", "off", false, ""},
+		{"invalid", "nope", false, "invalid boolean"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src := "workflow X\n" +
+				"  start: A\n" +
+				"  exit: A\n" +
+				"\n" +
+				"  defaults\n" +
+				"    cache_tools: " + tc.val + "\n" +
+				"\n" +
+				"  agent A\n" +
+				"    prompt: \"Do it.\"\n"
+			p := NewParser(src, "test.dip")
+			w, _ := p.Parse()
+			if got := w.Defaults.CacheTools; got != tc.wantBool {
+				t.Errorf("Defaults.CacheTools = %v, want %v", got, tc.wantBool)
+			}
+			joined := strings.Join(p.Diagnostics(), "\n")
+			if tc.wantDiagSub == "" {
+				if joined != "" {
+					t.Errorf("expected no diagnostics, got: %s", joined)
+				}
+				return
+			}
+			if !strings.Contains(joined, tc.wantDiagSub) {
+				t.Errorf("expected diagnostic containing %q, got: %s", tc.wantDiagSub, joined)
+			}
+		})
+	}
+}
+
 // buildBoolFieldDip produces a minimal valid .dip workflow that exercises
 // one of the four bool fields. The agent / tool node is the start node so
 // the workflow always has at least one node.

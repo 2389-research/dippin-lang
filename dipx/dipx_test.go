@@ -210,13 +210,13 @@ func TestPack_RejectsOversizedSource(t *testing.T) {
 func TestOpen_RejectsTooManyFiles(t *testing.T) {
 	// Verify the maxFiles cap fires with ErrCapExceeded.
 	//
-	// We exercise verifyAllHashes directly rather than going through OpenReader:
+	// We exercise verifyAllHashesCtx directly rather than going through OpenReader:
 	// constructing a manifest with maxFiles+1 entries serialized as JSON would
 	// always exceed maxManifestSize (1MB) regardless of how short the paths
 	// are — 10001 entries each containing a 64-char SHA-256 plus the minimal
 	// JSON overhead and shortest valid "workflows/<N>.dip" path is ~1.06MB —
 	// so the manifest-size cap would intercept before the file-count cap could
-	// fire. Calling verifyAllHashes directly tests the intended branch without
+	// fire. Calling verifyAllHashesCtx directly tests the intended branch without
 	// hitting that ordering hazard.
 	files := make([]ManifestEntry, 0, maxFiles+1)
 	hash := hashOf([]byte("x"))
@@ -227,7 +227,7 @@ func TestOpen_RejectsTooManyFiles(t *testing.T) {
 		})
 	}
 	m := Manifest{FormatVersion: 1, Entry: "workflows/f0.dip", Files: files}
-	_, _, err := verifyAllHashes(nil, m, maxTotalUncompBytes)
+	_, _, err := verifyAllHashesCtx(context.Background(), nil, m, maxTotalUncompBytes)
 	if !errors.Is(err, ErrCapExceeded) {
 		t.Fatalf("err = %v, want ErrCapExceeded", err)
 	}

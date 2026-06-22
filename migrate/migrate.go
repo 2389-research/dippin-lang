@@ -762,26 +762,20 @@ func applyManagerLoopScalarMigrate(cfg *ir.ManagerLoopConfig, attrs map[string]s
 	if v, ok := attrs["subgraph_ref"]; ok {
 		cfg.SubgraphRef = v
 	}
-	applyScalarDuration(&cfg.PollInterval, attrs, "poll_interval")
-	applyScalarInt(&cfg.MaxCycles, attrs, "max_cycles")
+	applyManagerLoopNumericMigrate(cfg, attrs)
 	if v, ok := attrs["steer_context"]; ok && v != "" {
 		cfg.SteerContext = parseFlattenedSteerContext(v)
 	}
 }
 
-// applyScalarDuration reads attrs[key] and parses into *target if present and valid.
-// Thin wrapper over tryApplyDurationDefault that also handles the attr-lookup.
-func applyScalarDuration(target *time.Duration, attrs map[string]string, key string) {
-	if v, ok := attrs[key]; ok {
-		_ = tryApplyDurationDefault(v, target)
+// applyManagerLoopNumericMigrate populates the numeric scalars (poll_interval,
+// max_cycles) from DOT attrs.
+func applyManagerLoopNumericMigrate(cfg *ir.ManagerLoopConfig, attrs map[string]string) {
+	if v, ok := attrs["poll_interval"]; ok {
+		_ = tryApplyDurationDefault(v, &cfg.PollInterval)
 	}
-}
-
-// applyScalarInt reads attrs[key] and parses into *target if present and valid.
-// Thin wrapper over tryApplyIntDefault that also handles the attr-lookup.
-func applyScalarInt(target *int, attrs map[string]string, key string) {
-	if v, ok := attrs[key]; ok {
-		_ = tryApplyIntDefault(v, target)
+	if v, ok := attrs["max_cycles"]; ok {
+		_ = tryApplyIntDefault(v, &cfg.MaxCycles)
 	}
 }
 
