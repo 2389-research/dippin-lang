@@ -53,6 +53,7 @@ src/flow.dip       → src/flow.test.json
 | `tests` | array | yes | List of test cases |
 | `tests[].name` | string | yes | Human-readable test name (shown in output) |
 | `tests[].scenario` | object | no | Context key/value pairs injected into the simulator. These determine which conditional edges are taken. |
+| `tests[].branch` | string[] | no | Restricts which parallel-branch targets the simulator walks. When set, only the listed branch targets are explored; omit to walk all branches. |
 | `tests[].expect` | object | yes | Assertions to check against the simulation result |
 
 ### Expectation Fields
@@ -61,7 +62,7 @@ All expectation fields are optional. Only specified fields are checked.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Expected simulation status: `"success"` (reached exit), `"fail"`, or `"dead_end"` |
+| `status` | string | Expected simulation status: `"success"` (reached exit) or `"dead_end"` |
 | `visited` | string[] | Node IDs that must appear in the execution path |
 | `not_visited` | string[] | Node IDs that must NOT appear in the execution path |
 | `path_contains` | string[] | Node IDs that must appear **in order** in the execution path. Non-contiguous matches are allowed (other nodes may appear between them). |
@@ -190,6 +191,26 @@ The simulator resolves conditions by looking up `ctx.<key>` in the scenario cont
 
 ---
 
+## Edge Coverage
+
+Pass `--coverage` to report which workflow edges were exercised across all test scenarios:
+
+```bash
+$ dippin test --coverage gate.dip
+═══ Test Results ═════════════════════════════════════════════
+  PASS  success path
+  PASS  failure path
+─── Summary ───────────────────────────────────────────────────
+  2 tests: 2 passed, 0 failed
+
+─── Edge Coverage ─────────────────────────────────────────────
+  4/4 edges covered (100.0%)
+```
+
+This is **edge** coverage only — there is no node-coverage report. Any uncovered edges are listed beneath the summary so you can add scenarios that exercise them.
+
+---
+
 ## CI Integration
 
 Use `--format json` for machine-readable output:
@@ -202,7 +223,7 @@ dippin --format json test pipeline.dip
 {
   "results": [
     {"name": "happy path", "passed": true, "path": ["Start", "Gate", "Pass", "Exit"]},
-    {"name": "error path", "passed": false, "errors": ["expected status \"fail\", got \"success\""]}
+    {"name": "error path", "passed": false, "errors": ["expected status \"dead_end\", got \"success\""]}
   ],
   "passed": 1,
   "failed": 1,
