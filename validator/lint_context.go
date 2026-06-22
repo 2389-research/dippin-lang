@@ -57,7 +57,7 @@ func varRefHelp(varRef string) string {
 		}
 		return "node-scoped refs must be in the form node.<id>.<key>"
 	}
-	return fmt.Sprintf("use a namespaced variable like ${ctx.%s}, ${graph.%s}, or ${params.%s}", varRef, varRef, varRef)
+	return fmt.Sprintf("use a namespaced variable like ${ctx.%s}, ${graph.%s}, ${params.%s}, or ${stack.%s}", varRef, varRef, varRef, varRef)
 }
 
 // isVarRefValid returns true if the variable reference is valid: either a known
