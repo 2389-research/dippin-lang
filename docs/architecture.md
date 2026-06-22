@@ -71,7 +71,12 @@ dippin-lang/
 │   ├── lint_writable_paths.go # DIP141, DIP142 (writable_paths safety)
 │   ├── lint_subgraph_tool_access.go # DIP143 (subgraph tool_access inheritance)
 │   ├── lint_failure_route.go # DIP144 (agent node missing failure route)
-│   └── lint_budget.go        # DIP145 (negative budget default)
+│   ├── lint_budget.go        # DIP145 (negative budget default)
+│   ├── lint_chain_attack.go  # DIP146, DIP147 (response-injection chain attack)
+│   ├── lint_last_response_truncate.go # DIP148 (last_response truncation mitigation)
+│   ├── lint_routing.go       # DIP149, DIP151 (edge routing / unused weight)
+│   ├── lint_human.go         # DIP150 (human-gate choice keys)
+│   └── ...                   # further lint_*.go files cover DIP110–DIP134 (response, subgraph, tool_cmd, etc.)
 │
 ├── formatter/          # Canonical .dip source formatter
 │   └── format.go       # IR → canonical .dip text (idempotent)
@@ -151,15 +156,21 @@ dippin-lang/
 ├── scaffold/           # Template scaffolding for `dippin new`
 │   └── scaffold.go     # Build(template, name) → *ir.Workflow
 │
+├── flatten/            # Subgraph ref inlining
+│   ├── flatten.go      # Inline referenced workflows into one flat ir.Workflow
+│   └── resolver.go     # Resolver interface + disk-backed ref loading (imports parser)
+│
 └── cmd/dippin/         # CLI entry point
     ├── main.go         # os.Args → Run()
     ├── cli.go          # Command dispatch and global flag handling
     ├── cmd_parse.go    # parse command
     ├── cmd_validate.go # validate command
     ├── cmd_check.go    # check command
+    ├── cmd_watch.go    # watch command (re-lint on file change)
     ├── cmd_fmt.go      # fmt command
     ├── cmd_new.go      # new command
     ├── cmd_export.go   # export-dot command
+    ├── cmd_export_dip.go # export-dip command (flattened workflow → .dip)
     ├── cmd_migrate.go  # migrate + validate-migration commands
     ├── cmd_simulate.go # simulate command
     ├── cmd_cost.go     # cost command
@@ -175,7 +186,8 @@ dippin-lang/
     ├── cmd_lsp.go      # lsp command
     ├── cmd_pack.go     # pack command (.dipx producer)
     ├── cmd_unpack.go   # unpack command (.dipx → directory)
-    └── cmd_inspect.go  # inspect command (.dipx → manifest summary)
+    ├── cmd_inspect.go  # inspect command (.dipx → manifest summary)
+    └── cmd_spec.go     # spec command (print full language specification)
 ```
 
 ### Loader Tier (dipx)
@@ -213,6 +225,8 @@ graph BT
     unused --> coverage
     unused --> cost
     graph["graph"] --> ir
+    flatten["flatten"] --> ir
+    flatten --> parser
     testrunner["testrunner"] --> ir
     testrunner --> simulate
     lsp["lsp"] --> ir
@@ -237,6 +251,7 @@ graph BT
     cmd --> lsp
     cmd --> unused
     cmd --> graph
+    cmd --> flatten
     cmd --> testrunner
     cmd --> dipx
 ```
@@ -355,6 +370,12 @@ Checks semantic quality — patterns that are likely bugs. Decomposed into focus
 - **Subgraph tool access** (`lint_subgraph_tool_access.go`): DIP143 — subgraph does not inherit parent tool_access restrictions
 - **Failure route** (`lint_failure_route.go`): DIP144 — agent node missing failure route
 - **Budget** (`lint_budget.go`): DIP145 — negative graph budget default
+- **Chain attack** (`lint_chain_attack.go`): DIP146, DIP147 — response-injection / cross-node chain-attack detection
+- **Last-response truncate** (`lint_last_response_truncate.go`): DIP148 — `last_response_truncate` mitigation hint
+- **Routing** (`lint_routing.go`): DIP149, DIP151 — edge routing validity and unused `weight:` soft-deprecation
+- **Human** (`lint_human.go`): DIP150 — human-gate `choice:` edge keys
+
+(Further modules — `lint_response.go`, `lint_subgraph.go`, `lint_tool_cmd.go`, etc. — cover DIP110–DIP134.)
 
 ### The Diagnostic Type
 
@@ -470,7 +491,7 @@ The `event` package defines the canonical event types (`pipeline_start`, `node_e
 
 ## The Analysis Packages
 
-Five packages provide analysis over IR workflows. They compose each other:
+Six packages provide analysis over IR workflows. They compose each other:
 
 ```mermaid
 graph BT

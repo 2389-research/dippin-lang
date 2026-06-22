@@ -1,6 +1,6 @@
 # Analysis Commands
 
-Dippin includes six analysis commands that inspect workflows for cost, coverage, health, optimization opportunities, and change impact. All produce human-readable text output by default.
+Dippin includes eight analysis commands that inspect workflows for cost, coverage, health, optimization opportunities, dead code, change impact, calibration, and dry-run behavior. All produce human-readable text output by default.
 
 ```mermaid
 graph LR
@@ -10,6 +10,8 @@ graph LR
     IR --> Doc["dippin doctor"]
     IR --> Opt["dippin optimize"]
     IR --> Sim["dippin simulate"]
+    IR --> Unused["dippin unused"]
+    IR --> Feedback["dippin feedback"]
     DIP2[".dip file (v2)"] --> IR2["ir.Workflow"]
     IR --> Diff["dippin diff"]
     IR2 --> Diff
@@ -165,7 +167,6 @@ dippin doctor pipeline.dip
 ─── Coverage ──────────────────────────────────────────────
   Reachable: 21/21 nodes
   ✓ All paths terminate
-  ✓ All tool outputs covered
 
 ─── Cost ──────────────────────────────────────────────────
   Expected: $2.10  (range: $1.50 – $8.40)
@@ -342,10 +343,10 @@ Unlike text-based `diff`, this compares graph structure: nodes added/removed, ed
 Compare predicted costs against actual execution telemetry to calibrate estimates.
 
 ```sh
-dippin feedback pipeline.dip telemetry.csv
+dippin feedback pipeline.dip telemetry.jsonl
 ```
 
-**Input:** The workflow file (for predicted costs) and a CSV telemetry file with columns: `node_id`, `input_tokens`, `output_tokens`, `cost_usd`.
+**Input:** The workflow file (for predicted costs) and a JSONL telemetry file. Each line is a JSON object with fields: `event`, `node`, `model`, `provider`, `tokens_in`, `tokens_out`, `actual_cost`, `turns`, `timestamp`.
 
 **When to use:** After running a pipeline in production, export telemetry and feed it back to see how accurate the cost predictions were. Outliers (>2x or <0.5x ratio) are flagged for investigation.
 
@@ -374,6 +375,50 @@ dippin feedback pipeline.dip telemetry.csv
 
 ---
 
+## unused
+
+Detect dead-branch nodes (reachable from start but with no path to exit) and the cost wasted running them.
+
+```sh
+dippin unused pipeline.dip
+```
+
+**Output:**
+
+```
+═══ Unused Nodes ══════════════════════════════════════════
+  ✗ AbandonedReview              agent (Abandoned Review)
+  ✗ OrphanCleanup                tool
+
+─── Wasted Cost ───────────────────────────────────────────
+  $0.00 - $1.20 estimated wasted per run
+
+─── Summary ───────────────────────────────────────────────
+  2 unused node(s) found
+```
+
+**What it checks:** A node is "unused" if it is reachable from the start node but has no path to exit (a sink). The package combines coverage analysis (which finds sinks) with cost analysis to estimate the wasted cost of reaching each dead-branch node.
+
+**When to use:** After editing routing to confirm every reachable node can still reach exit. Unused nodes either indicate a missing edge or genuinely dead code that should be removed.
+
+**JSON schema:**
+
+```json
+{
+  "unused_nodes": [
+    {
+      "node_id": "AbandonedReview",
+      "label": "Abandoned Review",
+      "kind": "agent",
+      "wasted_cost": {"min": 0.0, "expected": 0.6, "max": 1.2}
+    }
+  ],
+  "total_wasted": {"min": 0.0, "expected": 0.6, "max": 1.2}
+}
+```
+
+---
+
 ## Composing Analysis Commands
 
 A typical analysis workflow:
@@ -394,5 +439,5 @@ dippin optimize pipeline.dip
 dippin diff old.dip new.dip
 
 # 5. After production runs, calibrate
-dippin feedback pipeline.dip telemetry.csv
+dippin feedback pipeline.dip telemetry.jsonl
 ```
