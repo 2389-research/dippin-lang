@@ -211,7 +211,7 @@ func normalizeConditions(parsed map[string]*ir.Workflow) error {
 // SPEC NOTE: The dipx package has THREE parser.NewParser sites total:
 //  1. parseAllWorkflows here (Open pathway, verifiedBytes from .dipx).
 //  2. parseDipFile in source.go (Source loader, raw disk bytes).
-//  3. walkSourceTree in helpers.go (Pack pathway, raw disk bytes parallel to
+//  3. parsePackSource in helpers.go (Pack pathway, raw disk bytes parallel to
 //     parseDipFile).
 //
 // The verifiedBytes invariant applies only to site 1. Sites 2 and 3 consume

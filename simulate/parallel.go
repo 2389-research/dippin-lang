@@ -11,8 +11,10 @@ import (
 // corresponding fan-in join. Returns the join node ID as the next
 // node to continue from.
 //
-// If opts.Branch maps this parallel's target to a specific node,
-// only that branch is walked (for targeted test scenarios).
+// opts.Branch is a set of target node IDs: when non-empty, only the targets it
+// contains are walked (for targeted test scenarios); an empty set walks all.
+// If a non-empty set matches none of this parallel's targets, the filter is
+// ignored and all targets are walked (no matches → all).
 func (s *simulator) walkParallelBranches(cfg ir.ParallelConfig) (string, *Result, error) {
 	targets := resolveTargets(cfg)
 	joinID := s.findJoinNode(targets)

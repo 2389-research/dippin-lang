@@ -11,8 +11,11 @@ import (
 // not satisfied. A node is flagged if ALL of its incoming edges are conditional
 // (have a non-nil Condition), meaning there is no guaranteed path to it.
 //
-// Edges whose sibling set forms an exhaustive condition (e.g., outcome=success
-// + outcome=fail) are not flagged, since one branch is guaranteed to execute.
+// A node is not flagged when its source is "safe" (see sourceIsSafe): a valid
+// section `else ->` default covers any unmatched guard, the sibling set forms an
+// exhaustive condition (e.g., outcome=success + outcome=fail), the source has a
+// mixed unconditional outgoing edge, or the source is a tool with marker_grep-
+// driven typed routing.
 func lintConditionalReachability(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	incoming := buildIncomingEdgeMap(w)
@@ -126,8 +129,9 @@ func allEdgesConditional(edges []*ir.Edge) bool {
 // but no unconditional (default/fallback) edge. Without a default edge,
 // execution may get stuck at this node if no condition matches.
 //
-// Nodes whose outgoing conditions are exhaustive, or tool nodes with
-// marker_grep-driven typed routing, are not flagged.
+// Nodes covered by a valid section `else ->` default, nodes whose outgoing
+// conditions are exhaustive, and tool nodes with marker_grep-driven typed
+// routing are not flagged.
 func lintDefaultEdge(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	exhaustiveSources := findExhaustiveSources(w)

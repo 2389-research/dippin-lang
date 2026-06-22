@@ -340,7 +340,7 @@ func applyAgentRuntimeAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	applyAgentSafetyLimitAttrs(attrs, cfg)
 }
 
-// applyAgentSafetyLimitAttrs writes the numeric safety-limit attrs.
+// applyAgentSafetyLimitAttrs writes the last_response_truncate safety-limit attr.
 // Extracted from applyAgentRuntimeAttrs to keep cyclomatic complexity ≤ 5.
 func applyAgentSafetyLimitAttrs(attrs map[string]string, cfg ir.AgentConfig) {
 	if cfg.LastResponseTruncate > 0 {

@@ -942,8 +942,9 @@ func (p *Parser) parseBranchFields(bc *ir.BranchConfig) {
 }
 
 // applyBranchFieldChecked applies a branch field after safety checks.
-// It rejects a present-but-empty writable_paths (FIX A) and emits an
-// unknown-field hint for unrecognized keys (FIX B).
+// It rejects a present-but-empty writable_paths (FIX A), parses the
+// last_response_truncate integer override, and emits an unknown-field hint
+// for unrecognized keys (FIX B).
 func (p *Parser) applyBranchFieldChecked(bc *ir.BranchConfig, key, val string, loc ir.SourceLocation) {
 	if p.rejectEmptyWritablePaths(key, val, loc) {
 		return

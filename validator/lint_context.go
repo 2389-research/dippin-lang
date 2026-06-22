@@ -12,8 +12,9 @@ import (
 var varRefPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // lintUndefinedVariables checks DIP106: ${variable} references in prompts
-// must use known namespace prefixes (ctx., graph., params.). References without
-// a recognized namespace are flagged.
+// must use a known namespace prefix (ctx., graph., params., stack.) or be a
+// node-scoped ref (node.<id>.<key> or ctx.node.<id>.<key>). References without
+// a recognized namespace or valid node ID are flagged.
 func lintUndefinedVariables(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
@@ -36,7 +37,7 @@ func checkNodeVarRefs(n *ir.Node, w *ir.Workflow) []Diagnostic {
 			diags = append(diags, Diagnostic{
 				Code:     DIP106,
 				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("node %q references undefined variable ${%s}", n.ID, varRef),
+				Message:  fmt.Sprintf("node %q has unrecognized variable reference ${%s}", n.ID, varRef),
 				Location: n.Source,
 				Help:     varRefHelp(varRef),
 			})
@@ -56,7 +57,7 @@ func varRefHelp(varRef string) string {
 		}
 		return "node-scoped refs must be in the form node.<id>.<key>"
 	}
-	return fmt.Sprintf("use a namespaced variable like ${ctx.%s}, ${graph.%s}, or ${params.%s}", varRef, varRef, varRef)
+	return fmt.Sprintf("use a namespaced variable like ${ctx.%s}, ${graph.%s}, ${params.%s}, or ${stack.%s}", varRef, varRef, varRef, varRef)
 }
 
 // isVarRefValid returns true if the variable reference is valid: either a known

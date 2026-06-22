@@ -15,8 +15,9 @@ import (
 
 const maxDirectiveFileSize = 4 << 20 // 4 MiB
 
-// ResolveFileDirectives loads file contents for every tool node with
-// CommandFile set, populating Command from the file's bytes. Paths are
+// ResolveFileDirectives loads file contents for every *_file directive on a
+// node: a tool node's CommandFile into Command, and an agent node's PromptFile
+// into Prompt and SystemPromptFile into SystemPrompt. Paths are
 // resolved relative to baseDir (typically the directory of the .dip
 // source file). Returns the first error encountered.
 //

@@ -23,7 +23,10 @@ type Difference struct {
 //   - Same edges (from/to/conditions)
 //   - Same start/exit
 //   - Compatible node configurations (prompt content modulo whitespace)
-//   - Same graph-level defaults
+//   - A subset of graph-level defaults: model, provider, max_retries,
+//     max_restarts, fidelity. compareDefaults does NOT compare the budget,
+//     tool, on_failure, retry-policy, or on_resume defaults, so two workflows
+//     differing only in those report parity (a known gap — see issue #161).
 func CheckParity(a, b *ir.Workflow) []Difference {
 	var diffs []Difference
 	diffs = append(diffs, compareStartExit(a, b)...)

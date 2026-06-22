@@ -37,7 +37,7 @@ const (
 // decodeManifest parses raw manifest bytes per the spec's JSON encoding rules.
 // It rejects: BOM, oversized input (>1MB), duplicate keys (any level),
 // trailing data, depth > 32, version != integer, presence of reserved
-// "signatures" key. Field-presence and shape rules (entry must match a
+// "signatures" key at the top level. Field-presence and shape rules (entry must match a
 // files[] entry, sha256 format, path canonicalization, etc.) are enforced
 // separately by verifyManifestShape.
 func decodeManifest(raw []byte) (Manifest, error) {

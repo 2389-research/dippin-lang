@@ -99,7 +99,11 @@ func rewriteStartExit(out *ir.Workflow, rewires map[string]rewire) {
 	}
 }
 
-// newOutputWorkflow creates a fresh Workflow copying w's metadata but no nodes/edges.
+// newOutputWorkflow creates a fresh Workflow copying the metadata fields listed
+// below but no nodes/edges. It does NOT carry w.Requires, w.ElseTarget, or
+// w.ElseTargetSource, so flattening a workflow with subgraph refs drops the
+// requires list and the section-level `else ->` funnel default (a known gap —
+// see issue #161).
 func newOutputWorkflow(w *ir.Workflow) *ir.Workflow {
 	return &ir.Workflow{
 		Name:       w.Name,

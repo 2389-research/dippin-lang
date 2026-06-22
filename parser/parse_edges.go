@@ -86,7 +86,7 @@ func (p *Parser) parseSingleEdge() {
 	p.expect(TokenNewline)
 }
 
-// parseEdgeAttributes parses optional attributes (when, label, weight, restart) on an edge.
+// parseEdgeAttributes parses optional edge attributes (dispatched by applyEdgeAttribute).
 func (p *Parser) parseEdgeAttributes(edge *ir.Edge) {
 	if p.lexer.PeekToken().Type == TokenLBracket {
 		p.emitBracketSyntaxError()
