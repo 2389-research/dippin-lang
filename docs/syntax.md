@@ -221,7 +221,7 @@ An omitted field inherits the target agent's value. An inline-form parallel (`->
 The `edges` block defines connections between nodes. Every edge is a line of the form:
 
 ```
-<FromID> -> <ToID> [when <condition>] [label: <text>] [weight: <int>] [restart: true]
+<FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
 ```
 
 ### Basic edges
@@ -247,15 +247,20 @@ Add `when <expression>` to gate an edge on a runtime condition:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
+| `on <token>` | Token | Shorthand equality guard against the source node's outcome channel — agent (`ctx.outcome`) or tool+`marker_grep` (`ctx.tool_marker`) |
 | `when <expr>` | Condition | Boolean guard — edge only traversed if true |
-| `label: <text>` | String | Human-readable label (used for human gate choices) |
-| `weight: <int>` | Integer | Priority hint — higher wins among competing edges |
-| `restart: true` | Boolean | Marks this as a back-edge (loop restart) |
+| `label: <text>` | String | Human-readable label (used for human gate choices when no `choice:` is set) |
+| `choice: <key>` | String | Carried, not interpreted by dippin — explicit human-gate routing key the paired runtime matches the user's selection against, leaving `label:` for display |
+| `weight: <int>` | Integer | **Soft-deprecated** (raises DIP151). Parsed but **unused by routing**; slated for removal in `dip 2`. Historically a priority hint, but the cascade never consults it — guard edges with `when` / `on` instead |
+| `loop` | Flag | Bare keyword marking a back-edge (loop restart). Legacy `restart: true` is an accepted synonym that `dippin fmt` rewrites to `loop` |
+| `override: true` | Boolean | Carried, not interpreted by dippin — marks a human-authored validation override for a paired runtime to act on |
+
+A single `else -> <node>` line at the bottom of the `edges` block sets the graph's success-side default destination — any node whose guard edges all fail to match, and which has no unconditional edge of its own, routes there. At most one per edges block; it has no source node. See [edges.md](edges.md).
 
 Attributes can be combined on a single line:
 
 ```dippin
-    Task -> Start when ctx.outcome = fail label: "retry" restart: true
+    Task -> Start when ctx.outcome = fail label: "retry" loop
 ```
 
 See [edges.md](edges.md) for full details on conditions, routing, and restart semantics.
@@ -507,6 +512,6 @@ workflow ask_and_execute
     Interpret -> FanOut
     Join -> Validate
     Validate -> Approve      when ctx.outcome = success
-    Validate -> Interpret    when ctx.outcome = fail    restart: true
+    Validate -> Interpret    when ctx.outcome = fail    loop
     Approve -> Done
 ```
