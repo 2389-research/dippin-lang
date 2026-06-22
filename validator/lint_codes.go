@@ -7,7 +7,7 @@ const (
 	DIP103 = "DIP103" // duplicate condition on edges from the same node
 	DIP104 = "DIP104" // unbounded retry loop
 	DIP105 = "DIP105" // no success path to exit
-	DIP106 = "DIP106" // undefined variable in prompt
+	DIP106 = "DIP106" // unrecognized variable reference in prompt
 	DIP107 = "DIP107" // unused context key (written but never read)
 	DIP108 = "DIP108" // unknown model/provider combination
 	DIP109 = "DIP109" // namespace collision in imports
@@ -71,7 +71,7 @@ var linterCodeDescriptions = map[string]string{
 	DIP103: "duplicate condition on edges from the same node",
 	DIP104: "unbounded retry loop (no max_retries or fallback)",
 	DIP105: "no success path from start to exit",
-	DIP106: "undefined variable reference in prompt",
+	DIP106: "unrecognized variable reference in prompt",
 	DIP107: "unused context key (written but never read)",
 	DIP108: "unknown model/provider combination",
 	DIP109: "namespace collision in imports",

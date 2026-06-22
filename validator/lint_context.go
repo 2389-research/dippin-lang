@@ -37,7 +37,7 @@ func checkNodeVarRefs(n *ir.Node, w *ir.Workflow) []Diagnostic {
 			diags = append(diags, Diagnostic{
 				Code:     DIP106,
 				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("node %q references undefined variable ${%s}", n.ID, varRef),
+				Message:  fmt.Sprintf("node %q has unrecognized variable reference ${%s}", n.ID, varRef),
 				Location: n.Source,
 				Help:     varRefHelp(varRef),
 			})

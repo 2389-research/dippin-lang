@@ -127,9 +127,9 @@ func reachabilityExplanations() map[string]Explanation {
 		DIP103: {
 			Code:    DIP103,
 			Summary: "duplicate condition on edges from the same node",
-			Trigger: "Two edges from the same node carry the identical comparison. Comparisons are keyed on (variable, operator, value, negation), so negation is part of the key: two `[ctx.outcome = success]` edges are duplicates, but `[ctx.outcome = success]` and `[not ctx.outcome = success]` are NOT.",
+			Trigger: "Two edges from the same node carry the identical comparison. Comparisons are keyed on (variable, operator, value, negation), so negation is part of the key: two `when ctx.outcome = success` edges are duplicates, but `when ctx.outcome = success` and `when not ctx.outcome = success` are NOT.",
 			Fix:     "Remove the duplicate comparison, or distinguish the edges by variable, operator, value, or negation.",
-			Example: "A -> B [ctx.outcome = success]\nA -> C [ctx.outcome = success]  // duplicate; not a duplicate of [not ctx.outcome = success]",
+			Example: "A -> B when ctx.outcome = success\nA -> C when ctx.outcome = success  // duplicate; not a duplicate of when not ctx.outcome = success",
 		},
 		DIP104: {
 			Code:    DIP104,
