@@ -428,28 +428,6 @@ func TestSortTopCostsTruncation(t *testing.T) {
 	}
 }
 
-func TestGetModelProviderFallbackToDefaults(t *testing.T) {
-	// Direct test of getModelProvider when node has non-agent config.
-	w := &ir.Workflow{
-		Defaults: ir.WorkflowDefaults{
-			Model:    "default-model",
-			Provider: "default-provider",
-		},
-	}
-	n := &ir.Node{
-		ID:     "h1",
-		Kind:   ir.NodeHuman,
-		Config: ir.HumanConfig{Mode: "freeform"},
-	}
-	model, provider := getModelProvider(n, w)
-	if model != "default-model" {
-		t.Errorf("model = %q, want default-model", model)
-	}
-	if provider != "default-provider" {
-		t.Errorf("provider = %q, want default-provider", provider)
-	}
-}
-
 func TestEstimateTurnsZeroMaxTurns(t *testing.T) {
 	// When MaxTurns is 0, defaults to 10, then expected = 10/3 = 3.
 	ac := ir.AgentConfig{Prompt: "test", MaxTurns: 0}

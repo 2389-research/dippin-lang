@@ -16,7 +16,7 @@ func (s *Server) handleCompletion(ctx context.Context, reply jsonrpc2.Replier, r
 	}
 
 	doc := s.store.get(string(params.TextDocument.URI))
-	if doc == nil || doc.Parsed == nil {
+	if doc == nil {
 		return reply(ctx, nil, nil)
 	}
 

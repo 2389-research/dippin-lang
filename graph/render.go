@@ -109,13 +109,13 @@ func boxHeight(boxes [][]string) int {
 	return max
 }
 
-// mergeBoxLine merges one line across all boxes.
+// mergeBoxLine merges one line across all boxes. Every box comes from
+// renderNodeBox, which always returns exactly 3 lines, so lineIdx is always in
+// range and every box contributes a part.
 func mergeBoxLine(boxes [][]string, lineIdx int) string {
 	parts := make([]string, 0, len(boxes))
 	for _, b := range boxes {
-		if lineIdx < len(b) {
-			parts = append(parts, b[lineIdx])
-		}
+		parts = append(parts, b[lineIdx])
 	}
 	return strings.Join(parts, " ")
 }

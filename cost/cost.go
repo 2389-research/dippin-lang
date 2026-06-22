@@ -142,7 +142,7 @@ func estimateNodeCost(n *ir.Node, w *ir.Workflow, pricing PricingTable, r *Repor
 		return nc // non-agent nodes have zero cost
 	}
 
-	nc.Model, nc.Provider = getModelProvider(n, w)
+	nc.Model, nc.Provider = getModelProvider(ac, w)
 	nc.Tokens = estimateTokens(ac, nc.Model)
 	nc.Turns = estimateTurns(ac)
 
@@ -158,12 +158,8 @@ func estimateNodeCost(n *ir.Node, w *ir.Workflow, pricing PricingTable, r *Repor
 	return nc
 }
 
-// getModelProvider resolves the model and provider for a node.
-func getModelProvider(n *ir.Node, w *ir.Workflow) (string, string) {
-	ac, ok := n.Config.(ir.AgentConfig)
-	if !ok {
-		return w.Defaults.Model, w.Defaults.Provider
-	}
+// getModelProvider resolves the model and provider for an agent node.
+func getModelProvider(ac ir.AgentConfig, w *ir.Workflow) (string, string) {
 	model := ac.Model
 	if model == "" {
 		model = w.Defaults.Model

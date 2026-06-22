@@ -247,9 +247,10 @@ func dfsVisitEdge(graph map[string][]string, color map[string]int, stack *[]stri
 }
 
 // formatCycle renders the active DFS stack as "n1 -> n2 -> ... -> nk -> n1"
-// where n1 is the cycle entry node (where the back-edge points). The target
-// is expected to appear in the stack; if not (which would indicate an
-// invariant violation), the function falls back to the closing edge.
+// where n1 is the cycle entry node (where the back-edge points). The caller
+// (dfsVisitEdge) only invokes this when target is colorGray, which the tri-color
+// DFS sets exactly while target is on the active stack — so target is always
+// found. A miss would be an invariant violation, hence the panic.
 func formatCycle(stack []string, target string) string {
 	idx := -1
 	for i, n := range stack {
@@ -259,10 +260,7 @@ func formatCycle(stack []string, target string) string {
 		}
 	}
 	if idx < 0 {
-		if len(stack) > 0 {
-			return stack[len(stack)-1] + " -> " + target
-		}
-		return target
+		panic(fmt.Sprintf("formatCycle: target %q not on active DFS stack %v", target, stack))
 	}
 	cycle := append([]string{}, stack[idx:]...)
 	cycle = append(cycle, target)

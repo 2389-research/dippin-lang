@@ -58,11 +58,7 @@ type pathState struct {
 }
 
 func (pe *pathEnumerator) enumerate() ([]*Result, error) {
-	// Ensure conditions are parsed.
-	if err := EnsureConditionsParsed(pe.workflow); err != nil {
-		return nil, err
-	}
-
+	// Conditions are already parsed by RunAllPaths, the sole caller.
 	initial := &pathState{
 		nodeID:  pe.workflow.Start,
 		ctx:     make(map[string]string),
