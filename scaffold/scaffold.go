@@ -114,12 +114,10 @@ func buildConditional(name string) *ir.Workflow {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "Pass", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Check", To: "Fail", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Check", To: "Done"},
 			{From: "Pass", To: "Done"},
@@ -149,12 +147,10 @@ func buildReviewLoop(name string) *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "Implement", To: "Review"},
 			{From: "Review", To: "Done", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Review", To: "Implement", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 		},
 	}

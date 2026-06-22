@@ -149,8 +149,7 @@ func TestForceLoopExit_UnconditionalEdge(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "A", To: "A", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "A", To: "B"},
 		},
@@ -178,12 +177,10 @@ func TestForceLoopExit_AllCondMatchFallback(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "A", To: "A", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 		},
 	}
@@ -202,8 +199,7 @@ func TestFirstUnconditional_AllConditional(t *testing.T) {
 	s := &simulator{ctx: make(map[string]string)}
 	edges := []*ir.Edge{
 		{From: "A", To: "B", Condition: &ir.Condition{
-			Raw:    "ctx.x = y",
-			Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "y"},
+			Raw: "ctx.x = y",
 		}},
 	}
 	e := s.firstUnconditional(edges)
@@ -454,12 +450,10 @@ func TestResolveConditionalNext_FallbackToFirst(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
-				Raw:    "ctx.x = y",
-				Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "y"},
+				Raw: "ctx.x = y",
 			}},
 			{From: "A", To: "C", Condition: &ir.Condition{
-				Raw:    "ctx.x = z",
-				Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "z"},
+				Raw: "ctx.x = z",
 			}},
 			{From: "B", To: "C"},
 		},

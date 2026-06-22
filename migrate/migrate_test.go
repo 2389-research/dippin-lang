@@ -909,8 +909,7 @@ func makeTestWorkflow() *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "A", To: "B"},
 			{From: "B", To: "C", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 		},
 	}

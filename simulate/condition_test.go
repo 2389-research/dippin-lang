@@ -179,13 +179,21 @@ func TestTokenizeCondition(t *testing.T) {
 }
 
 func TestEnsureConditionsParsed(t *testing.T) {
+	// Pre-parse the third edge via the real parser so the fixture matches
+	// parser output, then assert EnsureConditionsParsed leaves it untouched
+	// (idempotency / "already parsed" branch).
+	preParsed, err := ParseCondition("ctx.z = w")
+	if err != nil {
+		t.Fatalf("ParseCondition error: %v", err)
+	}
+
 	w := &ir.Workflow{
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{Raw: "ctx.x = y"}},
 			{From: "B", To: "C"}, // no condition
 			{From: "C", To: "D", Condition: &ir.Condition{
 				Raw:    "ctx.z = w",
-				Parsed: ir.CondCompare{Variable: "ctx.z", Op: "=", Value: "w"},
+				Parsed: preParsed,
 			}}, // already parsed
 		},
 	}
@@ -211,9 +219,9 @@ func TestEnsureConditionsParsed(t *testing.T) {
 		t.Error("edge B->C should have no condition")
 	}
 
-	// Third edge should remain as-is (already parsed).
-	if w.Edges[2].Condition.Parsed == nil {
-		t.Error("edge C->D condition should still be parsed")
+	// Third edge should remain as-is (already parsed, idempotent).
+	if w.Edges[2].Condition.Parsed != preParsed {
+		t.Errorf("edge C->D condition Parsed changed: got %+v, want %+v", w.Edges[2].Condition.Parsed, preParsed)
 	}
 }
 

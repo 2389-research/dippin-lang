@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/simulate"
 )
 
 // Fixture: minimal valid workflow (two nodes, one edge).
@@ -75,12 +76,10 @@ func askAndExecuteWorkflow() *ir.Workflow {
 			{From: "Interpret", To: "ImplementFanOut"},
 			{From: "ImplementJoin", To: "Validate"},
 			{From: "Validate", To: "Approve", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Validate", To: "Interpret", Label: "retry", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Approve", To: "Done"},
 		},
@@ -132,12 +131,10 @@ func subgraphWorkflow() *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "Build", To: "Review"},
 			{From: "Review", To: "Done", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Review", To: "Build", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 		},
 	}
@@ -159,16 +156,9 @@ func complexConditionWorkflow() *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "Check", To: "PathA", Condition: &ir.Condition{
 				Raw: "ctx.outcome = success and ctx.tool_stdout != empty",
-				Parsed: ir.CondAnd{
-					Left:  ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
-					Right: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "!=", Value: "empty"},
-				},
 			}},
 			{From: "Check", To: "PathB", Condition: &ir.Condition{
 				Raw: "not ctx.outcome = success",
-				Parsed: ir.CondNot{
-					Inner: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
-				},
 			}},
 			{From: "PathA", To: "Done"},
 			{From: "PathB", To: "Done"},
@@ -344,6 +334,9 @@ func TestNodeIO(t *testing.T) {
 
 func TestConditionAST(t *testing.T) {
 	w := complexConditionWorkflow()
+	if err := simulate.EnsureConditionsParsed(w); err != nil {
+		t.Fatalf("EnsureConditionsParsed: %v", err)
+	}
 
 	edges := w.EdgesFrom("Check")
 	if len(edges) != 2 {

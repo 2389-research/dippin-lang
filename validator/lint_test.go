@@ -124,8 +124,7 @@ func TestLint(t *testing.T) {
 				},
 				Edges: []*ir.Edge{
 					{From: "A", To: "B", Condition: &ir.Condition{
-						Raw:    "ctx.x = 1",
-						Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
+						Raw: "ctx.x = 1",
 					}},
 					{From: "A", To: "C"},
 					{From: "B", To: "C"},
@@ -189,8 +188,7 @@ func TestLint(t *testing.T) {
 				},
 				Edges: []*ir.Edge{
 					{From: "A", To: "B", Condition: &ir.Condition{
-						Raw:    "ctx.x = 1",
-						Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
+						Raw: "ctx.x = 1",
 					}},
 					{From: "A", To: "C"}, // unconditional default
 					{From: "B", To: "C"},
@@ -214,12 +212,10 @@ func TestLint(t *testing.T) {
 				},
 				Edges: []*ir.Edge{
 					{From: "A", To: "B", Condition: &ir.Condition{
-						Raw:    "ctx.outcome = success",
-						Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+						Raw: "ctx.outcome = success",
 					}},
 					{From: "A", To: "C", Condition: &ir.Condition{
-						Raw:    "ctx.outcome = success",
-						Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+						Raw: "ctx.outcome = success",
 					}},
 				},
 			},
@@ -239,12 +235,10 @@ func TestLint(t *testing.T) {
 				},
 				Edges: []*ir.Edge{
 					{From: "A", To: "B", Condition: &ir.Condition{
-						Raw:    "ctx.outcome = success",
-						Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+						Raw: "ctx.outcome = success",
 					}},
 					{From: "A", To: "C", Condition: &ir.Condition{
-						Raw:    "ctx.outcome = fail",
-						Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+						Raw: "ctx.outcome = fail",
 					}},
 					{From: "B", To: "C"},
 				},
@@ -1231,14 +1225,9 @@ func TestLintDIP103OverlappingANDConditions(t *testing.T) {
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
 				Raw: "ctx.x = 1 and ctx.y = 2",
-				Parsed: ir.CondAnd{
-					Left:  ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
-					Right: ir.CondCompare{Variable: "ctx.y", Op: "=", Value: "2"},
-				},
 			}},
 			{From: "A", To: "C", Condition: &ir.Condition{
-				Raw:    "ctx.x = 1",
-				Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
+				Raw: "ctx.x = 1",
 			}},
 		},
 	}
@@ -1612,8 +1601,7 @@ func TestLint_DIP115_NoGoalGate_NoDiag(t *testing.T) {
 func TestLint_DIP120_BareVariable(t *testing.T) {
 	w := cleanMinimalWorkflow()
 	w.Edges[0].Condition = &ir.Condition{
-		Raw:    "outcome = success",
-		Parsed: ir.CondCompare{Variable: "outcome", Op: "=", Value: "success"},
+		Raw: "outcome = success",
 	}
 	res := Lint(w)
 	assertHasCode(t, res, DIP120)
@@ -1622,8 +1610,7 @@ func TestLint_DIP120_BareVariable(t *testing.T) {
 func TestLint_DIP120_NamespacedVariable_NoDiag(t *testing.T) {
 	w := cleanMinimalWorkflow()
 	w.Edges[0].Condition = &ir.Condition{
-		Raw:    "ctx.outcome = success",
-		Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+		Raw: "ctx.outcome = success",
 	}
 	res := Lint(w)
 	assertNoCode(t, res, DIP120)
@@ -1632,8 +1619,7 @@ func TestLint_DIP120_NamespacedVariable_NoDiag(t *testing.T) {
 func TestLint_DIP120_GraphNamespace_NoDiag(t *testing.T) {
 	w := cleanMinimalWorkflow()
 	w.Edges[0].Condition = &ir.Condition{
-		Raw:    "graph.goal = build",
-		Parsed: ir.CondCompare{Variable: "graph.goal", Op: "=", Value: "build"},
+		Raw: "graph.goal = build",
 	}
 	res := Lint(w)
 	assertNoCode(t, res, DIP120)
@@ -1643,10 +1629,6 @@ func TestLint_DIP120_BareVariableInAnd(t *testing.T) {
 	w := cleanMinimalWorkflow()
 	w.Edges[0].Condition = &ir.Condition{
 		Raw: "outcome = success and tool_stdout != empty",
-		Parsed: ir.CondAnd{
-			Left:  ir.CondCompare{Variable: "outcome", Op: "=", Value: "success"},
-			Right: ir.CondCompare{Variable: "tool_stdout", Op: "!=", Value: "empty"},
-		},
 	}
 	res := Lint(w)
 	assertHasCode(t, res, DIP120)

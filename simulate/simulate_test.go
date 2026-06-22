@@ -54,12 +54,10 @@ func conditionalWorkflow() *ir.Workflow {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "PathA", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Check", To: "PathB", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "PathA", To: "Done"},
 			{From: "PathB", To: "Done"},
@@ -151,14 +149,9 @@ func complexConditionWorkflow() *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "Check", To: "PathA", Condition: &ir.Condition{
 				Raw: "ctx.outcome = success and ctx.tool_stdout != empty",
-				Parsed: ir.CondAnd{
-					Left:  ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
-					Right: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "!=", Value: "empty"},
-				},
 			}},
 			{From: "Check", To: "PathB", Condition: &ir.Condition{
-				Raw:    "not ctx.outcome = success",
-				Parsed: ir.CondNot{Inner: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"}},
+				Raw: "not ctx.outcome = success",
 			}},
 			{From: "PathA", To: "Done"},
 			{From: "PathB", To: "Done"},
@@ -182,12 +175,10 @@ func restartWorkflow() *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "Impl", To: "Review"},
 			{From: "Review", To: "Done", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Review", To: "Impl", Label: "retry", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 		},
 	}
@@ -228,8 +219,7 @@ func unconditionalFallbackWorkflow() *ir.Workflow {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "Special", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = special",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "special"},
+				Raw: "ctx.outcome = special",
 			}},
 			{From: "Check", To: "Default"}, // unconditional fallback
 			{From: "Special", To: "Done"},
@@ -832,21 +822,17 @@ func multiGateWorkflow() *ir.Workflow {
 			{From: "Start", To: "Phase1"},
 			{From: "Phase1", To: "Gate1"},
 			{From: "Gate1", To: "Phase2", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Gate1", To: "Fail1", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Phase2", To: "Gate2"},
 			{From: "Gate2", To: "Success", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Gate2", To: "Fail2", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Fail1", To: "Done"},
 			{From: "Fail2", To: "Done"},
@@ -906,12 +892,10 @@ func TestRunScenario_ToolStdoutOverride(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "Run", To: "OK", Condition: &ir.Condition{
-				Raw:    "ctx.tool_stdout = success",
-				Parsed: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "=", Value: "success"},
+				Raw: "ctx.tool_stdout = success",
 			}},
 			{From: "Run", To: "Bad", Condition: &ir.Condition{
-				Raw:    "ctx.tool_stdout = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "=", Value: "fail"},
+				Raw: "ctx.tool_stdout = fail",
 			}},
 			{From: "OK", To: "Done"},
 			{From: "Bad", To: "Done"},
@@ -950,13 +934,9 @@ func toolGatedLoopWorkflow() *ir.Workflow {
 			{From: "Start", To: "PickNext"},
 			{From: "PickNext", To: "Work", Condition: &ir.Condition{
 				Raw: "ctx.tool_stdout not contains all-done",
-				Parsed: ir.CondNot{Inner: ir.CondCompare{
-					Variable: "ctx.tool_stdout", Op: "contains", Value: "all-done",
-				}},
 			}},
 			{From: "PickNext", To: "Done", Condition: &ir.Condition{
-				Raw:    "ctx.tool_stdout contains all-done",
-				Parsed: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "contains", Value: "all-done"},
+				Raw: "ctx.tool_stdout contains all-done",
 			}},
 			{From: "Work", To: "PickNext", Restart: true},
 		},
@@ -1037,14 +1017,9 @@ func orConditionWorkflow() *ir.Workflow {
 		Edges: []*ir.Edge{
 			{From: "Check", To: "PathA", Condition: &ir.Condition{
 				Raw: "ctx.outcome = success or ctx.outcome = partial",
-				Parsed: ir.CondOr{
-					Left:  ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
-					Right: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "partial"},
-				},
 			}},
 			{From: "Check", To: "PathB", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "PathA", To: "Done"},
 			{From: "PathB", To: "Done"},
@@ -1093,12 +1068,10 @@ func inConditionWorkflow() *ir.Workflow {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "PathA", Condition: &ir.Condition{
-				Raw:    "ctx.outcome in success,partial,done",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "in", Value: "success,partial,done"},
+				Raw: "ctx.outcome in success,partial,done",
 			}},
 			{From: "Check", To: "PathB", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "PathA", To: "Done"},
 			{From: "PathB", To: "Done"},
@@ -1153,8 +1126,7 @@ func unconditionalExitLoopWorkflow() *ir.Workflow {
 			{From: "Start", To: "Gate"},
 			// One conditional that always matches (loops), plus an unconditional fallback.
 			{From: "Gate", To: "Work", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Gate", To: "Done"}, // unconditional
 			{From: "Work", To: "Gate", Restart: true},
@@ -1360,8 +1332,7 @@ func TestEvalCondition_StartsWith(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "Match", Condition: &ir.Condition{
-				Raw:    "ctx.value startswith hello",
-				Parsed: ir.CondCompare{Variable: "ctx.value", Op: "startswith", Value: "hello"},
+				Raw: "ctx.value startswith hello",
 			}},
 			{From: "Check", To: "NoMatch"},
 			{From: "Match", To: "Done"},
@@ -1390,8 +1361,7 @@ func TestEvalCondition_EndsWith(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "Match", Condition: &ir.Condition{
-				Raw:    "ctx.value endswith world",
-				Parsed: ir.CondCompare{Variable: "ctx.value", Op: "endswith", Value: "world"},
+				Raw: "ctx.value endswith world",
 			}},
 			{From: "Check", To: "NoMatch"},
 			{From: "Match", To: "Done"},
@@ -1420,8 +1390,7 @@ func TestEvalCondition_Contains(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "Check", To: "Match", Condition: &ir.Condition{
-				Raw:    "ctx.value contains middle",
-				Parsed: ir.CondCompare{Variable: "ctx.value", Op: "contains", Value: "middle"},
+				Raw: "ctx.value contains middle",
 			}},
 			{From: "Check", To: "NoMatch"},
 			{From: "Match", To: "Done"},
@@ -1510,17 +1479,28 @@ func TestRunHumanInteractive_ChoiceMode(t *testing.T) {
 // --- EnsureConditionsParsed edge cases ---
 
 func TestEnsureConditionsParsed_AlreadyParsed(t *testing.T) {
+	// Derive Parsed from the real parser (not a hand-built AST) so the
+	// fixture matches genuine parser output, then assert EnsureConditionsParsed
+	// leaves an already-parsed condition untouched (the Parsed != nil early
+	// return in ensureEdgeConditionParsed).
+	parsed, err := ParseCondition("ctx.x = y")
+	if err != nil {
+		t.Fatalf("ParseCondition() error: %v", err)
+	}
 	w := &ir.Workflow{
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
 				Raw:    "ctx.x = y",
-				Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "y"},
+				Parsed: parsed,
 			}},
 		},
 	}
-	err := EnsureConditionsParsed(w)
-	if err != nil {
+	if err := EnsureConditionsParsed(w); err != nil {
 		t.Fatalf("EnsureConditionsParsed() error: %v", err)
+	}
+	// The already-parsed branch must not replace or mutate Parsed.
+	if got := w.Edges[0].Condition.Parsed; got != parsed {
+		t.Errorf("Parsed was replaced: got %v, want original %v", got, parsed)
 	}
 }
 
@@ -1659,8 +1639,7 @@ func TestRunAllPaths_NotCondition(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
-				Raw:    "not ctx.done = true",
-				Parsed: ir.CondNot{Inner: ir.CondCompare{Variable: "ctx.done", Op: "=", Value: "true"}},
+				Raw: "not ctx.done = true",
 			}},
 			{From: "A", To: "C"},
 			{From: "B", To: "C"},
@@ -1692,8 +1671,7 @@ func TestToolDefaultClearing_FallbackEdge(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "T", To: "Special", Condition: &ir.Condition{
-				Raw:    "ctx.tool_stdout = has_data",
-				Parsed: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "=", Value: "has_data"},
+				Raw: "ctx.tool_stdout = has_data",
 			}},
 			{From: "T", To: "Fallback"}, // unconditional fallback
 			{From: "Special", To: "Done"},
@@ -1726,8 +1704,7 @@ func TestToolDefaultClearing_GlobalEmpty(t *testing.T) {
 		},
 		Edges: []*ir.Edge{
 			{From: "T", To: "Match", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "T", To: "Done"}, // fallback
 			{From: "Match", To: "Done"},
