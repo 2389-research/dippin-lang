@@ -64,19 +64,16 @@ func Analyze(w *ir.Workflow) *Report {
 // analyzeNodes evaluates edge coverage for each tool node.
 func analyzeNodes(w *ir.Workflow, r *Report) {
 	for _, n := range w.Nodes {
-		if _, ok := n.Config.(ir.ToolConfig); !ok {
+		cfg, ok := n.Config.(ir.ToolConfig)
+		if !ok {
 			continue
 		}
-		r.Nodes[n.ID] = analyzeToolNode(w, n)
+		r.Nodes[n.ID] = analyzeToolNode(w, n, cfg)
 	}
 }
 
 // analyzeToolNode computes coverage for a single tool node.
-func analyzeToolNode(w *ir.Workflow, n *ir.Node) NodeCoverage {
-	cfg, ok := n.Config.(ir.ToolConfig)
-	if !ok {
-		return NodeCoverage{NodeID: n.ID}
-	}
+func analyzeToolNode(w *ir.Workflow, n *ir.Node, cfg ir.ToolConfig) NodeCoverage {
 	edges := w.EdgesFrom(n.ID)
 	conditions, hasFallback := collectEdgeConditions(edges)
 	terms := collectEdgeConditionTerms(edges)

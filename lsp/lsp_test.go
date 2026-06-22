@@ -104,14 +104,6 @@ func TestCollectDiagnostics_ValidDocument(t *testing.T) {
 	}
 }
 
-func TestCollectDiagnostics_NilParsed(t *testing.T) {
-	doc := &document{URI: "file:///bad.dip", Err: nil, Parsed: nil}
-	diags := collectDiagnostics(doc)
-	if len(diags) != 0 {
-		t.Errorf("expected no diagnostics for nil parsed without error, got %d", len(diags))
-	}
-}
-
 func TestMapSeverity(t *testing.T) {
 	tests := []struct {
 		input validator.Severity

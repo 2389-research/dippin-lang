@@ -20,7 +20,7 @@ func (s *Server) handleHover(ctx context.Context, reply jsonrpc2.Replier, req js
 	}
 
 	doc := s.store.get(string(params.TextDocument.URI))
-	if doc == nil || doc.Parsed == nil {
+	if doc == nil {
 		return reply(ctx, nil, nil)
 	}
 
