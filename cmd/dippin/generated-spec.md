@@ -40,7 +40,7 @@ workflow <Name>
   fan_in <ID> <- <Source1>, <Source2>[, ...]
 
   edges
-    <From> -> <To> [on <token> | when <condition>] [label: <text>] [weight: <int>] [loop] [override: true]
+    <From> -> <To> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
     [else -> <NodeID>]   # success-side default for any node with no matching guard / unconditional edge; at most one per block
 ```
 
@@ -488,7 +488,10 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | condition | `when <expr>` | Guard expression |
 | outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
-| weight | `weight: <int>` | Priority (higher wins) |
+| choice | `choice: <key>` | Human-gate routing key; carried, not interpreted — marks the load-bearing routing key so `label:` stays display-only (DIP150) |
+| weight | `weight: <int>` | Soft-deprecated (DIP151) — parsed but ignored by routing; removal slated for dip 2 |
+| override | `override: true` | Carried, not interpreted by the parser |
+| else default | `else -> <NodeID>` | Section-level success-side default route; at most one per `edges` block; no source node and no attributes (#157) |
 | loop | `loop` | Bare keyword marking a back-edge; **required on back-edges** to avoid DIP005 (unconditional cycle). Legacy `restart: true` still parses; `fmt` rewrites it to `loop` |
 
 ### Conditions

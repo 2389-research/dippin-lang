@@ -3,6 +3,7 @@
   "workflow"
   "defaults"
   "edges"
+  "else"
   "stylesheet"
 ] @keyword
 

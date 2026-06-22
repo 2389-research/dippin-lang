@@ -106,6 +106,10 @@
           "name": "keyword.control.loop.dippin"
         },
         {
+          "match": "\\b(else)\\b",
+          "name": "keyword.control.else.dippin"
+        },
+        {
           "match": "\\b(restart)\\s*:",
           "captures": {
             "1": { "name": "keyword.other.edge-attr.dippin" }
