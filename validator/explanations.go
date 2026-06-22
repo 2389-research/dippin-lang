@@ -201,10 +201,10 @@ func contextExplanations() map[string]Explanation {
 		},
 		DIP109: {
 			Code:    DIP109,
-			Summary: "namespace collision in imports",
-			Trigger: "Two imports declare the same namespace prefix.",
-			Fix:     "Rename one of the imports to use a unique namespace.",
-			Example: "import \"a.dip\" as lib\nimport \"b.dip\" as lib  // collision",
+			Summary: "duplicate subgraph reference",
+			Trigger: "Two subgraph nodes reference the same file, which can collide context keys.",
+			Fix:     "Give the subgraph nodes distinct params, or consolidate them into one node.",
+			Example: "subgraph S1 { ref \"shared.dip\" }\nsubgraph S2 { ref \"shared.dip\" }  // same ref, no distinct params",
 		},
 		DIP110: {
 			Code:    DIP110,
@@ -236,14 +236,14 @@ func configExplanations() map[string]Explanation {
 			Code:    DIP113,
 			Summary: "invalid retry policy name",
 			Trigger: "A node specifies a retry_policy value not in the allowed set.",
-			Fix:     "Use a valid retry policy: exponential, linear, or fixed.",
-			Example: "node A { retry_policy aggressive }  // invalid policy",
+			Fix:     "Use a valid retry policy: standard, aggressive, patient, linear, or none.",
+			Example: "node A { retry_policy exponential }  // invalid policy",
 		},
 		DIP114: {
 			Code:    DIP114,
 			Summary: "invalid fidelity level",
 			Trigger: "A node specifies a fidelity level not in the allowed set.",
-			Fix:     "Use a valid fidelity: low, medium, or high.",
+			Fix:     "Use a valid fidelity: full, summary:high, summary:medium, summary:low, compact, or truncate.",
 			Example: "node A { fidelity maximum }  // invalid fidelity",
 		},
 		DIP115: {
@@ -257,7 +257,7 @@ func configExplanations() map[string]Explanation {
 			Code:    DIP116,
 			Summary: "invalid compaction threshold or on_resume value",
 			Trigger: "A compaction block has an invalid threshold or on_resume value.",
-			Fix:     "Use a valid threshold (0.0-1.0) and on_resume (summarize or truncate).",
+			Fix:     "Use a valid threshold (0.0-1.0) and on_resume (preserve or degrade).",
 			Example: "compaction { threshold 1.5 }  // out of range",
 		},
 		DIP117: {

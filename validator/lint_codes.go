@@ -10,7 +10,7 @@ const (
 	DIP106 = "DIP106" // unrecognized variable reference in prompt
 	DIP107 = "DIP107" // unused context key (written but never read)
 	DIP108 = "DIP108" // unknown model/provider combination
-	DIP109 = "DIP109" // namespace collision in imports
+	DIP109 = "DIP109" // duplicate subgraph reference
 	DIP110 = "DIP110" // empty prompt on agent node
 	DIP111 = "DIP111" // tool command without timeout
 	DIP112 = "DIP112" // reads key not in any upstream writes
@@ -74,7 +74,7 @@ var linterCodeDescriptions = map[string]string{
 	DIP106: "unrecognized variable reference in prompt",
 	DIP107: "unused context key (written but never read)",
 	DIP108: "unknown model/provider combination",
-	DIP109: "namespace collision in imports",
+	DIP109: "duplicate subgraph reference",
 	DIP110: "empty prompt on agent node",
 	DIP111: "tool command has no timeout",
 	DIP112: "reads key not produced by any upstream writes",
