@@ -515,7 +515,7 @@ graph BT
 - **doctor** — Aggregation layer. Computes a score from lint + coverage + cost, maps to grade A–F, generates suggestions.
 - **optimize** — Rule-based model substitution. Identifies simple prompts, retry-loop nodes, and bookkeeping tasks that can use cheaper models.
 - **diff** — Structural comparison between two workflows with field-level change tracking and cost delta.
-- **feedback** — Reads CSV telemetry, compares against predicted costs, flags outliers.
+- **feedback** — Reads JSONL telemetry, compares against predicted costs, flags outliers.
 - **unused** — Detects dead-branch nodes (reachable from start but with no path to exit) and estimates their wasted cost by combining coverage and cost analysis.
 
 See [analysis.md](analysis.md) for output formats and JSON schemas.

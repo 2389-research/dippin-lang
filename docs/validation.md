@@ -408,20 +408,20 @@ warning[DIP108]: unknown model/provider combination
 
 ---
 
-### DIP109: Namespace Collision in Imports
+### DIP109: Duplicate Subgraph Reference
 
 **Severity**: Warning
 
-Two `subgraph` nodes reference the same imported file, which may cause namespace collisions.
+Two `subgraph` nodes reference the same `ref:` file, which can collide their context keys.
 
 ```
-warning[DIP109]: nodes "A" and "B" both reference subgraph "lib.dip", which may cause namespace collisions
+warning[DIP109]: duplicate subgraph reference
   --> pipeline.dip:28:5
 ```
 
-**What triggers it**: Two `subgraph` nodes share the same `ref:` file. After expansion, the imported names from both nodes may collide.
+**What triggers it**: Two `subgraph` nodes reference the same `ref:` file. The rule keys only on the `ref:` value, so distinct params do **not** silence it.
 
-**How to fix**: Use distinct node IDs and ensure imported names do not collide after expansion.
+**How to fix**: Use a different `ref:` for each, or consolidate the duplicate subgraph nodes into one.
 
 ---
 

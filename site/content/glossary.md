@@ -13,7 +13,7 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 **Edge** — A connection between two nodes, written `A -> B` in the `edges` block. May carry a `when` condition (or the `on <token>` shorthand), a `loop` keyword for back-edges, a `label:`, a `choice:` routing key, a `restart:` flag, and an `override:` flag. (`weight:` is still parsed but soft-deprecated — DIP151.)
 
-**Condition** — A predicate attached to an edge using the `when` keyword. Syntax: `ctx.<field> <op> <value>` with operators `=`, `!=`, `contains`, `not contains`, `startswith`, `endswith`, and `in`. Complementary pairs (success/fail, contains/not-contains) are detected as exhaustive automatically.
+**Condition** — A predicate attached to an edge using the `when` keyword. Syntax: `ctx.<field> <op> <value>` with operators `=`, `==` (synonym for `=`), `!=`, `contains`, `not contains`, `startswith`, `endswith`, and `in`. Complementary pairs (success/fail, contains/not-contains) are detected as exhaustive automatically.
 
 **on / loop** — Edge shorthand keywords. `on <token>` desugars into an equality test against the source node's outcome channel (`ctx.outcome` for agents, `ctx.tool_marker` for tools with `marker_grep`) — equivalent to the matching `when`. `loop` marks a back-edge (a deliberate cycle) so reachability lint treats it as intentional.
 

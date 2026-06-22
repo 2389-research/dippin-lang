@@ -189,8 +189,8 @@ Agent nodes invoke an LLM. They are the most configurable node kind. Key fields 
 | `cache_tools` | Boolean | Whether to cache tool call results for this agent. Overrides the workflow default. |
 | `compaction` | String | Context compaction mode for managing long context windows. Overrides the workflow default. |
 | `compaction_threshold` | Float | Threshold value that triggers compaction (provider-specific semantics). |
-| `reads` | String | Context key this node reads as input (advisory metadata) |
-| `writes` | String | Context key this node writes as output (advisory metadata) |
+| `reads` | CSV | Context keys this node reads as input (advisory metadata) |
+| `writes` | CSV | Context keys this node writes as output (advisory metadata) |
 | `response_format` | String | Structured output mode: `json_object` or `json_schema`. Instructs the model to return valid JSON. |
 | `response_schema` | Block | JSON Schema definition enforced when `response_format: json_schema` is set. Must be valid JSON. |
 | `params` | Block | Arbitrary key-value pairs forwarded to the provider API. Keys must not duplicate first-class fields (see DIP133). |
