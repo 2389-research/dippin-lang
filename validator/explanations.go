@@ -203,8 +203,8 @@ func contextExplanations() map[string]Explanation {
 			Code:    DIP109,
 			Summary: "duplicate subgraph reference",
 			Trigger: "Two subgraph nodes reference the same file, which can collide context keys.",
-			Fix:     "Give the subgraph nodes distinct params, or consolidate them into one node.",
-			Example: "subgraph S1 { ref \"shared.dip\" }\nsubgraph S2 { ref \"shared.dip\" }  # same ref, no distinct params",
+			Fix:     "Use a different ref: for each subgraph node, or consolidate the duplicates into a single node.",
+			Example: "subgraph S1 { ref: shared.dip }\nsubgraph S2 { ref: shared.dip }  # same ref",
 		},
 		DIP110: {
 			Code:    DIP110,
