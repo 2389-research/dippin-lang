@@ -84,17 +84,6 @@ type Result struct {
 	Diagnostics []Diagnostic
 }
 
-// Errors returns only error-severity diagnostics.
-func (r Result) Errors() []Diagnostic {
-	var out []Diagnostic
-	for _, d := range r.Diagnostics {
-		if d.Severity == SeverityError {
-			out = append(out, d)
-		}
-	}
-	return out
-}
-
 // HasErrors returns true if any error-severity diagnostics exist.
 func (r Result) HasErrors() bool {
 	for _, d := range r.Diagnostics {

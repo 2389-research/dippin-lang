@@ -592,24 +592,6 @@ func TestDiagnosticFormattingWithFix(t *testing.T) {
 	}
 }
 
-func TestResultErrors(t *testing.T) {
-	r := Result{
-		Diagnostics: []Diagnostic{
-			{Code: DIP001, Severity: SeverityError, Message: "e1"},
-			{Code: "INFO", Severity: SeverityInfo, Message: "i1"},
-			{Code: DIP002, Severity: SeverityError, Message: "e2"},
-		},
-	}
-
-	errs := r.Errors()
-	if len(errs) != 2 {
-		t.Fatalf("Errors() returned %d, want 2", len(errs))
-	}
-	if errs[0].Code != DIP001 || errs[1].Code != DIP002 {
-		t.Errorf("Errors() = [%s, %s], want [DIP001, DIP002]", errs[0].Code, errs[1].Code)
-	}
-}
-
 func TestResultHasErrors(t *testing.T) {
 	tests := []struct {
 		name string

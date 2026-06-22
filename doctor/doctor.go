@@ -51,12 +51,6 @@ type Suggestion struct {
 	Message  string `json:"message"`
 }
 
-// Diagnose produces a health Report for the given workflow using default lint
-// options.
-func Diagnose(w *ir.Workflow, pricing cost.PricingTable) *Report {
-	return DiagnoseWithOptions(w, pricing, validator.Options{})
-}
-
 // DiagnoseWithOptions produces a health Report, threading per-invocation lint
 // options (e.g. a scoped extra-models catalog) into the lint pass so doctor's
 // DIP108 summary matches `dippin lint --extra-models`.

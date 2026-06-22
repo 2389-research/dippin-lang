@@ -229,30 +229,3 @@ func (w *Workflow) fanInEdgesTo(id string, out []*Edge, seen map[string]bool) []
 	}
 	return out
 }
-
-// AllEdges returns every edge in the workflow, including implicit edges from
-// parallel fan-outs and fan-in joins. This is the complete graph for consumers
-// that need to traverse all connections (TUI, BFS, validation).
-func (w *Workflow) AllEdges() []*Edge {
-	seen := make(map[string]bool)
-	var all []*Edge
-	for _, n := range w.Nodes {
-		for _, e := range w.EdgesFrom(n.ID) {
-			key := e.From + "->" + e.To
-			if !seen[key] {
-				seen[key] = true
-				all = append(all, e)
-			}
-		}
-	}
-	return all
-}
-
-// NodeIDs returns all node IDs in declaration order.
-func (w *Workflow) NodeIDs() []string {
-	ids := make([]string, len(w.Nodes))
-	for i, n := range w.Nodes {
-		ids[i] = n.ID
-	}
-	return ids
-}

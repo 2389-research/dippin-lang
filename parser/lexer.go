@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"strings"
 	"unicode"
 
@@ -34,10 +33,6 @@ type Token struct {
 	Type     TokenType
 	Value    string
 	Location ir.SourceLocation
-}
-
-func (t Token) String() string {
-	return fmt.Sprintf("%v(%q)@%d:%d", t.Type, t.Value, t.Location.Line, t.Location.Column)
 }
 
 type Lexer struct {

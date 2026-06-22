@@ -56,7 +56,7 @@ func TestLintExamples(t *testing.T) {
 }
 
 // TestPackExamples round-trips every example .dip through dipx.Pack →
-// dipx.OpenReader, asserting that each example bundles cleanly and reopens
+// dipx.Open, asserting that each example bundles cleanly and reopens
 // without error. This catches packer regressions and bundle-shape drift.
 func TestPackExamples(t *testing.T) {
 	matches, err := filepath.Glob("../examples/*.dip")
@@ -79,7 +79,11 @@ func TestPackExamples(t *testing.T) {
 			if _, err := dipx.Pack(context.Background(), path, &buf); err != nil {
 				t.Fatalf("Pack failed: %v", err)
 			}
-			if _, err := dipx.OpenReader(context.Background(), bytes.NewReader(buf.Bytes()), int64(buf.Len())); err != nil {
+			bundlePath := filepath.Join(t.TempDir(), "bundle.dipx")
+			if err := os.WriteFile(bundlePath, buf.Bytes(), 0o644); err != nil {
+				t.Fatalf("write bundle: %v", err)
+			}
+			if _, err := dipx.Open(context.Background(), bundlePath); err != nil {
 				t.Fatalf("Open failed: %v", err)
 			}
 		})

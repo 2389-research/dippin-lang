@@ -55,8 +55,7 @@ func readManifestEntry(cz *constrainedZip) ([]byte, error) {
 // and the running total. The effective per-file cap is min(maxPerFileBytes,
 // totalCap-total), so the running total cap is enforced as a streaming bound
 // rather than after a per-file allocation has already happened. Checks ctx at
-// entry and before each entry in the loop (P10.10); most callers should prefer
-// this form over the bare verifyAllHashes wrapper.
+// entry and before each entry in the loop (P10.10).
 func verifyAllHashesCtx(ctx context.Context, cz *constrainedZip, m Manifest, totalCap int64) (map[string]verifiedBytes, int64, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, 0, err
@@ -85,12 +84,6 @@ func verifyEntriesLoop(ctx context.Context, cz *constrainedZip, files []Manifest
 		verified[e.Path] = vb
 	}
 	return verified, total, nil
-}
-
-// verifyAllHashes is the no-ctx form, retained for tests that don't need
-// cancellation. Prefer verifyAllHashesCtx in production code.
-func verifyAllHashes(cz *constrainedZip, m Manifest, totalCap int64) (map[string]verifiedBytes, int64, error) {
-	return verifyAllHashesCtx(context.Background(), cz, m, totalCap)
 }
 
 // verifyEntryWithBudget verifies a single manifest entry under an effective

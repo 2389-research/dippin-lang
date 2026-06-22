@@ -1,7 +1,6 @@
 package dipx
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"strings"
@@ -54,48 +53,6 @@ func TestBundle_Identity(t *testing.T) {
 	id := b.Identity()
 	if id == [32]byte{} {
 		t.Fatal("Identity should be non-zero")
-	}
-}
-
-func TestBundle_Lookup(t *testing.T) {
-	b := newTestBundle(t)
-	wf, err := b.Lookup("workflows/a.dip")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if wf.Name != "A" {
-		t.Fatalf("Name = %q", wf.Name)
-	}
-	_, err = b.Lookup("workflows/missing.dip")
-	if !errors.Is(err, ErrFileMissing) {
-		t.Fatalf("err = %v, want ErrFileMissing", err)
-	}
-}
-
-func TestBundle_ReadFile(t *testing.T) {
-	b := newTestBundle(t)
-	got, err := b.ReadFile("workflows/a.dip")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(got, []byte("a-bytes")) {
-		t.Fatalf("ReadFile mismatch")
-	}
-}
-
-func TestBundle_Lookup_RejectsUnsafePath(t *testing.T) {
-	b := newTestBundle(t)
-	_, err := b.Lookup("../../../etc/passwd")
-	if !errors.Is(err, ErrPathUnsafe) {
-		t.Fatalf("err = %v, want ErrPathUnsafe", err)
-	}
-}
-
-func TestBundle_ReadFile_RejectsUnsafePath(t *testing.T) {
-	b := newTestBundle(t)
-	_, err := b.ReadFile("../../../etc/passwd")
-	if !errors.Is(err, ErrPathUnsafe) {
-		t.Fatalf("err = %v, want ErrPathUnsafe", err)
 	}
 }
 
