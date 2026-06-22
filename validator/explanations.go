@@ -127,9 +127,9 @@ func reachabilityExplanations() map[string]Explanation {
 		DIP103: {
 			Code:    DIP103,
 			Summary: "duplicate condition on edges from the same node",
-			Trigger: "Two edges from the same node carry the identical comparison (same variable, operator and value), so the routing is duplicated.",
-			Fix:     "Make conditions mutually exclusive or remove the duplicate condition.",
-			Example: "A -> B [ctx.outcome = success]\nA -> C [ctx.outcome = success]  // same comparison reused",
+			Trigger: "Two edges from the same node carry the identical comparison. Comparisons are keyed on (variable, operator, value, negation), so negation is part of the key: two `[ctx.outcome = success]` edges are duplicates, but `[ctx.outcome = success]` and `[not ctx.outcome = success]` are NOT.",
+			Fix:     "Remove the duplicate comparison, or distinguish the edges by variable, operator, value, or negation.",
+			Example: "A -> B [ctx.outcome = success]\nA -> C [ctx.outcome = success]  // duplicate; not a duplicate of [not ctx.outcome = success]",
 		},
 		DIP104: {
 			Code:    DIP104,
@@ -180,10 +180,10 @@ func contextExplanations() map[string]Explanation {
 	return map[string]Explanation{
 		DIP106: {
 			Code:    DIP106,
-			Summary: "undefined variable reference in prompt",
-			Trigger: "A prompt template references a variable like ${name} that is never defined.",
-			Fix:     "Add the variable to an upstream node's writes, or fix the variable name.",
-			Example: "node A { prompt \"Hello ${user}\" }  // ctx.user not defined",
+			Summary: "unrecognized variable reference in prompt",
+			Trigger: "A prompt template has a ${...} reference that lacks a known namespace prefix (ctx., graph., params., stack.) and is not a recognized node-scoped ref (node.<id>.<key> or ctx.node.<id>.<key> pointing at an existing node). This is a shape/namespace check only — it does not verify the key was actually written upstream.",
+			Fix:     "Namespace the reference (e.g. ${ctx.user}), or for a node-scoped ref use ${node.<id>.<key>} with an existing node ID.",
+			Example: "node A { prompt \"Hello ${user}\" }  // no namespace; use ${ctx.user}",
 		},
 		DIP107: {
 			Code:    DIP107,
