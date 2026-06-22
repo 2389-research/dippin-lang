@@ -156,7 +156,6 @@ child, err := src.Workflow("phases/review.dip", entry.SourceLocation.File)
 
 - `Manifest()` — the parsed manifest (format version, entry path, files[])
 - `Identity()` — 32-byte SHA-256 over the manifest bytes-as-stored (a stable content-addressed id)
-- `ReadFile(path)` — raw bytes for any bundle-relative path
 
 `dipx.Pack(ctx, entry, w)` writes a deterministic ZIP from a `.dip` entry; `dipx.Extract(ctx, src, dest, allowOverwrite)` atomically unpacks one. Both refuse symlinks anywhere in the source tree (Pack) or staging tree (Extract) and enforce the spec's per-file (50 MB) and total-bundle (100 MB) caps.
 

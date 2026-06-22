@@ -139,10 +139,10 @@ dippin-lang/
 │   └── symbols.go      # Document symbol outline
 │
 ├── dipx/               # .dipx bundle format (loader tier)
-│   ├── dipx.go         # Open, OpenLax, OpenReader, Pack, Extract, Validate
+│   ├── dipx.go         # Open, OpenManifest, Pack, Extract
 │   ├── source.go       # Source interface, dirSource, Load (.dip vs .dipx)
 │   ├── manifest.go     # Manifest decode/encode + shape verification
-│   ├── bundle.go       # Bundle (Workflow, Identity, Manifest, ReadFile)
+│   ├── bundle.go       # Bundle (Workflow, Identity, Manifest, Resolve, Entry)
 │   ├── zipio.go        # Constrained zip reader (rejects forbidden features)
 │   ├── resolve.go      # Path canonicalization, Windows reserved names
 │   ├── helpers.go      # Hash verify, parse-and-link, walkSourceTree, ReadNoFollowSymlinks (shared no-follow read)

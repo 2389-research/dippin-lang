@@ -239,19 +239,42 @@ func TestBundle_ConcurrentReads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// firstErr captures the first non-nil error any goroutine sees on the
+	// shared Workflow read path, so a race-induced failure can't pass silently.
+	var (
+		errMu    sync.Mutex
+		firstErr error
+	)
+	record := func(err error) {
+		if err == nil {
+			return
+		}
+		errMu.Lock()
+		defer errMu.Unlock()
+		if firstErr == nil {
+			firstErr = err
+		}
+	}
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			// Exercise the shared read accessors concurrently — these are
-			// what the concurrency contract actually covers.
+			// what the concurrency contract actually covers. Workflow is part
+			// of the dipx.Source contract, which promises concurrent-read
+			// safety, so it must be exercised here too (see dipx/source.go).
 			_ = b.Entry()
 			_ = b.Manifest()
 			_ = b.Identity()
+			_, err := b.Workflow(context.Background(), "hello.dip", "workflows/hello.dip")
+			record(err)
 		}()
 	}
 	wg.Wait()
+	if firstErr != nil {
+		t.Fatalf("concurrent read returned error: %v", firstErr)
+	}
 }
 
 func TestPack_RejectsSymlink(t *testing.T) {
