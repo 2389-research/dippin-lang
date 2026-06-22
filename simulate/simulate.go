@@ -58,7 +58,7 @@ type Result struct {
 	// NodesVisited is the count of unique nodes entered.
 	NodesVisited int
 
-	// Status is "success" if the exit node was reached, "fail" otherwise.
+	// Status is "success" if the exit node was reached, "dead_end" otherwise.
 	Status string
 
 	// Path is the ordered list of node IDs visited.
