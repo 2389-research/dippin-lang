@@ -7,7 +7,7 @@ subtitle: "Cost, coverage, health, optimization, and change tracking."
 
 ## Overview
 
-Dippin includes six analysis commands that inspect workflows for cost, coverage, health, optimization opportunities, and change impact. `doctor` aggregates cost + coverage + lint into a single grade. Run it first for an overview, then drill into specific commands for details.
+Dippin includes eight analysis commands that inspect workflows for cost, coverage, health, optimization opportunities, dead code, change impact, calibration, and dry-run behavior. `doctor` aggregates cost + coverage + lint into a single grade. Run it first for an overview, then drill into specific commands for details.
 
 <div class="flow-diagram">
   <div class="flow-step">dippin doctor</div>
@@ -100,7 +100,6 @@ Health report card — a single grade (A-F) aggregating lint, coverage, and cost
 <span class="dim">&#9472;&#9472;&#9472; Coverage &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   Reachable: <span class="pass">21/21 nodes</span>
   <span class="pass">&#10003;</span> All paths terminate
-  <span class="pass">&#10003;</span> All tool outputs covered
 
 <span class="dim">&#9472;&#9472;&#9472; Cost &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   Expected: $2.10  <span class="dim">(range: $1.50 - $8.40)</span>
@@ -115,11 +114,11 @@ Starts at 100 points, with deductions for issues:
 
 | Issue | Deduction |
 |-------|-----------|
-| Each lint error | -15 points |
+| Each lint error | -20 points |
 | Each lint warning | -5 points |
-| Unreachable node | -10 per node |
-| Non-terminating paths | -20 |
-| Uncovered tool outputs | -5 per tool |
+| Unreachable node | -15 per node |
+| Non-terminating paths | -15 |
+| Uncovered tool outputs | -10 per tool |
 
 ### Grades
 
@@ -156,6 +155,16 @@ Suggest cheaper model substitutions without sacrificing quality. Rules include: 
 
 **When to use:** After `dippin cost` shows high costs. Review each suggestion — some "simple" prompts may actually need a capable model.
 
+## simulate
+
+Dry-run a workflow without real side effects, emitting JSONL events to stdout. It walks the IR graph from start to exit, logging each node visited — no LLM calls and no shell commands run. Use `--scenario key=val` to inject context and explore conditional branches, `--all-paths` to enumerate every reachable path, and `--interactive` to prompt at human nodes.
+
+```
+$ dippin simulate pipeline.dip --scenario outcome=fail
+```
+
+**When to use:** Verify routing logic before running the real pipeline — confirm a scenario reaches the expected node sequence, or audit every branch with `--all-paths`.
+
 ## diff
 
 Semantic comparison between two workflow versions. Unlike text-based `diff`, this compares graph structure: nodes added/removed, edges changed, field-level modifications, and cost impact.
@@ -184,10 +193,10 @@ Semantic comparison between two workflow versions. Unlike text-based `diff`, thi
 
 ## feedback
 
-Compare predicted costs against actual execution telemetry to calibrate estimates. Takes the workflow file (for predicted costs) and a CSV telemetry file with columns: `node_id`, `input_tokens`, `output_tokens`, `cost_usd`.
+Compare predicted costs against actual execution telemetry to calibrate estimates. Takes the workflow file (for predicted costs) and a JSONL telemetry file — one JSON object per line with fields: `event`, `node`, `model`, `provider`, `tokens_in`, `tokens_out`, `actual_cost`, `turns`, `timestamp`.
 
 ```
-$ dippin feedback pipeline.dip telemetry.csv
+$ dippin feedback pipeline.dip telemetry.jsonl
 ```
 
 After running a pipeline in production, export telemetry and feed it back to see how accurate the cost predictions were. Outliers (>2x or <0.5x ratio) are flagged for investigation.
