@@ -19,8 +19,7 @@ func makeCondEdge(from, to, variable, value string) *ir.Edge {
 		From: from,
 		To:   to,
 		Condition: &ir.Condition{
-			Raw:    variable + " = " + value,
-			Parsed: ir.CondCompare{Variable: variable, Op: "=", Value: value},
+			Raw: variable + " = " + value,
 		},
 	}
 }
@@ -539,10 +538,6 @@ func TestCollectEdgeConditions_OrCondition(t *testing.T) {
 			makeEdge("start", "check"),
 			{From: "check", To: "end", Condition: &ir.Condition{
 				Raw: "ctx.result = a or ctx.result = b",
-				Parsed: ir.CondOr{
-					Left:  ir.CondCompare{Variable: "ctx.result", Op: "=", Value: "a"},
-					Right: ir.CondCompare{Variable: "ctx.result", Op: "=", Value: "b"},
-				},
 			}},
 		},
 	}
@@ -571,8 +566,7 @@ func TestCollectEdgeConditions_NotCondition(t *testing.T) {
 		Edges: []*ir.Edge{
 			makeEdge("start", "check"),
 			{From: "check", To: "end", Condition: &ir.Condition{
-				Raw:    "not ctx.result = fail",
-				Parsed: ir.CondNot{Inner: ir.CondCompare{Variable: "ctx.result", Op: "=", Value: "fail"}},
+				Raw: "not ctx.result = fail",
 			}},
 		},
 	}

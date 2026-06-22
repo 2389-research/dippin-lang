@@ -7,6 +7,7 @@ import (
 
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/parser"
+	"github.com/2389-research/dippin-lang/simulate"
 )
 
 // --- Fixtures ---
@@ -75,12 +76,10 @@ func askAndExecuteWorkflow() *ir.Workflow {
 			{From: "Interpret", To: "ImplementFanOut"},
 			{From: "ImplementJoin", To: "Validate"},
 			{From: "Validate", To: "Approve", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Validate", To: "Interpret", Label: "retry", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Approve", To: "Done"},
 		},
@@ -473,8 +472,7 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 		{
 			name: "simple compare",
 			condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			},
 			wantAttr: `condition="outcome = success"`,
 		},
@@ -482,10 +480,6 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 			name: "AND condition",
 			condition: &ir.Condition{
 				Raw: "ctx.x = 1 and ctx.y = 2",
-				Parsed: ir.CondAnd{
-					Left:  ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
-					Right: ir.CondCompare{Variable: "ctx.y", Op: "=", Value: "2"},
-				},
 			},
 			wantAttr: `condition="x = 1 and y = 2"`,
 		},
@@ -493,10 +487,6 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 			name: "OR condition",
 			condition: &ir.Condition{
 				Raw: "ctx.x = 1 or ctx.x = 2",
-				Parsed: ir.CondOr{
-					Left:  ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
-					Right: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "2"},
-				},
 			},
 			wantAttr: `condition="x = 1 or x = 2"`,
 		},
@@ -504,23 +494,16 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 			name: "NOT condition",
 			condition: &ir.Condition{
 				Raw: "not ctx.done = true",
-				Parsed: ir.CondNot{
-					Inner: ir.CondCompare{Variable: "ctx.done", Op: "=", Value: "true"},
-				},
 			},
 			wantAttr: `condition="not done = true"`,
 		},
 		{
 			name: "nested AND in OR — parenthesized",
+			// AND binds tighter than OR, so this parses to the same AST as
+			// an explicitly-parenthesized left operand; the formatter re-adds
+			// the precedence parens.
 			condition: &ir.Condition{
-				Raw: "(ctx.x = 1 and ctx.y = 2) or ctx.z = 3",
-				Parsed: ir.CondOr{
-					Left: ir.CondAnd{
-						Left:  ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
-						Right: ir.CondCompare{Variable: "ctx.y", Op: "=", Value: "2"},
-					},
-					Right: ir.CondCompare{Variable: "ctx.z", Op: "=", Value: "3"},
-				},
+				Raw: "ctx.x = 1 and ctx.y = 2 or ctx.z = 3",
 			},
 			wantAttr: `condition="(x = 1 and y = 2) or z = 3"`,
 		},
@@ -528,12 +511,6 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 			name: "NOT of compound — parenthesized",
 			condition: &ir.Condition{
 				Raw: "not (ctx.x = 1 and ctx.y = 2)",
-				Parsed: ir.CondNot{
-					Inner: ir.CondAnd{
-						Left:  ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
-						Right: ir.CondCompare{Variable: "ctx.y", Op: "=", Value: "2"},
-					},
-				},
 			},
 			wantAttr: `condition="not (x = 1 and y = 2)"`,
 		},
@@ -552,6 +529,11 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 				Edges: []*ir.Edge{
 					{From: "A", To: "B", Condition: tt.condition},
 				},
+			}
+			// Populate Parsed via the real parser so the formatted-Parsed
+			// branch of resolveConditionStr is exercised against parser output.
+			if err := simulate.EnsureConditionsParsed(w); err != nil {
+				t.Fatalf("EnsureConditionsParsed: %v", err)
 			}
 			out := ExportDOT(w, ExportOptions{})
 			assertContains(t, out, tt.wantAttr)
@@ -669,8 +651,7 @@ func TestExportDOTEdgeLabelWithCondition(t *testing.T) {
 				To:    "B",
 				Label: "retry",
 				Condition: &ir.Condition{
-					Raw:    "ctx.outcome = fail",
-					Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+					Raw: "ctx.outcome = fail",
 				},
 			},
 		},
@@ -696,8 +677,7 @@ func TestExportDOTEdgeConditionAsLabel(t *testing.T) {
 				From: "A",
 				To:   "B",
 				Condition: &ir.Condition{
-					Raw:    "ctx.outcome = success",
-					Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+					Raw: "ctx.outcome = success",
 				},
 			},
 		},
@@ -746,8 +726,7 @@ func TestExportDOTAllEdgeAttributes(t *testing.T) {
 				Weight:  5,
 				Restart: true,
 				Condition: &ir.Condition{
-					Raw:    "ctx.outcome = fail",
-					Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+					Raw: "ctx.outcome = fail",
 				},
 			},
 		},

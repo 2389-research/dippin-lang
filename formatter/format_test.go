@@ -8,6 +8,7 @@ import (
 
 	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/parser"
+	"github.com/2389-research/dippin-lang/simulate"
 )
 
 // --- Fixtures ---
@@ -76,12 +77,10 @@ func askAndExecuteWorkflow() *ir.Workflow {
 			{From: "Interpret", To: "ImplementFanOut"},
 			{From: "ImplementJoin", To: "Validate"},
 			{From: "Validate", To: "Approve", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Validate", To: "Interpret", Label: "retry", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Approve", To: "Done"},
 		},
@@ -111,6 +110,18 @@ func assertIdempotent(t *testing.T, w *ir.Workflow) {
 	if first != second {
 		t.Errorf("Format is not idempotent:\nfirst:\n%s\nsecond:\n%s", first, second)
 	}
+}
+
+// parsedCondition builds a condition whose AST is populated exactly as
+// validate/simulate would (Parsed only, Raw left empty) so tests exercise the
+// parsed-AST formatting path against real parser output.
+func parsedCondition(t *testing.T, raw string) *ir.Condition {
+	t.Helper()
+	expr, err := simulate.ParseCondition(raw)
+	if err != nil {
+		t.Fatalf("ParseCondition(%q): %v", raw, err)
+	}
+	return &ir.Condition{Parsed: expr}
 }
 
 // --- Table-driven tests ---
@@ -555,11 +566,14 @@ func TestFormatLoopValueQuotedFromParsed(t *testing.T) {
 			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
 		},
 		Edges: []*ir.Edge{
-			{From: "A", To: "B", Condition: &ir.Condition{
-				Raw:    `ctx.x = "loop"`,
-				Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "loop"},
-			}},
+			{From: "A", To: "B", Condition: &ir.Condition{Raw: `ctx.x = "loop"`}},
 		},
+	}
+	// Populate the AST exactly as validate/simulate would: parsing strips the
+	// quotes from the `loop` literal (CondCompare.Value == "loop"). conditionText
+	// prefers Parsed, so this exercises the re-quoting path the test guards.
+	if err := simulate.EnsureConditionsParsed(w); err != nil {
+		t.Fatalf("EnsureConditionsParsed: %v", err)
 	}
 	formatted := Format(w)
 	assertContains(t, formatted, `ctx.x = "loop"`)
@@ -813,8 +827,7 @@ func TestFormatEdges(t *testing.T) {
 			name: "conditional edge",
 			edges: []*ir.Edge{
 				{From: "A", To: "B", Condition: &ir.Condition{
-					Raw:    "ctx.outcome = success",
-					Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+					Raw: "ctx.outcome = success",
 				}},
 			},
 			checks: []string{"    A -> B  on success"},
@@ -827,8 +840,7 @@ func TestFormatEdges(t *testing.T) {
 					To:    "B",
 					Label: "retry",
 					Condition: &ir.Condition{
-						Raw:    "ctx.outcome = fail",
-						Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+						Raw: "ctx.outcome = fail",
 					},
 					Weight:  10,
 					Restart: true,
@@ -843,10 +855,6 @@ func TestFormatEdges(t *testing.T) {
 			edges: []*ir.Edge{
 				{From: "A", To: "B", Condition: &ir.Condition{
 					Raw: "ctx.outcome = success and ctx.tool_stdout != empty",
-					Parsed: ir.CondAnd{
-						Left:  ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
-						Right: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "!=", Value: "empty"},
-					},
 				}},
 			},
 			checks: []string{
@@ -1738,10 +1746,7 @@ func TestFormatEdgeOnShorthand(t *testing.T) {
 	}{
 		{"outcome raw", agentA, &ir.Condition{Raw: "ctx.outcome = success"}, "A -> B  on success"},
 		{"marker raw", toolA, &ir.Condition{Raw: "ctx.tool_marker = setup-failed"}, "A -> B  on setup-failed"},
-		{"from parsed AST", agentA, &ir.Condition{
-			Raw:    "ctx.outcome = fail",
-			Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
-		}, "A -> B  on fail"},
+		{"from parsed AST", agentA, parsedCondition(t, "ctx.outcome = fail"), "A -> B  on fail"},
 		{"double-eq stays when", agentA, &ir.Condition{Raw: "ctx.outcome == success"}, "A -> B  when ctx.outcome == success"},
 		{"non-channel var stays when", agentA, &ir.Condition{Raw: "ctx.reason = stalled"}, "A -> B  when ctx.reason = stalled"},
 		{"marker var on agent stays when", agentA, &ir.Condition{Raw: "ctx.tool_marker = x"}, "A -> B  when ctx.tool_marker = x"},
@@ -2150,10 +2155,10 @@ func TestFormatManagerLoop_ParsedConditionFallback(t *testing.T) {
 				Config: ir.ManagerLoopConfig{
 					SubgraphRef: "inner.dip",
 					MaxCycles:   5,
-					// Parsed set, Raw intentionally empty — simulates programmatic IR construction.
-					StopCondition: &ir.Condition{
-						Parsed: ir.CondCompare{Variable: "stack.child.outcome", Op: "=", Value: "success"},
-					},
+					// Parsed set, Raw intentionally empty — simulates programmatic IR
+					// construction. AST built via the real parser so it matches
+					// simulate output instead of a hand-built literal.
+					StopCondition: parsedCondition(t, "stack.child.outcome = success"),
 				},
 			},
 		},

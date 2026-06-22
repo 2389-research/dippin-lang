@@ -53,12 +53,10 @@ func askAndExecuteWorkflow() *ir.Workflow {
 			{From: "ImplementCodex", To: "ImplementJoin"},
 			{From: "ImplementJoin", To: "Validate"},
 			{From: "Validate", To: "Approve", Condition: &ir.Condition{
-				Raw:    "ctx.outcome = success",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"},
+				Raw: "ctx.outcome = success",
 			}},
 			{From: "Validate", To: "Interpret", Label: "retry", Restart: true, Condition: &ir.Condition{
-				Raw:    "ctx.outcome = fail",
-				Parsed: ir.CondCompare{Variable: "ctx.outcome", Op: "=", Value: "fail"},
+				Raw: "ctx.outcome = fail",
 			}},
 			{From: "Approve", To: "Done"},
 		},
@@ -411,8 +409,8 @@ func TestValidate(t *testing.T) {
 					{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
 				},
 				Edges: []*ir.Edge{
-					{From: "A", To: "B", Condition: &ir.Condition{Raw: "ctx.x = 1", Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"}}},
-					{From: "A", To: "B", Condition: &ir.Condition{Raw: "ctx.x = 2", Parsed: ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "2"}}},
+					{From: "A", To: "B", Condition: &ir.Condition{Raw: "ctx.x = 1"}},
+					{From: "A", To: "B", Condition: &ir.Condition{Raw: "ctx.x = 2"}},
 				},
 			},
 			wantNoDiag: true,

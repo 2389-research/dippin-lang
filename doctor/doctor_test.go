@@ -116,8 +116,7 @@ func TestDiagnose_WithUncoveredTools(t *testing.T) {
 			{From: "A", To: "T"},
 			// Only cover "pass" — "fail" has no edge, so tool is partially covered.
 			{From: "T", To: "D", Condition: &ir.Condition{
-				Raw:    "ctx.tool_stdout = pass",
-				Parsed: ir.CondCompare{Variable: "ctx.tool_stdout", Op: "=", Value: "pass"},
+				Raw: "ctx.tool_stdout = pass",
 			}},
 		},
 	}
