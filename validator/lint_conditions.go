@@ -118,7 +118,7 @@ func extractBinaryComparisons(left, right ir.ConditionExpr) []ir.CondCompare {
 }
 
 // lintConditionNamespace checks DIP120: condition variables should use a
-// namespace prefix (ctx., graph., params.). Bare variables like "outcome"
+// namespace prefix (ctx., graph., params., stack.). Bare variables like "outcome"
 // work at runtime but are inconsistent with the spec convention.
 func lintConditionNamespace(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic

@@ -6,7 +6,7 @@ type Edge struct {
 	To        string
 	Label     string     // Display label / human choice text
 	Choice    string     // Carried, not interpreted: explicit human-gate routing key (preferred over Label when set; #130)
-	Condition *Condition // Parsed condition (not raw string)
+	Condition *Condition // Edge guard; parser sets only Raw — Parsed (AST) stays nil until simulate.EnsureConditionsParsed()
 	Weight    int        // Priority hint for edge selection
 	Restart   bool       // Back-edge: triggers downstream clear + re-execution
 	Override  bool       // Carried, not interpreted: human-authored validation override (tracker#271)

@@ -91,7 +91,7 @@ func openFile(ctx context.Context, path string, mode openMode) (*Bundle, error) 
 	return bundle, nil
 }
 
-// openFromReader runs the 9-step Open ordering: zip → manifest read → manifest
+// openFromReader runs the 10-step Open ordering: zip → manifest read → manifest
 // decode → manifest shape → strict-extras check → hash verify → parse →
 // walkRefs → normalize → build. ctx is checked before each disk-/CPU-bound
 // stage.

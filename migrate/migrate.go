@@ -134,10 +134,11 @@ func extractGraphDefaults(attrs map[string]string, w *ir.Workflow) {
 	}
 }
 
-// applyUnknownGraphAttr routes unknown graph attributes: only recognized
-// integer-backed default keys (max_retries, max_restarts) go to Defaults;
-// all other attrs, including unrecognized integer-valued ones, are captured
-// in Workflow.Vars. Keys that aren't valid Dippin identifiers are skipped.
+// applyUnknownGraphAttr routes unknown graph attributes: recognized
+// integer-backed default keys (max_retries, max_restarts) and budget defaults
+// (max_total_tokens, max_cost_cents, max_wall_time, stall_timeout) go to
+// Defaults; all other attrs, including unrecognized integer-valued ones, are
+// captured in Workflow.Vars. Keys that aren't valid Dippin identifiers are skipped.
 func applyUnknownGraphAttr(k, v string, w *ir.Workflow) {
 	if applyIntDefault(k, v, w) {
 		return
@@ -420,7 +421,7 @@ func applyModelAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 }
 
 // applyRuntimeAttrs applies runtime-cluster attributes (backend, working_dir,
-// tool_access, writable_paths).
+// tool_access, writable_paths, last_response_truncate).
 func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["backend"]; ok {
 		cfg.Backend = v
@@ -797,7 +798,10 @@ func applyManagerLoopConditionMigrate(cfg *ir.ManagerLoopConfig, attrs map[strin
 }
 
 // steerContextDecoder reverses steerContextEncoder from export/dot.go.
-// Sequences are listed longest-first so the replacer matches greedily.
+// strings.NewReplacer is single-pass and never re-scans inserted output, and the
+// "%XX" patterns are mutually exclusive (none is a prefix of another), so order
+// is irrelevant — e.g. a literal "%2C" encodes to "%252C" and decodes back to
+// "%2C", not ",".
 var steerContextDecoder = strings.NewReplacer(
 	"%25", "%",
 	"%2C", ",",

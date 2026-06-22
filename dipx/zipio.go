@@ -34,7 +34,8 @@ const maxZipFiles = 10000
 // feature constraints: rejects encryption (general-purpose bit 0), non-UTF-8
 // filenames (bit 11 must be set), non-Store/non-Deflate compression methods,
 // symlink and other non-regular Unix mode bits, byte-equal duplicate entry
-// names, and ASCII-case-fold-equal duplicate entry names. Directory entries
+// names, ASCII-case-fold-equal duplicate entry names, and the reserved
+// manifest.sig entry name (v2 signatures). Directory entries
 // (names ending in `/`) are silently skipped.
 //
 // What this function does NOT enforce in v1 (deferred to v1.1, see

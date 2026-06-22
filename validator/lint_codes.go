@@ -4,7 +4,7 @@ package validator
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
-	DIP103 = "DIP103" // overlapping or contradictory conditions
+	DIP103 = "DIP103" // duplicate condition on edges from the same node
 	DIP104 = "DIP104" // unbounded retry loop
 	DIP105 = "DIP105" // no success path to exit
 	DIP106 = "DIP106" // undefined variable in prompt
@@ -31,7 +31,7 @@ const (
 	DIP127 = "DIP127" // invalid human node mode
 	DIP128 = "DIP128" // interview mode with meaningless default
 	DIP129 = "DIP129" // interview mode with conflicting choice-style edges
-	DIP130 = "DIP130" // invalid response_format value or on non-agent node
+	DIP130 = "DIP130" // invalid response_format value
 	DIP131 = "DIP131" // response_schema/response_format mismatch
 	DIP132 = "DIP132" // response_schema is not valid JSON
 	DIP133 = "DIP133" // agent params key shadows a first-class field
@@ -68,7 +68,7 @@ func init() {
 var linterCodeDescriptions = map[string]string{
 	DIP101: "unreachable node after conditional branches",
 	DIP102: "routing node has no default/unconditional edge",
-	DIP103: "overlapping or contradictory conditions",
+	DIP103: "duplicate condition on edges from the same node",
 	DIP104: "unbounded retry loop (no max_retries or fallback)",
 	DIP105: "no success path from start to exit",
 	DIP106: "undefined variable reference in prompt",
@@ -95,7 +95,7 @@ var linterCodeDescriptions = map[string]string{
 	DIP127: "invalid human node mode",
 	DIP128: "interview mode with meaningless default value",
 	DIP129: "interview mode with conflicting choice-style edges",
-	DIP130: "invalid response_format value or on non-agent node",
+	DIP130: "invalid response_format value",
 	DIP131: "response_schema and response_format mismatch",
 	DIP132: "response_schema is not valid JSON",
 	DIP133: "agent params key shadows a first-class field",

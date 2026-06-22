@@ -2,7 +2,7 @@
 //
 // Unlike text-based diff, this compares the workflow graph structure:
 // nodes added/removed/modified, edges added/removed, and field-level
-// changes on node configurations. It also computes cost delta.
+// changes on agent node configurations. It also computes cost delta.
 package diff
 
 import (
@@ -108,7 +108,8 @@ func findModifiedNodes(oldNodes, newNodes map[string]*ir.Node) []NodeDiff {
 	return diffs
 }
 
-// compareNodeFields compares individual fields of two nodes.
+// compareNodeFields compares label, kind, and agent-config fields of two nodes
+// (other config kinds are not field-diffed).
 func compareNodeFields(old, new *ir.Node) []FieldChange {
 	var changes []FieldChange
 	if old.Label != new.Label {

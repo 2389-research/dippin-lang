@@ -18,7 +18,7 @@ func (w *Workflow) Node(id string) *Node {
 // Human gates are deliberately excluded: they route on the human's choice
 // (preferred_label / edge labels), and nothing populates ctx.outcome for them,
 // so `on` would desugar to a condition that never matches. Human-gate routing
-// keys are the domain of the `choice:` work (#130); use `when` meanwhile.
+// keys are expressed with the `choice:` edge attribute (DIP150, #130/#151).
 //
 // This is the single source of truth shared by the parser (which desugars `on`)
 // and the formatter (which re-emits it), so the two never diverge.

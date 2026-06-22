@@ -4,7 +4,7 @@ package validator
 const (
 	DIP001 = "DIP001" // start node missing
 	DIP002 = "DIP002" // exit node missing
-	DIP003 = "DIP003" // unknown node reference (edge endpoint or on_failure target)
+	DIP003 = "DIP003" // unknown node reference (edge endpoint, on_failure target, or else default)
 	DIP004 = "DIP004" // unreachable node(s) from start
 	DIP005 = "DIP005" // unconditional cycle detected
 	DIP006 = "DIP006" // exit node has outgoing edges
@@ -18,7 +18,7 @@ const (
 var CodeDescription = map[string]string{
 	DIP001: "start node does not exist",
 	DIP002: "exit node does not exist",
-	DIP003: "unknown node reference in edge or on_failure",
+	DIP003: "unknown node reference in edge, on_failure, or else default",
 	DIP004: "node unreachable from start",
 	DIP005: "unconditional cycle detected",
 	DIP006: "exit node has outgoing edges",

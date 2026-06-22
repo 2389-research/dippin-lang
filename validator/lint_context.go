@@ -12,8 +12,9 @@ import (
 var varRefPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // lintUndefinedVariables checks DIP106: ${variable} references in prompts
-// must use known namespace prefixes (ctx., graph., params.). References without
-// a recognized namespace are flagged.
+// must use a known namespace prefix (ctx., graph., params., stack.) or be a
+// node-scoped ref (node.<id>.<key> or ctx.node.<id>.<key>). References without
+// a recognized namespace or valid node ID are flagged.
 func lintUndefinedVariables(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {

@@ -28,8 +28,8 @@ var Explanations = map[string]Explanation{
 	DIP003: {
 		Code:    DIP003,
 		Summary: CodeDescription[DIP003],
-		Trigger: "An edge or on_failure target references a node ID that does not exist in the workflow.",
-		Fix:     "Correct the node name in the edge or on_failure field, or add the missing node.",
+		Trigger: "An edge, on_failure target, or section-level 'else ->' default references a node ID that does not exist in the workflow.",
+		Fix:     "Correct the node name in the edge, on_failure field, or else default, or add the missing node.",
 		Example: "Start -> Analize  // typo: \"Analize\" not defined",
 	},
 	DIP004: {
@@ -114,22 +114,22 @@ func reachabilityExplanations() map[string]Explanation {
 			Code:    DIP101,
 			Summary: "unreachable node after conditional branches",
 			Trigger: "A node follows conditional branches that already cover all outcomes.",
-			Fix:     "Route the node through a condition, or remove it if unreachable.",
+			Fix:     "Route the node through a condition, add a section `else -> <node>` default that covers it, or remove it if unreachable.",
 			Example: "A -> B [success]\nA -> C [failure]\nA -> D  // unreachable",
 		},
 		DIP102: {
 			Code:    DIP102,
 			Summary: "routing node has no default/unconditional edge",
 			Trigger: "A routing node has conditional edges but no unconditional/default fallback.",
-			Fix:     "Add an unconditional edge or ensure conditions are exhaustive (success/failure pair).",
+			Fix:     "Add an unconditional edge, declare a section `else -> <node>` default, or ensure conditions are exhaustive (success/failure pair).",
 			Example: "Router -> A [success]\n// missing default edge from Router",
 		},
 		DIP103: {
 			Code:    DIP103,
-			Summary: "overlapping or contradictory conditions",
-			Trigger: "Two conditions on edges from the same node can both be true simultaneously.",
-			Fix:     "Make conditions mutually exclusive or remove the overlapping condition.",
-			Example: "A -> B [score > 5]\nA -> C [score > 3]  // overlaps",
+			Summary: "duplicate condition on edges from the same node",
+			Trigger: "Two edges from the same node carry the identical comparison (same variable, operator and value), so the routing is duplicated.",
+			Fix:     "Make conditions mutually exclusive or remove the duplicate condition.",
+			Example: "A -> B [ctx.outcome = success]\nA -> C [ctx.outcome = success]  // same comparison reused",
 		},
 		DIP104: {
 			Code:    DIP104,
@@ -181,9 +181,9 @@ func contextExplanations() map[string]Explanation {
 		DIP106: {
 			Code:    DIP106,
 			Summary: "undefined variable reference in prompt",
-			Trigger: "A prompt template references a variable like {{name}} that is never defined.",
+			Trigger: "A prompt template references a variable like ${name} that is never defined.",
 			Fix:     "Add the variable to an upstream node's writes, or fix the variable name.",
-			Example: "node A { prompt \"Hello {{user}}\" }  // user not defined",
+			Example: "node A { prompt \"Hello ${user}\" }  // ctx.user not defined",
 		},
 		DIP107: {
 			Code:    DIP107,
@@ -381,7 +381,7 @@ func nodeValidationExplanations() map[string]Explanation {
 		},
 		DIP130: {
 			Code:    DIP130,
-			Summary: "invalid response_format value or on non-agent node",
+			Summary: "invalid response_format value",
 			Trigger: "An agent node has a response_format value other than json_object or json_schema.",
 			Fix:     "Set response_format to json_object or json_schema.",
 			Example: "agent Parse\n  response_format: xml  // invalid",
