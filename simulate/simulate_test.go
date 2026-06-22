@@ -1479,16 +1479,28 @@ func TestRunHumanInteractive_ChoiceMode(t *testing.T) {
 // --- EnsureConditionsParsed edge cases ---
 
 func TestEnsureConditionsParsed_AlreadyParsed(t *testing.T) {
+	// Derive Parsed from the real parser (not a hand-built AST) so the
+	// fixture matches genuine parser output, then assert EnsureConditionsParsed
+	// leaves an already-parsed condition untouched (the Parsed != nil early
+	// return in ensureEdgeConditionParsed).
+	parsed, err := ParseCondition("ctx.x = y")
+	if err != nil {
+		t.Fatalf("ParseCondition() error: %v", err)
+	}
 	w := &ir.Workflow{
 		Edges: []*ir.Edge{
 			{From: "A", To: "B", Condition: &ir.Condition{
-				Raw: "ctx.x = y",
+				Raw:    "ctx.x = y",
+				Parsed: parsed,
 			}},
 		},
 	}
-	err := EnsureConditionsParsed(w)
-	if err != nil {
+	if err := EnsureConditionsParsed(w); err != nil {
 		t.Fatalf("EnsureConditionsParsed() error: %v", err)
+	}
+	// The already-parsed branch must not replace or mutate Parsed.
+	if got := w.Edges[0].Condition.Parsed; got != parsed {
+		t.Errorf("Parsed was replaced: got %v, want original %v", got, parsed)
 	}
 }
 

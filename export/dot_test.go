@@ -519,6 +519,25 @@ func TestExportDOTEdgeConditions(t *testing.T) {
 			},
 			wantAttr: `condition="not x = 1 and y = 2"`,
 		},
+		{
+			name: "NOT of compound — parenthesized",
+			// The parser binds `not` tighter than `and` and has no grouping
+			// parens, so it can never produce CondNot{Inner: CondAnd{...}} from
+			// any Raw. We build the AST directly via Parsed to regression-test
+			// the formatter's parenthesization branch: a CondNot wrapping a
+			// higher-binding compound must wrap it in parens
+			// (formatBinaryOp: parentPrec=precNot != precAnd). This is a
+			// formatter unit test for an unreachable-from-parser shape, not a
+			// parser-output fixture, so hand-built Parsed is the correct (and
+			// only) way to cover it.
+			condition: &ir.Condition{
+				Parsed: ir.CondNot{Inner: ir.CondAnd{
+					Left:  ir.CondCompare{Variable: "ctx.x", Op: "=", Value: "1"},
+					Right: ir.CondCompare{Variable: "ctx.y", Op: "=", Value: "2"},
+				}},
+			},
+			wantAttr: `condition="not (x = 1 and y = 2)"`,
+		},
 	}
 
 	for _, tt := range tests {
