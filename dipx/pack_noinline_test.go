@@ -230,6 +230,26 @@ func TestPack_IncludeDipFileRejected(t *testing.T) {
 	}
 }
 
+// TestPack_DirectiveDipTargetRejected guards the discriminator invariant: a
+// file-directive (here command_file:) whose target ends in .dip must be
+// rejected at pack time, not shipped as an asset. Shipping it would produce a
+// bundle whose Open re-parses the asset as a workflow (spec: assets may not end
+// in .dip).
+func TestPack_DirectiveDipTargetRejected(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{
+		"a.dip": strings.Replace(dipWithCommandFile,
+			"command_file: scripts/run.sh",
+			"command_file: scripts/helper.dip", 1),
+		"scripts/helper.dip": "#!/bin/sh\necho hi\n",
+	})
+	var buf bytes.Buffer
+	_, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf, PackOptions{NoInline: true})
+	if !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
 func TestPack_IncludeEscapeRejected(t *testing.T) {
 	dir := t.TempDir()
 	writeTree(t, dir, map[string]string{"sub/a.dip": minimalStandaloneDip()})

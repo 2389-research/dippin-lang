@@ -585,6 +585,9 @@ func ensureAssetUnderRoot(abs, rootDir string) error {
 // path. Callers MUST run ensureAssetUnderRoot first (ReadNoFollowSymlinks
 // assumes containment).
 func readAssetFile(abs, rootDir string) (packedFile, error) {
+	if strings.HasSuffix(abs, ".dip") {
+		return packedFile{}, newError(ErrPathUnsafe, abs, "assets may not end in .dip", nil)
+	}
 	raw, err := ReadNoFollowSymlinks(abs, rootDir)
 	if err != nil {
 		return packedFile{}, err
@@ -676,12 +679,9 @@ func collectDirectiveAssets(wf *ir.Workflow, wfAbsPath, rootDir string, visited 
 	return results, nil
 }
 
-// collectIncludeFile reads one --include leaf file as an asset, rejecting .dip
-// targets and skipping already-visited paths.
+// collectIncludeFile reads one --include leaf file as an asset (readAssetFile
+// rejects .dip targets) and skips already-visited paths.
 func collectIncludeFile(abs, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
-	if strings.HasSuffix(abs, ".dip") {
-		return nil, newError(ErrPathUnsafe, abs, "assets may not end in .dip", nil)
-	}
 	if _, ok := visited[abs]; ok {
 		return nil, nil
 	}
