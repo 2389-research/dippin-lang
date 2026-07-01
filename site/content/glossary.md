@@ -35,7 +35,7 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 **agent** — An LLM call. Has a `prompt:` (single line or multiline indented block), optional `model:`, `provider:`, `temperature:`, `tools:`, and `outputs:`.
 
-**human** — A gate that requires user input. Has a `mode:` (`freeform`, `choice`, `confirm`) and an optional `timeout:`.
+**human** — A gate that requires user input. Has a `mode:` (`choice`, `freeform`, `interview`, `yes_no`) and an optional `timeout:`.
 
 **tool** — A shell command. Has a `command:` and optional `timeout:`. Constrained by `tool_commands_allow` / `tool_denylist_add` defaults.
 

@@ -1,6 +1,6 @@
 ---
 title: "CLI Reference"
-description: "Complete command reference for the Dippin toolchain: parse, validate, lint, format, simulate, cost, test, pack, unpack, inspect, and 19 more commands."
+description: "Complete command reference for the Dippin toolchain: 18 commands for authoring, export, analysis, and bundling AI pipeline workflows — parse, validate, lint, check, fmt, simulate, cost, coverage, doctor, test, watch, pack, unpack, inspect, and more."
 section_label: "Reference"
 subtitle: "Every command in the dippin toolchain — authoring, export, analysis, and bundles."
 ---
@@ -153,8 +153,9 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 
 <div class="cmd-card">
   <h3>pack</h3>
-  <div class="cmd-usage">dippin pack [-o &lt;out&gt;] [--dry-run] &lt;entry.dip&gt;</div>
+  <div class="cmd-usage">dippin pack [-o &lt;out&gt;] [--dry-run] [--no-inline] [--include &lt;path&gt;...] &lt;entry.dip&gt;</div>
   <p>Build a deterministic <code>.dipx</code> bundle from a <code>.dip</code> entry, walking every transitively-reachable subgraph ref. Runs structural validation (DIP001–DIP010) before packing. <code>-o -</code> writes to stdout; <code>--dry-run</code> validates and walks refs without writing. File output is atomic via <code>os.CreateTemp</code> + rename. Refuses symlinks anywhere in the source tree, including parent components.</p>
+  <p>By default (inline mode) every <code>command_file:</code>, <code>prompt_file:</code>, and <code>system_prompt_file:</code> body is inlined into the packed <code>.dip</code>, producing a self-contained <code>format_version 1</code> bundle. <code>--no-inline</code> instead ships those directive targets as separate entries under <code>workflows/</code> and keeps the <code>*_file:</code> directives, so they resolve against the extracted tree exactly as in a source-tree run (<code>format_version 2</code>). <code>--include &lt;path&gt;</code> (repeatable, requires <code>--no-inline</code>) ships extra sibling files or directories — assets referenced only from inside shell bodies — as a single file or a whole directory tree; a path that resolves to a <code>.dip</code> is an error.</p>
 </div>
 
 <div class="cmd-card">
