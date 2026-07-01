@@ -158,7 +158,10 @@ func parsePackArgs(stderr io.Writer, args []string) (packArgs, int) {
 		return packArgs{}, exitDipxUserError
 	}
 	entry := rest[0]
-	if !strings.EqualFold(filepath.Ext(entry), ".dip") {
+	// Case-sensitive: the bundle format requires a literal lowercase ".dip"
+	// suffix (checkPathPolicy), so reject e.g. "foo.DIP" here rather than let it
+	// fail later with a confusing pack-time policy error.
+	if filepath.Ext(entry) != ".dip" {
 		fmt.Fprintf(stderr, "error: entry must be a .dip file (got %q)\n", entry)
 		return packArgs{}, exitDipxUserError
 	}

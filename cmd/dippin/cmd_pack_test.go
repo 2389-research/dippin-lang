@@ -75,6 +75,21 @@ func TestRunPack_MissingEntry(t *testing.T) {
 	}
 }
 
+// TestRunPack_RejectsUppercaseDipExtension guards that the entry-extension
+// check is case-sensitive: the bundle format requires a literal lowercase
+// ".dip", so "foo.DIP" must be rejected up front with a clear error rather than
+// failing later in pack-time policy.
+func TestRunPack_RejectsUppercaseDipExtension(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := runPack(&stdout, &stderr, []string{"foo.DIP"})
+	if code != exitDipxUserError {
+		t.Fatalf("code = %d, want %d", code, exitDipxUserError)
+	}
+	if !strings.Contains(stderr.String(), "must be a .dip file") {
+		t.Errorf("stderr = %q, want .dip file error", stderr.String())
+	}
+}
+
 func TestRunPack_DryRun(t *testing.T) {
 	dir, entry := writeMinimalEntry(t)
 	var stdout, stderr bytes.Buffer

@@ -20,9 +20,11 @@ const (
 // bundle-relative path or an error if any safety rule is violated. It does
 // NOT enforce the workflows/ prefix or the .dip suffix — those are
 // version-aware POLICY, enforced separately inside dipx by checkPathPolicy;
-// external callers of Canonicalize get safety canonicalization only. Within
-// dipx, all bundle-path handling MUST go through this function; no other code
-// in dipx is permitted to call path.Clean / filepath.Clean.
+// external callers of Canonicalize get safety canonicalization only. Every
+// bundle-relative path admitted to a manifest or bundle MUST pass through this
+// function to count as validated. Other path.Clean / filepath.Clean uses in
+// dipx only prepare or lexically join filesystem paths (e.g. resolveLexically,
+// the pack/include helpers) and are never a substitute for this validation.
 func Canonicalize(p string) (string, error) {
 	checks := []func(string) error{
 		checkPathBasics,
