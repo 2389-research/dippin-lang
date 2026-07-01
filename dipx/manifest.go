@@ -307,7 +307,7 @@ func verifyFiles(m Manifest) (map[string]struct{}, error) {
 	seenByte := make(map[string]struct{}, len(m.Files))
 	seenFold := make(map[string]struct{}, len(m.Files))
 	for _, e := range m.Files {
-		if err := verifyOneFile(e, seenByte, seenFold); err != nil {
+		if err := verifyOneFile(e, m.FormatVersion, seenByte, seenFold); err != nil {
 			return nil, err
 		}
 	}
@@ -316,8 +316,8 @@ func verifyFiles(m Manifest) (map[string]struct{}, error) {
 
 // verifyOneFile validates a single ManifestEntry and records it in the seen
 // sets. Mutates seenByte and seenFold on success.
-func verifyOneFile(e ManifestEntry, seenByte, seenFold map[string]struct{}) error {
-	if err := verifyEntryFields(e); err != nil {
+func verifyOneFile(e ManifestEntry, version int, seenByte, seenFold map[string]struct{}) error {
+	if err := verifyEntryFields(e, version); err != nil {
 		return err
 	}
 	return checkAndRecordPath(e.Path, seenByte, seenFold)
@@ -325,12 +325,16 @@ func verifyOneFile(e ManifestEntry, seenByte, seenFold map[string]struct{}) erro
 
 // verifyEntryFields enforces presence and shape of an entry's path and sha256
 // fields. Missing path is classified as ErrManifestInvalid (schema rule 3),
-// not as ErrPathUnsafe.
-func verifyEntryFields(e ManifestEntry) error {
+// not as ErrPathUnsafe. Path safety is checked by Canonicalize; the
+// version-aware prefix/suffix POLICY is checked by checkPathPolicy.
+func verifyEntryFields(e ManifestEntry, version int) error {
 	if e.Path == "" {
 		return newError(ErrManifestInvalid, "", "files[] entry missing required key: path", nil)
 	}
 	if _, err := Canonicalize(e.Path); err != nil {
+		return err
+	}
+	if err := checkPathPolicy(e.Path, version); err != nil {
 		return err
 	}
 	if !isValidHash(e.SHA256) {
@@ -358,6 +362,11 @@ func checkAndRecordPath(path string, seenByte, seenFold map[string]struct{}) err
 // the previously-seen files[].path values.
 func verifyEntryInFiles(m Manifest, seenByte map[string]struct{}) error {
 	if _, err := Canonicalize(m.Entry); err != nil {
+		return err
+	}
+	// entry is always a workflow; v1 policy (workflows/ prefix + .dip suffix)
+	// applies regardless of bundle format version.
+	if err := checkPathPolicy(m.Entry, 1); err != nil {
 		return err
 	}
 	if _, ok := seenByte[m.Entry]; !ok {
@@ -397,4 +406,4 @@ func isLowerHexRune(r rune) bool {
 
 // SupportedFormatVersions returns the format_version values this build accepts.
 // Returns a fresh slice on every call to prevent mutation by callers.
-func SupportedFormatVersions() []int { return []int{1} }
+func SupportedFormatVersions() []int { return []int{1, 2} }

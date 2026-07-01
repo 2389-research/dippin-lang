@@ -45,12 +45,8 @@ func TestCanonicalize_Rejects(t *testing.T) {
 		{"win-reserved-con-multi-ext", "workflows/CON.tar.dip"},
 		{"win-reserved-com1-multi-ext", "workflows/COM1.foo.dip"},
 		{"win-reserved-aux-with-prefix", "workflows/AUX.something.dip"},
-		{"missing-extension", "workflows/foo"},
-		{"wrong-extension", "workflows/foo.txt"},
-		{"uppercase-extension", "workflows/foo.DIP"},
 		{"too-many-components", "workflows/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p.dip"}, // 17
 		{"too-long", "workflows/" + strings.Repeat("a", 1020) + ".dip"},
-		{"not-under-workflows", "other/foo.dip"},
 		{"empty", ""},
 	}
 	for _, c := range cases {
@@ -92,6 +88,79 @@ func TestCanonicalize_RejectsNFD(t *testing.T) {
 	}
 	if !errors.Is(err, ErrPathUnsafe) {
 		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestCanonicalize_AcceptsNonDIPSuffix proves the safety-only contract: after
+// the policy split, Canonicalize accepts a non-.dip path under workflows/.
+func TestCanonicalize_AcceptsNonDIPSuffix(t *testing.T) {
+	if _, err := Canonicalize("workflows/boot.sh"); err != nil {
+		t.Fatalf("Canonicalize(workflows/boot.sh) = %v, want nil", err)
+	}
+}
+
+// TestCanonicalize_AcceptsNonWorkflowsPrefix proves the workflows/ prefix is
+// policy, not safety: Canonicalize no longer requires it.
+func TestCanonicalize_AcceptsNonWorkflowsPrefix(t *testing.T) {
+	if _, err := Canonicalize("other/foo.dip"); err != nil {
+		t.Fatalf("Canonicalize(other/foo.dip) = %v, want nil", err)
+	}
+}
+
+func TestCheckPathPolicy_V1_Valid(t *testing.T) {
+	if err := checkPathPolicy("workflows/foo.dip", 1); err != nil {
+		t.Fatalf("checkPathPolicy(workflows/foo.dip, 1) = %v, want nil", err)
+	}
+}
+
+func TestCheckPathPolicy_V1_Rejects(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"missing-extension", "workflows/foo"},
+		{"wrong-extension", "workflows/foo.txt"},
+		{"uppercase-extension", "workflows/foo.DIP"},
+		{"not-under-workflows", "other/foo.dip"},
+		{"reserved-manifest-json", "manifest.json"},
+		{"reserved-manifest-sig", "manifest.sig"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := checkPathPolicy(c.in, 1)
+			if !errors.Is(err, ErrPathUnsafe) {
+				t.Fatalf("checkPathPolicy(%q, 1) = %v, want ErrPathUnsafe", c.in, err)
+			}
+		})
+	}
+}
+
+func TestCheckPathPolicy_V2_Valid(t *testing.T) {
+	cases := []string{
+		"workflows/foo.dip",
+		"workflows/scripts/boot.sh",
+		"workflows/scripts/lib/bootstrap.sh",
+	}
+	for _, in := range cases {
+		if err := checkPathPolicy(in, 2); err != nil {
+			t.Errorf("checkPathPolicy(%q, 2) = %v, want nil", in, err)
+		}
+	}
+}
+
+func TestCheckPathPolicy_V2_RejectsNoWorkflowsPrefix(t *testing.T) {
+	if err := checkPathPolicy("scripts/boot.sh", 2); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("checkPathPolicy(scripts/boot.sh, 2) = %v, want ErrPathUnsafe", err)
+	}
+}
+
+func TestCheckPathPolicy_RejectsReservedNames(t *testing.T) {
+	for _, version := range []int{1, 2} {
+		for _, in := range []string{"manifest.json", "manifest.sig"} {
+			if err := checkPathPolicy(in, version); !errors.Is(err, ErrPathUnsafe) {
+				t.Errorf("checkPathPolicy(%q, %d) = %v, want ErrPathUnsafe", in, version, err)
+			}
+		}
 	}
 }
 

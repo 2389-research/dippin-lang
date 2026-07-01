@@ -14,16 +14,19 @@ const (
 	maxPathComponents = 16
 )
 
-// Canonicalize returns the canonical form of a bundle-relative path or an
-// error if the path violates any rule in the spec's "Path canonicalization"
-// section. All call sites in dipx and its consumers MUST use this function;
-// no other code in dipx is permitted to call path.Clean / filepath.Clean.
+// Canonicalize applies the version-independent SAFETY rules (NFC, reject
+// absolute paths, .. segments, backslash, NUL/control chars, component-count
+// cap, Windows-reserved names) and returns the canonical form of a
+// bundle-relative path or an error if any safety rule is violated. It does
+// NOT enforce the workflows/ prefix or the .dip suffix — those are
+// version-aware POLICY; call checkPathPolicy for them. All call sites in dipx
+// and its consumers MUST use this function; no other code in dipx is permitted
+// to call path.Clean / filepath.Clean.
 func Canonicalize(p string) (string, error) {
 	checks := []func(string) error{
 		checkPathBasics,
 		checkPathStructure,
 		checkPathComponents,
-		checkPathSuffix,
 		checkPathIdempotent,
 	}
 	for _, fn := range checks {
@@ -90,12 +93,26 @@ func checkPathComponents(p string) error {
 	return nil
 }
 
-// checkPathSuffix enforces workflows/ prefix and .dip suffix.
-func checkPathSuffix(p string) error {
+// isReservedBundleName reports whether p collides with a root-level reserved
+// bundle entry. Because assets live under workflows/ they can never collide,
+// but checkPathPolicy asserts it anyway as defense in depth (spec § Security 4).
+func isReservedBundleName(p string) bool {
+	return p == "manifest.json" || p == "manifest.sig"
+}
+
+// checkPathPolicy enforces the version-aware path POLICY that Canonicalize no
+// longer applies. Both versions require the workflows/ prefix and reject the
+// reserved bundle names; format_version 1 additionally requires the .dip
+// suffix (every listed path is a workflow). format_version 2 allows any
+// canonical path under workflows/ that does not end in .dip to be an asset.
+func checkPathPolicy(p string, version int) error {
+	if isReservedBundleName(p) {
+		return newError(ErrPathUnsafe, p, "reserved bundle name", nil)
+	}
 	if !strings.HasPrefix(p, "workflows/") {
 		return newError(ErrPathUnsafe, p, "must start with workflows/", nil)
 	}
-	if !strings.HasSuffix(p, ".dip") {
+	if version == 1 && !strings.HasSuffix(p, ".dip") {
 		return newError(ErrPathUnsafe, p, "must end with .dip", nil)
 	}
 	return nil
@@ -292,8 +309,15 @@ func resolveLexically(refPath, relativeTo string) (string, error) {
 	}
 	joined := path.Join(dir, refPath)
 	cleaned := path.Clean(joined)
-	// Run through Canonicalize for safety checks. Note: refPath may have
-	// originally contained "..", which path.Clean resolves; the resulting
-	// cleaned path must itself be canonical.
-	return Canonicalize(cleaned)
+	// Run through Canonicalize for safety checks, then apply v1 path policy:
+	// subgraph refs are always workflows (workflows/ prefix + .dip suffix),
+	// which holds for both format_version 1 and 2 bundles. Note: refPath may
+	// have originally contained "..", which path.Clean resolves; the resulting
+	// cleaned path must itself be canonical. The future CI grep (Task 26) must
+	// allowlist both the Canonicalize and checkPathPolicy calls here.
+	canon, err := Canonicalize(cleaned)
+	if err != nil {
+		return "", err
+	}
+	return canon, checkPathPolicy(canon, 1)
 }

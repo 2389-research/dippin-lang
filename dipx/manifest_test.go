@@ -177,6 +177,72 @@ func TestVerifyManifestShape_MissingPath(t *testing.T) {
 	}
 }
 
+// TestVerifyManifestShape_V2_Happy proves format_version 2 accepts a manifest
+// mixing a .dip workflow and a non-.dip asset under workflows/.
+func TestVerifyManifestShape_V2_Happy(t *testing.T) {
+	hash := strings.Repeat("a", 64)
+	m := Manifest{
+		FormatVersion: 2,
+		Entry:         "workflows/entry.dip",
+		Files: []ManifestEntry{
+			{Path: "workflows/entry.dip", SHA256: hash},
+			{Path: "workflows/scripts/boot.sh", SHA256: hash},
+		},
+	}
+	if err := verifyManifestShape(m); err != nil {
+		t.Fatalf("verifyManifestShape(v2 mixed) = %v, want nil", err)
+	}
+}
+
+// TestVerifyManifestShape_V2_EntryMustBeDIP proves the entry is held to v1
+// policy (.dip suffix) even in a v2 bundle.
+func TestVerifyManifestShape_V2_EntryMustBeDIP(t *testing.T) {
+	hash := strings.Repeat("a", 64)
+	m := Manifest{
+		FormatVersion: 2,
+		Entry:         "workflows/boot.sh",
+		Files: []ManifestEntry{
+			{Path: "workflows/boot.sh", SHA256: hash},
+		},
+	}
+	if err := verifyManifestShape(m); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("verifyManifestShape(v2 non-.dip entry) = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestVerifyManifestShape_V1_RejectsAssetEntry proves v1 policy is unchanged:
+// a non-.dip path in files[] is rejected.
+func TestVerifyManifestShape_V1_RejectsAssetEntry(t *testing.T) {
+	hash := strings.Repeat("a", 64)
+	m := Manifest{
+		FormatVersion: 1,
+		Entry:         "workflows/entry.dip",
+		Files: []ManifestEntry{
+			{Path: "workflows/entry.dip", SHA256: hash},
+			{Path: "workflows/scripts/boot.sh", SHA256: hash},
+		},
+	}
+	if err := verifyManifestShape(m); !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("verifyManifestShape(v1 asset entry) = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestSupportedFormatVersions_IncludesV2 confirms the gate accepts v2.
+func TestSupportedFormatVersions_IncludesV2(t *testing.T) {
+	var has1, has2 bool
+	for _, v := range SupportedFormatVersions() {
+		if v == 1 {
+			has1 = true
+		}
+		if v == 2 {
+			has2 = true
+		}
+	}
+	if !has1 || !has2 {
+		t.Fatalf("SupportedFormatVersions() = %v, want to contain 1 and 2", SupportedFormatVersions())
+	}
+}
+
 // TestDecodeManifest_DepthAtCap is the positive boundary partner to
 // TestDecodeManifest_DepthCap. The depth cap is 32. The source builds the
 // top-level object (depth 1) plus 31 nested unknown-key objects = depth 32,
