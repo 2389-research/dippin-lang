@@ -19,9 +19,10 @@ const (
 // cap, Windows-reserved names) and returns the canonical form of a
 // bundle-relative path or an error if any safety rule is violated. It does
 // NOT enforce the workflows/ prefix or the .dip suffix — those are
-// version-aware POLICY; call checkPathPolicy for them. All call sites in dipx
-// and its consumers MUST use this function; no other code in dipx is permitted
-// to call path.Clean / filepath.Clean.
+// version-aware POLICY, enforced separately inside dipx by checkPathPolicy;
+// external callers of Canonicalize get safety canonicalization only. Within
+// dipx, all bundle-path handling MUST go through this function; no other code
+// in dipx is permitted to call path.Clean / filepath.Clean.
 func Canonicalize(p string) (string, error) {
 	checks := []func(string) error{
 		checkPathBasics,

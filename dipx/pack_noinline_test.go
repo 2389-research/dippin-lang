@@ -498,12 +498,9 @@ func TestPack_NoInlineExtractRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatalf("read extracted %s: %v", rel, err)
 		}
-		if rel == "dev_loop.dip" {
-			if !strings.Contains(string(got), "command_file:") {
-				t.Errorf("extracted entry lost command_file: directive")
-			}
-			continue // .dip is reformatted; assets are byte-identical
-		}
+		// No-inline pack ships raw .dip bytes (dipx never reformats — it can't
+		// import the formatter), so every file, including the entry .dip, must
+		// extract byte-identical to source under workflows/<rel>.
 		if string(got) != want {
 			t.Errorf("extracted %s not byte-identical:\n got %q\nwant %q", rel, got, want)
 		}
