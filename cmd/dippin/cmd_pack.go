@@ -35,14 +35,16 @@ func (c *CLI) CmdPack(args []string) ExitCode {
 	return ExitCode(runPack(c.Stdout, c.Stderr, args))
 }
 
-// runPack implements `dippin pack <entry.dip> [-o output] [--dry-run]`.
-// Returns one of exitDipx* per the .dipx CLI contract.
+// runPack implements `dippin pack <entry.dip> [-o output] [--dry-run]
+// [--no-inline] [--include <path>...]`. Returns one of exitDipx* per the .dipx
+// CLI contract.
 //
-// Before invoking dipx.Pack on the user-supplied entry, we build a shadow
-// source tree with all command_file: directives resolved to inline command:
-// blocks. dipx.Pack then walks the shadow tree, so the produced bundle is
-// self-contained and does not require the referenced script files to exist
-// when the bundle is later opened.
+// Default (inline) mode builds a shadow source tree with every command_file: /
+// prompt_file: / system_prompt_file: directive resolved to an inline block (see
+// runPackInline), so the bundle is self-contained and needs no referenced files
+// on disk when later opened. --no-inline instead packs the real entry, shipping
+// the directive targets and any --include assets as separate bundle entries and
+// keeping the *_file: directives (dipx.PackOptions).
 func runPack(stdout, stderr io.Writer, args []string) int {
 	pargs, code := parsePackArgs(stderr, args)
 	if code != -1 {

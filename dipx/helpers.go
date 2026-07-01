@@ -270,7 +270,7 @@ func walkSourceTree(ctx context.Context, entryPath string, opts PackOptions) (pa
 	if err := runWalkLoop(ctx, st); err != nil {
 		return packedFile{}, nil, err
 	}
-	return assemblePackFiles(st, opts.Include)
+	return assemblePackFiles(ctx, st, opts.Include)
 }
 
 // initPackWalkState absolutizes entryPath and constructs the walk state.
@@ -298,11 +298,11 @@ func runWalkLoop(ctx context.Context, st *packWalkState) error {
 // assemblePackFiles returns the entry plus every packed file. In NoInline mode
 // it appends the collected directive/--include assets before returning; the
 // combined slice is sorted by path later in writeBundle/buildManifestForPack.
-func assemblePackFiles(st *packWalkState, includes []string) (packedFile, []packedFile, error) {
+func assemblePackFiles(ctx context.Context, st *packWalkState, includes []string) (packedFile, []packedFile, error) {
 	if !st.trackWfs {
 		return st.entry, st.all, nil
 	}
-	assets, err := collectAllAssets(st, includes)
+	assets, err := collectAllAssets(ctx, st, includes)
 	if err != nil {
 		return packedFile{}, nil, err
 	}
@@ -721,9 +721,12 @@ func collectIncludeFile(abs, rootDir string, visited map[string]struct{}) ([]pac
 // walkIncludeEntry is the filepath.WalkDir callback for resolveIncludeDir. It
 // skips directory entries; file entries (including symlink leaves, which
 // readAssetFile rejects) route through collectIncludeFile.
-func walkIncludeEntry(path string, d fs.DirEntry, err error, rootDir string, visited map[string]struct{}, results *[]packedFile, found *int) error {
+func walkIncludeEntry(ctx context.Context, path string, d fs.DirEntry, err error, rootDir string, visited map[string]struct{}, results *[]packedFile, found *int) error {
 	if err != nil {
 		return err
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 	if d.IsDir() {
 		return nil
@@ -743,11 +746,11 @@ func walkIncludeEntry(path string, d fs.DirEntry, err error, rootDir string, vis
 // files (empty, or only subdirectories) is an error, to catch typos rather
 // than silently shipping nothing. `found` counts files before dedup, so a
 // directory whose files are all already shipped does not spuriously error.
-func resolveIncludeDir(absDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+func resolveIncludeDir(ctx context.Context, absDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
 	var results []packedFile
 	found := 0
 	err := filepath.WalkDir(absDir, func(path string, d fs.DirEntry, err error) error {
-		return walkIncludeEntry(path, d, err, rootDir, visited, &results, &found)
+		return walkIncludeEntry(ctx, path, d, err, rootDir, visited, &results, &found)
 	})
 	if err != nil {
 		return nil, err
@@ -760,7 +763,7 @@ func resolveIncludeDir(absDir, rootDir string, visited map[string]struct{}) ([]p
 
 // resolveIncludePath resolves one --include value (file or directory) relative
 // to entryDir, validates containment, then delegates to the dir or file reader.
-func resolveIncludePath(rel, entryDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+func resolveIncludePath(ctx context.Context, rel, entryDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
 	if rel == "" {
 		return nil, newError(ErrPathUnsafe, rel, "empty --include path", nil)
 	}
@@ -773,31 +776,59 @@ func resolveIncludePath(rel, entryDir, rootDir string, visited map[string]struct
 		return nil, err
 	}
 	if info.IsDir() {
-		return resolveIncludeDir(abs, rootDir, visited)
+		return resolveIncludeDir(ctx, abs, rootDir, visited)
 	}
 	return collectIncludeFile(abs, rootDir, visited)
 }
 
-// collectAllAssets gathers directive assets from every walked workflow plus each
-// --include path, deduplicating via st.visited, then sorts by bundle path for
-// determinism (WalkDir and map iteration order are not guaranteed).
-func collectAllAssets(st *packWalkState, includes []string) ([]packedFile, error) {
-	entryDir := filepath.Dir(st.entryAbs)
+// collectWorkflowAssets gathers directive assets from every walked workflow,
+// honoring ctx cancellation between workflows.
+func collectWorkflowAssets(ctx context.Context, st *packWalkState) ([]packedFile, error) {
 	var assets []packedFile
 	for absPath, wf := range st.wfMap {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		pfs, err := collectDirectiveAssets(wf, absPath, st.rootDir, st.visited)
 		if err != nil {
 			return nil, err
 		}
 		assets = append(assets, pfs...)
 	}
+	return assets, nil
+}
+
+// collectIncludeAssets resolves every --include path, honoring ctx cancellation
+// between includes.
+func collectIncludeAssets(ctx context.Context, st *packWalkState, includes []string) ([]packedFile, error) {
+	entryDir := filepath.Dir(st.entryAbs)
+	var assets []packedFile
 	for _, inc := range includes {
-		pfs, err := resolveIncludePath(inc, entryDir, st.rootDir, st.visited)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		pfs, err := resolveIncludePath(ctx, inc, entryDir, st.rootDir, st.visited)
 		if err != nil {
 			return nil, err
 		}
 		assets = append(assets, pfs...)
 	}
+	return assets, nil
+}
+
+// collectAllAssets gathers directive assets from every walked workflow plus each
+// --include path, deduplicating via st.visited, then sorts by bundle path for
+// determinism (WalkDir and map iteration order are not guaranteed).
+func collectAllAssets(ctx context.Context, st *packWalkState, includes []string) ([]packedFile, error) {
+	assets, err := collectWorkflowAssets(ctx, st)
+	if err != nil {
+		return nil, err
+	}
+	inc, err := collectIncludeAssets(ctx, st, includes)
+	if err != nil {
+		return nil, err
+	}
+	assets = append(assets, inc...)
 	sort.Slice(assets, func(i, j int) bool { return assets[i].bundlePath < assets[j].bundlePath })
 	return assets, nil
 }

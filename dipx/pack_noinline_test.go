@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/2389-research/dippin-lang/ir"
 )
 
 // dipWithCommandFile is a minimal workflow referencing a script via
@@ -414,6 +416,33 @@ func TestPack_IncludeWithoutNoInlineErrors(t *testing.T) {
 	_, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf, PackOptions{Include: []string{"loose"}})
 	if !errors.Is(err, ErrPathUnsafe) {
 		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestCollectAllAssets_ContextCancelled guards that no-inline asset collection
+// honors ctx cancellation in both the per-workflow and per-include loops, so a
+// cancel after the workflow BFS still short-circuits before walking/reading.
+func TestCollectAllAssets_ContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	stWf := &packWalkState{
+		rootDir:  "/x",
+		visited:  map[string]struct{}{},
+		trackWfs: true,
+		wfMap:    map[string]*ir.Workflow{"/x/a.dip": {}},
+	}
+	if _, err := collectAllAssets(ctx, stWf, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("workflow loop: err = %v, want context.Canceled", err)
+	}
+	stInc := &packWalkState{
+		entryAbs: "/x/a.dip",
+		rootDir:  "/x",
+		visited:  map[string]struct{}{},
+		trackWfs: true,
+		wfMap:    map[string]*ir.Workflow{},
+	}
+	if _, err := collectAllAssets(ctx, stInc, []string{"lib"}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("include loop: err = %v, want context.Canceled", err)
 	}
 }
 
