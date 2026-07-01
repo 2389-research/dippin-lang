@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -125,6 +126,9 @@ func walkRefs(parsed map[string]*ir.Workflow, m Manifest) error {
 // hundred workflows in practice).
 func detectCyclesAll(graph map[string][]string, m Manifest) error {
 	for _, e := range m.Files {
+		if !strings.HasSuffix(e.Path, ".dip") {
+			continue // asset entries have no ref graph; cycle-check workflows only
+		}
 		if err := detectCycles(graph, e.Path); err != nil {
 			return err
 		}
@@ -219,18 +223,32 @@ func normalizeConditions(parsed map[string]*ir.Workflow) error {
 func parseAllWorkflows(verified map[string]verifiedBytes, entryPath string) (map[string]*ir.Workflow, error) {
 	out := make(map[string]*ir.Workflow, len(verified))
 	for path, vb := range verified {
-		p := parser.NewParser(string(vb.Bytes()), path)
-		wf, err := p.Parse()
+		if !strings.HasSuffix(path, ".dip") {
+			continue // non-.dip entries are opaque assets (format_version 2)
+		}
+		wf, err := parseOneVerifiedWorkflow(path, vb, entryPath)
 		if err != nil {
-			sentinel := ErrSubgraphParse
-			if path == entryPath {
-				sentinel = ErrEntryParse
-			}
-			return nil, newError(sentinel, path, "parse failed", err)
+			return nil, err
 		}
 		out[path] = wf
 	}
 	return out, nil
+}
+
+// parseOneVerifiedWorkflow parses a single verified .dip entry, attributing a
+// parse failure to ErrEntryParse for the entry and ErrSubgraphParse otherwise.
+// This is the verifiedBytes-pathway call site of parser.NewParser (site 1 of
+// the three-site inventory documented on parseAllWorkflows).
+func parseOneVerifiedWorkflow(path string, vb verifiedBytes, entryPath string) (*ir.Workflow, error) {
+	wf, err := parser.NewParser(string(vb.Bytes()), path).Parse()
+	if err != nil {
+		sentinel := ErrSubgraphParse
+		if path == entryPath {
+			sentinel = ErrEntryParse
+		}
+		return nil, newError(sentinel, path, "parse failed", err)
+	}
+	return wf, nil
 }
 
 // packedFile is one source file collected by walkSourceTree.
@@ -242,23 +260,53 @@ type packedFile struct {
 
 // walkSourceTree collects the entry workflow plus every transitively-referenced
 // subgraph from disk. Refuses to follow symlinks. Refuses if any ref escapes
-// the entry's source root.
-func walkSourceTree(ctx context.Context, entryPath string) (packedFile, []packedFile, error) {
-	entryAbs, err := filepath.Abs(entryPath)
+// the entry's source root. When opts.NoInline is set it also collects directive
+// and --include asset files as non-.dip bundle entries.
+func walkSourceTree(ctx context.Context, entryPath string, opts PackOptions) (packedFile, []packedFile, error) {
+	st, err := initPackWalkState(entryPath, opts.NoInline)
 	if err != nil {
 		return packedFile{}, nil, err
 	}
-	rootDir := filepath.Dir(entryAbs)
-	st := newPackWalkState(entryAbs, rootDir)
+	if err := runWalkLoop(ctx, st); err != nil {
+		return packedFile{}, nil, err
+	}
+	return assemblePackFiles(st, opts.Include)
+}
+
+// initPackWalkState absolutizes entryPath and constructs the walk state.
+func initPackWalkState(entryPath string, trackWfs bool) (*packWalkState, error) {
+	entryAbs, err := filepath.Abs(entryPath)
+	if err != nil {
+		return nil, err
+	}
+	return newPackWalkState(entryAbs, filepath.Dir(entryAbs), trackWfs), nil
+}
+
+// runWalkLoop drives the BFS until the queue is empty, checking ctx per step.
+func runWalkLoop(ctx context.Context, st *packWalkState) error {
 	for st.hasMore() {
 		if err := ctx.Err(); err != nil {
-			return packedFile{}, nil, err
+			return err
 		}
 		if err := st.visitNext(); err != nil {
-			return packedFile{}, nil, err
+			return err
 		}
 	}
-	return st.entry, st.all, nil
+	return nil
+}
+
+// assemblePackFiles returns the entry plus every packed file. In NoInline mode
+// it appends the collected directive/--include assets before returning; the
+// combined slice is sorted by path later in writeBundle/buildManifestForPack.
+func assemblePackFiles(st *packWalkState, includes []string) (packedFile, []packedFile, error) {
+	if !st.trackWfs {
+		return st.entry, st.all, nil
+	}
+	assets, err := collectAllAssets(st, includes)
+	if err != nil {
+		return packedFile{}, nil, err
+	}
+	return st.entry, append(st.all, assets...), nil
 }
 
 // packWalkState carries iteration state for walkSourceTree so each step can be
@@ -270,15 +318,22 @@ type packWalkState struct {
 	queue    []string
 	entry    packedFile
 	all      []packedFile
+	trackWfs bool                    // NoInline: record parsed workflows for asset collection
+	wfMap    map[string]*ir.Workflow // populated only when trackWfs; key = absPath
 }
 
-func newPackWalkState(entryAbs, rootDir string) *packWalkState {
-	return &packWalkState{
+func newPackWalkState(entryAbs, rootDir string, trackWfs bool) *packWalkState {
+	st := &packWalkState{
 		entryAbs: entryAbs,
 		rootDir:  rootDir,
 		visited:  map[string]struct{}{},
 		queue:    []string{entryAbs},
+		trackWfs: trackWfs,
 	}
+	if trackWfs {
+		st.wfMap = map[string]*ir.Workflow{}
+	}
+	return st
 }
 
 func (s *packWalkState) hasMore() bool { return len(s.queue) > 0 }
@@ -300,6 +355,9 @@ func (s *packWalkState) visitNext() error {
 		s.entry = pf
 	}
 	s.all = append(s.all, pf)
+	if s.trackWfs {
+		s.wfMap[cur] = wf
+	}
 	return s.enqueueRefs(cur, wf)
 }
 
@@ -466,6 +524,246 @@ func buildManifestForPack(entry packedFile, all []packedFile) Manifest {
 		Entry:         entry.bundlePath,
 		Files:         files,
 	}
+}
+
+// buildPackManifest enforces pack-time caps then routes to the v1 (inline) or
+// v2 (no-inline) manifest builder.
+func buildPackManifest(entry packedFile, all []packedFile, noInline bool) (Manifest, error) {
+	if err := checkPackCaps(all); err != nil {
+		return Manifest{}, err
+	}
+	if noInline {
+		return buildManifestForPackV2(entry, all), nil
+	}
+	return buildManifestForPack(entry, all), nil
+}
+
+// buildManifestForPackV2 emits format_version 2. Kept separate from the v1
+// builder so the v1 path stays byte-identical (goldens and Identity() stable).
+func buildManifestForPackV2(entry packedFile, all []packedFile) Manifest {
+	files := make([]ManifestEntry, 0, len(all))
+	for _, pf := range all {
+		files = append(files, ManifestEntry{Path: pf.bundlePath, SHA256: pf.hash})
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return Manifest{
+		FormatVersion: 2,
+		Entry:         entry.bundlePath,
+		Files:         files,
+	}
+}
+
+// checkPackCaps enforces the 10 000-file and 100 MB-total caps at pack time so
+// the producer cannot emit a bundle that fails its own Open (spec § Security 2).
+func checkPackCaps(all []packedFile) error {
+	if len(all) > maxFiles {
+		return newError(ErrCapExceeded, "", fmt.Sprintf("files exceeds %d", maxFiles), nil)
+	}
+	var total int64
+	for _, pf := range all {
+		total += int64(len(pf.bytes))
+	}
+	if total > maxTotalUncompBytes {
+		return newError(ErrCapExceeded, "", fmt.Sprintf("total uncompressed bytes would exceed %d", maxTotalUncompBytes), nil)
+	}
+	return nil
+}
+
+// ensureAssetUnderRoot rejects an absolute path that escapes rootDir, using the
+// same lexical `..`-component check as resolveRefOnDisk.
+func ensureAssetUnderRoot(abs, rootDir string) error {
+	rel, err := filepath.Rel(rootDir, abs)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return newError(ErrPathUnsafe, abs, "path escapes source root", nil)
+	}
+	return nil
+}
+
+// readAssetFile reads a non-.dip asset through ReadNoFollowSymlinks (which
+// refuses symlink leaves/ancestors and non-regular files), enforces the
+// per-file cap, and returns a packedFile at its mirrored workflows/ bundle
+// path. Callers MUST run ensureAssetUnderRoot first (ReadNoFollowSymlinks
+// assumes containment).
+func readAssetFile(abs, rootDir string) (packedFile, error) {
+	raw, err := ReadNoFollowSymlinks(abs, rootDir)
+	if err != nil {
+		return packedFile{}, err
+	}
+	if int64(len(raw)) > maxPerFileBytes {
+		return packedFile{}, newError(ErrCapExceeded, abs, fmt.Sprintf("asset file exceeds %d bytes", maxPerFileBytes), nil)
+	}
+	bp, err := bundlePathFor(abs, rootDir)
+	if err != nil {
+		return packedFile{}, err
+	}
+	return packedFile{bundlePath: bp, bytes: raw, hash: hashHex(raw)}, nil
+}
+
+// agentFileDirectives returns the non-empty file-directive paths on an agent
+// config (prompt_file, system_prompt_file).
+func agentFileDirectives(cfg ir.AgentConfig) []string {
+	var out []string
+	if cfg.PromptFile != "" {
+		out = append(out, cfg.PromptFile)
+	}
+	if cfg.SystemPromptFile != "" {
+		out = append(out, cfg.SystemPromptFile)
+	}
+	return out
+}
+
+// fileDirectivesForNode returns the file-directive source paths for a node:
+// command_file for tool nodes, prompt_file/system_prompt_file for agent nodes.
+func fileDirectivesForNode(n *ir.Node) []string {
+	switch cfg := n.Config.(type) {
+	case ir.ToolConfig:
+		if cfg.CommandFile != "" {
+			return []string{cfg.CommandFile}
+		}
+	case ir.AgentConfig:
+		return agentFileDirectives(cfg)
+	}
+	return nil
+}
+
+// collectDirectiveFile resolves one file-directive path (relative to wfDir),
+// checks containment, deduplicates via visited, and reads the file as an asset.
+func collectDirectiveFile(rel, wfDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	if rel == "" {
+		return nil, nil
+	}
+	abs := filepath.Clean(filepath.Join(wfDir, rel))
+	if err := ensureAssetUnderRoot(abs, rootDir); err != nil {
+		return nil, err
+	}
+	if _, ok := visited[abs]; ok {
+		return nil, nil
+	}
+	pf, err := readAssetFile(abs, rootDir)
+	if err != nil {
+		return nil, err
+	}
+	visited[abs] = struct{}{}
+	return []packedFile{pf}, nil
+}
+
+// collectNodeDirectiveFiles gathers all directive assets referenced by one node.
+func collectNodeDirectiveFiles(n *ir.Node, wfDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	var results []packedFile
+	for _, rel := range fileDirectivesForNode(n) {
+		pfs, err := collectDirectiveFile(rel, wfDir, rootDir, visited)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, pfs...)
+	}
+	return results, nil
+}
+
+// collectDirectiveAssets walks all nodes in wf collecting command_file /
+// prompt_file / system_prompt_file targets, resolved relative to the
+// workflow's own directory (wfAbsPath's dir).
+func collectDirectiveAssets(wf *ir.Workflow, wfAbsPath, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	wfDir := filepath.Dir(wfAbsPath)
+	var results []packedFile
+	for _, n := range wf.Nodes {
+		pfs, err := collectNodeDirectiveFiles(n, wfDir, rootDir, visited)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, pfs...)
+	}
+	return results, nil
+}
+
+// collectIncludeFile reads one --include leaf file as an asset, rejecting .dip
+// targets and skipping already-visited paths.
+func collectIncludeFile(abs, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	if strings.HasSuffix(abs, ".dip") {
+		return nil, newError(ErrPathUnsafe, abs, "assets may not end in .dip", nil)
+	}
+	if _, ok := visited[abs]; ok {
+		return nil, nil
+	}
+	pf, err := readAssetFile(abs, rootDir)
+	if err != nil {
+		return nil, err
+	}
+	visited[abs] = struct{}{}
+	return []packedFile{pf}, nil
+}
+
+// walkIncludeEntry is the filepath.WalkDir callback for resolveIncludeDir. It
+// skips directory entries; file entries (including symlink leaves, which
+// readAssetFile rejects) route through collectIncludeFile.
+func walkIncludeEntry(path string, d fs.DirEntry, err error, rootDir string, visited map[string]struct{}, results *[]packedFile) error {
+	if err != nil {
+		return err
+	}
+	if d.IsDir() {
+		return nil
+	}
+	pfs, err := collectIncludeFile(path, rootDir, visited)
+	if err != nil {
+		return err
+	}
+	*results = append(*results, pfs...)
+	return nil
+}
+
+// resolveIncludeDir safely walks absDir collecting non-.dip files. WalkDir does
+// not descend into symlinked directories; symlink leaves are re-validated by
+// ReadNoFollowSymlinks inside readAssetFile.
+func resolveIncludeDir(absDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	var results []packedFile
+	err := filepath.WalkDir(absDir, func(path string, d fs.DirEntry, err error) error {
+		return walkIncludeEntry(path, d, err, rootDir, visited, &results)
+	})
+	return results, err
+}
+
+// resolveIncludePath resolves one --include value (file or directory) relative
+// to entryDir, validates containment, then delegates to the dir or file reader.
+func resolveIncludePath(rel, entryDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	if rel == "" {
+		return nil, newError(ErrPathUnsafe, rel, "empty --include path", nil)
+	}
+	abs := filepath.Clean(filepath.Join(entryDir, rel))
+	if err := ensureAssetUnderRoot(abs, rootDir); err != nil {
+		return nil, err
+	}
+	info, err := os.Lstat(abs)
+	if err != nil {
+		return nil, err
+	}
+	if info.IsDir() {
+		return resolveIncludeDir(abs, rootDir, visited)
+	}
+	return collectIncludeFile(abs, rootDir, visited)
+}
+
+// collectAllAssets gathers directive assets from every walked workflow plus each
+// --include path, deduplicating via st.visited, then sorts by bundle path for
+// determinism (WalkDir and map iteration order are not guaranteed).
+func collectAllAssets(st *packWalkState, includes []string) ([]packedFile, error) {
+	entryDir := filepath.Dir(st.entryAbs)
+	var assets []packedFile
+	for absPath, wf := range st.wfMap {
+		pfs, err := collectDirectiveAssets(wf, absPath, st.rootDir, st.visited)
+		if err != nil {
+			return nil, err
+		}
+		assets = append(assets, pfs...)
+	}
+	for _, inc := range includes {
+		pfs, err := resolveIncludePath(inc, entryDir, st.rootDir, st.visited)
+		if err != nil {
+			return nil, err
+		}
+		assets = append(assets, pfs...)
+	}
+	sort.Slice(assets, func(i, j int) bool { return assets[i].bundlePath < assets[j].bundlePath })
+	return assets, nil
 }
 
 // writeBundle writes a deterministic .dipx to w. manifest.json is always the

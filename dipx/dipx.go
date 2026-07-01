@@ -196,12 +196,25 @@ func buildBundle(m Manifest, manifestBytes []byte, parsed map[string]*ir.Workflo
 	}
 }
 
+// PackOptions controls Pack's file-shipping behavior. The zero value
+// reproduces the default inline behavior exactly (format_version 1).
+type PackOptions struct {
+	// NoInline ships directive targets (command_file:/prompt_file:/
+	// system_prompt_file:) as opaque asset entries and keeps the *_file:
+	// directives in the packed .dip text. Produces format_version 2.
+	NoInline bool
+	// Include lists extra sibling files or directories (relative to the entry
+	// .dip's directory) to ship as assets. Requires NoInline.
+	Include []string
+}
+
 // Pack builds a .dipx from an entry .dip on disk and writes it to w. Walks
 // every transitively-reachable subgraph ref. Validates structurally, applies
 // all path-safety and ZIP-feature constraints, and produces a deterministic
-// byte stream. Returns the resulting Manifest.
-func Pack(ctx context.Context, entryPath string, w io.Writer) (Manifest, error) {
-	manifest, all, err := preparePackManifest(ctx, entryPath)
+// byte stream. Returns the resulting Manifest. The zero-value PackOptions
+// reproduces the default inline behavior (format_version 1).
+func Pack(ctx context.Context, entryPath string, w io.Writer, opts PackOptions) (Manifest, error) {
+	manifest, all, err := preparePackManifest(ctx, entryPath, opts)
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -217,15 +230,18 @@ func Pack(ctx context.Context, entryPath string, w io.Writer) (Manifest, error) 
 // preparePackManifest walks the source tree and assembles a verified Manifest
 // alongside the packed-file slice ready to write. Split out from Pack so each
 // half stays under the project's complexity caps.
-func preparePackManifest(ctx context.Context, entryPath string) (Manifest, []packedFile, error) {
+func preparePackManifest(ctx context.Context, entryPath string, opts PackOptions) (Manifest, []packedFile, error) {
 	if err := ctx.Err(); err != nil {
 		return Manifest{}, nil, err
 	}
-	entry, all, err := walkSourceTree(ctx, entryPath)
+	entry, all, err := walkSourceTree(ctx, entryPath, opts)
 	if err != nil {
 		return Manifest{}, nil, err
 	}
-	manifest := buildManifestForPack(entry, all)
+	manifest, err := buildPackManifest(entry, all, opts.NoInline)
+	if err != nil {
+		return Manifest{}, nil, err
+	}
 	if err := verifyManifestShape(manifest); err != nil {
 		return Manifest{}, nil, err
 	}

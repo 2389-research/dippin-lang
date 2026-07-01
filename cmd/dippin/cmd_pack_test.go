@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -340,6 +341,117 @@ func TestRunPack_RejectsSubgraphRefEscape(t *testing.T) {
 	if !strings.Contains(combined, "escapes source root") {
 		t.Errorf("expected 'escapes source root' in error; got: %s", combined)
 	}
+}
+
+// TestRunPack_NoInlineProducesV2 confirms --no-inline yields a format_version 2
+// bundle that keeps the command_file: directive and ships the asset.
+func TestRunPack_NoInlineProducesV2(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "scripts", "run.sh"), []byte("#!/bin/sh\necho hi\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	src := `workflow A
+  goal: "no-inline"
+  start: Run
+  exit: Done
+
+  tool Run
+    timeout: 30s
+    command_file: scripts/run.sh
+
+  agent Done
+    prompt:
+      Done.
+
+  edges
+    Run -> Done
+`
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(dir, "a.dipx")
+	var stdout, stderr bytes.Buffer
+	if code := runPack(&stdout, &stderr, []string{"--no-inline", "-o", out, entry}); code != exitDipxOK {
+		t.Fatalf("pack exit = %d; stderr=%s", code, stderr.String())
+	}
+	if v := readBundleFormatVersion(t, out); v != 2 {
+		t.Fatalf("FormatVersion = %d, want 2", v)
+	}
+	if !strings.Contains(readBundledDip(t, out, "workflows/a.dip"), "command_file:") {
+		t.Error("bundled .dip lost command_file: directive under --no-inline")
+	}
+	found := false
+	for _, name := range listBundleEntries(t, out) {
+		if name == "workflows/scripts/run.sh" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("asset workflows/scripts/run.sh missing: %v", listBundleEntries(t, out))
+	}
+}
+
+// TestRunPack_DefaultStillV1 is the backward-compat regression guard: default
+// pack stays format_version 1 and byte-deterministic.
+func TestRunPack_DefaultStillV1(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(minimalDip), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out1 := filepath.Join(dir, "a1.dipx")
+	out2 := filepath.Join(dir, "a2.dipx")
+	var sout, serr bytes.Buffer
+	if code := runPack(&sout, &serr, []string{"-o", out1, entry}); code != exitDipxOK {
+		t.Fatalf("pack1 exit = %d; %s", code, serr.String())
+	}
+	if code := runPack(&sout, &serr, []string{"-o", out2, entry}); code != exitDipxOK {
+		t.Fatalf("pack2 exit = %d; %s", code, serr.String())
+	}
+	b1, _ := os.ReadFile(out1)
+	b2, _ := os.ReadFile(out2)
+	if !bytes.Equal(b1, b2) {
+		t.Fatal("default pack is not byte-deterministic")
+	}
+	if v := readBundleFormatVersion(t, out1); v != 1 {
+		t.Fatalf("FormatVersion = %d, want 1", v)
+	}
+}
+
+// TestRunPack_IncludeRequiresNoInline confirms --include without --no-inline is
+// a usage error.
+func TestRunPack_IncludeRequiresNoInline(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(minimalDip), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	code := runPack(&stdout, &stderr, []string{"--include", "scripts/", "-o", filepath.Join(dir, "a.dipx"), entry})
+	if code != exitDipxUserError {
+		t.Fatalf("exit = %d, want %d", code, exitDipxUserError)
+	}
+	if !strings.Contains(stderr.String(), "--include requires --no-inline") {
+		t.Errorf("stderr missing usage message: %s", stderr.String())
+	}
+}
+
+// readBundleFormatVersion reads manifest.json from a bundle and returns its
+// format_version.
+func readBundleFormatVersion(t *testing.T, bundlePath string) int {
+	t.Helper()
+	raw := readBundledDip(t, bundlePath, "manifest.json")
+	var m struct {
+		FormatVersion int `json:"format_version"`
+	}
+	if err := json.Unmarshal([]byte(raw), &m); err != nil {
+		t.Fatalf("decode manifest: %v", err)
+	}
+	return m.FormatVersion
 }
 
 // readBundledDip extracts the named .dip file from the bundle and returns
