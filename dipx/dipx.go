@@ -208,12 +208,25 @@ type PackOptions struct {
 	Include []string
 }
 
+// validatePackOptions rejects incoherent option combinations. Include is only
+// meaningful with NoInline (the inline walk never collects assets), so setting
+// it without NoInline is a caller error rather than a silent no-op.
+func validatePackOptions(opts PackOptions) error {
+	if len(opts.Include) > 0 && !opts.NoInline {
+		return newError(ErrPathUnsafe, "", "PackOptions.Include requires NoInline", nil)
+	}
+	return nil
+}
+
 // Pack builds a .dipx from an entry .dip on disk and writes it to w. Walks
 // every transitively-reachable subgraph ref. Validates structurally, applies
 // all path-safety and ZIP-feature constraints, and produces a deterministic
 // byte stream. Returns the resulting Manifest. The zero-value PackOptions
 // reproduces the default inline behavior (format_version 1).
 func Pack(ctx context.Context, entryPath string, w io.Writer, opts PackOptions) (Manifest, error) {
+	if err := validatePackOptions(opts); err != nil {
+		return Manifest{}, err
+	}
 	manifest, all, err := preparePackManifest(ctx, entryPath, opts)
 	if err != nil {
 		return Manifest{}, err

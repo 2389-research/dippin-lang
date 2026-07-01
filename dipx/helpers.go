@@ -629,14 +629,34 @@ func fileDirectivesForNode(n *ir.Node) []string {
 	return nil
 }
 
+// resolveDirectiveTarget validates one file-directive path the same way
+// parser.ResolveFileDirectives does for source/inline packs: it rejects
+// absolute paths and any target that escapes the declaring workflow's own
+// directory (wfDir). Without this, --no-inline could ship a file the source
+// run rejects and preserve a directive that later resolution fails. It also
+// enforces the assets-may-not-end-in-.dip rule before any dedup fast-path.
+func resolveDirectiveTarget(rel, wfDir string) (string, error) {
+	if filepath.IsAbs(rel) {
+		return "", newError(ErrPathUnsafe, rel, "file directive must be a relative path", nil)
+	}
+	abs := filepath.Clean(filepath.Join(wfDir, rel))
+	if err := ensureAssetUnderRoot(abs, wfDir); err != nil {
+		return "", err
+	}
+	if strings.HasSuffix(abs, ".dip") {
+		return "", newError(ErrPathUnsafe, abs, "assets may not end in .dip", nil)
+	}
+	return abs, nil
+}
+
 // collectDirectiveFile resolves one file-directive path (relative to wfDir),
 // checks containment, deduplicates via visited, and reads the file as an asset.
 func collectDirectiveFile(rel, wfDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
 	if rel == "" {
 		return nil, nil
 	}
-	abs := filepath.Clean(filepath.Join(wfDir, rel))
-	if err := ensureAssetUnderRoot(abs, rootDir); err != nil {
+	abs, err := resolveDirectiveTarget(rel, wfDir)
+	if err != nil {
 		return nil, err
 	}
 	if _, ok := visited[abs]; ok {
@@ -679,9 +699,14 @@ func collectDirectiveAssets(wf *ir.Workflow, wfAbsPath, rootDir string, visited 
 	return results, nil
 }
 
-// collectIncludeFile reads one --include leaf file as an asset (readAssetFile
-// rejects .dip targets) and skips already-visited paths.
+// collectIncludeFile reads one --include leaf file as an asset and skips
+// already-visited paths. The .dip rejection runs before the visited fast-path
+// so an --include of a .dip already reachable as a subgraph still errors
+// (rather than silently returning via dedup).
 func collectIncludeFile(abs, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	if strings.HasSuffix(abs, ".dip") {
+		return nil, newError(ErrPathUnsafe, abs, "assets may not end in .dip", nil)
+	}
 	if _, ok := visited[abs]; ok {
 		return nil, nil
 	}
@@ -696,13 +721,14 @@ func collectIncludeFile(abs, rootDir string, visited map[string]struct{}) ([]pac
 // walkIncludeEntry is the filepath.WalkDir callback for resolveIncludeDir. It
 // skips directory entries; file entries (including symlink leaves, which
 // readAssetFile rejects) route through collectIncludeFile.
-func walkIncludeEntry(path string, d fs.DirEntry, err error, rootDir string, visited map[string]struct{}, results *[]packedFile) error {
+func walkIncludeEntry(path string, d fs.DirEntry, err error, rootDir string, visited map[string]struct{}, results *[]packedFile, found *int) error {
 	if err != nil {
 		return err
 	}
 	if d.IsDir() {
 		return nil
 	}
+	*found++
 	pfs, err := collectIncludeFile(path, rootDir, visited)
 	if err != nil {
 		return err
@@ -713,13 +739,23 @@ func walkIncludeEntry(path string, d fs.DirEntry, err error, rootDir string, vis
 
 // resolveIncludeDir safely walks absDir collecting non-.dip files. WalkDir does
 // not descend into symlinked directories; symlink leaves are re-validated by
-// ReadNoFollowSymlinks inside readAssetFile.
+// ReadNoFollowSymlinks inside readAssetFile. An include directory holding no
+// files (empty, or only subdirectories) is an error, to catch typos rather
+// than silently shipping nothing. `found` counts files before dedup, so a
+// directory whose files are all already shipped does not spuriously error.
 func resolveIncludeDir(absDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
 	var results []packedFile
+	found := 0
 	err := filepath.WalkDir(absDir, func(path string, d fs.DirEntry, err error) error {
-		return walkIncludeEntry(path, d, err, rootDir, visited, &results)
+		return walkIncludeEntry(path, d, err, rootDir, visited, &results, &found)
 	})
-	return results, err
+	if err != nil {
+		return nil, err
+	}
+	if found == 0 {
+		return nil, newError(ErrPathUnsafe, absDir, "included directory contains no files", nil)
+	}
+	return results, nil
 }
 
 // resolveIncludePath resolves one --include value (file or directory) relative

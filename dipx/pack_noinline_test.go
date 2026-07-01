@@ -301,6 +301,122 @@ func TestPack_IncludeDirWithDipRejected(t *testing.T) {
 	}
 }
 
+// TestPack_DirectiveAbsoluteRejected: an absolute file-directive path is
+// rejected, matching parser.ResolveFileDirectives (which never accepts
+// absolute paths). Without this, --no-inline would diverge from source/inline.
+func TestPack_DirectiveAbsoluteRejected(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{
+		"a.dip": strings.Replace(dipWithCommandFile,
+			"command_file: scripts/run.sh",
+			"command_file: /etc/run.sh", 1),
+	})
+	var buf bytes.Buffer
+	_, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf, PackOptions{NoInline: true})
+	if !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestPack_SubgraphDirectiveEscapeRejected: a subgraph whose command_file:
+// escapes its OWN directory (../run.sh) is rejected even though the target
+// stays under the entry root. parser.ResolveFileDirectives rejects it relative
+// to the declaring .dip's dir, so --no-inline must too — otherwise it ships a
+// file the source run rejects and preserves a directive later resolution fails.
+func TestPack_SubgraphDirectiveEscapeRejected(t *testing.T) {
+	dir := t.TempDir()
+	parent := `workflow P
+  goal: x
+  start: S
+  exit: E
+  subgraph S
+    ref: sub/child.dip
+  agent E
+    prompt: end
+  edges
+    S -> E
+`
+	child := `workflow C
+  goal: y
+  start: Run
+  exit: Done
+  tool Run
+    timeout: 30s
+    command_file: ../run.sh
+  agent Done
+    prompt: done
+  edges
+    Run -> Done
+`
+	writeTree(t, dir, map[string]string{
+		"parent.dip":    parent,
+		"sub/child.dip": child,
+		"run.sh":        "x\n", // exists, under entry root, but escapes sub/
+	})
+	var buf bytes.Buffer
+	_, err := Pack(context.Background(), filepath.Join(dir, "parent.dip"), &buf, PackOptions{NoInline: true})
+	if !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestPack_IncludeReachableDipRejected: --include of a .dip that is ALSO a
+// reachable subgraph must still error, not silently succeed via the visited
+// dedup fast-path (the .dip check must precede dedup).
+func TestPack_IncludeReachableDipRejected(t *testing.T) {
+	dir := t.TempDir()
+	parent := `workflow P
+  goal: x
+  start: S
+  exit: E
+  subgraph S
+    ref: child.dip
+  agent E
+    prompt: end
+  edges
+    S -> E
+`
+	writeTree(t, dir, map[string]string{
+		"parent.dip": parent,
+		"child.dip":  minimalStandaloneDip(),
+	})
+	var buf bytes.Buffer
+	_, err := Pack(context.Background(), filepath.Join(dir, "parent.dip"), &buf, PackOptions{NoInline: true, Include: []string{"child.dip"}})
+	if !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestPack_IncludeEmptyDirRejected: --include of an existing but empty
+// directory is an error (catches typos rather than silently shipping nothing).
+func TestPack_IncludeEmptyDirRejected(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{"a.dip": minimalStandaloneDip()})
+	if err := os.MkdirAll(filepath.Join(dir, "empty"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	_, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf, PackOptions{NoInline: true, Include: []string{"empty"}})
+	if !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
+// TestPack_IncludeWithoutNoInlineErrors: the dipx.Pack library API rejects
+// Include when NoInline is false, rather than silently dropping the assets.
+func TestPack_IncludeWithoutNoInlineErrors(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{
+		"a.dip": minimalStandaloneDip(),
+		"loose": "x\n",
+	})
+	var buf bytes.Buffer
+	_, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf, PackOptions{Include: []string{"loose"}})
+	if !errors.Is(err, ErrPathUnsafe) {
+		t.Fatalf("err = %v, want ErrPathUnsafe", err)
+	}
+}
+
 func TestCheckPackCaps_FileCount(t *testing.T) {
 	all := make([]packedFile, maxFiles+1)
 	if err := checkPackCaps(all); !errors.Is(err, ErrCapExceeded) {
