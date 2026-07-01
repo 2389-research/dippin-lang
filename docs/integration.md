@@ -157,7 +157,9 @@ child, err := src.Workflow("phases/review.dip", entry.SourceLocation.File)
 - `Manifest()` — the parsed manifest (format version, entry path, files[])
 - `Identity()` — 32-byte SHA-256 over the manifest bytes-as-stored (a stable content-addressed id)
 
-`dipx.Pack(ctx, entry, w)` writes a deterministic ZIP from a `.dip` entry; `dipx.Extract(ctx, src, dest, allowOverwrite)` atomically unpacks one. Both refuse symlinks anywhere in the source tree (Pack) or staging tree (Extract) and enforce the spec's per-file (50 MB) and total-bundle (100 MB) caps.
+`dipx.Pack(ctx, entry, w, opts)` writes a deterministic ZIP from a `.dip` entry; `dipx.Extract(ctx, src, dest, allowOverwrite)` atomically unpacks one. Both refuse symlinks anywhere in the source tree (Pack) or staging tree (Extract) and enforce the spec's per-file (50 MB) and total-bundle (100 MB) caps.
+
+`PackOptions{}` (the zero value) is the default: every `command_file:` / `prompt_file:` / `system_prompt_file:` body is inlined into the bundled `.dip`, producing a self-contained `format_version 1` bundle. `PackOptions{NoInline: true, Include: []string{...}}` instead ships those directive targets — plus any extra sibling files or directories listed in `Include` (relative to the entry's directory) — as separate entries under `workflows/`, keeps the `*_file:` directives, and produces `format_version 2`. `Include` requires `NoInline`.
 
 **Note:** `dipx` does not run `validate`/`lint`/`cost` on the bundled workflow — call `validator.Validate(src.Entry())` from your code if needed. `dippin pack` does this at the CLI layer because `dipx` is bound by the loader-tier rule and cannot import `validator`.
 

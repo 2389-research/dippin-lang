@@ -76,7 +76,7 @@ func TestPackExamples(t *testing.T) {
 		path := path
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			var buf bytes.Buffer
-			if _, err := dipx.Pack(context.Background(), path, &buf); err != nil {
+			if _, err := dipx.Pack(context.Background(), path, &buf, dipx.PackOptions{}); err != nil {
 				t.Fatalf("Pack failed: %v", err)
 			}
 			bundlePath := filepath.Join(t.TempDir(), "bundle.dipx")

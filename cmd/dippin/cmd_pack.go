@@ -35,45 +35,70 @@ func (c *CLI) CmdPack(args []string) ExitCode {
 	return ExitCode(runPack(c.Stdout, c.Stderr, args))
 }
 
-// runPack implements `dippin pack <entry.dip> [-o output] [--dry-run]`.
-// Returns one of exitDipx* per the .dipx CLI contract.
+// runPack implements `dippin pack <entry.dip> [-o output] [--dry-run]
+// [--no-inline] [--include <path>...]`. Returns one of exitDipx* per the .dipx
+// CLI contract.
 //
-// Before invoking dipx.Pack on the user-supplied entry, we build a shadow
-// source tree with all command_file: directives resolved to inline command:
-// blocks. dipx.Pack then walks the shadow tree, so the produced bundle is
-// self-contained and does not require the referenced script files to exist
-// when the bundle is later opened.
+// Default (inline) mode builds a shadow source tree with every command_file: /
+// prompt_file: / system_prompt_file: directive resolved to an inline block (see
+// runPackInline), so the bundle is self-contained and needs no referenced files
+// on disk when later opened. --no-inline instead packs the real entry, shipping
+// the directive targets and any --include assets as separate bundle entries and
+// keeping the *_file: directives (dipx.PackOptions).
 func runPack(stdout, stderr io.Writer, args []string) int {
-	entry, dest, dryRun, code := parsePackArgs(stderr, args)
+	pargs, code := parsePackArgs(stderr, args)
 	if code != -1 {
 		return code
 	}
-	if code := validateEntryPrePack(stderr, entry); code != exitDipxOK {
+	if code := validatePackIncludes(stderr, pargs); code != exitDipxOK {
 		return code
 	}
-	shadowEntry, cleanup, err := prepShadowSourceTree(entry)
+	if code := validateEntryPrePack(stderr, pargs.entry); code != exitDipxOK {
+		return code
+	}
+	opts := dipx.PackOptions{NoInline: pargs.noInline, Include: pargs.includes}
+	if pargs.noInline {
+		return dispatchPack(stdout, stderr, pargs.entry, pargs.dest, pargs.dryRun, opts)
+	}
+	return runPackInline(stdout, stderr, pargs)
+}
+
+// runPackInline handles the default (inline) path: build a shadow source tree
+// with inlined directives, then dispatch to dipx.Pack with zero options.
+func runPackInline(stdout, stderr io.Writer, pargs packArgs) int {
+	shadowEntry, cleanup, err := prepShadowSourceTree(pargs.entry)
 	if err != nil {
 		fmt.Fprintf(stderr, "error: %v\n", err)
 		return exitDipxUserError
 	}
 	defer cleanup()
-	return dispatchPack(stdout, stderr, shadowEntry, dest, dryRun)
+	return dispatchPack(stdout, stderr, shadowEntry, pargs.dest, pargs.dryRun, dipx.PackOptions{})
 }
 
-// dispatchPack routes the resolved shadow entry to the right dipx.Pack sink
-// (dry-run discard, stdout, or atomic file). Extracted so runPack stays under
-// the project's cyclomatic-5 cap.
-func dispatchPack(stdout, stderr io.Writer, shadowEntry, dest string, dryRun bool) int {
+// validatePackIncludes rejects --include used without --no-inline (an
+// incoherent hybrid: inlined bodies plus loose assets).
+func validatePackIncludes(stderr io.Writer, pargs packArgs) int {
+	if len(pargs.includes) > 0 && !pargs.noInline {
+		fmt.Fprintln(stderr, "error: --include requires --no-inline")
+		return exitDipxUserError
+	}
+	return exitDipxOK
+}
+
+// dispatchPack routes the resolved entry to the right dipx.Pack sink (dry-run
+// discard, stdout, or atomic file). Extracted so runPack stays under the
+// project's cyclomatic-5 cap.
+func dispatchPack(stdout, stderr io.Writer, entry, dest string, dryRun bool, opts dipx.PackOptions) int {
 	ctx := context.Background()
 	if dryRun {
-		_, err := dipx.Pack(ctx, shadowEntry, io.Discard)
+		_, err := dipx.Pack(ctx, entry, io.Discard, opts)
 		return classifyExit(stderr, err)
 	}
 	if dest == "-" {
-		_, err := dipx.Pack(ctx, shadowEntry, stdout)
+		_, err := dipx.Pack(ctx, entry, stdout, opts)
 		return classifyExit(stderr, err)
 	}
-	return packToFile(stderr, ctx, shadowEntry, dest)
+	return packToFile(stderr, ctx, entry, dest, opts)
 }
 
 // validateEntryPrePack runs structural validation (DIP001-DIP010) on the entry
@@ -99,45 +124,66 @@ func validateEntryPrePack(stderr io.Writer, entry string) int {
 	return exitDipxUserError
 }
 
-// parsePackArgs parses pack flags. On success returns (-1) so the caller knows
-// to proceed; otherwise returns one of the exitDipx* codes.
-func parsePackArgs(stderr io.Writer, args []string) (entry, dest string, dryRun bool, code int) {
+// packArgs holds the parsed result of parsePackArgs.
+type packArgs struct {
+	entry, dest string
+	dryRun      bool
+	noInline    bool
+	includes    []string
+}
+
+// multiStringFlag is a flag.Value that appends each -flag use to a string slice
+// (implements the repeatable --include flag).
+type multiStringFlag []string
+
+func (f *multiStringFlag) String() string     { return strings.Join(*f, ",") }
+func (f *multiStringFlag) Set(v string) error { *f = append(*f, v); return nil }
+
+// parsePackArgs parses pack flags. On success returns code -1 so the caller
+// knows to proceed; otherwise returns one of the exitDipx* codes.
+func parsePackArgs(stderr io.Writer, args []string) (packArgs, int) {
 	fs := flag.NewFlagSet("pack", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	output := fs.String("o", "", "output path (default: <entry>.dipx; '-' for stdout)")
 	dry := fs.Bool("dry-run", false, "validate without writing output")
+	noInline := fs.Bool("no-inline", false, "ship directive targets as assets; keep *_file: directives")
+	var includes multiStringFlag
+	fs.Var(&includes, "include", "extra file or directory to ship (repeatable; requires --no-inline)")
 	if err := fs.Parse(args); err != nil {
-		return "", "", false, exitDipxUserError
+		return packArgs{}, exitDipxUserError
 	}
 	rest := fs.Args()
 	if len(rest) != 1 {
-		fmt.Fprintln(stderr, "usage: dippin pack <entry.dip> [-o output.dipx] [--dry-run]")
-		return "", "", false, exitDipxUserError
+		fmt.Fprintln(stderr, "usage: dippin pack <entry.dip> [-o output.dipx] [--dry-run] [--no-inline] [--include path]")
+		return packArgs{}, exitDipxUserError
 	}
-	entry = rest[0]
-	if !strings.EqualFold(filepath.Ext(entry), ".dip") {
+	entry := rest[0]
+	// Case-sensitive: the bundle format requires a literal lowercase ".dip"
+	// suffix (checkPathPolicy), so reject e.g. "foo.DIP" here rather than let it
+	// fail later with a confusing pack-time policy error.
+	if filepath.Ext(entry) != ".dip" {
 		fmt.Fprintf(stderr, "error: entry must be a .dip file (got %q)\n", entry)
-		return "", "", false, exitDipxUserError
+		return packArgs{}, exitDipxUserError
 	}
-	dest = *output
+	dest := *output
 	if dest == "" {
 		dest = strings.TrimSuffix(entry, filepath.Ext(entry)) + ".dipx"
 	}
-	return entry, dest, *dry, -1
+	return packArgs{entry: entry, dest: dest, dryRun: *dry, noInline: *noInline, includes: []string(includes)}, -1
 }
 
 // packToFile writes the bundle to a unique temp file alongside dest and
 // atomically renames into place on success. Failures clean up the temp file.
 // The unique-name pattern (os.CreateTemp) avoids clobbers between concurrent
 // `dippin pack -o foo.dipx` invocations sharing the same dest.
-func packToFile(stderr io.Writer, ctx context.Context, entry, dest string) int {
+func packToFile(stderr io.Writer, ctx context.Context, entry, dest string, opts dipx.PackOptions) int {
 	f, err := os.CreateTemp(filepath.Dir(dest), filepath.Base(dest)+".*.tmp")
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return exitDipxIOError
 	}
 	tmp := f.Name()
-	if _, err := dipx.Pack(ctx, entry, f); err != nil {
+	if _, err := dipx.Pack(ctx, entry, f, opts); err != nil {
 		_ = f.Close()
 		_ = os.Remove(tmp)
 		return classifyExit(stderr, err)

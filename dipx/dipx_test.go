@@ -148,7 +148,7 @@ func TestPack_RoundTrip(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	manifest, err := Pack(context.Background(), filepath.Join(dir, "parent.dip"), &buf)
+	manifest, err := Pack(context.Background(), filepath.Join(dir, "parent.dip"), &buf, PackOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,10 +181,10 @@ func TestPack_Reproducible(t *testing.T) {
 		t.Fatal(err)
 	}
 	var buf1, buf2 bytes.Buffer
-	if _, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf1); err != nil {
+	if _, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf1, PackOptions{}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf2); err != nil {
+	if _, err := Pack(context.Background(), filepath.Join(dir, "a.dip"), &buf2, PackOptions{}); err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(buf1.Bytes(), buf2.Bytes()) {
@@ -201,7 +201,7 @@ func TestPack_RejectsOversizedSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	var buf bytes.Buffer
-	_, err := Pack(context.Background(), filepath.Join(dir, "big.dip"), &buf)
+	_, err := Pack(context.Background(), filepath.Join(dir, "big.dip"), &buf, PackOptions{})
 	if !errors.Is(err, ErrCapExceeded) {
 		t.Fatalf("err = %v, want ErrCapExceeded", err)
 	}
@@ -288,7 +288,7 @@ func TestPack_RejectsSymlink(t *testing.T) {
 		t.Skip("symlinks not supported on this platform")
 	}
 	var buf bytes.Buffer
-	_, err := Pack(context.Background(), link, &buf)
+	_, err := Pack(context.Background(), link, &buf, PackOptions{})
 	if !errors.Is(err, ErrPathUnsafe) {
 		t.Fatalf("err = %v, want ErrPathUnsafe", err)
 	}
@@ -328,7 +328,7 @@ func TestPack_RejectsParentSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 	var buf bytes.Buffer
-	_, err := Pack(context.Background(), entryPath, &buf)
+	_, err := Pack(context.Background(), entryPath, &buf, PackOptions{})
 	if !errors.Is(err, ErrPathUnsafe) {
 		t.Fatalf("err = %v, want ErrPathUnsafe", err)
 	}
@@ -362,7 +362,7 @@ func TestPack_AcceptsDoubleDotPrefixDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	var buf bytes.Buffer
-	if _, err := Pack(context.Background(), entryPath, &buf); err != nil {
+	if _, err := Pack(context.Background(), entryPath, &buf, PackOptions{}); err != nil {
 		t.Fatalf("unexpected error packing legitimate '..foo' subdir: %v", err)
 	}
 }
@@ -481,7 +481,7 @@ func TestPack_BadSubgraph_ReportsErrSubgraphParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	var buf bytes.Buffer
-	_, err := Pack(context.Background(), entryPath, &buf)
+	_, err := Pack(context.Background(), entryPath, &buf, PackOptions{})
 	if err == nil {
 		t.Fatal("Pack returned nil, want ErrSubgraphParse")
 	}
@@ -577,7 +577,7 @@ func mustBuildValidBundle(t *testing.T, dst string) {
 		t.Fatal(err)
 	}
 	var buf bytes.Buffer
-	if _, err := Pack(context.Background(), entryPath, &buf); err != nil {
+	if _, err := Pack(context.Background(), entryPath, &buf, PackOptions{}); err != nil {
 		t.Fatalf("Pack: %v", err)
 	}
 	if err := os.WriteFile(dst, buf.Bytes(), 0o644); err != nil {
@@ -619,7 +619,7 @@ func TestPack_HonorsContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	var buf bytes.Buffer
-	_, err := Pack(ctx, entryPath, &buf)
+	_, err := Pack(ctx, entryPath, &buf, PackOptions{})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("Pack err = %v, want context.Canceled", err)
 	}
