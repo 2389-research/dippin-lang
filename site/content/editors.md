@@ -12,9 +12,9 @@ The built-in LSP server (`dippin lsp`) provides rich editing features for any LS
 | Feature | Description |
 |---------|-------------|
 | **Diagnostics** | Parse errors and lint warnings published on every change (DIP001-DIP010 structural, DIP101-DIP151 semantic) |
-| **Hover** | Tooltip showing node kind, model, provider, prompt preview, and field summary |
+| **Hover** | Tooltip showing node kind and a per-kind field summary — model/provider for agents, command for tools, mode for human gates |
 | **Go-to-definition** | Jump from a node reference in an edge to the node's declaration |
-| **Autocomplete** | Node IDs in edges, field names within node blocks, keywords |
+| **Autocomplete** | Node IDs in edges and field names within node blocks |
 | **Document symbols** | Outline view showing all nodes and the edges section |
 
 Diagnostics are the most valuable feature — you get real-time feedback as you type, identical to running `dippin lint` on every save.
