@@ -303,9 +303,27 @@ func (s *simulator) resolveConditionalNext(nodeID string, edges []*ir.Edge) (str
 		return next.To, nil
 	}
 
-	// No match — fall back to the first edge (happy-path default).
+	// No guard matched and this node has no unconditional edge of its own.
+	if to, ok := s.elseFallback(nodeID, edges); ok {
+		return to, nil
+	}
+
+	// No else default (or exhaustive guards) — fall back to the first edge
+	// (happy-path default).
 	s.emitEdgeTraverse(edges[0])
 	return edges[0].To, nil
+}
+
+// elseFallback routes an unmatched node to the section-level `else ->` default
+// when one is declared and the node's guards are non-exhaustive (mirroring real
+// routing). For exhaustive guards some edge always matches at runtime, so `else`
+// is unreachable and the happy-path heuristic is kept instead.
+func (s *simulator) elseFallback(fromID string, edges []*ir.Edge) (string, bool) {
+	if s.workflow.ElseTarget == "" || ir.EdgesExhaustive(edges) {
+		return "", false
+	}
+	s.emitEdgeTraverse(&ir.Edge{From: fromID, To: s.workflow.ElseTarget})
+	return s.workflow.ElseTarget, true
 }
 
 // shouldBreakLoop returns true if a node has been visited too many times.

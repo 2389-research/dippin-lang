@@ -183,6 +183,42 @@ func (pe *pathEnumerator) exploreEdges(edges []*ir.Edge, events []event.Event, c
 			depth:   depth + 1,
 		})
 	}
+	pe.exploreElseBranch(edges, events, ctx, visited, path, depth)
+}
+
+// exploreElseBranch enumerates the section-level `else ->` default as a distinct
+// path for a node whose guards are non-exhaustive and which has no unconditional
+// edge of its own — the "no guard matched" case that routes to w.ElseTarget.
+func (pe *pathEnumerator) exploreElseBranch(edges []*ir.Edge, events []event.Event, ctx map[string]string, visited map[string]int, path []string, depth int) {
+	if !pe.elseApplies(edges) {
+		return
+	}
+	elseEdge := &ir.Edge{From: edges[0].From, To: pe.workflow.ElseTarget}
+	branchEvents := append(cloneEvents(events), buildEdgeTraverseEvent(elseEdge))
+	pe.explore(&pathState{
+		nodeID:  pe.workflow.ElseTarget,
+		ctx:     cloneMap(ctx),
+		visited: cloneMapInt(visited),
+		events:  branchEvents,
+		path:    append([]string(nil), path...),
+		depth:   depth + 1,
+	})
+}
+
+// elseApplies reports whether the section `else` default is a reachable branch
+// for this sibling edge set: an else must be declared, the node must have no
+// unconditional edge of its own, and the guards must be non-exhaustive (else the
+// no-match case cannot occur).
+func (pe *pathEnumerator) elseApplies(edges []*ir.Edge) bool {
+	if pe.workflow.ElseTarget == "" {
+		return false
+	}
+	for _, e := range edges {
+		if e.Condition == nil {
+			return false
+		}
+	}
+	return !ir.EdgesExhaustive(edges)
 }
 
 // buildEdgeTraverseEvent constructs an EdgeTraverse event from an edge.
