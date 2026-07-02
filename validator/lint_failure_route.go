@@ -66,7 +66,7 @@ func hasBoundedFailureTarget(r ir.RetryConfig) bool {
 // An unconditional/success edge does NOT count — a hard failure does not traverse it.
 func hasFailEdge(edges []*ir.Edge) bool {
 	for _, e := range edges {
-		cmp, ok := extractEqualityCondition(e)
+		cmp, ok := ir.ExtractEqualityCondition(e)
 		if ok && isOutcomeVar(cmp.Variable) && isFailValue(cmp.Value) {
 			return true
 		}
