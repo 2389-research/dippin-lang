@@ -61,8 +61,21 @@ func isCompletePartition(edges []*Edge, byVar map[string]map[string]bool) bool {
 	if conditionalCount < 2 {
 		return false // need at least 2 branches to form a partition
 	}
-	equalityCount := countEqualityEdges(edges)
-	return equalityCount == conditionalCount
+	if countEqualityEdges(edges) != conditionalCount {
+		return false // some branch is not a simple equality test
+	}
+	// Require 2+ DISTINCT values — duplicate guards on the same value (e.g.
+	// tier = gold + tier = gold) do not partition anything.
+	return singleVarValueCount(byVar) >= 2
+}
+
+// singleVarValueCount returns the number of distinct values recorded for the
+// sole variable in a single-variable byVar map.
+func singleVarValueCount(byVar map[string]map[string]bool) int {
+	for _, values := range byVar {
+		return len(values)
+	}
+	return 0
 }
 
 // countConditionalEdges returns the number of edges with a condition.

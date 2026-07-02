@@ -28,9 +28,34 @@ func nonExhaustiveElseWorkflow() *ir.Workflow {
 	}
 }
 
+// partitionElseWorkflow: Route guards on a gold/silver complete partition
+// (which EdgesExhaustive treats as exhaustive) plus `else -> Cleanup`. A
+// concrete scenario value the guards don't cover (tier=bronze) must still route
+// to Cleanup — the engine falls to else on any unmatched outcome.
+func partitionElseWorkflow() *ir.Workflow {
+	return &ir.Workflow{
+		Name: "PartitionElse", Version: "1", Start: "Route", Exit: "Done",
+		ElseTarget: "Cleanup",
+		Nodes: []*ir.Node{
+			{ID: "Route", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "route"}},
+			{ID: "Gold", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "gold"}},
+			{ID: "Silver", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "silver"}},
+			{ID: "Cleanup", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "cleanup"}},
+			{ID: "Done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done"}},
+		},
+		Edges: []*ir.Edge{
+			{From: "Route", To: "Gold", Condition: &ir.Condition{Raw: "ctx.tier = gold"}},
+			{From: "Route", To: "Silver", Condition: &ir.Condition{Raw: "ctx.tier = silver"}},
+			{From: "Gold", To: "Done"},
+			{From: "Silver", To: "Done"},
+			{From: "Cleanup", To: "Done"},
+		},
+	}
+}
+
 // exhaustiveElseWorkflow: Route guards on the exhaustive ctx.outcome
-// success/fail set. `else -> Cleanup` is declared but unreachable — one guard
-// always matches at runtime — so Cleanup must never be routed to.
+// success/fail set with `else -> Cleanup`. Used by the path enumerator, which
+// trusts the declared partition and must not enumerate an unreachable else path.
 func exhaustiveElseWorkflow() *ir.Workflow {
 	return &ir.Workflow{
 		Name: "ExhaustiveElse", Version: "1", Start: "Route", Exit: "Done",
@@ -83,13 +108,19 @@ func TestSimulate_RoutesNoMatchToElse(t *testing.T) {
 	}
 }
 
-func TestSimulate_ExhaustiveDoesNotRouteToElse(t *testing.T) {
-	res, err := Run(exhaustiveElseWorkflow(), Options{})
+// A concrete scenario value that matches no guard (bronze, against a gold/silver
+// partition) must route to the else default — even though the partition looks
+// statically exhaustive — because that is what the engine does.
+func TestSimulate_UnmatchedScenarioValueRoutesToElse(t *testing.T) {
+	res, err := Run(partitionElseWorkflow(), Options{Scenario: map[string]string{"tier": "bronze"}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	if pathContains(res.Path, "Cleanup") {
-		t.Errorf("exhaustive guards must not route to else target; path=%v", res.Path)
+	if !pathContains(res.Path, "Cleanup") {
+		t.Errorf("unmatched scenario value did not route to else target Cleanup; path=%v", res.Path)
+	}
+	if pathContains(res.Path, "Gold") || pathContains(res.Path, "Silver") {
+		t.Errorf("no partition guard should have matched tier=bronze; path=%v", res.Path)
 	}
 }
 

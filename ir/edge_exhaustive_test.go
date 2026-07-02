@@ -43,6 +43,11 @@ func TestEdgesExhaustive(t *testing.T) {
 			edges: []*Edge{eq("A", "X", "ctx.a", "1"), eq("A", "Y", "ctx.b", "2")},
 			want:  false,
 		},
+		{
+			name:  "duplicate guards on the same value are not a partition",
+			edges: []*Edge{eq("A", "X", "ctx.tier", "gold"), eq("A", "Y", "ctx.tier", "gold")},
+			want:  false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
