@@ -146,3 +146,16 @@ func TestRunAllPaths_NoElseBranchForExhaustive(t *testing.T) {
 		t.Errorf("exhaustive node should not enumerate an else branch; %d paths reached Cleanup", len(results))
 	}
 }
+
+// A gold/silver complete partition is exhaustive by declaration, so the
+// enumerator (which routes by declared conditions) must not emit an else path —
+// even though the single-run simulator would fall to else on an unhandled value.
+func TestRunAllPaths_NoElseBranchForPartition(t *testing.T) {
+	results, err := RunAllPaths(partitionElseWorkflow(), nil)
+	if err != nil {
+		t.Fatalf("RunAllPaths: %v", err)
+	}
+	if anyPathContains(results, "Cleanup") {
+		t.Errorf("complete-partition node should not enumerate an else branch; %d paths reached Cleanup", len(results))
+	}
+}
