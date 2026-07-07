@@ -45,7 +45,7 @@ Dippin is a single [Go](https://go.dev/) binary. Install it with `go install`:
 Or via Homebrew (macOS and Linux):
 
 <pre>
-<span class="hl-dim">$</span> <span class="hl-shcmd">brew install 2389-research/tap/dippin</span>
+<span class="hl-dim">$</span> <span class="hl-shcmd">brew install 2389-research/tap/dippin-lang</span>
 </pre>
 
 Verify it works:

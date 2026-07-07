@@ -499,7 +499,7 @@ Run: `gh run watch` (or `gh run list --workflow=release.yml --limit=1`) and wait
 ### Step 6.3: Verify the release
 
 Run: `gh release view v0.30.0`
-Expected: release page exists with cross-platform binaries listed. The Homebrew tap should also have updated (`brew info 2389-research/tap/dippin` or the tap repo's commit log).
+Expected: release page exists with cross-platform binaries listed. The Homebrew tap should also have updated (`brew info 2389-research/tap/dippin-lang` or the tap repo's commit log).
 
 ### Step 6.4: Exit the worktree
 
