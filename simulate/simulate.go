@@ -303,7 +303,17 @@ func (s *simulator) resolveConditionalNext(nodeID string, edges []*ir.Edge) (str
 		return next.To, nil
 	}
 
-	// No match — fall back to the first edge (happy-path default).
+	// No guard matched and this node has no unconditional edge of its own.
+	// Route to the section `else ->` default if one is declared. This mirrors
+	// the engine: any unmatched outcome — including a concrete scenario value no
+	// guard covers (e.g. tier=bronze against gold/silver guards) — falls to else,
+	// regardless of whether the guards look statically exhaustive.
+	if s.workflow.ElseTarget != "" {
+		s.emitEdgeTraverse(&ir.Edge{From: nodeID, To: s.workflow.ElseTarget})
+		return s.workflow.ElseTarget, nil
+	}
+
+	// No else default — fall back to the first edge (happy-path default).
 	s.emitEdgeTraverse(edges[0])
 	return edges[0].To, nil
 }
