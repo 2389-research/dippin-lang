@@ -409,7 +409,7 @@ The two slots are independent — an agent may use any combination of inline `pr
   fan_in Merge <- WorkerA, WorkerB, WorkerC
 ```
 
-Inline syntax only. Every `parallel` must have a matching `fan_in` with identical target/source sets (DIP007). Wire edges from each target to the `fan_in` node in the `edges` block. All targets execute concurrently with independent context copies.
+Both inline (`parallel P -> A, B`) and block form (`parallel P` with `branch:` lines) are supported; block form additionally allows per-branch `model` / `provider` / `fidelity` / `tool_access` / `writable_paths` / `last_response_truncate` overrides (an omitted per-branch value inherits the target agent's setting). Every `parallel` must have a matching `fan_in` with identical target/source sets (DIP007) — this applies to both forms. Wire edges from each target to the `fan_in` node in the `edges` block. All targets execute concurrently with independent context copies.
 
 ### subgraph — embed another workflow
 
