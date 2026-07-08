@@ -138,7 +138,7 @@ Ready to use Dippin on your own pipelines? Install the binary:
 Or via Homebrew (macOS and Linux):
 
 <pre>
-<span class="hl-dim">$</span> <span class="hl-shcmd">brew install 2389-research/tap/dippin</span>
+<span class="hl-dim">$</span> <span class="hl-shcmd">brew install 2389-research/tap/dippin-lang</span>
 </pre>
 
 If you're new to Dippin, [Getting Started](getting-started.html) walks

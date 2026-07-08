@@ -13,7 +13,7 @@ go install github.com/2389-research/dippin-lang/cmd/dippin@latest
 Or via Homebrew:
 
 ```sh
-brew install 2389-research/tap/dippin
+brew install 2389-research/tap/dippin-lang
 ```
 
 Verify:
