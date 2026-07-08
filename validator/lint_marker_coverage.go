@@ -3,7 +3,11 @@
 package validator
 
 import (
+	"fmt"
+	"sort"
 	"strings"
+
+	"github.com/2389-research/dippin-lang/ir"
 )
 
 // markerMetachars are the regex metacharacters that make a branch non-literal.
@@ -61,4 +65,100 @@ func splitAlternation(s string) ([]string, bool) {
 // isLiteralToken reports whether s contains no regex metacharacter.
 func isLiteralToken(s string) bool {
 	return !strings.ContainsAny(s, markerMetachars)
+}
+
+// lintEdgeAnnotations runs DIP151 (unused weight) and DIP152 (marker coverage).
+// Grouped here to keep LintWithOptions within the statement-count limit.
+func lintEdgeAnnotations(w *ir.Workflow) []Diagnostic {
+	var d []Diagnostic
+	d = append(d, lintUnusedWeight(w)...)
+	d = append(d, lintMarkerCoverage(w)...)
+	return d
+}
+
+// lintMarkerCoverage checks DIP152 across all tool nodes.
+func lintMarkerCoverage(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	elseValid := hasValidElseDefault(w)
+	for _, n := range w.Nodes {
+		if d, ok := checkMarkerCoverage(w, n, elseValid); ok {
+			diags = append(diags, d)
+		}
+	}
+	return diags
+}
+
+// checkMarkerCoverage returns a DIP152 diagnostic for one node if its enumerable
+// marker_grep has markers neither routed nor covered.
+func checkMarkerCoverage(w *ir.Workflow, n *ir.Node, elseValid bool) (Diagnostic, bool) {
+	markers, ok := nodeEnumerableMarkers(n)
+	if !ok {
+		return Diagnostic{}, false
+	}
+	routed, hasUncond, hasComplex := classifyMarkerEdges(w.EdgesFrom(n.ID))
+	if markerNodeCovered(elseValid, hasUncond, hasComplex) {
+		return Diagnostic{}, false
+	}
+	missing := uncoveredMarkers(markers, routed)
+	if len(missing) == 0 {
+		return Diagnostic{}, false
+	}
+	return markerCoverageDiag(n, missing), true
+}
+
+// nodeEnumerableMarkers returns the enumerable marker set for a tool node, or
+// (nil,false) if the node is not a marker tool or its grep is non-enumerable.
+func nodeEnumerableMarkers(n *ir.Node) ([]string, bool) {
+	cfg, ok := n.Config.(ir.ToolConfig)
+	if !ok || cfg.MarkerGrep == "" {
+		return nil, false
+	}
+	return enumerateMarkers(cfg.MarkerGrep)
+}
+
+// classifyMarkerEdges splits a node's outgoing edges into the simple-equality
+// routed marker set plus flags for an unconditional edge and any "complex" edge
+// (compound/negated/other-variable) whose mere presence makes the node safe.
+func classifyMarkerEdges(edges []*ir.Edge) (routed map[string]struct{}, hasUncond, hasComplex bool) {
+	routed = make(map[string]struct{})
+	for _, e := range edges {
+		if e.Condition == nil {
+			hasUncond = true
+			continue
+		}
+		if cmp, ok := ir.ExtractEqualityCondition(e); ok && cmp.Variable == "ctx.tool_marker" {
+			routed[cmp.Value] = struct{}{}
+			continue
+		}
+		hasComplex = true
+	}
+	return routed, hasUncond, hasComplex
+}
+
+// markerNodeCovered reports whether the node is safe regardless of the routed set.
+func markerNodeCovered(elseValid, hasUncond, hasComplex bool) bool {
+	return elseValid || hasUncond || hasComplex
+}
+
+// uncoveredMarkers returns the sorted markers not in the routed set.
+func uncoveredMarkers(markers []string, routed map[string]struct{}) []string {
+	var missing []string
+	for _, m := range markers {
+		if _, ok := routed[m]; !ok {
+			missing = append(missing, m)
+		}
+	}
+	sort.Strings(missing)
+	return missing
+}
+
+// markerCoverageDiag builds the DIP152 diagnostic for a node.
+func markerCoverageDiag(n *ir.Node, missing []string) Diagnostic {
+	return Diagnostic{
+		Code:     DIP152,
+		Severity: SeverityWarning,
+		Message:  fmt.Sprintf("tool node %q emits markers that no edge routes and no else default covers: %s", n.ID, strings.Join(missing, ", ")),
+		Location: n.Source,
+		Help:     "route each marker with an edge (e.g. `on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default",
+	}
 }
