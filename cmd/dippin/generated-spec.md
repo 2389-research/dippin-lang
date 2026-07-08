@@ -197,10 +197,10 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-61 diagnostic codes across two categories:
+62 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
-- **DIP101–DIP151** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing)
+- **DIP101–DIP152** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes)
 
 ---
 
@@ -705,6 +705,7 @@ The primary loop for authoring .dip files:
 | DIP149 | A node has 2+ unconditional outgoing edges — which one fires is decided only by the lexical (alphabetical) tiebreak on target node ID | Keep at most one unconditional edge as the default fallback; guard the others with `when`. Restart/`loop` back-edges are exempt |
 | DIP150 | A label-routing `human` gate (mode `choice`, `yes_no`, or unset default) routes an outgoing edge by `label:` with no explicit `choice:` — the label doubles as the routing key, so nothing signals it is load-bearing (Hint). `freeform`/`interview` gates are exempt | Add `choice: "<key>"` to mark the routing key, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent |
 | DIP151 | An edge carries a `weight:` attribute — speculative tier-4 routing priority that the cascade never consults and no real workflow uses. It still parses (carry-only), but the keyword and cascade tier are slated for removal in `dip 2` (Warning) | Remove `weight:`; express priority with conditions — guard edges with `when` / `on`, or rely on a single unconditional fallback |
+| DIP152 | A tool node's `marker_grep` enumerates a literal marker that no edge routes and that no section `else ->` default or unconditional edge covers — the marker would be emitted at runtime with nowhere to go. Only checked for recognizable literal-alternation greps; any compound/negated/other-variable edge makes the node safe (Warning) | Route the marker with an edge (`on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default |
 
 ## Best Practices
 

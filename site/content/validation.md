@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "61 diagnostic codes for AI pipeline workflows. 10 structural errors and 51 semantic warnings catch bugs before runtime."
+description: "62 diagnostic codes for AI pipeline workflows. 10 structural errors and 52 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "61 diagnostic codes — 10 structural errors and 51 semantic warnings — to catch problems before runtime."
+subtitle: "62 diagnostic codes — 10 structural errors and 52 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP151): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP152): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP151)
+## Semantic Warnings (DIP101-DIP152)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -348,4 +348,14 @@ An edge carries a `weight:` attribute. `weight:` was tier 4 of the routing casca
 warning[DIP151]: edge "Route" -> "A" sets weight: 5, which routing does not use; guard edges with when / on or rely on a single unconditional fallback instead
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP151) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+### DIP152 — marker_grep enumerates an unrouted marker
+
+**Severity:** Warning
+
+A tool node's `marker_grep` enumerates a literal marker that no outgoing edge routes and that no section `else ->` default or unconditional fallback edge covers — so that marker would be emitted at runtime with nowhere to go. Only checked when `marker_grep` is a recognizable literal alternation (e.g. `^(a|b|c)$` or a bare literal); complex regexes are left unflagged, and any compound (`or`), negated (`!=` / `not`), or other-variable edge makes the node safe. Fix by routing the marker with an edge (`on <marker>`), adding an unconditional fallback edge, or adding a section `else -> <node>` default.
+
+```text
+warning[DIP152]: tool node "RunTests" emits markers that no edge routes and no else default covers: tests-failed
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP152) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
