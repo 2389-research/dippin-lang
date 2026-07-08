@@ -31,7 +31,7 @@
 - [ ] **Step 1: Confirm DIP152 is still free on `main`**
 
 Run: `git grep -hoE 'DIP15[0-9]' -- validator/lint_codes.go | sort -u`
-Expected: highest is `DIP151`. If `DIP152` appears (sibling issue #136 landed first), use **DIP153** everywhere below instead. Proceed assuming DIP152.
+Expected: highest is `DIP151`. (Confirmed free at implementation time — `DIP152` was allocated and is used throughout this branch. Had the sibling issue #136 landed first and taken `DIP152`, this would have been renumbered.)
 
 ---
 

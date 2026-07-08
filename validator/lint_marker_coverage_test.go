@@ -145,6 +145,37 @@ func TestDIP152_ExitNodeClean(t *testing.T) {
 	}
 }
 
+// TestDIP152_EdgelessNonExitElseDoesNotCover guards the coverage model: a
+// non-exit marker tool with zero outgoing edges strands its markers even when a
+// valid else default exists — the simulator dead-ends an edge-less node before
+// any else routing, so else does not cover it.
+func TestDIP152_EdgelessNonExitElseDoesNotCover(t *testing.T) {
+	src := `workflow W
+  goal: "t"
+  start: Begin
+  exit: Done
+
+  agent Begin
+    prompt: go
+
+  tool Mid
+    command: run
+    marker_grep: "^(ok|fail)$"
+
+  agent Done
+    prompt: d
+
+  edges
+    Begin -> Mid
+    Begin -> Done
+    else -> Done
+`
+	diags := markerDiagsFor(t, src)
+	if len(diags) != 1 {
+		t.Fatalf("edge-less non-exit marker tool must warn (else does not cover it), got %v", diags)
+	}
+}
+
 // --- false-positive guards (squad blockers) ---
 
 func TestDIP152_OrRoutingClean(t *testing.T) {

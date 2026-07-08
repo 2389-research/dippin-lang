@@ -182,11 +182,11 @@ current example. (An earlier draft cited `all_features.dip` — that file lives 
 **This coverage is not enforced by any existing CI path** and must be made so:
 `just lint-examples` ends in `|| true` (never fails), `just validate-examples`
 runs `validator.Validate` (structural only — never `Lint`), and
-`TestLintExamples` (`validator/lint_examples_test.go`) currently zero-asserts only
-`DIP108`/`DIP147`. **The implementer MUST add `DIP152` to that zero-assertion
-set** — otherwise the "examples stay covered" guarantee is a one-time manual
+`TestLintExamples` (`validator/lint_examples_test.go`) previously zero-asserted
+only `DIP108`/`DIP147`. **`DIP152` is now included in that zero-assertion set** —
+otherwise the "examples stay covered" guarantee would be a one-time manual
 observation that silently rots the moment someone adds a marker tool to an
-example. This is a required deliverable, not optional.
+example. This was a required deliverable, and it shipped in the implementation.
 
 ## Docs & count sweep
 

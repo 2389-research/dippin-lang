@@ -90,8 +90,9 @@ func checkMarkerCoverage(w *ir.Workflow, n *ir.Node, elseValid bool) (Diagnostic
 		return Diagnostic{}, false
 	}
 	channel, _ := n.OutcomeChannel() // "ctx.tool_marker" for a marker tool
-	routed, hasUncond, hasComplex := classifyMarkerEdges(w.EdgesFrom(n.ID), channel)
-	if markerNodeCovered(elseValid, hasUncond, hasComplex) {
+	edges := w.EdgesFrom(n.ID)
+	routed, hasUncond, hasComplex := classifyMarkerEdges(edges, channel)
+	if markerNodeCovered(len(edges) > 0, elseValid, hasUncond, hasComplex) {
 		return Diagnostic{}, false
 	}
 	missing := uncoveredMarkers(markers, routed)
@@ -130,9 +131,13 @@ func classifyMarkerEdges(edges []*ir.Edge, channel string) (routed map[string]st
 	return routed, hasUncond, hasComplex
 }
 
-// markerNodeCovered reports whether the node is safe regardless of the routed set.
-func markerNodeCovered(elseValid, hasUncond, hasComplex bool) bool {
-	return elseValid || hasUncond || hasComplex
+// markerNodeCovered reports whether the node is safe regardless of the routed
+// set. A node with no outgoing edges is never covered: `else` and unconditional
+// fallbacks only route a node whose guard edges fail to match (the simulator
+// dead-ends an edge-less node before any else routing, and DIP102 skips it too),
+// so an edge-less marker tool strands its markers.
+func markerNodeCovered(hasEdges, elseValid, hasUncond, hasComplex bool) bool {
+	return hasEdges && (elseValid || hasUncond || hasComplex)
 }
 
 // uncoveredMarkers returns the sorted markers not in the routed set.
