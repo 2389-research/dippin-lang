@@ -49,38 +49,73 @@ bare literal `tests_pass`; parser `parse_nodes.go:524`).
 
 A helper `enumerateMarkers(markerGrep string) ([]string, bool)` recognizes **only**
 the finite literal-alternation shape and returns `(markers, true)`; otherwise
-`(nil, false)`:
+`(nil, false)`. It must be a small hand-parser, **not** one loose regex like
+`^\^?\(([^)]+)\)\$?$` (which false-accepts `^(a.b|c)$` and would extract wrong
+markers):
 
-1. Strip an optional leading `^` and trailing `$`.
-2. The remainder is either:
-   - a single **literal** token (bare `tests_pass`), or
-   - a single parenthesized group `(x|y|z)` whose branches are all **literals**
-     split on `|`.
-3. A "literal" branch contains no regex metacharacters
-   (`. * + ? [ ] { } ( ) | \ ^ $` beyond the outer anchors/group). Any branch
-   with a metacharacter → the whole value is **non-enumerable**.
+1. `stripAnchors`: remove exactly one leading `^` and one trailing `$` if present.
+2. If the remainder starts with `(` **and ends with** `)` (a group spanning the
+   *entire* remainder), the branches are `split(inner, "|")`. Otherwise the whole
+   remainder is a single branch. (The full-span requirement rejects `(a|b)|c`,
+   `(a|b)?`, `(?i)(a|b)`, `(a)(b)`.)
+3. Each branch must be a non-empty `isLiteralToken`:
+   - **empty branch → non-enumerable** (`(a|b|)`, `(|a)`, `()`); otherwise the
+     empty string becomes a phantom marker no edge can spell → false DIP152.
+   - a branch containing any regex metacharacter — `. * + ? [ ] { } ( ) | \ ^ $`
+     (including an escaped `\.`) → non-enumerable. (`-`, `_`, `#`, apostrophes,
+     unicode are **not** metacharacters, so `setup-failed`, `tests_green` are
+     literals.)
+4. **Do not trim intra-branch whitespace** — regex spaces are literal, so `(a | b)`
+   is branches `"a "`/`" b"`; trimming would mismatch a verbatim `on a` route.
+   Dedup identical branches for clean output.
 
 Non-enumerable (`ok == false`): emit no DIP152 and preserve the current blanket
 DIP101/DIP102 exemption. This never false-positives on a regex we can't fully
 understand and matches 100% of real `marker_grep` values in the repo.
 
-## Coverage computation
+**Anchoring assumption:** enumeration treats the anchored group `^(a|b)$` and a
+bare literal `tests_pass` as equivalent marker sets. This rests on the runtime
+storing `ctx.tool_marker` as the matched *token* equal to a branch literal (which
+holds for every anchored value in the corpus). Stated as an explicit assumption;
+if it can't be confirmed against the runtime, restrict enumeration to fully
+`^...$`-anchored forms.
 
-For a tool node `n` with an enumerable marker set `M`:
+## Coverage computation (ultra-conservative — no false positives)
 
-- **Routed set** `R` = `{ v : some outgoing edge of n has condition
-  ir.ExtractEqualityCondition == (variable "ctx.tool_marker", value v) }`. The
-  `on <marker>` sugar already desugars to `ctx.tool_marker = <marker>`
-  (`parse_edges.go:155`), so both edge spellings are captured. Reuses
-  `ir.ExtractEqualityCondition` (moved to `ir` in #158).
-- **Node is marker-safe** iff any of:
-  - a valid `else` default exists (`hasValidElseDefault(w)`), **or**
-  - `n` has an unconditional outgoing edge (`hasUnconditionalEdge`), **or**
-  - every marker in `M` is in `R` (`M ⊆ R`).
-- Otherwise DIP152 fires for `n`, listing the uncovered markers `M − R`
-  (sorted for deterministic output).
+The condition grammar is richer than equality: an edge `when` can carry
+`CondOr` / `CondAnd` / `CondNot` and ops `= == != contains startswith endswith
+in` (`simulate/condition.go`, `ir/edge.go`). The `on <marker>` sugar can only
+express a single equality, so authors routing markers with `or`, a `!=`
+catch-all, or `not ... = x` will use `when`. Computing the routed set from bare
+equality alone would therefore **false-positive** on those valid workflows. Since
+a lint that cries wolf is worse than none, the rule is deliberately conservative:
+we only warn when routing is *simple enough to be certain* there is a gap.
 
-One diagnostic per node (listing all uncovered markers), not one per marker.
+For a tool node `n` with an enumerable marker set `M`, classify each outgoing
+edge:
+
+- **Simple marker route**: `ir.ExtractEqualityCondition(e)` succeeds *and* its
+  variable is exactly `"ctx.tool_marker"` — add the value to the routed set `R`.
+  (`ExtractEqualityCondition` only matches a bare `CondCompare` with `=`/`==`;
+  it needs `Condition.Parsed`, which `Lint` guarantees by calling
+  `EnsureConditionsParsed` first — `validator/lint.go`.)
+- **Unconditional edge** (`e.Condition == nil`) → set `hasUnconditional`.
+- **Anything else** (compound `or`/`and`, `not`, `!=`/`contains`/…, or an
+  equality on a different variable) → set `hasComplexRoute`. We cannot cheaply
+  prove what it covers, so its mere presence makes the node safe.
+
+**Node is marker-safe** iff any of: a valid `else` default
+(`hasValidElseDefault(w)`), `hasUnconditional`, `hasComplexRoute`, or `M ⊆ R`.
+Otherwise DIP152 fires for `n`, listing the uncovered markers `M − R` (sorted,
+deterministic). One diagnostic per node listing all uncovered markers (precedent:
+`lint_model.go` joins a list into one diagnostic), not one per marker.
+
+This catches the exact silent hole the issue describes — every edge a simple
+`on <marker>` / `when ctx.tool_marker = <marker>` and some marker unrouted with no
+`else`/fallback — while going quietly silent on any workflow whose routing we
+can't fully reason about (false negatives are acceptable; false positives are
+not). Reuses `ir.ExtractEqualityCondition` (moved to `ir` in #158) and the
+existing `hasUnconditionalEdge` / `hasValidElseDefault` helpers.
 
 ## Relationship to DIP101 / DIP102 (additive, no double-warnings)
 
@@ -97,21 +132,33 @@ adding DIP152 — that double-warns the same node.
 ## Placement & wiring
 
 - New file `validator/lint_marker_coverage.go`:
-  - `lintMarkerCoverage(w *ir.Workflow) []Diagnostic` — iterate tool nodes,
-    enumerate, compute coverage, emit DIP152.
-  - `enumerateMarkers` + small helpers (kept in `validator`; only the validator
-    needs them — no `ir` move, per YAGNI).
-- Register the pass wherever the other lint passes are aggregated (alongside
-  `lintDefaultEdge` etc.).
-- DIP152 code registration (the standard new-code checklist):
-  - `DIP152 = "DIP152"` constant + `linterCodeDescriptions` entry in
-    `validator/lint_codes.go`.
-  - Explanation in `validator/explanations.go` (`Code`/`Summary`/`Trigger`/
-    `Example`/`Fix` all non-empty) so `TestExplanationsCoverAllCodes` passes.
+  - `lintMarkerCoverage(w *ir.Workflow) []Diagnostic` — iterate nodes.
+  - `checkMarkerCoverage(w, n) (Diagnostic, bool)` — per-node (mirrors
+    `checkConditionalReachability`) to keep the loop under the caps.
+  - `enumerateMarkers` + `stripAnchors`, `isLiteralToken`, `splitAlternation`
+    (the metachar/paren handling busts ≤7 cognitive if inlined).
+  - `classifyMarkerEdges(edges) (routed set, hasUnconditional, hasComplexRoute)`.
+  - `uncoveredMarkers(M, R) []string` (sorted).
+  - All kept in `validator` (only the validator needs them — no `ir` move, per
+    YAGNI; the routed-set reuses the already-`ir` `ExtractEqualityCondition`).
+- Register the pass in `LintWithOptions` (`validator/lint.go`, append after the
+  last pass) and bump the `Lint` doc range comment there. Ordering is
+  irrelevant — each pass is a pure function of `w`. `EnsureConditionsParsed`
+  already runs first at the top of `LintWithOptions`.
+- **DIP code number:** the spec assumes `DIP152`, but an unmerged sibling
+  (#136) also targets DIP152. **Reconfirm the next free code against `main` at
+  implementation time** (`git grep 'DIP15' -- validator/lint_codes.go`) and
+  renumber to DIP153 if #136 landed first.
+- DIP152 code registration + docs (the full new-code checklist — see the
+  "Docs & count sweep" section; the earlier 3-item list was incomplete):
+  - `DIP152 = "DIP152"` constant + `linterCodeDescriptions` entry + range
+    comment in `validator/lint_codes.go`.
+  - Explanation in `validator/explanations.go` `reachabilityExplanations()`
+    (`Code`/`Summary`/`Trigger`/`Example`/`Fix` all non-empty) so
+    `TestExplanationsCoverAllCodes` and `TestExplanationsNoExtra` pass.
 
 Keep every function under the complexity caps (cyclomatic ≤5, cognitive ≤7);
-extract helpers (`enumerateMarkers`, `routedMarkerSet`, `uncoveredMarkers`)
-rather than inlining.
+the helper names above are the pre-planned extractions.
 
 ## Diagnostic shape
 
@@ -124,25 +171,74 @@ warning[DIP152]: node "RunTests": marker_grep enumerates markers that no edge
 
 Location: the node's source (`n.Source`).
 
-## Blast radius
+## Blast radius (and the mandatory CI guard)
 
-All `examples/*.dip` are already covered (`error_funnel.dip` via `else`;
-`marker_routing.dip` and `all_features.dip` route every marker), so no example
-reconciliation is expected. Verify with `just lint-examples`.
+Only two examples declare `marker_grep`, and both are already covered:
+`error_funnel.dip` (the `*-failed` markers fall to `else -> Cleanup`) and
+`marker_routing.dip` (both markers routed, `M ⊆ R`). So DIP152 fires on no
+current example. (An earlier draft cited `all_features.dip` — that file lives in
+`parser/testdata/`, not `examples/`; the real rationale is else + routed.)
+
+**This coverage is not enforced by any existing CI path** and must be made so:
+`just lint-examples` ends in `|| true` (never fails), `just validate-examples`
+runs `validator.Validate` (structural only — never `Lint`), and
+`TestLintExamples` (`validator/lint_examples_test.go`) currently zero-asserts only
+`DIP108`/`DIP147`. **The implementer MUST add `DIP152` to that zero-assertion
+set** — otherwise the "examples stay covered" guarantee is a one-time manual
+observation that silently rots the moment someone adds a marker tool to an
+example. This is a required deliverable, not optional.
+
+## Docs & count sweep
+
+Adding DIP152 changes the counts (61 → 62 codes, 51 → 52 semantic warnings,
+range DIP101–DIP151 → DIP101–DIP152). Update every hardcoded occurrence (both
+ASCII `-` and en-dash `–`; `git grep` for the counts/ranges):
+`CLAUDE.md`, `README.md`, `AGENTS.md`, `docs/architecture.md`,
+`docs/integration.md`, `docs/llm-reference.md`, `docs/validation.md` (+ a new
+`### DIP152` section), `site/content/{validation,glossary,architecture,editors,
+cli}.md`, `site/content/blog/editor-setup.md`, `site/static/skill.md` (diagnostics
+table row + range), and the `validator/lint.go` / `lint_codes.go` range comments.
+Then **regenerate the embedded spec**: `bash scripts/gen-spec.sh` and commit
+`cmd/dippin/generated-spec.md` (its currency is a hard CI gate). Do **not**
+hand-edit `CHANGELOG.md` / `site/content/changelog.md` (generated).
 
 ## Testing
 
-`validator/lint_marker_coverage_test.go`:
-- **Gap warns** — `^(go|stop)$` with only `on go` and no else/unconditional →
+`validator/lint_marker_coverage_test.go` — **parser-driven** (parse real `.dip`
+text; never hand-set `Condition.Parsed`, per the DIP101 fixture-drift lesson):
+- **Gap warns** — `^(go|stop)$` with only `on go`, no else/unconditional →
   DIP152 naming `stop`.
 - **Fully routed** — both markers routed → no DIP152.
 - **else-covered** — gap but a valid `else` default → no DIP152.
 - **Unconditional-edge covered** — gap but an unconditional out-edge → no DIP152.
-- **Non-enumerable regex** — e.g. `.*fail.*` → no DIP152 (no false positive).
-- **Bare-literal marker_grep** — `tests_pass` routed / unrouted.
 - **Multi-marker gap** — `^(a|b|c)$` with only `on a` → DIP152 lists `b, c`.
-- **enumerateMarkers** unit table (anchored/unanchored, single literal, group,
-  metacharacter → non-enumerable).
-- Explanation-parity (`TestExplanationsCoverAllCodes`) passes automatically.
-- Integration: a real `.dip` parsed through the pipeline confirms DIP152 fires
-  (mirrors `TestLintExamples`).
+- **Bare-literal marker_grep** — `tests_pass` routed / unrouted.
+- False-positive guards (the squad blockers — these must stay green):
+  - **OR routing** — `when ctx.tool_marker = go or ctx.tool_marker = stop` →
+    `hasComplexRoute` → **no DIP152**.
+  - **`!=` catch-all** — `on go` + `when ctx.tool_marker != go` → no DIP152.
+  - **`not` catch-all** — `when not ctx.tool_marker = go` → no DIP152.
+  - **Non-enumerable regex** — `.*fail.*`, `^\d+$` → no DIP152.
+  - **Empty branch** — `^(a|b|)$` is non-enumerable → no DIP152 (no phantom `""`).
+- `enumerateMarkers` unit table: anchored/unanchored, single literal, group,
+  metachar branch → reject, empty branch → reject, non-full-span group
+  (`(a|b)|c`, `(a|b)?`) → reject, intra-branch whitespace preserved.
+- Explanation-parity (`TestExplanationsCoverAllCodes`) — automatic.
+- `TestLintExamples` extended to zero-assert DIP152 (the required guard above).
+- Integration: a real `.dip` parsed through the pipeline confirms DIP152 fires.
+
+## Known limitations (stated, not fixed)
+
+- **Non-enumerable `marker_grep`** (complex regex) keeps the blanket exemption,
+  so a genuine hole behind `.*fail.*` stays silent. This is the status quo — the
+  additive framing doesn't regress it.
+- **Marker routed via a non-`tool_marker` condition** (e.g.
+  `when ctx.tool_stdout contains tests-failed`) is not recognized, so DIP152
+  could flag `tests-failed` as unrouted. Unusual/discouraged (the point of
+  `marker_grep` is `tool_marker`); the `else`/unconditional escape hatches cover
+  it, and `hasComplexRoute` silences the node if that condition is the only
+  routing. Documented, not fixed.
+- **Expected first-release friction:** an author who routes the happy marker and
+  relies on a runtime default / `route_required` (no `else`, no fallback) will
+  see DIP152. This is intended — the fix is one `else`, one fallback edge, or
+  routing the marker — but the issue thread should note it.
