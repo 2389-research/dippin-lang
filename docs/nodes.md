@@ -344,7 +344,7 @@ The same pattern applies to any tool whose output drives routing — build comma
 
 There are two ways to type a tool node's routing, and they're independent. **Declared-regex:** when `marker_grep` is declared, the runtime matches it against stdout and populates `ctx.tool_marker`, so routing edges can reference it instead of `ctx.tool_stdout`. **Convention sentinel:** a tool can instead emit a routing sentinel line that the runtime recognizes (no node attribute needed), populating `ctx.tool_route`; `route_required: true` then makes the *absence* of that sentinel a hard failure instead of a silent fallthrough. The exact sentinel format is the runtime's contract. `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
 
-**Lint:** A tool node that declares `marker_grep:` is treated as a "safe routing source" — outgoing conditional edges that test `ctx.tool_marker` no longer trip `DIP101` (unreachable target) or `DIP102` (no default edge), even with a single conditional edge. The declaration is an explicit author signal that routing is typed.
+**Lint:** A tool node that declares `marker_grep:` is treated as a "safe routing source" — outgoing conditional edges that test `ctx.tool_marker` no longer trip `DIP101` (unreachable target) or `DIP102` (no default edge), even with a single conditional edge. The declaration is an explicit author signal that routing is typed. Coverage is still checked, though: when `marker_grep` is a recognizable literal alternation (e.g. `^(a|b)$`) and a marker it enumerates is routed by no edge and covered by no `else`/unconditional fallback, `DIP152` flags that specific marker.
 
 ---
 

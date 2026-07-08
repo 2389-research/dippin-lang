@@ -710,7 +710,7 @@ The primary loop for authoring .dip files:
 ## Best Practices
 
 - **Always set `timeout`** on tool nodes — no timeout means infinite hang
-- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel.
+- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel — but for a recognizable literal-alternation grep, DIP152 still flags any enumerated marker that no edge routes and no `else`/unconditional fallback covers.
 - **Boolean fields** (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively. Anything else is a parse diagnostic.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
