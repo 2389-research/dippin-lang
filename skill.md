@@ -386,7 +386,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP151) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP152) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -518,11 +518,12 @@ The primary loop for authoring .dip files:
 | DIP149 | A node has 2+ unconditional outgoing edges — which one fires is decided only by the lexical (alphabetical) tiebreak on target node ID | Keep at most one unconditional edge as the default fallback; guard the others with `when`. Restart/`loop` back-edges are exempt |
 | DIP150 | A label-routing `human` gate (mode `choice`, `yes_no`, or unset default) routes an outgoing edge by `label:` with no explicit `choice:` — the label doubles as the routing key, so nothing signals it is load-bearing (Hint). `freeform`/`interview` gates are exempt | Add `choice: "<key>"` to mark the routing key, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent |
 | DIP151 | An edge carries a `weight:` attribute — speculative tier-4 routing priority that the cascade never consults and no real workflow uses. It still parses (carry-only), but the keyword and cascade tier are slated for removal in `dip 2` (Warning) | Remove `weight:`; express priority with conditions — guard edges with `when` / `on`, or rely on a single unconditional fallback |
+| DIP152 | A tool node's `marker_grep` enumerates a literal marker that no edge routes and that no section `else ->` default or unconditional edge covers — the marker would be emitted at runtime with nowhere to go. Only checked for recognizable literal-alternation greps; any compound/negated/other-variable edge makes the node safe (Warning) | Route the marker with an edge (`on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default |
 
 ## Best Practices
 
 - **Always set `timeout`** on tool nodes — no timeout means infinite hang
-- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel.
+- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel — but for a recognizable literal-alternation grep, DIP152 still flags any enumerated marker that no edge routes and no `else`/unconditional fallback covers.
 - **Boolean fields** (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively. Anything else is a parse diagnostic.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
