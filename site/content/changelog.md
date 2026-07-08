@@ -4,6 +4,18 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.45.0] — 2026-07-08
+
+### Added
+- **`DIP152` — coverage-aware `marker_grep` lint** ([#156](https://github.com/2389-research/dippin-lang/issues/156), [#180](https://github.com/2389-research/dippin-lang/pull/180)). Warns when a tool node's `marker_grep` enumerates a literal marker that no outgoing edge routes and that no section `else ->` default or unconditional fallback covers — that marker would be emitted at runtime with nowhere to go, previously a silent hole (any `marker_grep` blanket-exempted the source node from DIP101/DIP102). DIP152 catches it precisely, naming the uncovered markers. **Additive**: DIP101/DIP102 keep their marker exemption, so a gap gets exactly one warning. **Ultra-conservative — no false positives**: only recognizable finite literal alternations (`^(a|b|c)$` or a bare literal) are coverage-checked; any regex with a metacharacter, an empty branch, or a non-full-span group stays blanket-exempt, and any compound (`or`), negated (`!=` / `not`), other-variable, or unconditional edge makes the node safe. The exit node and edge-less dead-ends are handled correctly (the simulator dead-ends an edge-less node before any `else` routing, so `else` cannot cover it). Reuses `ir.ExtractEqualityCondition`; a `TestLintExamples` guard keeps the example suite covered. Brings the catalog to 62 codes (DIP101–DIP152).
+
+### Changed
+- **`dippin simulate` + the all-paths enumerator now honor the section `else ->` default** ([#158](https://github.com/2389-research/dippin-lang/issues/158), [#178](https://github.com/2389-research/dippin-lang/pull/178)). `ir.Workflow.ElseTarget` lives outside `Edges` and `EdgesFrom` doesn't expose it, so the built-in simulator and enumerator never traversed the `else` funnel default (they fell back to `edges[0]`, the happy-path heuristic). Now the simulator routes an unmatched node — including a concrete `--scenario` value no guard covers — to `ElseTarget`, mirroring the engine; the enumerator emits the `else` branch as a distinct path, gated on non-exhaustive guards (a declared-exhaustive success/fail set or complete partition does not enumerate an unreachable `else`). The static analyses (DIP003/004/101/102/105) were already `else`-aware since #157; this finishes the two execution-simulation consumers. Enabled by moving the edge-condition exhaustiveness helper to the shared `ir` tier as `ir.EdgesExhaustive` (validator and simulate share one source of truth — no import cycle, no drift).
+
+### Fixed
+- **Spec self-contradiction on block-form `parallel`** ([#174](https://github.com/2389-research/dippin-lang/issues/174)) — the `parallel`/`fan_in` section said "Inline syntax only", contradicting the supported block form (`parallel P` / `branch:` lines with per-branch `model`/`provider`/`fidelity`/`tool_access`/`writable_paths`/`last_response_truncate` overrides). Reworded to document both forms; the `fan_in`/DIP007 pairing applies to both.
+- **`brew install` formula name** in the site + docs install instructions ([#179](https://github.com/2389-research/dippin-lang/pull/179), thanks [@lra](https://github.com/lra)) — the tap ships the formula as `dippin-lang`, so `brew install 2389-research/tap/dippin` failed; corrected all five occurrences.
+
 ## [v0.44.0] — 2026-07-01
 
 ### Added
