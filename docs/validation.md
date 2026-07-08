@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 61 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (60 documented sections):
+Dippin registers 62 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (61 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP151): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP152): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP151<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP152<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP151)
+## Semantic Lint Warnings (DIP101–DIP152)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1362,6 +1362,31 @@ routing explicit and deterministic.
 
 ---
 
+### DIP152: marker_grep enumerates an unrouted marker
+
+**Severity**: Warning
+
+A tool node's `marker_grep` enumerates a literal marker that no outgoing edge
+routes and that no section `else ->` default or unconditional fallback edge
+covers. That marker would be emitted at runtime with nowhere to go. Only checked
+when `marker_grep` is a recognizable literal alternation (e.g. `^(a|b|c)$` or a
+bare literal); complex regexes are left unflagged.
+
+```text
+warning[DIP152]: tool node "RunTests" emits markers that no edge routes and no else default covers: tests-failed
+```
+
+**Trigger:** The routing is simple enough to be certain of a gap — every outgoing
+edge is a plain `on <marker>` / `when ctx.tool_marker = <marker>` equality, some
+enumerated marker is unrouted, and there is no `else` default or unconditional
+edge. Any compound (`or`), negated (`!=` / `not`), or other-variable edge makes
+the node safe (no warning), and non-enumerable regexes are skipped entirely.
+
+**Fix:** Route the marker with an edge (`RunTests -> <node> on tests-failed`),
+add an unconditional fallback edge, or add a section `else -> <node>` default.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1378,7 +1403,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP151 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP152 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

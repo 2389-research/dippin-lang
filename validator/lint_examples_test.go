@@ -13,10 +13,11 @@ import (
 )
 
 // TestLintExamples parses every .dip file in examples/ through the real
-// parser and lints it, asserting zero DIP108 (unknown model) warnings and zero
-// DIP147 (chain-attack topology). This catches model catalog staleness and
-// invalid model IDs, and guards against an example silently demonstrating the
-// restricted->tool-bearing laundering topology.
+// parser and lints it, asserting zero DIP108 (unknown model) warnings, zero
+// DIP147 (chain-attack topology), and zero DIP152 (unrouted marker_grep
+// markers). This catches model catalog staleness, invalid model IDs, and guards
+// against examples demonstrating restricted->tool-bearing laundering or
+// unreachable marker routing.
 func TestLintExamples(t *testing.T) {
 	examples, err := filepath.Glob("../examples/*.dip")
 	if err != nil {
@@ -47,7 +48,7 @@ func TestLintExamples(t *testing.T) {
 
 			result := validator.Lint(w)
 			for _, d := range result.Diagnostics {
-				if d.Code == validator.DIP108 || d.Code == validator.DIP147 {
+				if d.Code == validator.DIP108 || d.Code == validator.DIP147 || d.Code == validator.DIP152 {
 					t.Errorf("%s: %s", name, d.Message)
 				}
 			}

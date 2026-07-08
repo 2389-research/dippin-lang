@@ -173,6 +173,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Remove weight:. Express edge priority with conditions instead — guard edges with `when` / `on`, or rely on a single unconditional fallback to make routing explicit.",
 			Example: "agent Route\n  prompt: \"decide\"\nRoute -> A weight: 5  # DIP151: weight: is unused by routing; guard with when or drop it\nRoute -> B",
 		},
+		DIP152: {
+			Code:    DIP152,
+			Summary: "marker_grep enumerates a marker no edge routes and no else default covers",
+			Trigger: "A tool node's marker_grep enumerates a literal marker (e.g. \"tests-failed\" in ^(tests-ok|tests-failed)$) that no outgoing edge routes and that no section `else ->` default or unconditional fallback edge covers, so that marker would be emitted at runtime with nowhere to go. Only checked when marker_grep is a recognizable literal alternation; complex regexes are left unflagged.",
+			Fix:     "Route the marker with an edge (`Node -> Target on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default.",
+			Example: "tool RunTests\n  marker_grep: ^(tests-ok|tests-failed)$\nedges\n  RunTests -> Done on tests-ok  # DIP152: tests-failed is emitted but routed nowhere",
+		},
 	}
 }
 

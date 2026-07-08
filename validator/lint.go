@@ -5,7 +5,7 @@ import (
 	"github.com/2389-research/dippin-lang/simulate"
 )
 
-// Lint runs all semantic quality checks (DIP101–DIP151, except DIP138 —
+// Lint runs all semantic quality checks (DIP101–DIP152, except DIP138 —
 // reserved, no firing logic — and DIP146 — which the CLI's cross-file pass
 // emits, not this function) on the workflow
 // and returns all diagnostics found. These are warnings, not errors —
@@ -50,55 +50,66 @@ func LintWithOptions(w *ir.Workflow, opts Options) Result {
 	_ = simulate.EnsureConditionsParsed(w)
 
 	var diags []Diagnostic
-
-	diags = append(diags, lintConditionalReachability(w)...)
-	diags = append(diags, lintDefaultEdge(w)...)
-	diags = append(diags, lintOverlappingConditions(w)...)
-	diags = append(diags, lintUnboundedRetry(w)...)
-	diags = append(diags, lintSuccessPath(w)...)
-	diags = append(diags, lintUndefinedVariables(w)...)
-	diags = append(diags, lintUnusedWrites(w)...)
-	diags = append(diags, lintModelProvider(w, opts.ExtraModels)...)
-	diags = append(diags, lintNamespaceCollisions(w)...)
-	diags = append(diags, lintEmptyPrompts(w)...)
-	diags = append(diags, lintToolTimeout(w)...)
-	diags = append(diags, lintReadsWithoutUpstreamWrites(w)...)
-	diags = append(diags, lintRetryPolicy(w)...)
-	diags = append(diags, lintRetryRestartConfusion(w)...)
-	diags = append(diags, lintFidelity(w)...)
-	diags = append(diags, lintGoalGateFallback(w)...)
-	diags = append(diags, lintCompactionThreshold(w)...)
-	diags = append(diags, lintOnResume(w)...)
-	diags = append(diags, lintReasoningEffort(w)...)
-	diags = append(diags, lintConditionNamespace(w)...)
-	diags = append(diags, lintStylesheetRefs(w)...)
-	diags = append(diags, lintConditionUndefinedOutput(w)...)
-	diags = append(diags, lintConditionUndeclaredValue(w)...)
-	diags = append(diags, lintToolSyntax(w)...)
-	diags = append(diags, lintToolCtxVars(w)...)
-	diags = append(diags, lintToolBinary(w)...)
-	diags = append(diags, lintSubgraphRef(w)...)
-	diags = append(diags, lintManagerLoop(w)...)
-	diags = append(diags, lintHumanMode(w)...)
-	diags = append(diags, lintInterviewDefault(w)...)
-	diags = append(diags, lintInterviewLabeledEdges(w)...)
-	diags = append(diags, lintHumanChoiceKey(w)...)
-	diags = append(diags, lintResponseFormat(w)...)
-	diags = append(diags, lintResponseSchemaMismatch(w)...)
-	diags = append(diags, lintResponseSchemaJSON(w)...)
-	diags = append(diags, lintAgentParamsShadow(w)...)
-	diags = append(diags, lintToolAccessValues(w)...)
-	diags = append(diags, lintParamsReenablesTools(w)...)
-	diags = append(diags, lintWritablePaths(w)...)
-	diags = append(diags, lintSubgraphToolAccess(w)...)
-	diags = append(diags, lintAgentFailureRoute(w)...)
-	diags = append(diags, lintBudgetRanges(w)...)
-	diags = append(diags, lintChainAttack(w)...)
-	diags = append(diags, lintLastResponseTruncate(w)...)
-	diags = append(diags, lintAmbiguousRouting(w)...)
-	diags = append(diags, lintUnusedWeight(w)...)
-
+	for _, pass := range lintPasses(opts) {
+		diags = append(diags, pass(w)...)
+	}
 	return Result{Diagnostics: diags}
+}
+
+// lintPasses returns the ordered semantic-lint passes. Every pass is a pure
+// func(*ir.Workflow) []Diagnostic; lintModelProvider is wrapped to close over
+// opts.ExtraModels. Order is irrelevant to correctness (diagnostics are
+// independent), so new passes append to the end.
+func lintPasses(opts Options) []func(*ir.Workflow) []Diagnostic {
+	return []func(*ir.Workflow) []Diagnostic{
+		lintConditionalReachability,
+		lintDefaultEdge,
+		lintOverlappingConditions,
+		lintUnboundedRetry,
+		lintSuccessPath,
+		lintUndefinedVariables,
+		lintUnusedWrites,
+		func(w *ir.Workflow) []Diagnostic { return lintModelProvider(w, opts.ExtraModels) },
+		lintNamespaceCollisions,
+		lintEmptyPrompts,
+		lintToolTimeout,
+		lintReadsWithoutUpstreamWrites,
+		lintRetryPolicy,
+		lintRetryRestartConfusion,
+		lintFidelity,
+		lintGoalGateFallback,
+		lintCompactionThreshold,
+		lintOnResume,
+		lintReasoningEffort,
+		lintConditionNamespace,
+		lintStylesheetRefs,
+		lintConditionUndefinedOutput,
+		lintConditionUndeclaredValue,
+		lintToolSyntax,
+		lintToolCtxVars,
+		lintToolBinary,
+		lintSubgraphRef,
+		lintManagerLoop,
+		lintHumanMode,
+		lintInterviewDefault,
+		lintInterviewLabeledEdges,
+		lintHumanChoiceKey,
+		lintResponseFormat,
+		lintResponseSchemaMismatch,
+		lintResponseSchemaJSON,
+		lintAgentParamsShadow,
+		lintToolAccessValues,
+		lintParamsReenablesTools,
+		lintWritablePaths,
+		lintSubgraphToolAccess,
+		lintAgentFailureRoute,
+		lintBudgetRanges,
+		lintChainAttack,
+		lintLastResponseTruncate,
+		lintAmbiguousRouting,
+		lintUnusedWeight,
+		lintMarkerCoverage,
+	}
 }
 
 // knownNamespaces lists the valid namespace prefixes for variable references.
