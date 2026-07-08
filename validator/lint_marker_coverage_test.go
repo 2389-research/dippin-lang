@@ -46,7 +46,7 @@ func TestEnumerateMarkers(t *testing.T) {
 	}
 }
 
-// lintFor parses .dip source and returns the diagnostics for `code`.
+// markerDiagsFor parses .dip source and returns its DIP152 diagnostics.
 func markerDiagsFor(t *testing.T, src string) []Diagnostic {
 	t.Helper()
 	w, err := parser.NewParser(src, "test.dip").Parse()
@@ -115,8 +115,33 @@ func TestDIP152_UnconditionalCovered(t *testing.T) {
 
 func TestDIP152_MultiMarkerGap(t *testing.T) {
 	diags := markerDiagsFor(t, mk("^(a|b|c)$", "    RunTests -> Done on a\n"))
-	if len(diags) != 1 || !strings.Contains(diags[0].Message, "b, c") {
-		t.Fatalf("want DIP152 listing b, c: %v", diags)
+	if len(diags) != 1 || !strings.Contains(diags[0].Message, `"b", "c"`) {
+		t.Fatalf(`want DIP152 listing "b", "c": %v`, diags)
+	}
+}
+
+// TestDIP152_ExitNodeClean guards against a false positive: a marker tool that
+// is the workflow exit legitimately has no outgoing edges, so its markers are
+// "unrouted" — but demanding edges out of a terminal node is wrong.
+func TestDIP152_ExitNodeClean(t *testing.T) {
+	src := `workflow W
+  goal: "t"
+  start: Begin
+  exit: Run
+
+  agent Begin
+    prompt: go
+
+  tool Run
+    command: run
+    marker_grep: "^(ok|fail)$"
+
+  edges
+    Begin -> Run
+`
+	diags := markerDiagsFor(t, src)
+	if len(diags) != 0 {
+		t.Fatalf("marker tool that is the exit node must not warn, got %v", diags)
 	}
 }
 

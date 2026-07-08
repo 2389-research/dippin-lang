@@ -76,6 +76,7 @@ dippin-lang/
 │   ├── lint_last_response_truncate.go # DIP147, DIP148 (last_response truncation mitigation)
 │   ├── lint_routing.go       # DIP103, DIP149, DIP151 (edge routing / unused weight)
 │   ├── lint_human.go         # DIP127, DIP128, DIP129, DIP150 (human-gate modes + choice keys)
+│   ├── lint_marker_coverage.go # DIP152 (marker_grep coverage vs routed edges)
 │   └── ...                   # further lint_*.go files cover DIP110–DIP134 (response, subgraph, tool_cmd, etc.)
 │
 ├── formatter/          # Canonical .dip source formatter
@@ -374,6 +375,7 @@ Checks semantic quality — patterns that are likely bugs. Decomposed into focus
 - **Last-response truncate** (`lint_last_response_truncate.go`): DIP147, DIP148 — `last_response_truncate` mitigation hint
 - **Routing** (`lint_routing.go`): DIP103, DIP149, DIP151 — edge routing validity and unused `weight:` soft-deprecation
 - **Human** (`lint_human.go`): DIP127, DIP128, DIP129, DIP150 — human-gate interaction modes + `choice:` edge keys
+- **Marker coverage** (`lint_marker_coverage.go`): DIP152 — a tool's `marker_grep` enumerates a marker no edge routes and no `else`/unconditional edge covers
 
 (Further modules — `lint_response.go`, `lint_subgraph.go`, `lint_tool_cmd.go`, etc. — cover DIP110–DIP134.)
 

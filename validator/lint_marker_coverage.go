@@ -67,20 +67,14 @@ func isLiteralToken(s string) bool {
 	return !strings.ContainsAny(s, markerMetachars)
 }
 
-// lintEdgeAnnotations runs DIP151 (unused weight) and DIP152 (marker coverage).
-// Grouped here to keep LintWithOptions within the statement-count limit.
-func lintEdgeAnnotations(w *ir.Workflow) []Diagnostic {
-	var d []Diagnostic
-	d = append(d, lintUnusedWeight(w)...)
-	d = append(d, lintMarkerCoverage(w)...)
-	return d
-}
-
 // lintMarkerCoverage checks DIP152 across all tool nodes.
 func lintMarkerCoverage(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	elseValid := hasValidElseDefault(w)
 	for _, n := range w.Nodes {
+		if n.ID == w.Exit {
+			continue // the exit node legitimately has no outgoing edges
+		}
 		if d, ok := checkMarkerCoverage(w, n, elseValid); ok {
 			diags = append(diags, d)
 		}
@@ -95,7 +89,8 @@ func checkMarkerCoverage(w *ir.Workflow, n *ir.Node, elseValid bool) (Diagnostic
 	if !ok {
 		return Diagnostic{}, false
 	}
-	routed, hasUncond, hasComplex := classifyMarkerEdges(w.EdgesFrom(n.ID))
+	channel, _ := n.OutcomeChannel() // "ctx.tool_marker" for a marker tool
+	routed, hasUncond, hasComplex := classifyMarkerEdges(w.EdgesFrom(n.ID), channel)
 	if markerNodeCovered(elseValid, hasUncond, hasComplex) {
 		return Diagnostic{}, false
 	}
@@ -119,14 +114,14 @@ func nodeEnumerableMarkers(n *ir.Node) ([]string, bool) {
 // classifyMarkerEdges splits a node's outgoing edges into the simple-equality
 // routed marker set plus flags for an unconditional edge and any "complex" edge
 // (compound/negated/other-variable) whose mere presence makes the node safe.
-func classifyMarkerEdges(edges []*ir.Edge) (routed map[string]struct{}, hasUncond, hasComplex bool) {
+func classifyMarkerEdges(edges []*ir.Edge, channel string) (routed map[string]struct{}, hasUncond, hasComplex bool) {
 	routed = make(map[string]struct{})
 	for _, e := range edges {
 		if e.Condition == nil {
 			hasUncond = true
 			continue
 		}
-		if cmp, ok := ir.ExtractEqualityCondition(e); ok && cmp.Variable == "ctx.tool_marker" {
+		if cmp, ok := ir.ExtractEqualityCondition(e); ok && cmp.Variable == channel {
 			routed[cmp.Value] = struct{}{}
 			continue
 		}
@@ -157,8 +152,18 @@ func markerCoverageDiag(n *ir.Node, missing []string) Diagnostic {
 	return Diagnostic{
 		Code:     DIP152,
 		Severity: SeverityWarning,
-		Message:  fmt.Sprintf("tool node %q emits markers that no edge routes and no else default covers: %s", n.ID, strings.Join(missing, ", ")),
+		Message:  fmt.Sprintf("tool node %q emits markers that no edge routes and no else default covers: %s", n.ID, quoteMarkers(missing)),
 		Location: n.Source,
 		Help:     "route each marker with an edge (e.g. `on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default",
 	}
+}
+
+// quoteMarkers renders markers as a comma-separated list of quoted literals, so
+// values containing whitespace stay legible in the diagnostic.
+func quoteMarkers(markers []string) string {
+	quoted := make([]string, len(markers))
+	for i, m := range markers {
+		quoted[i] = fmt.Sprintf("%q", m)
+	}
+	return strings.Join(quoted, ", ")
 }

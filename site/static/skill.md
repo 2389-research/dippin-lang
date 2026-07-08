@@ -386,7 +386,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP151) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP152) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
