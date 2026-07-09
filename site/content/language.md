@@ -25,7 +25,7 @@ Every `.dip` file contains exactly one workflow. The top-level structure has up 
 
 Dippin uses indentation-sensitive syntax (like Python). Use 2 spaces or tabs consistently. The canonical formatter always outputs 2-space indentation.
 
-A `.dip` file may optionally declare its **format version** on the first line, before the `workflow` declaration — e.g. `dip 2`. With no declaration the version defaults to **1**, and the formatter only emits the `dip N` line for versions greater than 1 (a v1 file never gains one). The version is parsed before the workflow body so future format versions can change edge syntax wholesale; `dippin fmt --migrate` re-emits a file in its current format version, still formatting it to canonical form — today the v1→v1 migration itself is an identity pass with no version transform.
+A `.dip` file may optionally declare its **format version** on the first line, before the `workflow` declaration — e.g. `dip 2`. With no declaration the version defaults to **1**, and the formatter only emits the `dip N` line for versions greater than 1 (a v1 file never gains one). The version is parsed before the workflow body so a format version can change edge syntax wholesale; `dippin fmt --migrate` converts a v1 file to `dip 2` — folding `fallback_target` into an `on fail` edge and a non-self `retry_target` into a `loop` edge, and flagging any case it can't express 1:1 for review.
 
 ## Workflow Header
 
@@ -147,8 +147,8 @@ These fields (`label`, `class`, `reads`, `writes`, and the retry fields) are acc
 | `retry_policy` | String | Named retry strategy: `standard`, `aggressive`, `patient`, `linear`, `none`. Overrides the workflow default. |
 | `max_retries` | Integer | Maximum retry attempts before giving up. Overrides the workflow default. |
 | `base_delay` | Duration | Override the retry policy's default base delay (e.g. `500ms`, `2s`, `1m`). |
-| `retry_target` | String | Node ID to jump to when retrying (instead of re-executing the current node). |
-| `fallback_target` | String | Node ID to jump to if all retries are exhausted. |
+| `retry_target` | String | **v1 only** (rejected under `dip 2`) — node ID to jump to when retrying. In `dip 2`, use a `loop` edge (`dippin fmt --migrate` converts). |
+| `fallback_target` | String | **v1 only** (rejected under `dip 2`) — node ID to jump to if all retries are exhausted. In `dip 2`, use an `on fail` edge. |
 
 ### agent
 
@@ -185,7 +185,7 @@ Agent nodes invoke an LLM. They are the most configurable node kind. Key fields 
 | `fidelity` | String | Checkpoint fidelity level for state persistence. |
 | `max_turns` | Integer | Maximum conversation turns before the node exits |
 | `auto_status` | Boolean | Automatically extract `STATUS: success/fail` from model output into `ctx.outcome` |
-| `goal_gate` | Boolean | Marks this node as a goal gate — requires `retry_target` or `fallback_target` for recovery |
+| `goal_gate` | Boolean | Marks this node as a goal gate — requires a failure route (an `on fail` edge; or `retry_target`/`fallback_target` in v1) for recovery |
 | `cache_tools` | Boolean | Whether to cache tool call results for this agent. Overrides the workflow default. |
 | `compaction` | String | Context compaction mode for managing long context windows. Overrides the workflow default. |
 | `compaction_threshold` | Float | Threshold value that triggers compaction (provider-specific semantics). |

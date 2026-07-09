@@ -57,7 +57,7 @@ workflow <Name>
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
 
-All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, `fallback_target`.
+All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`. **v1-only (rejected under `dip 2`):** `retry_target`, `fallback_target` — in `dip 2` use a `loop` edge and an `on fail` edge instead (`dippin fmt --migrate` converts).
 
 ---
 

@@ -149,10 +149,10 @@ These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
 <div class="diag-card warning">
   <span class="diag-code">DIP115</span> — Goal Gate Without Recovery Path
-  <p>A node has <code>goal_gate: true</code> but no <code>retry_target</code> or <code>fallback_target</code>, meaning the pipeline has no recovery path if the gate fails.</p>
+  <p>A node has <code>goal_gate: true</code> but no failure route — no <code>on fail</code> edge, and (in v1) no <code>retry_target</code>/<code>fallback_target</code> — so the pipeline has no recovery path if the gate fails.</p>
   <pre>warning[DIP115]: node "validate_tests" has goal_gate but no recovery path
   --&gt; pipeline.dip:18:3
-  = help: add retry_target or fallback_target</pre>
+  = help: add an on fail edge (dip 2), or retry_target / fallback_target (v1)</pre>
 </div>
 
 <div class="diag-card warning">

@@ -54,8 +54,8 @@ These fields are available on **all** block-style node kinds (agent, human, tool
 | `retry_policy` | String | No | Named retry strategy: `"standard"`, `"aggressive"`, `"patient"`, `"linear"`, `"none"`. Overrides the workflow default. |
 | `max_retries` | Integer | No | Maximum retry attempts before giving up. Overrides the workflow default. |
 | `base_delay` | Duration | No | Override the retry policy's default base delay (e.g. `500ms`, `2s`, `1m`). |
-| `retry_target` | String | No | Node ID to jump to when retrying (instead of re-executing the current node). |
-| `fallback_target` | String | No | Node ID to jump to if all retries are exhausted. A graph-level catch-all can also be declared via `defaults.on_failure` (see [edges.md](edges.md) — Failure Handling). |
+| `retry_target` | String | No | **v1 only** (rejected under `dip 2`) — node ID to jump to when retrying. In `dip 2`, use a `loop` edge; run `dippin fmt --migrate` to convert. |
+| `fallback_target` | String | No | **v1 only** (rejected under `dip 2`) — node ID to jump to if all retries are exhausted. In `dip 2`, use an `on fail` edge. A graph-level catch-all can also be declared via `defaults.on_failure` (see [edges.md](edges.md) — Failure Handling). |
 
 ### reads and writes
 
@@ -135,8 +135,8 @@ When an agent reaches `max_turns` without completing, the engine treats it as a
 failure (`ctx.outcome = fail`), **not** a successful stop. `max_turns` is therefore
 a routing event, not just a cost control. An agent with `max_turns` set but no
 failure route is a latent dead-end — [DIP144](validation.md#dip144) warns you. Pair
-every bounded `max_turns` with one of: a `when ctx.outcome = fail` edge,
-`fallback_target`, a bounded `retry_target`, or a graph `on_failure`.
+every bounded `max_turns` with one of: an `on fail` edge (`when ctx.outcome = fail`),
+a graph `on_failure`, or — in v1 — a `fallback_target` / bounded `retry_target`.
 
 ### auto_status
 

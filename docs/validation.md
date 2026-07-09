@@ -321,14 +321,14 @@ warning[DIP103]: overlapping or contradictory conditions
 
 **Severity**: Warning
 
-A retry path has no `max_retries` or `fallback_target` to bound it.
+A retry path has no bound and no failure route — no `max_retries`, no `on fail` edge, and (in v1) no `fallback_target`.
 
 ```
 warning[DIP104]: unbounded retry loop (no max_retries or fallback)
   --> pipeline.dip:40:3
 ```
 
-**What triggers it**: A node has a `retry_target` set but no `max_retries` or `fallback_target`. This could cause infinite retries.
+**What triggers it**: A node has retry configuration but no `max_retries` and no failure route (an `on fail` edge, or — in v1 — a `fallback_target`). This could cause infinite retries. Set `max_retries` to bound retries, or add an `on fail` edge for graceful degradation.
 
 **How to fix**: Set `max_retries` and/or `fallback_target`:
 ```dippin
@@ -545,12 +545,12 @@ warning[DIP114]: node "analyze" has fidelity "sumary:high" which is not a recogn
 
 **Severity**: Warning
 
-A node has `goal_gate: true` but no `retry_target` or `fallback_target`, meaning the pipeline has no recovery path if the gate fails.
+A node has `goal_gate: true` but no failure route — no `on fail` edge and (in v1) no `retry_target`/`fallback_target` — meaning the pipeline has no recovery path if the gate fails.
 
 ```
 warning[DIP115]: node "validate_tests" has goal_gate: true but no retry_target or fallback_target
   --> pipeline.dip:18:3
-  = help: add retry_target or fallback_target so the pipeline can recover when the gate fails
+  = help: add an `on fail` edge, set fallback_target:, or add retry_target with max_retries so the pipeline can recover when the gate fails
 ```
 
 **What `goal_gate` means**: When a node with `goal_gate: true` completes with `outcome != success`, the pipeline fails at exit — even if the exit node itself succeeded. Goal gates enforce invariants (e.g., "all tests must pass").

@@ -72,7 +72,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>fmt</h3>
   <div class="cmd-usage">dippin fmt [--check] [--write] [--migrate] &lt;file&gt;</div>
-  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting. <code>--migrate</code> re-emits a file in its current format version, still formatting it to canonical form; the v1→v1 migration itself is an identity pass today — no version transform — and scaffolding for future version migrations.</p>
+  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting. <code>--migrate</code> converts a v1 file to <code>dip 2</code>: it folds <code>fallback_target</code> into an <code>on fail</code> edge and a non-self <code>retry_target</code> into a <code>loop</code> edge, flagging any case it can't express 1:1 with an inline <code># MIGRATION:</code> comment plus a stderr summary and exit code 3 (review needed). <code>--migrate --check</code> exits non-zero when a file is not already canonical <code>dip 2</code>.</p>
 </div>
 
 <div class="cmd-card">
