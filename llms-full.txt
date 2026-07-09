@@ -59,7 +59,7 @@ workflow <Name>
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
 
-All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, `fallback_target`.
+All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`. **v1-only (rejected under `dip 2`):** `retry_target`, `fallback_target` — in `dip 2` use a `loop` edge and an `on fail` edge instead (`dippin fmt --migrate` converts).
 
 ---
 
@@ -259,7 +259,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
-| `goal_gate` | bool | Pipeline fails if gate fails. Add `retry_target` or `fallback_target` (DIP115) |
+| `goal_gate` | bool | Pipeline fails if gate fails. Add a failure route — an `on fail` edge (dip 2), or `retry_target`/`fallback_target` (v1). See DIP115 |
 | `response_format` | string | `json_object` or `json_schema` (DIP130) |
 | `response_schema` | multiline JSON | Must be valid JSON (DIP132). Requires `response_format: json_schema` (DIP131) |
 | `reasoning_effort` | string | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` (DIP119) |
@@ -467,8 +467,8 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | `retry_policy` | `standard`, `aggressive`, `patient`, `linear`, `none` (DIP113 if invalid) |
 | `max_retries` | Max retry attempts |
 | `base_delay` | Override base delay, e.g. `500ms`, `2s` |
-| `retry_target` | Node ID to jump to on retry |
-| `fallback_target` | Node ID if retries exhausted |
+| `retry_target` | **v1 only** (rejected under `dip 2`) — node to jump to on retry; use a `loop` edge in dip 2 |
+| `fallback_target` | **v1 only** (rejected under `dip 2`) — node if retries exhausted; use an `on fail` edge in dip 2 |
 
 **Every node must have at least one field.** An empty node body causes a parse error.
 
@@ -667,7 +667,7 @@ The primary loop for authoring .dip files:
 | DIP101 | Node only reachable via conditionals | Add unconditional fallback edge or make conditions exhaustive (`success`/`fail`) |
 | DIP102 | No default edge from routing node | Add unconditional edge or exhaustive conditions |
 | DIP103 | Overlapping conditions | Disambiguate condition expressions |
-| DIP104 | Unbounded retry loop | Add `max_retries` or `fallback_target` |
+| DIP104 | Unbounded retry loop | Add `max_retries`, an `on fail` edge (dip 2), or `fallback_target` (v1) |
 | DIP105 | No success path start→exit | Ensure at least one unconditional path exists |
 | DIP106 | Undefined variable in prompt | Check `${var}` references |
 | DIP107 | Written key never read downstream | Remove unused `writes` or add consumer node |
@@ -678,7 +678,7 @@ The primary loop for authoring .dip files:
 | DIP112 | Reads key not written upstream | Add `writes:` to producing node |
 | DIP113 | Invalid retry policy | Use: `standard`, `aggressive`, `patient`, `linear`, `none` |
 | DIP114 | Invalid fidelity | Use: `full`, `summary:high`, `summary:medium`, `summary:low`, `compact`, `truncate` |
-| DIP115 | Goal gate without recovery | Add `retry_target` or `fallback_target` |
+| DIP115 | Goal gate without recovery | Add an `on fail` edge (dip 2), or `retry_target`/`fallback_target` (v1) |
 | DIP116 | Invalid compaction threshold | Use float 0.0-1.0 |
 | DIP117 | Stylesheet class references undefined class | Fix class name in stylesheet block |
 | DIP118 | Stylesheet ID references unknown node | Fix node ID in stylesheet block |
@@ -698,7 +698,7 @@ The primary loop for authoring .dip files:
 | DIP141 | `writable_paths` set with `tool_access: none` (dead config) | Remove `writable_paths` — `tool_access: none` already strips all tools, leaving nothing for `writable_paths` to bound |
 | DIP142 | Unsafe `writable_paths` entry (absolute, `..` escape, `~`, brace fragment) | Use workspace-relative globs (e.g. `.ai/sprints/**`); absolute, `~`, Windows-drive, and `..`-escaping entries are rejected by the runtime fs jail |
 | DIP143 | Workflow uses `tool_access` but references a subgraph — child agents unguarded | Open the referenced `.dip` and set `tool_access` on its agents directly; parent restrictions do not cross the file boundary |
-| DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail`, set `fallback_target`, add `retry_target` with `max_retries`, or declare `on_failure:` in defaults |
+| DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail` (dip 2), or set `fallback_target`/`retry_target`+`max_retries` (v1), or declare `on_failure:` in defaults |
 | DIP145 | Graph budget default is negative | Use a positive cap, or omit the field / set `0` to mean no limit |
 | DIP146 | Referenced subgraph child restricts no agent's `tool_access` while a workflow on the path does (cross-file) | Set `tool_access` on the child's agents; native `dippin lint` resolves the child and supersedes DIP143 |
 | DIP147 | A `tool_access: none` agent `writes:` a context key that a downstream tool-bearing agent `reads:` (chain-attack / info-flow) | Confirm the restricted agent's input is trusted; if not, give the consumer `tool_access: none` too or insert a sanitizing step. Detection only — the runtime enforces |
@@ -716,7 +716,7 @@ The primary loop for authoring .dip files:
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
 - **Mark back-edges `loop`** — loops without it trigger DIP005
 - **Declare `reads`/`writes`** on nodes to document data flow (enables DIP107/DIP112 checks)
-- **Add `retry_target` or `fallback_target`** to `goal_gate: true` nodes
+- **Add a failure route** (an `on fail` edge, or `retry_target`/`fallback_target` in v1) to `goal_gate: true` nodes
 - **Run `dippin check`** after every edit — it catches issues the formatter won't
 - **Use `dippin doctor`** for a health grade and actionable improvement suggestions
 
