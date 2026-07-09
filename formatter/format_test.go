@@ -2731,3 +2731,24 @@ func TestFormat_LastResponseTruncate_OmittedWhenZero(t *testing.T) {
 		t.Errorf("last_response_truncate emitted for zero value")
 	}
 }
+
+func TestFormatEdgeComment(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "W", Version: "2", Start: "A", Exit: "B",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
+		},
+		Edges: []*ir.Edge{
+			{From: "A", To: "B", Comment: "MIGRATION: review this"},
+		},
+	}
+	out := Format(w)
+	if !strings.Contains(out, "# MIGRATION: review this\n") {
+		t.Errorf("expected leading migration comment line, got:\n%s", out)
+	}
+	// The comment must appear immediately before the edge.
+	if !strings.Contains(out, "# MIGRATION: review this\n    A -> B") {
+		t.Errorf("comment not positioned before its edge:\n%s", out)
+	}
+}

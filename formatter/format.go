@@ -754,6 +754,9 @@ func writeEdges(wr *writer, w *ir.Workflow) {
 }
 
 func writeEdge(wr *writer, w *ir.Workflow, e *ir.Edge) {
+	if e.Comment != "" {
+		wr.line("# %s", e.Comment)
+	}
 	var parts []string
 	parts = append(parts, fmt.Sprintf("%s -> %s", e.From, e.To))
 	parts = appendEdgeCondition(parts, w, e)
