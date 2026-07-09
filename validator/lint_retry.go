@@ -12,23 +12,25 @@ import (
 func lintUnboundedRetry(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
-		if isUnboundedRetry(n.Retry) {
+		if isUnboundedRetry(w, n) {
 			diags = append(diags, Diagnostic{
 				Code:     DIP104,
 				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("node %q has retry configuration but no max_retries or fallback_target", n.ID),
+				Message:  fmt.Sprintf("node %q has retry configuration but no max_retries and no failure route", n.ID),
 				Location: n.Source,
-				Help:     "set max_retries to limit retries, or add a fallback_target for graceful degradation",
+				Help:     "set max_retries to bound retries, or add an `on fail` edge / fallback_target for graceful degradation",
 			})
 		}
 	}
 	return diags
 }
 
-// isUnboundedRetry returns true if retry config exists but has no bounds.
-func isUnboundedRetry(r ir.RetryConfig) bool {
+// isUnboundedRetry returns true if retry config exists with no bound: no
+// max_retries and no failure route (fallback_target or `on fail` edge).
+func isUnboundedRetry(w *ir.Workflow, n *ir.Node) bool {
+	r := n.Retry
 	hasRetryConfig := r.Policy != "" || r.RetryTarget != ""
-	return hasRetryConfig && r.MaxRetries == 0 && r.FallbackTarget == ""
+	return hasRetryConfig && r.MaxRetries == 0 && !nodeHasFailureRoute(w, n)
 }
 
 // validRetryPolicies is the set of retry policy names recognized by the runtime engine.
@@ -108,29 +110,29 @@ func hasRestartEdges(w *ir.Workflow) bool {
 }
 
 // lintGoalGateFallback checks DIP115: nodes with goal_gate: true should have
-// a retry_target or fallback_target so the pipeline has a recovery path when
-// the gate fails.
+// a retry_target, fallback_target, or `on fail` edge so the pipeline has a
+// recovery path when the gate fails.
 func lintGoalGateFallback(w *ir.Workflow) []Diagnostic {
 	var diags []Diagnostic
 	for _, n := range w.Nodes {
-		if needsGoalGateFallback(n) {
+		if needsGoalGateFallback(w, n) {
 			diags = append(diags, Diagnostic{
 				Code:     DIP115,
 				Severity: SeverityWarning,
-				Message:  fmt.Sprintf("node %q has goal_gate: true but no retry_target or fallback_target", n.ID),
+				Message:  fmt.Sprintf("node %q has goal_gate: true but no failure route", n.ID),
 				Location: n.Source,
-				Help:     "add retry_target or fallback_target so the pipeline can recover when the gate fails",
+				Help:     "add an `on fail` edge, set fallback_target:, or add retry_target with max_retries so the pipeline can recover when the gate fails",
 			})
 		}
 	}
 	return diags
 }
 
-// needsGoalGateFallback returns true if a node has goal_gate but no recovery path.
-func needsGoalGateFallback(n *ir.Node) bool {
+// needsGoalGateFallback returns true if a goal_gate node has no recovery path.
+func needsGoalGateFallback(w *ir.Workflow, n *ir.Node) bool {
 	cfg, ok := n.Config.(ir.AgentConfig)
 	if !ok || !cfg.GoalGate {
 		return false
 	}
-	return n.Retry.RetryTarget == "" && n.Retry.FallbackTarget == ""
+	return !nodeHasFailureRoute(w, n)
 }

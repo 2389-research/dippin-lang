@@ -3,6 +3,8 @@ package validator
 import (
 	"strings"
 	"testing"
+
+	"github.com/2389-research/dippin-lang/parser"
 )
 
 func dip144Fires(diags []Diagnostic, nodeID string) bool {
@@ -215,5 +217,56 @@ func TestDIP144NotOnHumanOrToolNodes(t *testing.T) {
 	}
 	if dip144Fires(diags, "T") {
 		t.Fatal("DIP144 must not fire on tool node T")
+	}
+}
+
+func diagsForCode(t *testing.T, src, code string) int {
+	t.Helper()
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	n := 0
+	for _, d := range Lint(w).Diagnostics {
+		if d.Code == code {
+			n++
+		}
+	}
+	return n
+}
+
+const goalGateV1 = `workflow W
+  goal: "t"
+  start: G
+  exit: D
+  agent G
+    prompt: g
+    goal_gate: true
+    fallback_target: D
+  agent D
+    prompt: d
+  edges
+    G -> D
+`
+
+const goalGateV2Edge = `workflow W
+  goal: "t"
+  start: G
+  exit: D
+  agent G
+    prompt: g
+    goal_gate: true
+  agent D
+    prompt: d
+  edges
+    G -> D  on fail
+`
+
+func TestDIP115_SatisfiedByFallbackTargetAndByFailEdge(t *testing.T) {
+	if got := diagsForCode(t, goalGateV1, "DIP115"); got != 0 {
+		t.Errorf("v1 fallback_target should satisfy DIP115, got %d", got)
+	}
+	if got := diagsForCode(t, goalGateV2Edge, "DIP115"); got != 0 {
+		t.Errorf("v2 on-fail edge should satisfy DIP115, got %d", got)
 	}
 }

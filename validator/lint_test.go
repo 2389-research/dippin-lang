@@ -1574,10 +1574,13 @@ func TestLint_DIP115_GoalGateNoFallback(t *testing.T) {
 	assertHasCode(t, res, DIP115)
 }
 
-func TestLint_DIP115_GoalGateWithRetryTarget(t *testing.T) {
+func TestLint_DIP115_GoalGateWithBoundedRetryTarget(t *testing.T) {
+	// retry_target alone (no max_retries) is unbounded, so DIP115 still fires.
+	// Only a bounded retry_target (max_retries > 0) satisfies the failure-route check.
 	w := cleanMinimalWorkflow()
 	w.Nodes[0].Config = ir.AgentConfig{Prompt: "X", GoalGate: true}
 	w.Nodes[0].Retry.RetryTarget = "Begin"
+	w.Nodes[0].Retry.MaxRetries = 3
 	res := Lint(w)
 	assertNoCode(t, res, DIP115)
 }

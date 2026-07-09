@@ -47,10 +47,14 @@ func hasFailureRoute(w *ir.Workflow, n *ir.Node, outgoing []*ir.Edge) bool {
 	if w.Defaults.OnFailure != "" && w.Node(w.Defaults.OnFailure) != nil {
 		return true
 	}
-	if hasBoundedFailureTarget(n.Retry) {
-		return true
-	}
-	return hasFailEdge(outgoing)
+	return nodeHasFailureRoute(w, n)
+}
+
+// nodeHasFailureRoute reports whether a node has a recovery path for failure —
+// a bounded retry target (v1 fallback_target / retry_target+max_retries) or an
+// `on fail` edge (the dip 2 form). Shared by DIP104, DIP115, DIP144.
+func nodeHasFailureRoute(w *ir.Workflow, n *ir.Node) bool {
+	return hasBoundedFailureTarget(n.Retry) || hasFailEdge(w.EdgesFrom(n.ID))
 }
 
 // hasBoundedFailureTarget reports whether retry config supplies a recovery target:
@@ -66,16 +70,9 @@ func hasBoundedFailureTarget(r ir.RetryConfig) bool {
 // An unconditional/success edge does NOT count — a hard failure does not traverse it.
 func hasFailEdge(edges []*ir.Edge) bool {
 	for _, e := range edges {
-		cmp, ok := ir.ExtractEqualityCondition(e)
-		if ok && isOutcomeVar(cmp.Variable) && isFailValue(cmp.Value) {
+		if ir.EdgeRoutesOnFail(e) {
 			return true
 		}
 	}
 	return false
 }
-
-// isOutcomeVar matches the outcome variable in both namespaced and bare forms.
-func isOutcomeVar(v string) bool { return v == "ctx.outcome" || v == "outcome" }
-
-// isFailValue matches the failure outcome values the engine recognizes.
-func isFailValue(v string) bool { return v == "fail" || v == "failure" }
