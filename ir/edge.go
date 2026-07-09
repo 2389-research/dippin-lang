@@ -10,8 +10,22 @@ type Edge struct {
 	Weight    int        // Priority hint for edge selection
 	Restart   bool       // Back-edge: triggers downstream clear + re-execution
 	Override  bool       // Carried, not interpreted: human-authored validation override (tracker#271)
+	Comment   string     // Optional leading `# ` line the formatter emits before this edge (migration review notes)
 	Source    SourceLocation
 }
+
+// EdgeRoutesOnFail reports whether an edge's guard routes the failure outcome
+// (ctx.outcome / outcome = fail / failure). Requires Condition.Parsed (populated
+// by simulate.EnsureConditionsParsed); an edge whose AST is not yet parsed
+// returns false.
+func EdgeRoutesOnFail(e *Edge) bool {
+	cmp, ok := ExtractEqualityCondition(e)
+	return ok && isOutcomeVariable(cmp.Variable) && isFailOutcome(cmp.Value)
+}
+
+func isOutcomeVariable(v string) bool { return v == "ctx.outcome" || v == "outcome" }
+
+func isFailOutcome(v string) bool { return v == "fail" || v == "failure" }
 
 // Condition is a parsed, validated boolean expression attached to an edge.
 type Condition struct {
