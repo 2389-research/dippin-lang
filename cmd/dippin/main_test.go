@@ -505,22 +505,15 @@ func TestCmdFmt_Check_NotCanonical(t *testing.T) {
 	}
 }
 
-func TestCmdFmt_Migrate_IdentityForCurrentFile(t *testing.T) {
-	// --migrate is a no-op identity pass for already-current (v1) files:
-	// formatting a canonical file then re-migrating yields the same output.
-	canonical, _, code := runCLI(t, "fmt", testdata("valid_minimal.dip"))
-	if code != ExitOK {
-		t.Fatalf("fmt failed: exit %d", code)
-	}
+func TestCmdFmt_Migrate_ConvertsToV2(t *testing.T) {
+	// --migrate converts a v1 file to dip 2: the output gains a `dip 2` declaration
+	// and exits OK (no review notes for a clean v1 file with no retry targets).
 	migrated, _, code := runCLI(t, "fmt", "--migrate", testdata("valid_minimal.dip"))
 	if code != ExitOK {
 		t.Fatalf("fmt --migrate failed: exit %d", code)
 	}
-	if migrated != canonical {
-		t.Errorf("--migrate not identity for current file:\nfmt:\n%s\nmigrate:\n%s", canonical, migrated)
-	}
-	if strings.Contains(migrated, "dip ") {
-		t.Errorf("v1 file gained a dip declaration after --migrate:\n%s", migrated)
+	if !strings.HasPrefix(migrated, "dip 2\n") {
+		t.Errorf("--migrate output should declare dip 2:\n%s", migrated)
 	}
 }
 

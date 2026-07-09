@@ -34,9 +34,10 @@ const (
 type ExitCode int
 
 const (
-	ExitOK         ExitCode = 0
-	ExitError      ExitCode = 1
-	ExitUsageError ExitCode = 2
+	ExitOK            ExitCode = 0
+	ExitError         ExitCode = 1
+	ExitUsageError    ExitCode = 2
+	ExitMigrateReview ExitCode = 3 // `fmt --migrate` succeeded but flagged cases needing author review
 )
 
 // CLI holds parsed global state and dispatches to per-command implementations.
