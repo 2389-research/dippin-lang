@@ -1,9 +1,12 @@
 package formatter
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/parser"
 	"github.com/2389-research/dippin-lang/simulate"
 )
 
@@ -99,5 +102,26 @@ func TestMigrate_NonSelfRetryTarget_LoopEdgeAndNote(t *testing.T) {
 	e := edgeTo(w, "Esc")
 	if e == nil || !e.Restart {
 		t.Fatalf("expected a loop edge T->Esc, edges=%v", w.Edges)
+	}
+}
+
+func TestMigrate_ExamplesRoundTripToValidV2(t *testing.T) {
+	matches, _ := filepath.Glob("../examples/*.dip")
+	for _, path := range matches {
+		src, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		w, err := parser.NewParser(string(src), path).Parse()
+		if err != nil {
+			t.Fatalf("%s: parse: %v", path, err)
+		}
+		_ = simulate.EnsureConditionsParsed(w)
+		MigrateToV2(w)
+		out := Format(w)
+		// The migrated text must re-parse as a valid dip 2 file.
+		if _, err := parser.NewParser(out, path).Parse(); err != nil {
+			t.Errorf("%s: migrated v2 does not re-parse: %v\n%s", path, err, out)
+		}
 	}
 }

@@ -17,7 +17,22 @@ workflow Example
 
 The declaration is `dip` followed by an integer. A file with **no** declaration defaults to version **1**. The formatter only emits the `dip N` line when the version is greater than 1, so a v1 file never gains a declaration. (As with any `fmt` run, byte-identical output is only guaranteed when the input is already canonical.)
 
-The version is parsed before the workflow body, which lets later format versions change edge syntax wholesale. `dippin fmt --migrate` re-emits a file in its current format version; today it is a no-op identity pass for already-current files. (v1→v2 edge transforms land in a later release.)
+The version is parsed before the workflow body, which lets later format versions change edge syntax wholesale. `dippin fmt --migrate` converts a v1 file to dip 2 — it folds `retry_target` and `fallback_target` node fields into `on fail` edges and flags any case it cannot express 1:1 with a `# MIGRATION:` comment; run it and review the output before committing.
+
+### dip 2: retry budgets vs failure destinations
+
+Under `dip 2`, a node carries only retry **budgets** — `max_retries`, `base_delay`,
+`retry_policy`. The `retry_target` and `fallback_target` node fields are removed:
+`max_retries: N` means "re-run this node up to N times," and the post-exhaustion
+destination is the node's `on fail` edge. Convert a v1 file with `dippin fmt
+--migrate` (it rewrites the fields into edges and flags any case it cannot express
+1:1).
+
+**Runtime ordering note (spec delta):** in `dip 2` a node exhausts its
+`max_retries` in place *before* control follows the `on fail` edge — the retry
+budget is consumed first, then the failure edge is taken. This differs from the
+v1 cascade where a matching `fail` edge preempts node retry. dippin ships the
+syntax and IR; the enforcing runtime converges on this ordering.
 
 ---
 
