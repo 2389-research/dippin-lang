@@ -517,18 +517,19 @@ func TestCmdFmt_Migrate_ConvertsToV2(t *testing.T) {
 	}
 }
 
-func TestCmdFmt_MigrateSuppressesCheck(t *testing.T) {
-	// --migrate suppresses the --check comparison (emitFmt: `check && !migrate`).
-	// A non-canonical file under plain --check exits 1; adding --migrate must not.
+func TestCmdFmt_MigrateCheckDetectsUnmigrated(t *testing.T) {
+	// `--migrate --check` compares the (migrated) formatted output to the file:
+	// a file that is not already canonical dip 2 exits non-zero (migration would
+	// change it), and --check never writes formatted output to stdout.
 	if _, _, code := runCLI(t, "fmt", "--check", testdata("needs_formatting.dip")); code != ExitError {
 		t.Fatalf("--check on non-canonical file: expected exit 1, got %d", code)
 	}
 	out, _, code := runCLI(t, "fmt", "--check", "--migrate", testdata("needs_formatting.dip"))
-	if code != ExitOK {
-		t.Fatalf("--check --migrate: expected check suppressed (exit 0), got %d", code)
+	if code == ExitOK {
+		t.Fatalf("--check --migrate on a file needing migration: expected non-zero, got %d", code)
 	}
-	if out == "" {
-		t.Error("--check --migrate produced no formatted output on stdout")
+	if out != "" {
+		t.Errorf("--check must not write formatted output to stdout, got:\n%s", out)
 	}
 }
 

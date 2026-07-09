@@ -57,7 +57,7 @@ func (c *CLI) runFmt(flags fmtFlags) ExitCode {
 	}
 	notes := c.conditionalMigrate(w, flags.migrate)
 	formatted := formatter.Format(w)
-	if ec := c.emitFmt(flags.path, string(data), formatted, flags.check, flags.write, flags.migrate); ec != ExitOK {
+	if ec := c.emitFmt(flags.path, string(data), formatted, flags.check, flags.write); ec != ExitOK {
 		return ec
 	}
 	return c.reportMigrationNotes(notes)
@@ -106,10 +106,12 @@ func (c *CLI) reportMigrationNotes(notes []formatter.MigrationNote) ExitCode {
 	return ExitMigrateReview
 }
 
-// emitFmt routes formatted output to --check, --write, or stdout.
-// --migrate performs the real v1→v2 transform; it suppresses the --check comparison.
-func (c *CLI) emitFmt(path, original, formatted string, check, write, migrate bool) ExitCode {
-	if check && !migrate {
+// emitFmt routes formatted output to --check, --write, or stdout. With --check,
+// the (already migrated, if --migrate) formatted text is compared to the
+// original — so `fmt --migrate --check` exits non-zero exactly when the file is
+// not already canonical dip 2 (i.e. migration would change it), never writing.
+func (c *CLI) emitFmt(path, original, formatted string, check, write bool) ExitCode {
+	if check {
 		return c.fmtCheck(path, original, formatted)
 	}
 	return writeOutput(c.Stdout, c.Stderr, boolToPath(write, path), formatted)

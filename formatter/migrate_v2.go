@@ -31,36 +31,41 @@ func MigrateToV2(w *ir.Workflow) []MigrationNote {
 }
 
 // migrateFallbackTarget turns a node's fallback_target into an `on fail` edge:
-// synthesize when absent, dedupe when it matches an existing fail edge, or flag
-// (keep both + comment) when it diverges.
+// dropped when it targets the node itself (no destination beyond the budget),
+// deduped when an on-fail edge to it already exists, synthesized when absent, or
+// flagged (keep both + comment) when it diverges from a different on-fail edge.
 func migrateFallbackTarget(w *ir.Workflow, n *ir.Node) []MigrationNote {
 	f := n.Retry.FallbackTarget
 	if f == "" {
 		return nil
 	}
 	n.Retry.FallbackTarget = ""
-	existing := failEdgeTarget(w, n.ID)
-	if existing == f {
-		return nil // destinations agree — dedupe
+	if f == n.ID {
+		return nil // fallback to self carries no destination beyond the retry budget
 	}
-	if existing == "" {
+	if hasFailEdgeTo(w, n.ID, f) {
+		return nil // an on-fail edge to f already exists — dedupe
+	}
+	other, diverges := anyFailEdgeTarget(w, n.ID)
+	if !diverges {
 		w.Edges = append(w.Edges, newFailEdge(n.ID, f, ""))
 		return nil
 	}
-	msg := fmt.Sprintf("MIGRATION: v1 fallback_target was %q (differs from the on-fail edge -> %q) — pick one", f, existing)
+	msg := fmt.Sprintf("MIGRATION: v1 fallback_target was %q (differs from the on-fail edge -> %q) — pick one", f, other)
 	w.Edges = append(w.Edges, newFailEdge(n.ID, f, msg))
 	return []MigrationNote{{Node: n.ID, Message: msg}}
 }
 
 // migrateRetryTarget drops a self retry_target (max_retries alone means re-run in
-// place) and converts a non-self retry_target into a `loop` edge + review note.
+// place), dedupes against an existing loop edge, and otherwise converts a
+// non-self retry_target into a `loop` edge + review note.
 func migrateRetryTarget(w *ir.Workflow, n *ir.Node) []MigrationNote {
 	r := n.Retry.RetryTarget
 	if r == "" {
 		return nil
 	}
 	n.Retry.RetryTarget = ""
-	if r == n.ID {
+	if r == n.ID || hasLoopEdgeTo(w, n.ID, r) {
 		return nil
 	}
 	msg := fmt.Sprintf("MIGRATION: v1 retry_target -> %q (non-self) became a loop edge — verify the loop intent", r)
@@ -68,14 +73,35 @@ func migrateRetryTarget(w *ir.Workflow, n *ir.Node) []MigrationNote {
 	return []MigrationNote{{Node: n.ID, Message: msg}}
 }
 
-// failEdgeTarget returns the target of the first outgoing on-fail edge, or "".
-func failEdgeTarget(w *ir.Workflow, nodeID string) string {
+// hasFailEdgeTo reports whether nodeID already has an on-fail edge to target.
+func hasFailEdgeTo(w *ir.Workflow, nodeID, target string) bool {
 	for _, e := range w.EdgesFrom(nodeID) {
-		if ir.EdgeRoutesOnFail(e) {
-			return e.To
+		if e.To == target && ir.EdgeRoutesOnFail(e) {
+			return true
 		}
 	}
-	return ""
+	return false
+}
+
+// hasLoopEdgeTo reports whether nodeID already has a loop (restart) edge to target.
+func hasLoopEdgeTo(w *ir.Workflow, nodeID, target string) bool {
+	for _, e := range w.EdgesFrom(nodeID) {
+		if e.To == target && e.Restart {
+			return true
+		}
+	}
+	return false
+}
+
+// anyFailEdgeTarget returns a representative on-fail edge target for nodeID, and
+// whether one exists (used to detect a divergent fallback).
+func anyFailEdgeTarget(w *ir.Workflow, nodeID string) (string, bool) {
+	for _, e := range w.EdgesFrom(nodeID) {
+		if ir.EdgeRoutesOnFail(e) {
+			return e.To, true
+		}
+	}
+	return "", false
 }
 
 // newFailEdge builds a `-> to on fail` edge with an optional leading comment.

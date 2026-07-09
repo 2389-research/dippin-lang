@@ -105,6 +105,58 @@ func TestMigrate_NonSelfRetryTarget_LoopEdgeAndNote(t *testing.T) {
 	}
 }
 
+// A fallback_target pointing at the node itself carries no destination beyond
+// the retry budget — it must be dropped, never synthesized into a self-cycle.
+func TestMigrate_SelfFallbackTarget_Dropped(t *testing.T) {
+	w := v1wf(t, ir.RetryConfig{FallbackTarget: "T"}, nil)
+	notes := MigrateToV2(w)
+	if len(notes) != 0 || w.Nodes[0].Retry.FallbackTarget != "" {
+		t.Fatalf("self fallback should drop silently, notes=%v fb=%q", notes, w.Nodes[0].Retry.FallbackTarget)
+	}
+	for _, e := range w.Edges {
+		if e.From == "T" && e.To == "T" {
+			t.Fatalf("self fallback must not synthesize a self-cycle edge")
+		}
+	}
+}
+
+// When a node has multiple on-fail edges and the fallback_target matches one of
+// them (not the first), dedupe against it — never synthesize a duplicate edge.
+func TestMigrate_FallbackMatchesSecondFailEdge_NoDuplicate(t *testing.T) {
+	w := v1wf(t, ir.RetryConfig{FallbackTarget: "Esc"}, []*ir.Edge{failTo("Done"), failTo("Esc")})
+	notes := MigrateToV2(w)
+	if len(notes) != 0 {
+		t.Fatalf("fallback matching an existing fail edge should dedupe, got notes %v", notes)
+	}
+	count := 0
+	for _, e := range w.Edges {
+		if e.To == "Esc" && ir.EdgeRoutesOnFail(e) {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly one on-fail edge to Esc, got %d", count)
+	}
+}
+
+// A non-self retry_target that already has a loop edge to it must dedupe.
+func TestMigrate_RetryTargetExistingLoopEdge_NoDuplicate(t *testing.T) {
+	w := v1wf(t, ir.RetryConfig{RetryTarget: "Esc", MaxRetries: 2}, []*ir.Edge{{From: "T", To: "Esc", Restart: true}})
+	notes := MigrateToV2(w)
+	if len(notes) != 0 {
+		t.Fatalf("retry_target matching an existing loop edge should dedupe, got %v", notes)
+	}
+	count := 0
+	for _, e := range w.Edges {
+		if e.To == "Esc" && e.Restart {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly one loop edge to Esc, got %d", count)
+	}
+}
+
 func TestMigrate_ExamplesRoundTripToValidV2(t *testing.T) {
 	matches, _ := filepath.Glob("../examples/*.dip")
 	for _, path := range matches {
