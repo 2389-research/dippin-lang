@@ -62,6 +62,10 @@ type WorkflowDefaults struct {
 	StallTimeout      time.Duration // Abort/route when no progress for this wall-clock span (0 = disabled)
 	ToolCommandsAllow string        // Comma-separated glob allowlist for tool shell commands
 	ToolDenylistAdd   string        // Comma-separated globs appended to the runtime's default denylist
+	PromptPrefix      string        // Cascade: inline prefix prepended to every agent's prompt (#175)
+	PromptSuffix      string        // Cascade: inline suffix appended to every agent's prompt (#175)
+	PromptPrefixFile  string        // Cascade: prefix fragment loaded from a file (#175)
+	PromptSuffixFile  string        // Cascade: suffix fragment loaded from a file (#175)
 }
 
 // Node represents a single step in the workflow.
@@ -102,6 +106,9 @@ type AgentConfig struct {
 	PromptFile          string // Source path; coexists with Prompt after resolve (formatter prefers the directive form). Populated by parser.ResolveFileDirectives.
 	SystemPrompt        string
 	SystemPromptFile    string // Source path; coexists with SystemPrompt after resolve (formatter prefers the directive form). Populated by parser.ResolveFileDirectives.
+	PromptInclude       string // Fragment file appended after the body, before the cascade suffix (#175). Composed into Prompt by ResolveFileDirectives.
+	PromptPrefix        string // Node-level: "none" opts out of the defaults prompt_prefix cascade; "" = inherit (#175).
+	PromptSuffix        string // Node-level: "none" opts out of the defaults prompt_suffix cascade; "" = inherit (#175).
 	Model               string // Per-node override
 	Provider            string
 	MaxTurns            int
