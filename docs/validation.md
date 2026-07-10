@@ -1407,6 +1407,12 @@ guard (`when`/`on`) and no attribute (`label:`, `choice:`, `weight:`, `override`
 restart). A conditional or attributed edge between the same nodes is **not**
 redundant and is left untouched.
 
+**Fix:** Remove the redundant edge — `dippin fmt` strips it automatically. Under
+a `dip 2` header the re-declaration is rejected outright (a parse error) rather
+than warned.
+
+---
+
 ### DIP154: prompt-cascade opt-out is a no-op
 
 **Severity**: Hint
@@ -1421,12 +1427,6 @@ hint[DIP154]: agent "A" sets prompt_suffix: none but no defaults prompt_suffix c
 
 **Fix:** Remove the unnecessary `prompt_prefix: none` / `prompt_suffix: none`, or
 add the intended cascade (`prompt_suffix_file:` / `prompt_suffix:`) to `defaults`.
-
----
-
-## Running Validation**Fix:** Remove the redundant edge — `dippin fmt` strips it automatically. Under
-a `dip 2` header the re-declaration is rejected outright (a parse error) rather
-than warned.
 
 ---
 
