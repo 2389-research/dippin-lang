@@ -1,5 +1,7 @@
 package ir
 
+import "slices"
+
 // Edge represents a connection between nodes in the workflow graph.
 type Edge struct {
 	From      string
@@ -26,6 +28,48 @@ func EdgeRoutesOnFail(e *Edge) bool {
 func isOutcomeVariable(v string) bool { return v == "ctx.outcome" || v == "outcome" }
 
 func isFailOutcome(v string) bool { return v == "fail" || v == "failure" }
+
+// IsRedundantFanEdge reports whether e merely repeats a parallel/fan_in fork
+// already declared inline on a node's config, carrying no extra information —
+// it is unconditional and attribute-free, and either From is a parallel node
+// listing To as a target, or To is a fan_in node listing From as a source.
+// Such an edge can be stripped without losing information; a conditional or
+// attributed edge between the same nodes is NOT redundant.
+func IsRedundantFanEdge(w *Workflow, e *Edge) bool {
+	return edgeIsPlain(e) && (fromIsParallelTarget(w, e) || toIsFanInSource(w, e))
+}
+
+func fromIsParallelTarget(w *Workflow, e *Edge) bool {
+	from := w.Node(e.From)
+	if from == nil {
+		return false
+	}
+	cfg, ok := from.Config.(ParallelConfig)
+	return ok && slices.Contains(cfg.Targets, e.To)
+}
+
+func toIsFanInSource(w *Workflow, e *Edge) bool {
+	to := w.Node(e.To)
+	if to == nil {
+		return false
+	}
+	cfg, ok := to.Config.(FanInConfig)
+	return ok && slices.Contains(cfg.Sources, e.From)
+}
+
+// edgeIsPlain reports whether an edge carries no guard, label, or routing
+// attribute — i.e. it conveys only "From connects to To".
+func edgeIsPlain(e *Edge) bool {
+	return e.Condition == nil && !edgeHasAttrs(e)
+}
+
+func edgeHasAttrs(e *Edge) bool {
+	return e.Label != "" || e.Choice != "" || e.Comment != "" || edgeHasRoutingAttrs(e)
+}
+
+func edgeHasRoutingAttrs(e *Edge) bool {
+	return e.Weight != 0 || e.Restart || e.Override
+}
 
 // Condition is a parsed, validated boolean expression attached to an edge.
 type Condition struct {

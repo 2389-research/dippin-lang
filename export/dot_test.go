@@ -1686,3 +1686,33 @@ func TestExportAgentWritablePaths(t *testing.T) {
 		t.Errorf("DOT missing writable_paths attr; got:\n%s", dot)
 	}
 }
+
+func TestExportDOT_SynthesizesFanEdges(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "W",
+		Nodes: []*ir.Node{
+			{ID: "Fan", Config: ir.ParallelConfig{Targets: []string{"A", "B"}}},
+			{ID: "A"}, {ID: "B"},
+			{ID: "Join", Config: ir.FanInConfig{Sources: []string{"A", "B"}}},
+		},
+		// No Edges — forks live only in node config.
+	}
+	dot := ExportDOT(w, ExportOptions{})
+	for _, want := range []string{`Fan -> A`, `Fan -> B`, `A -> Join`, `B -> Join`} {
+		if !strings.Contains(dot, want) {
+			t.Errorf("DOT missing synthesized fan edge %q\n%s", want, dot)
+		}
+	}
+}
+
+func TestExportDOT_NoDoubleDrawWhenExplicit(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "W",
+		Nodes: []*ir.Node{{ID: "Fan", Config: ir.ParallelConfig{Targets: []string{"A"}}}, {ID: "A"}},
+		Edges: []*ir.Edge{{From: "Fan", To: "A"}},
+	}
+	dot := ExportDOT(w, ExportOptions{})
+	if got := strings.Count(dot, "Fan -> A"); got != 1 {
+		t.Errorf("expected exactly one Fan->A edge, got %d:\n%s", got, dot)
+	}
+}

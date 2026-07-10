@@ -53,8 +53,43 @@ func ExportDOT(w *ir.Workflow, opts ExportOptions) string {
 		writeEdgeDOT(&b, e)
 	}
 
+	writeSynthesizedFanEdges(&b, w)
+
 	b.WriteString("}\n")
 	return b.String()
+}
+
+// writeSynthesizedFanEdges emits parallel fan-out and fan-in edges that are
+// declared inline on node config but absent from w.Edges as an unconditional
+// explicit edge. This lets DOT render forks even when the redundant edges-block
+// re-declaration has been stripped (issue #136).
+func writeSynthesizedFanEdges(b *strings.Builder, w *ir.Workflow) {
+	seen := make(map[[2]string]bool)
+	for _, e := range w.Edges {
+		if e.Condition == nil {
+			seen[[2]string{e.From, e.To}] = true
+		}
+	}
+	emit := func(from, to string) {
+		key := [2]string{from, to}
+		if seen[key] {
+			return
+		}
+		seen[key] = true
+		writeEdgeDOT(b, &ir.Edge{From: from, To: to})
+	}
+	for _, n := range w.Nodes {
+		switch cfg := n.Config.(type) {
+		case ir.ParallelConfig:
+			for _, t := range cfg.Targets {
+				emit(n.ID, t)
+			}
+		case ir.FanInConfig:
+			for _, s := range cfg.Sources {
+				emit(s, n.ID)
+			}
+		}
+	}
 }
 
 // reservedGraphAttrs are DOT graph attributes used by the defaults/header — skip
