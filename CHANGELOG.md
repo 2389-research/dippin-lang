@@ -2,6 +2,25 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.47.0] — 2026-07-10
+
+**Single-source `parallel`/`fan_in` — stop requiring edges-block re-declaration** ([#136](https://github.com/2389-research/dippin-lang/issues/136), Phase 1 of routing epic [#127](https://github.com/2389-research/dippin-lang/issues/127)). A `parallel Fan -> A, B` fan-out (and a `fan_in Join <- A, B` join) declares its fork inline, yet workflows routinely re-declared the same edges in the `edges` block (`Fan -> A`, `Fan -> B`, …), duplicating the fork and forcing authors to keep two declarations in sync by hand. An investigation confirmed the inline node-config list is already the single source of truth for every semantic consumer — reachability (DIP004), fan matching (DIP007), the built-in simulator, and `ir.EdgesFrom` all derive the fan edges from it; the edges-block copies are inert. This release makes that authoritative and removes the duplication.
+
+### Added
+- **`DIP153` — redundant parallel/fan_in edge** ([#136](https://github.com/2389-research/dippin-lang/issues/136)). Warns when an `edges` block declares an unconditional, attribute-free edge that merely repeats a fork already declared inline on a `parallel`/`fan_in` node. **Conservative — no false positives**: a *conditional* or *attributed* edge (`when`/`on`, `label:`, `choice:`, `weight:`, `override`, restart) between the same nodes is real routing, not a duplicate, and is never flagged; detection is a single shared predicate `ir.IsRedundantFanEdge` reused by the lint, the formatter, and the parser so the three can never disagree. Surfaces in lint / check / watch / doctor. Brings the catalog to 63 codes (DIP101–DIP153).
+- **`dippin fmt` strips redundant fan edges**. Formatting removes the redundant edges-block re-declarations, leaving the inline `parallel`/`fan_in` line as the sole declaration. Idempotent and deterministic; an all-redundant edge list emits no dangling empty `edges` block. Conditional/attributed edges are preserved.
+
+### Changed
+- **Redundant fan-edge re-declaration is rejected under `dip 2`** ([#136](https://github.com/2389-research/dippin-lang/issues/136)). In a `dip 2` file, a redundant edges-block copy of an inline fork is a parse error (remediation: "the inline `parallel`/`fan_in` list is authoritative under `dip 2` — remove it, run `dippin fmt`"), consistent with `dip 2`'s rejection of `retry_target`/`fallback_target` (#134). Under v1 (the default) the re-declaration still parses and merely warns (DIP153) — fully non-breaking.
+- **DOT export derives fan edges from node config**. `dippin export-dot` now synthesizes the parallel fan-out / fan-in arcs from `ParallelConfig.Targets` / `FanInConfig.Sources` (deduped against any explicit edge), so a file whose redundant edges have been stripped still renders complete fork arrows. Previously DOT drew fan arcs only from the edges block.
+- **Examples cleaned** — removed 216 redundant fan-edge re-declarations across 11 example workflows (deletions only, no reformatting); a `TestLintExamples` guard now asserts zero DIP153 across the suite.
+
+### Docs
+- Documented that the inline `parallel`/`fan_in` list is the single source of truth (`docs/nodes.md`); added DIP153 to `docs/validation.md`, `site/content/validation.md`, `site/static/skill.md`; noted `fmt` strips redundant fan edges on the CLI pages; bumped the diagnostic catalog to 63 (DIP101–DIP153) across every hand-maintained doc/site surface; regenerated the embedded spec.
+
+### Runtime pairing (requires an enforcing runtime)
+- None. This is a pure authoring/analysis change — the inline list was already authoritative for the engine, so a migrated file routes fan-out/fan-in exactly as before; DIP153 and the `dip 2` rejection are enforced entirely at lint/parse time (per `never-gate-dippin-on-tracker`).
+
 ## [v0.46.0] — 2026-07-09
 
 **`dip 2` — edges own destinations** ([#134](https://github.com/2389-research/dippin-lang/issues/134), epic [#127](https://github.com/2389-research/dippin-lang/issues/127)). The routing epic's structural payoff: under `dip 2`, a node's failure destination is no longer a node field — it is an edge, like every other routing decision. `retry_target:` and `fallback_target:` are the last two node-level routing knobs; `dip 2` removes them so that *all* control flow lives in the `edges` block and there is one place to read a graph's topology. Fully non-breaking for existing files: every valid v1 `.dip` still parses, validates, and formats unchanged, and `dip 2` is opt-in via the `dip 2` version header. A first-class migration (`dippin fmt --migrate`) mechanically rewrites v1 → `dip 2`.
