@@ -46,10 +46,22 @@ func writeWorkflowTailSections(wr *writer, w *ir.Workflow) {
 		wr.blank()
 		writeStylesheet(wr, w.Stylesheet)
 	}
-	if len(w.Edges) > 0 || w.ElseTarget != "" {
+	if hasVisibleEdges(w) || w.ElseTarget != "" {
 		wr.blank()
 		writeEdges(wr, w)
 	}
+}
+
+// hasVisibleEdges reports whether any edge survives formatting — i.e. is not a
+// redundant fan edge stripped per #136. Guards the edges-block header so an
+// all-redundant edge list does not emit a dangling empty block.
+func hasVisibleEdges(w *ir.Workflow) bool {
+	for _, e := range w.Edges {
+		if !ir.IsRedundantFanEdge(w, e) {
+			return true
+		}
+	}
+	return false
 }
 
 // writer wraps a strings.Builder with indentation tracking.
@@ -745,6 +757,9 @@ func writeEdges(wr *writer, w *ir.Workflow) {
 	wr.line("edges")
 	wr.push()
 	for _, e := range w.Edges {
+		if ir.IsRedundantFanEdge(w, e) {
+			continue // inline parallel/fan_in list is authoritative (#136 / DIP153)
+		}
 		writeEdge(wr, w, e)
 	}
 	if w.ElseTarget != "" {

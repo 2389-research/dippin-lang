@@ -2752,3 +2752,62 @@ func TestFormatEdgeComment(t *testing.T) {
 		t.Errorf("comment not positioned before its edge:\n%s", out)
 	}
 }
+
+func TestFormat_StripsRedundantFanEdges(t *testing.T) {
+	src := `workflow W
+  start: Fan
+  exit: A
+  parallel Fan -> A, B
+  agent A
+    prompt: "a"
+  agent B
+    prompt: "b"
+  edges
+    Fan -> A
+    Fan -> B
+`
+	w, err := parser.NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	// The indented edge-line form (4 spaces) must be gone; the inline
+	// `parallel Fan -> A, B` line (which also contains "Fan -> A") survives.
+	if strings.Contains(out, "    Fan -> A") || strings.Contains(out, "    Fan -> B") {
+		t.Fatalf("redundant fan edges should be stripped:\n%s", out)
+	}
+	if !strings.Contains(out, "parallel Fan -> A, B") {
+		t.Fatalf("inline parallel line must survive:\n%s", out)
+	}
+	// Idempotent: reformatting the stripped output is a no-op.
+	w2, err := parser.NewParser(out, "test.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if Format(w2) != out {
+		t.Fatalf("format not idempotent:\n--- first ---\n%s\n--- second ---\n%s", out, Format(w2))
+	}
+}
+
+func TestFormat_KeepsConditionalFanEdge(t *testing.T) {
+	src := `workflow W
+  start: Fan
+  exit: A
+  parallel Fan -> A, B
+  agent A
+    prompt: "a"
+  agent B
+    prompt: "b"
+  edges
+    Fan -> A when ctx.x = 1
+    Fan -> B
+`
+	w, err := parser.NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "Fan -> A") {
+		t.Fatalf("conditional fan edge must be preserved:\n%s", out)
+	}
+}

@@ -20,9 +20,3 @@ workflow ParallelBranches
       fidelity: full
 
   fan_in join <- fast, accurate
-
-  edges
-    split -> fast
-    split -> accurate
-    fast -> join
-    accurate -> join

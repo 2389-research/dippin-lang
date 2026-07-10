@@ -17,9 +17,3 @@ workflow ParallelFanInParams
     params:
       fan_in_policy: quorum
       quorum: 2
-
-  edges
-    split -> reviewer_a
-    split -> reviewer_b
-    reviewer_a -> join
-    reviewer_b -> join
