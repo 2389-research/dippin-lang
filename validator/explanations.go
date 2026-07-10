@@ -187,6 +187,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Remove the redundant edge (run `dippin fmt`, which strips it). A conditional or attributed edge (`when`, `label:`, `choice:`, `weight:`) between the same nodes is NOT redundant and is kept. Rejected outright under `dip 2`.",
 			Example: "parallel Fan -> A, B\nedges\n  Fan -> A  # DIP153: redundant — the inline parallel list is authoritative",
 		},
+		DIP154: {
+			Code:    DIP154,
+			Summary: "agent opts out of a defaults prompt cascade that is not declared",
+			Trigger: "An agent sets `prompt_prefix: none` or `prompt_suffix: none` to opt out of the defaults cascade, but the `defaults` block declares no cascade of that kind (no `prompt_prefix`/`prompt_prefix_file`, or no `prompt_suffix`/`prompt_suffix_file`). The opt-out is a no-op — likely a leftover or a mistake.",
+			Fix:     "Remove the unnecessary `prompt_prefix: none` / `prompt_suffix: none`, or add the intended cascade to the `defaults` block.",
+			Example: "agent A\n  prompt: \"x\"\n  prompt_suffix: none  # DIP154: no defaults prompt_suffix cascade to opt out of",
+		},
 	}
 }
 

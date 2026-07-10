@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP153).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP154).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -58,6 +58,7 @@ const (
 	DIP151 = "DIP151" // edge sets weight: which routing does not use (soft-deprecated, slated for removal in dip 2)
 	DIP152 = "DIP152" // marker_grep enumerates a marker not routed by any edge or else default
 	DIP153 = "DIP153" // edges-block edge redundantly repeats an inline parallel/fan_in fork (inline list is authoritative)
+	DIP154 = "DIP154" // agent opts out (prompt_prefix/suffix: none) of a defaults cascade that is not declared (no-op)
 )
 
 func init() {
@@ -121,4 +122,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP151: "edge weight: is unused by routing (soft-deprecated)",
 	DIP152: "marker_grep enumerates a marker no edge routes and no else default covers",
 	DIP153: "edges-block edge redundantly repeats an inline parallel/fan_in fork",
+	DIP154: "agent opts out of a defaults prompt cascade that is not declared (no-op)",
 }
