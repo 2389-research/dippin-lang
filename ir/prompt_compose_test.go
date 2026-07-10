@@ -15,6 +15,10 @@ func TestComposePrompt(t *testing.T) {
 		{"suffix always last", "P", "B", "I", "S", "P\n\nB\n\nI\n\nS"},
 		{"all empty", "", "", "", "", ""},
 		{"prefix only", "P", "", "", "", "P"},
+		{"suffix trailing newline trimmed", "", "B", "", "S\n", "B\n\nS"},
+		{"suffix trailing spaces trimmed", "", "B", "", "S   ", "B\n\nS"},
+		{"plain body preserved (no fragments)", "", "X  ", "", "", "X  "},
+		{"per-line trailing trimmed with fragment", "", "a  \nb", "", "S", "a\nb\n\nS"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
