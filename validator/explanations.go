@@ -180,6 +180,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Route the marker with an edge (`Node -> Target on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default.",
 			Example: "tool RunTests\n  marker_grep: ^(tests-ok|tests-failed)$\nedges\n  RunTests -> Done on tests-ok  # DIP152: tests-failed is emitted but routed nowhere",
 		},
+		DIP153: {
+			Code:    DIP153,
+			Summary: "edges-block edge redundantly repeats an inline parallel/fan_in fork",
+			Trigger: "An `edges` block declares an unconditional, attribute-free edge (e.g. `Fan -> A`) that merely repeats a fork already declared inline on a `parallel Fan -> A, B` or `fan_in Join <- A, B` node. The inline list is the single source of truth — validation, simulation, and DOT all derive the fan edges from it — so the re-declaration conveys nothing new.",
+			Fix:     "Remove the redundant edge (run `dippin fmt`, which strips it). A conditional or attributed edge (`when`, `label:`, `choice:`, `weight:`) between the same nodes is NOT redundant and is kept. Rejected outright under `dip 2`.",
+			Example: "parallel Fan -> A, B\nedges\n  Fan -> A  # DIP153: redundant — the inline parallel list is authoritative",
+		},
 	}
 }
 

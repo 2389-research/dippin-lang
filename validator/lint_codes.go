@@ -1,6 +1,6 @@
 package validator
 
-// Diagnostic codes for semantic quality warnings (DIP101–DIP152).
+// Diagnostic codes for semantic quality warnings (DIP101–DIP153).
 const (
 	DIP101 = "DIP101" // unreachable nodes after conditional branches
 	DIP102 = "DIP102" // routing node without default/unconditional edge
@@ -57,6 +57,7 @@ const (
 	DIP150 = "DIP150" // human gate routes by label: which doubles as the routing key — use choice: to mark it explicitly
 	DIP151 = "DIP151" // edge sets weight: which routing does not use (soft-deprecated, slated for removal in dip 2)
 	DIP152 = "DIP152" // marker_grep enumerates a marker not routed by any edge or else default
+	DIP153 = "DIP153" // edges-block edge redundantly repeats an inline parallel/fan_in fork (inline list is authoritative)
 )
 
 func init() {
@@ -119,4 +120,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP150: "human gate routes by label; use choice: to mark the routing key",
 	DIP151: "edge weight: is unused by routing (soft-deprecated)",
 	DIP152: "marker_grep enumerates a marker no edge routes and no else default covers",
+	DIP153: "edges-block edge redundantly repeats an inline parallel/fan_in fork",
 }
