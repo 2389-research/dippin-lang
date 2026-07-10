@@ -121,8 +121,8 @@ func findExtraNodes(aNodes, bNodes map[string]*ir.Node) []Difference {
 
 // compareEdges checks edges between two workflows for missing and extra.
 func compareEdges(a, b *ir.Workflow) []Difference {
-	aEdges := edgeSet(a.Edges)
-	bEdges := edgeSet(b.Edges)
+	aEdges := effectiveEdgeSet(a)
+	bEdges := effectiveEdgeSet(b)
 
 	var diffs []Difference
 	for key := range aEdges {
@@ -155,10 +155,17 @@ func edgeKey(e *ir.Edge) string {
 	return fmt.Sprintf("%s->%s[%s]", e.From, e.To, condStr)
 }
 
-func edgeSet(edges []*ir.Edge) map[string]*ir.Edge {
-	m := make(map[string]*ir.Edge, len(edges))
-	for _, e := range edges {
-		m[edgeKey(e)] = e
+// effectiveEdgeSet keys a workflow's effective edges — explicit edges plus the
+// implicit parallel fan-out / fan-in edges ir.EdgesFrom synthesizes from node
+// config. Comparing effective edges keeps migration parity correct when a fork
+// is declared inline (parallel/fan_in) without an edges-block re-declaration
+// (#136), matching a DOT that draws it explicitly.
+func effectiveEdgeSet(w *ir.Workflow) map[string]*ir.Edge {
+	m := make(map[string]*ir.Edge, len(w.Edges))
+	for _, n := range w.Nodes {
+		for _, e := range w.EdgesFrom(n.ID) {
+			m[edgeKey(e)] = e
+		}
 	}
 	return m
 }
