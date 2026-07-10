@@ -248,6 +248,7 @@ func (p *Parser) applyAgentField(cfg *ir.AgentConfig, nodeID, key, val string, l
 	if applyAgentStringField(cfg, key, val) {
 		p.checkPromptFileConflict(cfg, nodeID, key, loc)
 		p.checkSystemPromptFileConflict(cfg, nodeID, key, loc)
+		p.checkNodePromptOptOut(nodeID, key, val, loc)
 		return
 	}
 	p.applyAgentComplexField(cfg, key, val, loc)
@@ -306,6 +307,20 @@ func applyAgentFragmentField(cfg *ir.AgentConfig, key, val string) bool {
 		return false
 	}
 	return true
+}
+
+// checkNodePromptOptOut rejects a node-level prompt_prefix/prompt_suffix whose
+// value is neither `none` (the cascade opt-out) — the only meaning defined at
+// node level (#175). Custom per-node override is a future extension.
+func (p *Parser) checkNodePromptOptOut(nodeID, key, val string, loc ir.SourceLocation) {
+	if key != "prompt_prefix" && key != "prompt_suffix" {
+		return
+	}
+	if val != "none" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"agent node %q sets %s: %q — only `none` (opt out of the defaults cascade) is valid at node level at %d:%d",
+			nodeID, key, val, loc.Line, loc.Column))
+	}
 }
 
 // applyAgentPromptPair assigns val to either the inline or *_file target

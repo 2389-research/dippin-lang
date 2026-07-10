@@ -26,23 +26,46 @@ const maxDirectiveFileSize = 4 << 20 // 4 MiB
 // the IR retains the CommandFile-set / Command-empty state, which is the
 // correct unresolved view for those consumers.
 func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
+	cascade, err := loadPromptCascade(&w.Defaults, baseDir)
+	if err != nil {
+		return err
+	}
 	for _, n := range w.Nodes {
-		if err := resolveNodeDirective(n, baseDir); err != nil {
+		if err := resolveNodeDirective(n, baseDir, cascade); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// promptCascade holds the resolved defaults prompt prefix/suffix (inline value or
+// loaded file content), applied to every agent unless a node opts out (#175).
+type promptCascade struct {
+	prefix, suffix string
+}
+
+// loadPromptCascade resolves the defaults-block prompt cascade once per workflow
+// so N agents do not re-read the fragment files N times.
+func loadPromptCascade(d *ir.WorkflowDefaults, baseDir string) (promptCascade, error) {
+	c := promptCascade{prefix: d.PromptPrefix, suffix: d.PromptSuffix}
+	if err := loadDirectiveInto(&c.prefix, d.PromptPrefixFile, baseDir, "defaults", "prompt_prefix_file"); err != nil {
+		return c, err
+	}
+	if err := loadDirectiveInto(&c.suffix, d.PromptSuffixFile, baseDir, "defaults", "prompt_suffix_file"); err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
 // resolveNodeDirective resolves any file-directive fields on a single node.
 // Dispatches per node-config kind so the per-kind loader functions stay
 // focused on their own field set.
-func resolveNodeDirective(n *ir.Node, baseDir string) error {
+func resolveNodeDirective(n *ir.Node, baseDir string, cascade promptCascade) error {
 	switch cfg := n.Config.(type) {
 	case ir.ToolConfig:
 		return resolveToolDirective(n, cfg, baseDir)
 	case ir.AgentConfig:
-		return resolveAgentDirective(n, cfg, baseDir)
+		return resolveAgentDirective(n, cfg, baseDir, cascade)
 	}
 	return nil
 }
@@ -59,15 +82,38 @@ func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
 // resolveAgentDirective populates Prompt and SystemPrompt from their *File
 // twins on AgentConfig. The two slots are independent — either, both, or
 // neither may be set.
-func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string) error {
+func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string, cascade promptCascade) error {
 	if err := loadDirectiveInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
 		return err
 	}
 	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
 		return err
 	}
+	include := ""
+	if err := loadDirectiveInto(&include, cfg.PromptInclude, baseDir, n.ID, "prompt_include"); err != nil {
+		return err
+	}
+	cfg.Prompt = ir.ComposePrompt(effectivePrefix(cfg, cascade), cfg.Prompt, include, effectiveSuffix(cfg, cascade))
 	n.Config = cfg
 	return nil
+}
+
+// effectivePrefix returns the cascade prefix unless the node opted out with
+// `prompt_prefix: none` (#175).
+func effectivePrefix(cfg ir.AgentConfig, cascade promptCascade) string {
+	if cfg.PromptPrefix == "none" {
+		return ""
+	}
+	return cascade.prefix
+}
+
+// effectiveSuffix returns the cascade suffix unless the node opted out with
+// `prompt_suffix: none` (#175).
+func effectiveSuffix(cfg ir.AgentConfig, cascade promptCascade) string {
+	if cfg.PromptSuffix == "none" {
+		return ""
+	}
+	return cascade.suffix
 }
 
 // loadDirectiveInto reads path (relative to baseDir) into *dst, no-op if path

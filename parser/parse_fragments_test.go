@@ -66,3 +66,17 @@ func TestParseAgent_PromptIncludeAndOptOut(t *testing.T) {
 		t.Errorf("suffix=%q", cfg.PromptSuffix)
 	}
 }
+
+func TestParseAgent_NodePromptPrefixMustBeNone(t *testing.T) {
+	src := `workflow W
+  start: A
+  exit: A
+  agent A
+    prompt: "x"
+    prompt_prefix: "custom"
+`
+	_, err := NewParser(src, "t.dip").Parse()
+	if err == nil || !strings.Contains(err.Error(), "only `none`") {
+		t.Fatalf("want node-level prefix rejection, got %v", err)
+	}
+}
