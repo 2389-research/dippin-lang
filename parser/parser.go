@@ -30,10 +30,27 @@ func NewParser(input string, filename string) *Parser {
 func (p *Parser) Parse() (*ir.Workflow, error) {
 	p.parseVersionDeclaration()
 	p.parseTopLevel()
+	p.rejectRedundantFanEdgesUnderV2()
 	if len(p.diagnostics) > 0 {
 		return p.workflow, fmt.Errorf("parsing errors: %s", strings.Join(p.diagnostics, "; "))
 	}
 	return p.workflow, nil
+}
+
+// rejectRedundantFanEdgesUnderV2 reports, under dip 2, any edges-block edge that
+// merely repeats an inline parallel/fan_in fork — the inline list is the single
+// source of truth under dip 2 (#136). No-op under v1, where DIP153 warns instead.
+func (p *Parser) rejectRedundantFanEdgesUnderV2() {
+	if p.version < 2 {
+		return
+	}
+	for _, e := range p.workflow.Edges {
+		if ir.IsRedundantFanEdge(p.workflow, e) {
+			p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+				"redundant edge %q -> %q: the inline parallel/fan_in list is authoritative under dip 2 — remove it (run `dippin fmt`) at %d:%d",
+				e.From, e.To, e.Source.Line, e.Source.Column))
+		}
+	}
 }
 
 // Diagnostics returns the accumulated diagnostic messages.
