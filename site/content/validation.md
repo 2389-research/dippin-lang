@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "62 diagnostic codes for AI pipeline workflows. 10 structural errors and 52 semantic warnings catch bugs before runtime."
+description: "63 diagnostic codes for AI pipeline workflows. 10 structural errors and 53 semantic warnings catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "62 diagnostic codes — 10 structural errors and 52 semantic warnings — to catch problems before runtime."
+subtitle: "63 diagnostic codes — 10 structural errors and 53 semantic warnings — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP152): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP153): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP152)
+## Semantic Warnings (DIP101-DIP153)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -358,4 +358,14 @@ A tool node's `marker_grep` enumerates a literal marker that no outgoing edge ro
 warning[DIP152]: tool node "RunTests" emits markers that no edge routes and no else default covers: tests-failed
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP152) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+### DIP153 — redundant parallel/fan_in edge
+
+**Severity:** Warning
+
+An `edges` block declares an unconditional, attribute-free edge that merely repeats a fork already declared inline on a `parallel Fan -> A, B` or `fan_in Join <- A, B` node. The inline list is the single source of truth — validation, simulation, and DOT export all derive the fan edges from it — so the re-declaration conveys nothing new and must be kept in sync by hand. A *conditional* or *attributed* edge (`when`, `label:`, `choice:`, `weight:`) between the same nodes is real routing, not a duplicate, and is left untouched. Fix by removing the redundant edge — `dippin fmt` strips it automatically; under a `dip 2` header the re-declaration is rejected outright.
+
+```text
+warning[DIP153]: edges-block edge 'Fan -> A' redundantly repeats the inline parallel/fan_in fork; the inline list is authoritative — run 'dippin fmt' to remove it (rejected under 'dip 2')
+```
+
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP153) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.

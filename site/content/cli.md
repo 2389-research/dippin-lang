@@ -56,7 +56,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>lint</h3>
   <div class="cmd-usage">dippin lint [--extra-models &lt;spec&gt;] &lt;file&gt;</div>
-  <p>Run both structural validation and semantic linting (DIP001-DIP010 + DIP101-DIP152). All 62 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
+  <p>Run both structural validation and semantic linting (DIP001-DIP010 + DIP101-DIP153). All 63 diagnostic rules. Errors cause exit code 1; warnings alone exit 0.</p>
   <dl>
     <dt><code>--extra-models "provider:model1,model2;provider2:model3"</code></dt>
     <dd>Extend the DIP108 model catalog at runtime for private or newly-released models.</dd>
@@ -72,7 +72,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>fmt</h3>
   <div class="cmd-usage">dippin fmt [--check] [--write] [--migrate] &lt;file&gt;</div>
-  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting. <code>--migrate</code> converts a v1 file to <code>dip 2</code>: it folds <code>fallback_target</code> into an <code>on fail</code> edge and a non-self <code>retry_target</code> into a <code>loop</code> edge, flagging any case it can't express 1:1 with an inline <code># MIGRATION:</code> comment plus a stderr summary and exit code 3 (review needed). <code>--migrate --check</code> exits non-zero when a file is not already canonical <code>dip 2</code>.</p>
+  <p>Format a <code>.dip</code> file to canonical form. 2-space indentation, standard field ordering, deterministic and idempotent output. Use <code>--check</code> for CI (exit 1 if unformatted) or <code>--write</code> for in-place formatting. It also strips redundant <code>parallel</code>/<code>fan_in</code> fan edges re-declared in the <code>edges</code> block — the inline node list is authoritative (<code>DIP153</code>). <code>--migrate</code> converts a v1 file to <code>dip 2</code>: it folds <code>fallback_target</code> into an <code>on fail</code> edge and a non-self <code>retry_target</code> into a <code>loop</code> edge, flagging any case it can't express 1:1 with an inline <code># MIGRATION:</code> comment plus a stderr summary and exit code 3 (review needed). <code>--migrate --check</code> exits non-zero when a file is not already canonical <code>dip 2</code>.</p>
 </div>
 
 <div class="cmd-card">

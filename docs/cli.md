@@ -124,7 +124,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 
 ### lint
 
-Run both structural validation and semantic linting (DIP001–DIP010 + DIP101–DIP152).
+Run both structural validation and semantic linting (DIP001–DIP010 + DIP101–DIP153).
 
 ```bash
 dippin lint [--extra-models <spec>] <file>
@@ -132,7 +132,7 @@ dippin lint [--extra-models <spec>] <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: All 62 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP152) are reported but don't affect the exit code.
+**Checks**: All 63 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP153) are reported but don't affect the exit code.
 
 **Output**: All diagnostics (errors and warnings) to stderr.
 
@@ -264,7 +264,7 @@ dippin fmt [--check] [--write] [--migrate] <file>
 - Workflow header fields in standard order (goal, requires, start, exit)
 - Defaults block (if present) after header
 - Node definitions ordered by kind
-- Edges section at end
+- Edges section at end (redundant `parallel`/`fan_in` fan edges re-declared here are stripped — the inline node list is authoritative; see `DIP153`)
 - Multiline fields (prompt, command) indented with `:` on the same line
 - Deterministic, idempotent — formatting an already-formatted file produces identical output
 

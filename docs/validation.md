@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 62 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (61 documented sections):
+Dippin registers 63 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (62 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP152): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP153): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP152<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP153<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP152)
+## Semantic Lint Warnings (DIP101–DIP153)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1387,6 +1387,32 @@ add an unconditional fallback edge, or add a section `else -> <node>` default.
 
 ---
 
+### DIP153: redundant parallel/fan_in edge
+
+**Severity**: Warning
+
+An `edges` block declares an unconditional, attribute-free edge that merely
+repeats a fork already declared inline on a `parallel` or `fan_in` node. The
+inline list is the single source of truth — validation, simulation, and DOT
+export all derive the fan edges from it — so the re-declaration conveys nothing
+new and must be kept in sync by hand.
+
+```text
+warning[DIP153]: edges-block edge 'Fan -> A' redundantly repeats the inline parallel/fan_in fork; the inline list is authoritative — run 'dippin fmt' to remove it (rejected under 'dip 2')
+```
+
+**Trigger:** An edge whose `From` is a `parallel` node listing `To` as a target,
+or whose `To` is a `fan_in` node listing `From` as a source, and which carries no
+guard (`when`/`on`) and no attribute (`label:`, `choice:`, `weight:`, `override`,
+restart). A conditional or attributed edge between the same nodes is **not**
+redundant and is left untouched.
+
+**Fix:** Remove the redundant edge — `dippin fmt` strips it automatically. Under
+a `dip 2` header the re-declaration is rejected outright (a parse error) rather
+than warned.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1403,7 +1429,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP152 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP153 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

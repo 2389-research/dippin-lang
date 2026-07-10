@@ -371,6 +371,13 @@ parallel <ID> -> <target1>, <target2>[, <target3>, ...]
 - The `->` operator defines which nodes receive concurrent execution
 - Targets must be existing node IDs
 - Every `parallel` node **must** have a matching `fan_in` node (DIP007)
+- The inline list is the **single source of truth** for the fan-out edges. You do
+  **not** re-declare `FanOut -> TaskA` in the `edges` block — validation,
+  simulation, and DOT export all derive the fork edges from this list. An
+  unconditional edges-block edge that repeats a fork is redundant (`DIP153`) and
+  `dippin fmt` strips it; under a `dip 2` header it is rejected. (A *conditional*
+  edge from a parallel target is fine — that is real routing, not a duplicate.)
+  The same rule applies to `fan_in X <- a, b, c`.
 
 ### How It Works
 
