@@ -2,6 +2,28 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.48.0] — 2026-07-10
+
+**Shared prompt fragments** ([#175](https://github.com/2389-research/dippin-lang/issues/175)). `prompt_file:` / `system_prompt_file:` load an *entire* prompt from a file — all or nothing — so control-protocol boilerplate that must be byte-identical across many agents (e.g. a STATUS / FINAL-LINE contract) gets hand-pasted and drifts (downstream: pipelines#111, the same block duplicated 65× across 11 files). This release lets a shared fragment be declared once and applied to many agents. Fully additive and non-breaking: every existing `.dip` parses, validates, formats, and packs unchanged, in v1 and `dip 2` alike.
+
+### Added
+- **`defaults` prompt cascade** ([#175](https://github.com/2389-research/dippin-lang/issues/175)). The `defaults` block gains `prompt_prefix:` / `prompt_suffix:` (inline literal) and `prompt_prefix_file:` / `prompt_suffix_file:` (fragment loaded from a file — the way to single-source across many `.dip` files). The declared fragment **cascades to every agent node** (tool/human/parallel/etc. have no prompt and are unaffected). The inline and file forms are mutually exclusive per side (setting both is a structural error).
+- **Per-agent `prompt_include:`** — appends an extra fragment file after the agent's own body (for agents that need a fragment beyond the cascade).
+- **Per-agent opt-out** — `prompt_prefix: none` / `prompt_suffix: none` opts an agent out of that side of the cascade. Only `none` is valid at node level (custom per-node override is a future extension).
+- **`DIP154` (Hint)** — an agent sets `prompt_prefix: none` / `prompt_suffix: none` while the `defaults` block declares no cascade of that kind — a no-op opt-out (likely a leftover). Conservative, no false positives; surfaces in lint / check / watch / doctor. Brings the catalog to 64 codes (DIP101–DIP154).
+
+### How composition works
+The effective prompt is assembled at **resolve time** (the `pack` / `check` / runtime-load path; `dippin fmt` operates on unresolved IR and round-trips the directives verbatim) as **`prefix → body → prompt_include → suffix`**, joining only the non-empty parts — so the cascade **suffix is always the final content**, satisfying "the very last line MUST be exactly …" contracts. Fragment files use the **same security envelope** as `prompt_file` (relative-path containment, atomic leaf-symlink rejection, size cap, TOCTOU hardening). `dippin pack` inlines the fully-composed prompt (self-contained `format_version 1` bundle); `pack --no-inline` ships the fragment files under `workflows/` and keeps the directives, so the extracted tree composes byte-identically to a source run.
+
+### Fixed
+- **Migration-parity check now compares effective edges** (`migrate/parity.go`). Since v0.47.0's #136 stripped redundant fan edges from example `.dip` files, `dippin validate-migration` reported spurious `edge_missing` differences against the un-stripped example `.dot` siblings (a fork declared inline on a `parallel`/`fan_in` node is an *implicit* edge). `CheckParity` now keys `ir.EdgesFrom` (explicit **plus** synthesized parallel/fan_in edges) on both sides, so an inline fork matches an explicitly-drawn one. Real migration differences are still detected.
+
+### Docs & tooling
+- Documented the cascade + `prompt_include` + `none` opt-out in `docs/nodes.md`, `docs/GRAMMAR.ebnf`, `docs/{cli,integration,llm-reference}.md`, `site/content/{language,cli}.md`, and `site/static/skill.md`; added DIP154 to the validation pages; added the five keywords to the VS Code grammar (tree-sitter/Zed highlight fields generically, so no regen was needed); added `examples/shared_prompt_fragment.dip`; bumped the diagnostic catalog to 64 (DIP101–DIP154) across every hand-maintained surface; regenerated the embedded spec.
+
+### Runtime pairing (requires an enforcing runtime)
+- None. Composition is entirely resolve-time — a packed bundle carries the fully-composed prompt (inline) or the fragment files (no-inline), so the engine reads ordinary prompt content with no new field to interpret (per `never-gate-dippin-on-tracker`).
+
 ## [v0.47.0] — 2026-07-10
 
 **Single-source `parallel`/`fan_in` — stop requiring edges-block re-declaration** ([#136](https://github.com/2389-research/dippin-lang/issues/136), Phase 1 of routing epic [#127](https://github.com/2389-research/dippin-lang/issues/127)). A `parallel Fan -> A, B` fan-out (and a `fan_in Join <- A, B` join) declares its fork inline, yet workflows routinely re-declared the same edges in the `edges` block (`Fan -> A`, `Fan -> B`, …), duplicating the fork and forcing authors to keep two declarations in sync by hand. An investigation confirmed the inline node-config list is already the single source of truth for every semantic consumer — reachability (DIP004), fan matching (DIP007), the built-in simulator, and `ir.EdgesFrom` all derive the fan edges from it; the edges-block copies are inert. This release makes that authoritative and removes the duplication.
