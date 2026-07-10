@@ -535,3 +535,32 @@ func TestPack_NoInlineExtractRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestPack_NoInlinePromptFragments(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{
+		"a.dip": `workflow A
+  goal: "prompt-fragment no-inline"
+  start: R
+  exit: R
+
+  defaults
+    prompt_suffix_file: protocols/status.md
+
+  agent R
+    model: claude-sonnet-4-6
+    prompt: "do the thing"
+    prompt_include: protocols/extra.md
+`,
+		"protocols/status.md": "END WITH STATUS\n",
+		"protocols/extra.md":  "EXTRA\n",
+	})
+	raw := packBytes(t, filepath.Join(dir, "a.dip"), PackOptions{NoInline: true})
+	m := openBundle(t, raw).Manifest()
+	paths := manifestPaths(m)
+	for _, want := range []string{"workflows/protocols/status.md", "workflows/protocols/extra.md"} {
+		if _, ok := paths[want]; !ok {
+			t.Errorf("manifest missing %s; files=%v", want, m.Files)
+		}
+	}
+}

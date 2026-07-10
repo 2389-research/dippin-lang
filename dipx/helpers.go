@@ -612,6 +612,9 @@ func agentFileDirectives(cfg ir.AgentConfig) []string {
 	if cfg.SystemPromptFile != "" {
 		out = append(out, cfg.SystemPromptFile)
 	}
+	if cfg.PromptInclude != "" {
+		out = append(out, cfg.PromptInclude)
+	}
 	return out
 }
 
@@ -691,6 +694,27 @@ func collectDirectiveAssets(wf *ir.Workflow, wfAbsPath, rootDir string, visited 
 	var results []packedFile
 	for _, n := range wf.Nodes {
 		pfs, err := collectNodeDirectiveFiles(n, wfDir, rootDir, visited)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, pfs...)
+	}
+	cascade, err := collectDefaultsCascadeFiles(wf, wfDir, rootDir, visited)
+	if err != nil {
+		return nil, err
+	}
+	return append(results, cascade...), nil
+}
+
+// collectDefaultsCascadeFiles gathers the defaults-block prompt cascade fragment
+// files (prompt_prefix_file / prompt_suffix_file) for a workflow (#175).
+func collectDefaultsCascadeFiles(wf *ir.Workflow, wfDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
+	var results []packedFile
+	for _, rel := range []string{wf.Defaults.PromptPrefixFile, wf.Defaults.PromptSuffixFile} {
+		if rel == "" {
+			continue
+		}
+		pfs, err := collectDirectiveFile(rel, wfDir, rootDir, visited)
 		if err != nil {
 			return nil, err
 		}

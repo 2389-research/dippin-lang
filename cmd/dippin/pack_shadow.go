@@ -136,10 +136,21 @@ func inlineOne(srcAbs, rootDir, shadowDir string) ([]string, error) {
 // blocks instead. Result: the shadow .dip carries inline content only,
 // and the .dipx bundle is self-contained.
 func clearFileDirectives(wf *ir.Workflow) {
+	clearDefaultsPromptCascade(wf)
 	for _, n := range wf.Nodes {
 		clearToolFileDirective(n)
 		clearAgentFileDirectives(n)
 	}
+}
+
+// clearDefaultsPromptCascade clears the defaults-block prompt cascade (#175)
+// after resolve has baked it into every agent's Prompt, so the shadow .dip does
+// not re-apply it on load.
+func clearDefaultsPromptCascade(wf *ir.Workflow) {
+	wf.Defaults.PromptPrefix = ""
+	wf.Defaults.PromptSuffix = ""
+	wf.Defaults.PromptPrefixFile = ""
+	wf.Defaults.PromptSuffixFile = ""
 }
 
 // clearToolFileDirective clears ToolConfig.CommandFile if set.
@@ -161,6 +172,9 @@ func clearAgentFileDirectives(n *ir.Node) {
 	}
 	ac.PromptFile = ""
 	ac.SystemPromptFile = ""
+	ac.PromptInclude = ""
+	ac.PromptPrefix = ""
+	ac.PromptSuffix = ""
 	n.Config = ac
 }
 
