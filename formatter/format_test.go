@@ -2811,3 +2811,36 @@ func TestFormat_KeepsConditionalFanEdge(t *testing.T) {
 		t.Fatalf("conditional fan edge must be preserved:\n%s", out)
 	}
 }
+
+func TestFormat_PromptFragmentDirectives(t *testing.T) {
+	src := `workflow W
+  start: A
+  exit: B
+  defaults
+    prompt_suffix_file: protocols/status.md
+  agent A
+    prompt: "body A"
+    prompt_include: protocols/extra.md
+  agent B
+    prompt: "body B"
+    prompt_suffix: none
+`
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	for _, want := range []string{"prompt_suffix_file: protocols/status.md", "prompt_include: protocols/extra.md", "prompt_suffix: none"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("formatted output missing %q:\n%s", want, out)
+		}
+	}
+	// Idempotent round-trip.
+	w2, err := parser.NewParser(out, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse: %v\n%s", err, out)
+	}
+	if Format(w2) != out {
+		t.Fatalf("not idempotent:\n--- first ---\n%s\n--- second ---\n%s", out, Format(w2))
+	}
+}

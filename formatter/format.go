@@ -150,7 +150,24 @@ func writeDefaults(wr *writer, d ir.WorkflowDefaults) {
 	wr.push()
 	writeDefaultsModelFields(wr, d)
 	writeDefaultsRestartFields(wr, d)
+	writeDefaultsPromptFields(wr, d)
 	wr.pop()
+}
+
+// writeDefaultsPromptFields writes the prompt-cascade defaults (#175).
+func writeDefaultsPromptFields(wr *writer, d ir.WorkflowDefaults) {
+	if d.PromptPrefix != "" {
+		wr.line("prompt_prefix: %s", quoteValue(d.PromptPrefix))
+	}
+	if d.PromptPrefixFile != "" {
+		wr.line("prompt_prefix_file: %s", quoteValue(d.PromptPrefixFile))
+	}
+	if d.PromptSuffix != "" {
+		wr.line("prompt_suffix: %s", quoteValue(d.PromptSuffix))
+	}
+	if d.PromptSuffixFile != "" {
+		wr.line("prompt_suffix_file: %s", quoteValue(d.PromptSuffixFile))
+	}
 }
 
 // writeDefaultsModelFields writes model/provider/fidelity fields.
@@ -411,6 +428,21 @@ func writeAgentPromptFields(wr *writer, cfg ir.AgentConfig) {
 		wr.line("prompt_file: %s", quoteValue(cfg.PromptFile))
 	} else if cfg.Prompt != "" {
 		wr.multilineBlock("prompt", cfg.Prompt)
+	}
+	writeAgentFragmentFields(wr, cfg)
+}
+
+// writeAgentFragmentFields writes the per-node prompt-fragment directives (#175):
+// prompt_include and the prompt_prefix/prompt_suffix cascade opt-out.
+func writeAgentFragmentFields(wr *writer, cfg ir.AgentConfig) {
+	if cfg.PromptInclude != "" {
+		wr.line("prompt_include: %s", quoteValue(cfg.PromptInclude))
+	}
+	if cfg.PromptPrefix != "" {
+		wr.line("prompt_prefix: %s", quoteValue(cfg.PromptPrefix))
+	}
+	if cfg.PromptSuffix != "" {
+		wr.line("prompt_suffix: %s", quoteValue(cfg.PromptSuffix))
 	}
 }
 
