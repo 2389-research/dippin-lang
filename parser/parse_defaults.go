@@ -7,11 +7,27 @@ import (
 )
 
 func (p *Parser) parseDefaults() {
+	loc := p.lexer.PeekToken().Location
 	p.lexer.NextToken() // defaults
 	p.expect(TokenNewline)
 	p.expect(TokenIndent)
 	p.parseDefaultsBody()
 	p.expect(TokenOutdent)
+	p.checkDefaultsPromptExclusive(loc)
+}
+
+// checkDefaultsPromptExclusive rejects a defaults block that sets both the inline
+// and file form of a prompt cascade side — the two are ambiguous (#175).
+func (p *Parser) checkDefaultsPromptExclusive(loc ir.SourceLocation) {
+	d := &p.workflow.Defaults
+	if d.PromptPrefix != "" && d.PromptPrefixFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"defaults sets both prompt_prefix and prompt_prefix_file at %d:%d — use one", loc.Line, loc.Column))
+	}
+	if d.PromptSuffix != "" && d.PromptSuffixFile != "" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"defaults sets both prompt_suffix and prompt_suffix_file at %d:%d — use one", loc.Line, loc.Column))
+	}
 }
 
 // parseDefaultsBody parses the indented body of a defaults block.
@@ -55,7 +71,28 @@ func (p *Parser) applyDefaultStringField(key, val string) bool {
 	if applyDefaultExtraField(&p.workflow.Defaults, key, val) {
 		return true
 	}
+	if applyDefaultPromptField(&p.workflow.Defaults, key, val) {
+		return true
+	}
 	return applyDefaultToolField(&p.workflow.Defaults, key, val)
+}
+
+// applyDefaultPromptField handles the prompt-cascade defaults (#175):
+// prompt_prefix/prompt_suffix (inline) and prompt_prefix_file/prompt_suffix_file.
+func applyDefaultPromptField(d *ir.WorkflowDefaults, key, val string) bool {
+	switch key {
+	case "prompt_prefix":
+		d.PromptPrefix = val
+	case "prompt_suffix":
+		d.PromptSuffix = val
+	case "prompt_prefix_file":
+		d.PromptPrefixFile = val
+	case "prompt_suffix_file":
+		d.PromptSuffixFile = val
+	default:
+		return false
+	}
+	return true
 }
 
 // applyDefaultCoreField handles model, provider, retry_policy defaults.

@@ -274,11 +274,34 @@ func applyAgentPromptField(cfg *ir.AgentConfig, key, val string) bool {
 	if applyAgentPromptPair(&cfg.SystemPrompt, &cfg.SystemPromptFile, "system_prompt", key, val) {
 		return true
 	}
+	return applyAgentPromptExtraField(cfg, key, val)
+}
+
+// applyAgentPromptExtraField handles the response-shaping fields and delegates
+// the prompt-fragment directives (#175) to applyAgentFragmentField.
+func applyAgentPromptExtraField(cfg *ir.AgentConfig, key, val string) bool {
 	switch key {
 	case "reasoning_effort":
 		cfg.ReasoningEffort = val
 	case "response_schema":
 		cfg.ResponseSchema = val
+	default:
+		return applyAgentFragmentField(cfg, key, val)
+	}
+	return true
+}
+
+// applyAgentFragmentField handles the prompt-fragment directives (#175):
+// prompt_include appends a fragment file; prompt_prefix/prompt_suffix carry the
+// node-level `none` opt-out of the defaults cascade.
+func applyAgentFragmentField(cfg *ir.AgentConfig, key, val string) bool {
+	switch key {
+	case "prompt_include":
+		cfg.PromptInclude = val
+	case "prompt_prefix":
+		cfg.PromptPrefix = val
+	case "prompt_suffix":
+		cfg.PromptSuffix = val
 	default:
 		return false
 	}
