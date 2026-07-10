@@ -62,6 +62,10 @@ defaults_field ::= "model" ":" field_value
                  | "stall_timeout" ":" DURATION      /* abort/route after no-progress span; 0 = disabled */
                  | "tool_commands_allow" ":" field_value  /* comma-separated glob allowlist */
                  | "tool_denylist_add" ":" field_value    /* comma-separated globs appended to denylist */
+                 | "prompt_prefix" ":" field_value        /* cascade: inline prefix prepended to every agent prompt (#175) */
+                 | "prompt_suffix" ":" field_value        /* cascade: inline suffix appended to every agent prompt (#175) */
+                 | "prompt_prefix_file" ":" field_value   /* cascade: prefix fragment file; mutually exclusive with prompt_prefix */
+                 | "prompt_suffix_file" ":" field_value   /* cascade: suffix fragment file; mutually exclusive with prompt_suffix */
 
 /* ============================================================ */
 /* Vars Section                                                 */
@@ -85,6 +89,9 @@ agent_field ::= "prompt" ":" field_value
               | "prompt_file" ":" field_value         /* path relative to .dip dir; mutually exclusive with prompt */
               | "system_prompt" ":" field_value
               | "system_prompt_file" ":" field_value  /* path relative to .dip dir; mutually exclusive with system_prompt */
+              | "prompt_include" ":" field_value      /* fragment file appended after the body, before the cascade suffix (#175) */
+              | "prompt_prefix" ":" "none"            /* opt out of the defaults prompt_prefix cascade (#175) */
+              | "prompt_suffix" ":" "none"            /* opt out of the defaults prompt_suffix cascade (#175) */
               | "model" ":" field_value
               | "provider" ":" field_value
               | "backend" ":" field_value

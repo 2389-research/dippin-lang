@@ -62,11 +62,16 @@ The optional `defaults` block sets graph-level configuration that applies to all
     compaction: summary
     stall_timeout: 5m
     on_failure: Escalate
+    prompt_suffix_file: protocols/status-contract.md
 ```
+
+The `prompt_prefix`/`prompt_suffix` (inline) and `prompt_prefix_file`/`prompt_suffix_file` (fragment file) defaults **cascade a shared prompt fragment to every agent** (#175) — the effective prompt is composed as `prefix → body → prompt_include → suffix` at resolve time, with the suffix always last. An agent opts out with `prompt_suffix: none` / `prompt_prefix: none`.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `model` | String | Default LLM model for all agent nodes |
+| `prompt_prefix` / `prompt_suffix` | String | Inline prompt fragment cascaded to every agent as a prefix/suffix (#175) |
+| `prompt_prefix_file` / `prompt_suffix_file` | String | Prompt fragment loaded from a file and cascaded to every agent (mutually exclusive with the inline form) |
 | `provider` | String | Default LLM provider (e.g., "openai", "anthropic") |
 | `retry_policy` | String | Default retry strategy name |
 | `max_retries` | Integer | Default max retry attempts per node |
@@ -178,6 +183,8 @@ Agent nodes invoke an LLM. They are the most configurable node kind. Key fields 
 | `prompt_file` | String | Path (relative to the `.dip` dir) to an external file whose contents become the prompt. Mutually exclusive with `prompt:` — setting both is a parse error. |
 | `system_prompt` | Block | System-level instructions prepended before the prompt |
 | `system_prompt_file` | String | Path (relative to the `.dip` dir) to an external file whose contents become the system prompt. Mutually exclusive with `system_prompt:` — setting both is a parse error. |
+| `prompt_include` | String | Path to a fragment file appended after the body, before the defaults cascade suffix (#175). |
+| `prompt_prefix` / `prompt_suffix` | `none` | Set to `none` to opt this agent out of the corresponding `defaults` prompt cascade (#175). |
 | `tool_access` | String | LLM tool-catalog gate. Set to `none` to strip the model's tool registry on this agent. DIP139 warns on unknown values; the runtime fail-closes. |
 | `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded; a present-but-empty value is rejected by `dippin validate`/`pack`. Enforced by the runtime. |
 | `last_response_truncate` | Integer | Caps how much of the prior node's response is carried into this agent's context, in characters. `0`/unset = no truncation (a negative value raises DIP148). |

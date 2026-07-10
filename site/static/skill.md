@@ -213,7 +213,7 @@ The two slots are independent — an agent may use any combination of inline `pr
 
 **Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. The runtime reads inline prompts from the bundle; no separate file lookup at runtime.
 
-**Non-goals:** defaults-block file-form support ([#72](https://github.com/2389-research/dippin-lang/issues/72)) and bundled-files `.dipx` redesign ([#73](https://github.com/2389-research/dippin-lang/issues/73)) are tracked as follow-up issues.
+**Shared prompt fragments (#175)** — single-source boilerplate shared across agents. In the `defaults` block, `prompt_prefix:`/`prompt_suffix:` (inline) or `prompt_prefix_file:`/`prompt_suffix_file:` (fragment file) cascade to **every agent**; a per-agent `prompt_include: <file>` appends an extra fragment. The effective prompt is composed at resolve time as `prefix → body → include → suffix` (suffix always last — satisfies "final line must be …"). An agent opts out with `prompt_suffix: none` / `prompt_prefix: none` (`DIP154` hints on an opt-out with no matching cascade). Fragment files use the same security envelope as `prompt_file`; `pack` inlines the composed prompt, or ships the fragment files under `--no-inline`.
 
 ### parallel / fan_in — concurrent execution
 
@@ -520,6 +520,7 @@ The primary loop for authoring .dip files:
 | DIP151 | An edge carries a `weight:` attribute — speculative tier-4 routing priority that the cascade never consults and no real workflow uses. It still parses (carry-only), but the keyword and cascade tier are slated for removal in `dip 2` (Warning) | Remove `weight:`; express priority with conditions — guard edges with `when` / `on`, or rely on a single unconditional fallback |
 | DIP152 | A tool node's `marker_grep` enumerates a literal marker that no edge routes and that no section `else ->` default or unconditional edge covers — the marker would be emitted at runtime with nowhere to go. Only checked for recognizable literal-alternation greps; any compound/negated/other-variable edge makes the node safe (Warning) | Route the marker with an edge (`on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default |
 | DIP153 | An `edges` block re-declares an unconditional, attribute-free edge that already exists as an inline `parallel`/`fan_in` fork — the inline list is authoritative (validation, simulation, DOT all derive fan edges from it), so the re-declaration is redundant (Warning). A conditional/attributed edge between the same nodes is kept | Remove the redundant edge (`dippin fmt` strips it); rejected outright under `dip 2` |
+| DIP154 | An agent sets `prompt_prefix: none` / `prompt_suffix: none` to opt out of the defaults prompt cascade, but no cascade of that kind is declared — the opt-out is a no-op (Hint) | Remove the unnecessary opt-out, or add the intended `prompt_prefix`/`prompt_suffix`(`_file`) cascade to `defaults` |
 
 ## Best Practices
 

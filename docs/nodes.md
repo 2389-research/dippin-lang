@@ -109,6 +109,9 @@ Agent nodes invoke an LLM. They are the most configurable node kind.
 | `prompt_file` | String | — | Path (relative to .dip dir) to an external file whose contents become the agent's `prompt`. Mutually exclusive with `prompt:`. |
 | `system_prompt` | Multiline | — | System-level instructions passed separately to the LLM. Has higher behavioral precedence than the user prompt. Used for persistent rules like output format or persona. |
 | `system_prompt_file` | String | — | Path (relative to .dip dir) to an external file whose contents become the agent's `system_prompt`. Mutually exclusive with `system_prompt:`. |
+| `prompt_include` | String | — | Path (relative to .dip dir) to a fragment file appended after this agent's body, before the defaults cascade suffix (#175). Composed into `prompt` at resolve time. |
+| `prompt_prefix` | `none` | inherit | Set to `none` to opt this agent out of the `defaults` prompt-prefix cascade (#175). Only `none` is valid at node level. |
+| `prompt_suffix` | `none` | inherit | Set to `none` to opt this agent out of the `defaults` prompt-suffix cascade (#175). Only `none` is valid at node level. |
 | `model` | String | workflow default | LLM model identifier (e.g., `"claude-opus-4-6"`, `"gpt-5.4"`). Overrides the workflow-level default. |
 | `provider` | String | workflow default | LLM provider (e.g., `"anthropic"`, `"openai"`, `"gemini"`). Overrides the workflow-level default. |
 | `backend` | String | runtime default | Per-node backend override (e.g., `native`, `claude-code`, `acp`). |
@@ -172,6 +175,23 @@ In DOT export, goal gate nodes are highlighted with a red filled background.
 ### Unrecognized Fields
 
 If you use a field name that is not recognized for the current node type, the parser emits a diagnostic suggesting you put the field under `params:` instead. This replaces the previous behavior of silently discarding unknown fields.
+
+### Shared Prompt Fragments (#175)
+
+To single-source boilerplate shared across many agents (e.g. a STATUS/FINAL-LINE control-protocol block), declare it once in the `defaults` block and it cascades to **every agent node**:
+
+```dippin
+  defaults
+    prompt_suffix_file: protocols/status-contract.md   # fragment from a file
+    prompt_prefix: "You are part of an automated pipeline."  # inline literal
+```
+
+- `prompt_prefix:` / `prompt_suffix:` — inline literal text.
+- `prompt_prefix_file:` / `prompt_suffix_file:` — a fragment loaded from a file (the way to single-source across many `.dip` files). The inline and file forms are mutually exclusive per side.
+
+The effective prompt of each agent is assembled at resolve time as **`prefix → body → prompt_include → suffix`** (empty parts are skipped), so the cascade **suffix is always the final content** — satisfying "the very last line must be exactly …" contracts. Fragment files use the same security envelope as `prompt_file` (relative-path containment, symlink rejection, size cap).
+
+An agent opts out of a cascade side with `prompt_suffix: none` / `prompt_prefix: none` (see the field table above); `DIP154` hints when an opt-out matches no declared cascade. A packed bundle inlines the fully-composed prompt by default, or ships the fragment files under `pack --no-inline`.
 
 ---
 

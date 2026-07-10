@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 63 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (62 documented sections):
+Dippin registers 64 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (63 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP153): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP154): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP153<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP154<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP153)
+## Semantic Lint Warnings (DIP101–DIP154)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1407,7 +1407,24 @@ guard (`when`/`on`) and no attribute (`label:`, `choice:`, `weight:`, `override`
 restart). A conditional or attributed edge between the same nodes is **not**
 redundant and is left untouched.
 
-**Fix:** Remove the redundant edge — `dippin fmt` strips it automatically. Under
+### DIP154: prompt-cascade opt-out is a no-op
+
+**Severity**: Hint
+
+An agent sets `prompt_prefix: none` or `prompt_suffix: none` to opt out of the
+defaults prompt cascade, but the `defaults` block declares no cascade of that
+kind — so the opt-out does nothing (likely a leftover or a mistake).
+
+```text
+hint[DIP154]: agent "A" sets prompt_suffix: none but no defaults prompt_suffix cascade is declared — the opt-out is a no-op
+```
+
+**Fix:** Remove the unnecessary `prompt_prefix: none` / `prompt_suffix: none`, or
+add the intended cascade (`prompt_suffix_file:` / `prompt_suffix:`) to `defaults`.
+
+---
+
+## Running Validation**Fix:** Remove the redundant edge — `dippin fmt` strips it automatically. Under
 a `dip 2` header the re-declaration is rejected outright (a parse error) rather
 than warned.
 
@@ -1429,7 +1446,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP153 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP154 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

@@ -1,0 +1,21 @@
+workflow SharedPromptFragment
+  goal: "Demonstrate a shared prompt fragment cascaded to every agent via defaults"
+  start: Draft
+  exit: Summarize
+
+  defaults
+    prompt_suffix_file: fragments/status-contract.md
+
+  agent Draft
+    prompt: "Draft a short plan for the task."
+
+  agent Review
+    prompt: "Review the draft for correctness and completeness."
+
+  agent Summarize
+    prompt: "Summarize the outcome for a human reader."
+    prompt_suffix: none
+
+  edges
+    Draft -> Review
+    Review -> Summarize
