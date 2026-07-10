@@ -157,23 +157,11 @@ workflow SemportThematic
   edges
     Start -> EnsureWorkspace
     EnsureWorkspace -> PlanParallel
-    PlanParallel -> PlanGPT
-    PlanParallel -> PlanOpus
-    PlanParallel -> PlanGemini
-    PlanGPT -> PlanJoin
-    PlanOpus -> PlanJoin
-    PlanGemini -> PlanJoin
     PlanJoin -> ConsolidatePlan
     ConsolidatePlan -> ImplementSlice
     ImplementSlice -> BuildGate
     BuildGate -> ValidateParallel  when ctx.outcome = success  label: build_passed
     BuildGate -> PlanParallel  when ctx.outcome = fail  label: build_failed_replan  restart: true
-    ValidateParallel -> ValidateGPT
-    ValidateParallel -> ValidateOpus
-    ValidateParallel -> ValidateGemini
-    ValidateGPT -> ValidateJoin
-    ValidateOpus -> ValidateJoin
-    ValidateGemini -> ValidateJoin
     ValidateJoin -> ConsolidateValidation
     ConsolidateValidation -> CheckCompletion
     CheckCompletion -> Exit  when ctx.outcome = success  label: all_checked_and_validated

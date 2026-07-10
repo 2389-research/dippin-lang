@@ -256,19 +256,7 @@ workflow CodeHealthCheck
 
   edges
     GatherContext -> AnalysisFan
-    AnalysisFan -> RunVet
-    AnalysisFan -> RunStaticcheck
-    AnalysisFan -> RunTests
-    RunVet -> AnalysisJoin
-    RunStaticcheck -> AnalysisJoin
-    RunTests -> AnalysisJoin
     AnalysisJoin -> ReviewFan
-    ReviewFan -> ReviewAnthropic
-    ReviewFan -> ReviewOpenAI
-    ReviewFan -> ReviewGemini
-    ReviewAnthropic -> ReviewJoin
-    ReviewOpenAI -> ReviewJoin
-    ReviewGemini -> ReviewJoin
     ReviewJoin -> Synthesize
     Synthesize -> QualityGate
     QualityGate -> WriteReport  when ctx.outcome = success  label: approved

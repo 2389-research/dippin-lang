@@ -227,35 +227,11 @@ workflow AskAndExecute
     SetupWorkspace -> AskUser
     AskUser -> InterpretRequest
     InterpretRequest -> ImplementParallel
-    ImplementParallel -> ImplementClaude
-    ImplementParallel -> ImplementCodex
-    ImplementParallel -> ImplementGemini
-    ImplementClaude -> ImplementJoin
-    ImplementCodex -> ImplementJoin
-    ImplementGemini -> ImplementJoin
     ImplementJoin -> ValidateBuild
     ValidateBuild -> CommitWork  when ctx.outcome = success  label: validated
     ValidateBuild -> ImplementClaude  when ctx.outcome = fail  label: fix_validation restart: true
     CommitWork -> ReviewParallel
-    ReviewParallel -> ReviewClaude
-    ReviewParallel -> ReviewCodex
-    ReviewParallel -> ReviewGemini
-    ReviewClaude -> ReviewsJoin
-    ReviewCodex -> ReviewsJoin
-    ReviewGemini -> ReviewsJoin
     ReviewsJoin -> CritiquesParallel
-    CritiquesParallel -> CritiqueClaudeOnCodex
-    CritiquesParallel -> CritiqueClaudeOnGemini
-    CritiquesParallel -> CritiqueCodexOnClaude
-    CritiquesParallel -> CritiqueCodexOnGemini
-    CritiquesParallel -> CritiqueGeminiOnClaude
-    CritiquesParallel -> CritiqueGeminiOnCodex
-    CritiqueClaudeOnCodex -> CritiquesJoin
-    CritiqueClaudeOnGemini -> CritiquesJoin
-    CritiqueCodexOnClaude -> CritiquesJoin
-    CritiqueCodexOnGemini -> CritiquesJoin
-    CritiqueGeminiOnClaude -> CritiquesJoin
-    CritiqueGeminiOnCodex -> CritiquesJoin
     CritiquesJoin -> ReviewAnalysis
     ReviewAnalysis -> CommitWork  when ctx.outcome = success  label: pass restart: true
     ReviewAnalysis -> ImplementClaude  when ctx.outcome = retry  label: rework restart: true

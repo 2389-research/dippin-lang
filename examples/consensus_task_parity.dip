@@ -160,30 +160,12 @@ workflow ConsensusTaskParity
   edges
     Start -> CheckDoD
     CheckDoD -> DoDParallel
-    DoDParallel -> DefineDoD_Gemini
-    DoDParallel -> DefineDoD_GPT
-    DoDParallel -> DefineDoD_Opus
-    DefineDoD_Gemini -> DoDJoin
-    DefineDoD_GPT -> DoDJoin
-    DefineDoD_Opus -> DoDJoin
     DoDJoin -> ConsolidateDoD
     ConsolidateDoD -> PlanParallel
-    PlanParallel -> PlanGemini
-    PlanParallel -> PlanGPT
-    PlanParallel -> PlanOpus
-    PlanGemini -> PlanJoin
-    PlanGPT -> PlanJoin
-    PlanOpus -> PlanJoin
     PlanJoin -> DebateConsolidate
     DebateConsolidate -> Implement
     Implement -> VerifyOutputs
     VerifyOutputs -> ReviewParallel
-    ReviewParallel -> ReviewGemini
-    ReviewParallel -> ReviewGPT
-    ReviewParallel -> ReviewOpus
-    ReviewGemini -> ReviewJoin
-    ReviewGPT -> ReviewJoin
-    ReviewOpus -> ReviewJoin
     ReviewJoin -> ReviewConsensus
     ReviewConsensus -> Exit  when ctx.outcome = success  label: pass
     ReviewConsensus -> Postmortem  when ctx.outcome = retry  label: retry

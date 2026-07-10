@@ -233,25 +233,7 @@ workflow SprintExec
     ValidateBuild -> CommitSprintWork  when ctx.outcome = success  label: validated
     ValidateBuild -> ImplementSprint  when ctx.outcome = fail  label: fix_validation  restart: true
     CommitSprintWork -> ReviewParallel
-    ReviewParallel -> ReviewClaude
-    ReviewParallel -> ReviewCodex
-    ReviewParallel -> ReviewGemini
-    ReviewClaude -> ReviewsJoin
-    ReviewCodex -> ReviewsJoin
-    ReviewGemini -> ReviewsJoin
     ReviewsJoin -> CritiquesParallel
-    CritiquesParallel -> CritiqueClaudeOnCodex
-    CritiquesParallel -> CritiqueClaudeOnGemini
-    CritiquesParallel -> CritiqueCodexOnClaude
-    CritiquesParallel -> CritiqueCodexOnGemini
-    CritiquesParallel -> CritiqueGeminiOnClaude
-    CritiquesParallel -> CritiqueGeminiOnCodex
-    CritiqueClaudeOnCodex -> CritiquesJoin
-    CritiqueClaudeOnGemini -> CritiquesJoin
-    CritiqueCodexOnClaude -> CritiquesJoin
-    CritiqueCodexOnGemini -> CritiquesJoin
-    CritiqueGeminiOnClaude -> CritiquesJoin
-    CritiqueGeminiOnCodex -> CritiquesJoin
     CritiquesJoin -> ReviewAnalysis
     ReviewAnalysis -> CompleteSprint  when ctx.outcome = success  label: pass
     ReviewAnalysis -> ImplementSprint  when ctx.outcome = retry  label: rework  restart: true

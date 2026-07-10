@@ -354,67 +354,17 @@ workflow Megaplan
     Start -> SetupEnvironment
     SetupEnvironment -> DetermineSprintId
     DetermineSprintId -> OrientParallel
-    OrientParallel -> OrientConventions
-    OrientParallel -> OrientLedger
-    OrientParallel -> OrientRecent
-    OrientParallel -> OrientSeedExplore
-    OrientConventions -> OrientJoin
-    OrientLedger -> OrientJoin
-    OrientRecent -> OrientJoin
-    OrientSeedExplore -> OrientJoin
     OrientJoin -> SynthesizeOrientation
     SynthesizeOrientation -> IntentParallel
-    IntentParallel -> IntentClaude
-    IntentParallel -> IntentCodex
-    IntentParallel -> IntentGemini
-    IntentClaude -> IntentJoin
-    IntentCodex -> IntentJoin
-    IntentGemini -> IntentJoin
     IntentJoin -> InitialDraftParallel
-    InitialDraftParallel -> DraftClaude
-    InitialDraftParallel -> DraftCodex
-    InitialDraftParallel -> DraftGemini
-    DraftClaude -> InitialDraftJoin
-    DraftCodex -> InitialDraftJoin
-    DraftGemini -> InitialDraftJoin
     InitialDraftJoin -> QuestionsParallel
-    QuestionsParallel -> QuestionsClaude
-    QuestionsParallel -> QuestionsCodex
-    QuestionsParallel -> QuestionsGemini
-    QuestionsClaude -> QuestionsJoin
-    QuestionsCodex -> QuestionsJoin
-    QuestionsGemini -> QuestionsJoin
     QuestionsJoin -> InterviewGate
     InterviewGate -> SkipInterview  label: "[S] Skip interview"
     InterviewGate -> CaptureInterview  label: "[A] Answer interview"
     CaptureInterview -> RevisedDraftParallel
     SkipInterview -> RevisedDraftParallel
-    RevisedDraftParallel -> ReviseClaude
-    RevisedDraftParallel -> ReviseCodex
-    RevisedDraftParallel -> ReviseGemini
-    ReviseClaude -> RevisedDraftJoin
-    ReviseCodex -> RevisedDraftJoin
-    ReviseGemini -> RevisedDraftJoin
     RevisedDraftJoin -> CritiquesParallel
-    CritiquesParallel -> CritiqueClaudeOnCodex
-    CritiquesParallel -> CritiqueClaudeOnGemini
-    CritiquesParallel -> CritiqueCodexOnClaude
-    CritiquesParallel -> CritiqueCodexOnGemini
-    CritiquesParallel -> CritiqueGeminiOnClaude
-    CritiquesParallel -> CritiqueGeminiOnCodex
-    CritiqueClaudeOnCodex -> CritiquesJoin
-    CritiqueClaudeOnGemini -> CritiquesJoin
-    CritiqueCodexOnClaude -> CritiquesJoin
-    CritiqueCodexOnGemini -> CritiquesJoin
-    CritiqueGeminiOnClaude -> CritiquesJoin
-    CritiqueGeminiOnCodex -> CritiquesJoin
     CritiquesJoin -> MergeAnalysisParallel
-    MergeAnalysisParallel -> CompareArchitectures
-    MergeAnalysisParallel -> ExtractBestIdeas
-    MergeAnalysisParallel -> SynthesizeCritiques
-    CompareArchitectures -> MergeAnalysisJoin
-    ExtractBestIdeas -> MergeAnalysisJoin
-    SynthesizeCritiques -> MergeAnalysisJoin
     MergeAnalysisJoin -> WriteMergeNotes
     WriteMergeNotes -> WriteFinalSprint
     WriteFinalSprint -> PersistSprintPlaceholder

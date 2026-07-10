@@ -305,20 +305,8 @@ workflow CodeQualitySweep
 
   edges
     ScanCodebase -> AnalysisFan
-    AnalysisFan -> AnalyzeAnthropic
-    AnalysisFan -> AnalyzeGemini
-    AnalysisFan -> AnalyzeOpenAI
-    AnalyzeAnthropic -> AnalysisJoin
-    AnalyzeGemini -> AnalysisJoin
-    AnalyzeOpenAI -> AnalysisJoin
     AnalysisJoin -> Synthesize
     Synthesize -> WorkFan
-    WorkFan -> FixBugs
-    WorkFan -> WriteDocs
-    WorkFan -> WriteTests
-    FixBugs -> WorkJoin
-    WriteDocs -> WorkJoin
-    WriteTests -> WorkJoin
     WorkJoin -> QualityGate
     QualityGate -> Done  when ctx.outcome = success
     QualityGate -> Synthesize  when ctx.outcome = fail  restart: true

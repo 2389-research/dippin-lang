@@ -321,12 +321,6 @@ workflow APIDesign
     Interview -> ScanContext
     ScanContext -> ExtractRequirements
     ExtractRequirements -> DesignFan
-    DesignFan -> DesignClaude
-    DesignFan -> DesignGPT
-    DesignFan -> DesignGemini
-    DesignClaude -> DesignJoin
-    DesignGPT -> DesignJoin
-    DesignGemini -> DesignJoin
     DesignJoin -> Critique
     Critique -> Synthesize
     Synthesize -> QualityGate

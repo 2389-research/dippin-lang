@@ -28,8 +28,4 @@ workflow FanInPolicy
       Given both reviews, decide whether to merge.
 
   edges
-    split -> correctness_reviewer
-    split -> security_reviewer
-    correctness_reviewer -> gather
-    security_reviewer -> gather
     gather -> decide

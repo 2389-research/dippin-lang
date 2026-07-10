@@ -247,19 +247,9 @@ workflow ComplexityCleanup
 
   edges
     InstallTools -> MeasureFan
-    MeasureFan -> MeasureCyclomatic
-    MeasureFan -> MeasureCognitive
-    MeasureCyclomatic -> MeasureJoin
-    MeasureCognitive -> MeasureJoin
     MeasureJoin -> Triage
     Triage -> Refactor
     Refactor -> VerifyFan
-    VerifyFan -> RunTests
-    VerifyFan -> RemeasureCyclomatic
-    VerifyFan -> RemeasureCognitive
-    RunTests -> VerifyJoin
-    RemeasureCyclomatic -> VerifyJoin
-    RemeasureCognitive -> VerifyJoin
     VerifyJoin -> QualityGate
     QualityGate -> Done  when ctx.outcome == "success"
     QualityGate -> Refactor  when ctx.outcome == "fail"  restart: true
