@@ -64,20 +64,20 @@ func ExportDOT(w *ir.Workflow, opts ExportOptions) string {
 // explicit edge. This lets DOT render forks even when the redundant edges-block
 // re-declaration has been stripped (issue #136).
 func writeSynthesizedFanEdges(b *strings.Builder, w *ir.Workflow) {
-	seen := explicitUnconditionalEdgeSet(w)
+	seen := explicitEdgeSet(w)
 	for _, n := range w.Nodes {
 		writeNodeFanEdges(b, n, seen)
 	}
 }
 
-// explicitUnconditionalEdgeSet indexes the (from,to) pairs already covered by an
-// unconditional explicit edge, so synthesized fan edges dedup against them.
-func explicitUnconditionalEdgeSet(w *ir.Workflow) map[[2]string]bool {
+// explicitEdgeSet indexes every (from,to) pair already drawn from w.Edges —
+// conditional or not — so a synthesized fan edge is only emitted when the arc is
+// otherwise absent. Deduping against conditional edges too avoids drawing a
+// duplicate plain arc when an author keeps an attributed edge to a fan target.
+func explicitEdgeSet(w *ir.Workflow) map[[2]string]bool {
 	seen := make(map[[2]string]bool)
 	for _, e := range w.Edges {
-		if e.Condition == nil {
-			seen[[2]string{e.From, e.To}] = true
-		}
+		seen[[2]string{e.From, e.To}] = true
 	}
 	return seen
 }

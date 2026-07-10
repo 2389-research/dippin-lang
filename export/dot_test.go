@@ -1716,3 +1716,23 @@ func TestExportDOT_NoDoubleDrawWhenExplicit(t *testing.T) {
 		t.Errorf("expected exactly one Fan->A edge, got %d:\n%s", got, dot)
 	}
 }
+
+func TestExportDOT_NoDuplicateArcForConditionalFanEdge(t *testing.T) {
+	// An attributed/conditional explicit edge to a fan target must NOT also get a
+	// synthesized plain arc (would be a duplicate Graphviz edge). #136 squad review.
+	w := &ir.Workflow{
+		Name: "W",
+		Nodes: []*ir.Node{
+			{ID: "Fan", Config: ir.ParallelConfig{Targets: []string{"A", "B"}}},
+			{ID: "A"}, {ID: "B"},
+		},
+		Edges: []*ir.Edge{{From: "Fan", To: "A", Condition: &ir.Condition{Raw: "ctx.x = 1"}}},
+	}
+	dot := ExportDOT(w, ExportOptions{})
+	if got := strings.Count(dot, "Fan -> A"); got != 1 {
+		t.Errorf("expected exactly one Fan->A arc (the conditional one), got %d:\n%s", got, dot)
+	}
+	if !strings.Contains(dot, "Fan -> B") { // B still synthesized from config
+		t.Errorf("Fan->B should be synthesized:\n%s", dot)
+	}
+}
