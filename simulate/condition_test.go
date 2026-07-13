@@ -274,3 +274,35 @@ func TestEnsureConditionsParsed_ManagerLoop_InvalidCondition(t *testing.T) {
 		t.Errorf("error %q does not include the offending raw condition", err.Error())
 	}
 }
+
+// Salvaged from PR #183 (thanks @harperreed): decode-side coverage for escaped
+// double quotes and normalized single-quote backslashes crossing the parser →
+// simulator boundary (#182).
+
+func TestParseCondition_DecodesEscapedDoubleQuotedValue(t *testing.T) {
+	expr, err := ParseCondition(`ctx.tool_stdout = "say \"alpha\\beta\""`)
+	if err != nil {
+		t.Fatalf("ParseCondition: %v", err)
+	}
+	cmp, ok := expr.(ir.CondCompare)
+	if !ok {
+		t.Fatalf("want CondCompare, got %T", expr)
+	}
+	if cmp.Value != `say "alpha\beta"` {
+		t.Fatalf("Value = %q, want decoded quote and backslash", cmp.Value)
+	}
+}
+
+func TestParseCondition_DecodesNormalizedSingleQuoteBackslash(t *testing.T) {
+	expr, err := ParseCondition(`ctx.x = "it's \\d+ here"`)
+	if err != nil {
+		t.Fatalf("ParseCondition: %v", err)
+	}
+	cmp, ok := expr.(ir.CondCompare)
+	if !ok {
+		t.Fatalf("want CondCompare, got %T", expr)
+	}
+	if cmp.Value != `it's \d+ here` {
+		t.Fatalf("Value = %q, want literal backslash preserved", cmp.Value)
+	}
+}

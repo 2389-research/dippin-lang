@@ -153,8 +153,14 @@ func advanceInQuote(s string, i int, quote byte) (int, byte) {
 	return advanceInSingleQuote(s, i)
 }
 
-// advanceInDoubleQuote closes a `"`-string on a `"`, otherwise stays inside.
+// advanceInDoubleQuote closes a `"`-string on an unescaped `"`, honoring
+// backslash escapes: `\"` and `\\` stay inside (a lone `\` before the char is a
+// literal escape, not a close). Mirrors doubleQuoteEnd / readQuotedContent so
+// comment detection agrees with tokenization on where a `"`-string ends (#182).
 func advanceInDoubleQuote(s string, i int) (int, byte) {
+	if s[i] == '\\' && i+1 < len(s) {
+		return i + 1, '"' // escaped char: skip both, stay inside
+	}
 	if s[i] == '"' {
 		return i, 0
 	}

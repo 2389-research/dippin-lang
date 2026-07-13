@@ -176,3 +176,24 @@ func TestDIP010_EdgesOnly(t *testing.T) {
 		t.Fatalf("DIP010 should not fire for manager_loop node conditions: %v", codes(diags))
 	}
 }
+
+// Salvaged from PR #183 (thanks @harperreed): an escaped-quote edge condition
+// parses cleanly through parse → Validate with a populated AST (#182).
+func TestDIP010_EscapedQuoteConditionParsesFromSource(t *testing.T) {
+	src := `workflow W
+  goal: "escaped quote"
+  start: A
+  exit: B
+
+  agent A
+    prompt: "a"
+  agent B
+    prompt: "b"
+
+  edges
+    A -> B when ctx.tool_stdout = "say \"alpha||beta\""
+`
+	if diags := validateSrc(t, src); len(diags) != 0 {
+		t.Fatalf("unexpected validation diagnostics: %v", diags)
+	}
+}

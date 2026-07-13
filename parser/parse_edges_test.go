@@ -488,3 +488,75 @@ func TestExistingDipFilesStillParse(t *testing.T) {
 		})
 	}
 }
+
+// The following edge-condition quote cases are salvaged from PR #183 (thanks
+// @harperreed) — its coverage caught a real comment-stripping/backslash-parity
+// gap in the #182 fix (advanceInDoubleQuote was not escape-aware).
+
+func TestParseConditionPreservesHashInsideEscapedQuotes(t *testing.T) {
+	w, err := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = "say \"alpha # beta\""`), "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got, want := w.Edges[0].Condition.Raw, `ctx.tool_stdout = "say \"alpha # beta\""`; got != want {
+		t.Fatalf("Raw = %q, want %q (hash inside escaped quotes must survive)", got, want)
+	}
+}
+
+func TestParseConditionStripsCommentAfterEscapedQuoteLiteral(t *testing.T) {
+	w, err := NewParser(buildEdgeDip(`A -> B when ctx.x = "say \"alpha\"" # trailing`), "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got, want := w.Edges[0].Condition.Raw, `ctx.x = "say \"alpha\""`; got != want {
+		t.Fatalf("Raw = %q, want comment-free %q", got, want)
+	}
+}
+
+func TestParseConditionBackslashParityControlsQuoteClosure(t *testing.T) {
+	cases := []struct{ name, edge, want string }{
+		{"even run closes quote", `A -> B when ctx.x = "path\\" # trailing`, `ctx.x = "path\\"`},
+		{"odd run escapes quote", `A -> B when ctx.x = "path\\\"quoted" # trailing`, `ctx.x = "path\\\"quoted"`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			w, err := NewParser(buildEdgeDip(c.edge), "test.dip").Parse()
+			if err != nil {
+				t.Fatalf("parse: %v", err)
+			}
+			if got := w.Edges[0].Condition.Raw; got != c.want {
+				t.Fatalf("Raw = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
+func TestParseConditionKeepsSingleQuoteNormalization(t *testing.T) {
+	w, err := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = 'say alpha||beta'`), "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got, want := w.Edges[0].Condition.Raw, `ctx.tool_stdout = "say alpha||beta"`; got != want {
+		t.Fatalf("Raw = %q, want normalized single-quoted literal %q", got, want)
+	}
+}
+
+func TestParseConditionEscapesNormalizedSingleQuoteValue(t *testing.T) {
+	w, err := NewParser(buildEdgeDip(`A -> B when ctx.x = 'it''s \d+ here'`), "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got, want := w.Edges[0].Condition.Raw, `ctx.x = "it's \\d+ here"`; got != want {
+		t.Fatalf("Raw = %q, want escaped double-quoted normalization %q", got, want)
+	}
+}
+
+func TestParseConditionPreservesLiteralTabWhenNormalizing(t *testing.T) {
+	w, err := NewParser(buildEdgeDip("A -> B when ctx.x = 'a\tcafé'"), "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got, want := w.Edges[0].Condition.Raw, "ctx.x = \"a\tcafé\""; got != want {
+		t.Fatalf("Raw = %q, want literal tab + non-ASCII %q", got, want)
+	}
+}
