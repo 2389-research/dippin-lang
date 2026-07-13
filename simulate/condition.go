@@ -199,23 +199,58 @@ func isQuoteChar(ch byte) bool {
 	return ch == '"' || ch == '\''
 }
 
-// tryTokenizeQuotedCond handles quoted strings (single or double quotes).
+// tryTokenizeQuotedCond handles quoted strings. Double quotes honor backslash
+// escapes (\" and \\); single quotes keep the existing scan-to-quote behavior
+// so previously-valid single-quoted conditions are unchanged (#182).
 func tryTokenizeQuotedCond(raw string, i int) (token string, consumed int) {
 	if !isQuoteChar(raw[i]) {
 		return "", 0
 	}
+	if raw[i] == '"' {
+		return readDoubleQuotedCond(raw, i)
+	}
+	return readSingleQuotedCond(raw, i)
+}
 
+// readDoubleQuotedCond reads a double-quoted value from raw[i] (raw[i]=='"'),
+// collapsing \" and \\ to their literal chars, until an unescaped closing ".
+// Returns the unescaped content and the bytes consumed (both quotes included).
+func readDoubleQuotedCond(raw string, i int) (string, int) {
+	var b strings.Builder
+	j := i + 1
+	for j < len(raw) && raw[j] != '"' {
+		j += appendCondEscaped(&b, raw, j)
+	}
+	if j < len(raw) {
+		j++ // closing quote
+	}
+	return b.String(), j - i
+}
+
+// appendCondEscaped appends one char (collapsing \x to x) and returns bytes
+// consumed — the inverse of parse_edges.escapeConditionLiteral (#182).
+func appendCondEscaped(b *strings.Builder, raw string, j int) int {
+	if raw[j] == '\\' && j+1 < len(raw) {
+		b.WriteByte(raw[j+1])
+		return 2
+	}
+	b.WriteByte(raw[j])
+	return 1
+}
+
+// readSingleQuotedCond preserves the pre-#182 scan-to-quote behavior (no escapes).
+func readSingleQuotedCond(raw string, i int) (string, int) {
 	quote := raw[i]
-	i++
-	start := i
-	for i < len(raw) && raw[i] != quote {
-		i++
+	start := i + 1
+	j := start
+	for j < len(raw) && raw[j] != quote {
+		j++
 	}
-	token = raw[start:i]
-	if i < len(raw) {
-		i++ // skip closing quote
+	token := raw[start:j]
+	if j < len(raw) {
+		j++ // skip closing quote
 	}
-	return token, i - (start - 1)
+	return token, j - i
 }
 
 // operatorChars is the set of characters that form operators.

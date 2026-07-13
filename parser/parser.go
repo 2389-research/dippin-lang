@@ -28,6 +28,7 @@ func NewParser(input string, filename string) *Parser {
 }
 
 func (p *Parser) Parse() (*ir.Workflow, error) {
+	p.diagnostics = append(p.diagnostics, p.lexer.Errors()...)
 	p.parseVersionDeclaration()
 	p.parseTopLevel()
 	p.rejectRedundantFanEdgesUnderV2()

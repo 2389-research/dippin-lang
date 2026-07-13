@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 
@@ -44,7 +45,11 @@ type Lexer struct {
 	indentStack []int
 	tokens      []Token
 	tokenIdx    int
+	errs        []string // lex-time errors (e.g. unterminated string), surfaced by Parse
 }
+
+// Errors returns the lex-time errors accumulated during tokenization.
+func (l *Lexer) Errors() []string { return l.errs }
 
 func NewLexer(input string, filename string) *Lexer {
 	l := &Lexer{
@@ -499,7 +504,10 @@ func (l *Lexer) tryLexOperator(line string, i int, loc ir.SourceLocation) (int, 
 func (l *Lexer) tryLexQuotedString(line string, i int, loc ir.SourceLocation) (int, bool) {
 	switch line[i] {
 	case '"':
-		content, newI := readQuotedContent(line, i+1)
+		content, newI, terminated := readQuotedContent(line, i+1)
+		if !terminated {
+			l.errs = append(l.errs, fmt.Sprintf("unterminated string literal at %d:%d", loc.Line, loc.Column))
+		}
 		l.tokens = append(l.tokens, Token{Type: TokenLiteral, Value: content, Location: loc})
 		return newI, true
 	case '\'':
@@ -512,17 +520,19 @@ func (l *Lexer) tryLexQuotedString(line string, i int, loc ir.SourceLocation) (i
 }
 
 // readQuotedContent reads characters from line[start:] until an unescaped closing quote.
-// Returns the content string and the position after the closing quote.
-func readQuotedContent(line string, start int) (string, int) {
+// Returns the content string, the position after the closing quote (or end of line),
+// and whether a closing quote was found (false = unterminated literal, #182).
+func readQuotedContent(line string, start int) (string, int, bool) {
 	var content strings.Builder
 	i := start
 	for i < len(line) && line[i] != '"' {
 		i += appendQuotedChar(&content, line, i)
 	}
-	if i < len(line) {
+	terminated := i < len(line) // stopped on a closing quote, not end-of-line
+	if terminated {
 		i++ // skip closing quote
 	}
-	return content.String(), i
+	return content.String(), i, terminated
 }
 
 // readSingleQuotedContent reads characters from line[start:] until the closing

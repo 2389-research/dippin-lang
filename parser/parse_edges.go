@@ -327,7 +327,16 @@ func (p *Parser) conditionTerminates(pk Token) bool {
 // formatConditionToken formats a single token for raw condition text.
 func formatConditionToken(t Token) string {
 	if t.Type == TokenLiteral {
-		return "\"" + t.Value + "\""
+		return "\"" + escapeConditionLiteral(t.Value) + "\""
 	}
 	return t.Value
+}
+
+// escapeConditionLiteral escapes a literal's backslashes then double quotes so
+// the re-wrapped value round-trips through the condition tokenizer — the inverse
+// of the lexer's appendQuotedChar. Order matters: backslash first (#182).
+func escapeConditionLiteral(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	return s
 }
