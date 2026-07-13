@@ -53,18 +53,54 @@ func TestParseConditionPreservesHashInsideEscapedQuotes(t *testing.T) {
 	}
 }
 
+func TestParseConditionStripsCommentAfterEscapedQuoteLiteral(t *testing.T) {
+	p := NewParser(buildEdgeDip(`A -> B when ctx.x = "say \"alpha\"" # trailing`), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got, want := w.Edges[0].Condition.Raw, `ctx.x = "say \"alpha\""`; got != want {
+		t.Fatalf("Condition.Raw = %q, want comment-free %q", got, want)
+	}
+}
+
+func TestParseConditionBackslashParityControlsQuoteClosure(t *testing.T) {
+	tests := []struct {
+		name, edgeLine, want string
+	}{
+		{"even run closes quote", `A -> B when ctx.x = "path\\" # trailing`, `ctx.x = "path\\"`},
+		{"odd run escapes quote", `A -> B when ctx.x = "path\\\"quoted" # trailing`, `ctx.x = "path\\\"quoted"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := NewParser(buildEdgeDip(tt.edgeLine), "test.dip")
+			w, err := p.Parse()
+			if err != nil {
+				t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+			}
+			if got := w.Edges[0].Condition.Raw; got != tt.want {
+				t.Fatalf("Condition.Raw = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParseConditionRejectsUnterminatedDoubleQuote(t *testing.T) {
 	p := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = "say alpha`), "test.dip")
 	_, err := p.Parse()
 	if err == nil {
 		t.Fatal("expected parse error for unterminated double quote")
 	}
-	diagnostic := strings.Join(p.Diagnostics(), "\n")
+	diagnostics := p.Diagnostics()
+	if len(diagnostics) != 1 {
+		t.Fatalf("diagnostics = %v, want exactly one unterminated-quote diagnostic", diagnostics)
+	}
+	diagnostic := diagnostics[0]
 	if !strings.Contains(diagnostic, "unterminated double-quoted literal") {
 		t.Fatalf("diagnostic = %q, want unterminated quote explanation", diagnostic)
 	}
-	if !strings.Contains(diagnostic, "16:") {
-		t.Fatalf("diagnostic = %q, want source line and column", diagnostic)
+	if want := "unterminated double-quoted literal at 16:35"; diagnostic != want {
+		t.Fatalf("diagnostic = %q, want exact quote-start location %q", diagnostic, want)
 	}
 }
 

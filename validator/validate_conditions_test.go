@@ -1,8 +1,11 @@
+// ABOUTME: Verifies structural validation of edge conditions parsed from real .dip source.
+// ABOUTME: Covers DIP010 diagnostics and lazy population of condition ASTs.
 package validator
 
 import (
 	"testing"
 
+	"github.com/2389-research/dippin-lang/ir"
 	"github.com/2389-research/dippin-lang/parser"
 )
 
@@ -125,6 +128,36 @@ func TestDIP010_ValidConditionsClean(t *testing.T) {
 	diags := validateSrc(t, src)
 	if hasCode(diags, "DIP010") {
 		t.Fatalf("unexpected DIP010 on valid conditions: %v", codes(diags))
+	}
+}
+
+func TestDIP010_EscapedQuoteConditionParsesFromSource(t *testing.T) {
+	src := `workflow W
+  goal: "escaped quote"
+  start: A
+  exit: B
+
+  agent A
+    prompt: "a"
+  agent B
+    prompt: "b"
+
+  edges
+    A -> B when ctx.tool_stdout = "say \"alpha||beta\""
+`
+	w, err := parser.NewParser(src, "test.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	if diags := Validate(w).Diagnostics; len(diags) != 0 {
+		t.Fatalf("unexpected validation diagnostics: %v", diags)
+	}
+	cmp, ok := w.Edges[0].Condition.Parsed.(ir.CondCompare)
+	if !ok {
+		t.Fatalf("Condition.Parsed = %T, want ir.CondCompare", w.Edges[0].Condition.Parsed)
+	}
+	if want := `say "alpha||beta"`; cmp.Value != want {
+		t.Fatalf("comparison Value = %q, want %q", cmp.Value, want)
 	}
 }
 
