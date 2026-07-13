@@ -2,6 +2,17 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.49.0] — 2026-07-13
+
+**Lossless quoted edge conditions** ([#182](https://github.com/2389-research/dippin-lang/issues/182)). Double-quoted edge-condition values containing escaped quotes or backslashes were corrupted while the parser reconstructed `Condition.Raw`; embedded operator-like text could then be reinterpreted, and valid workflows failed validation with DIP010. This release makes the double-quoted path escape-aware end to end, from source parsing through `Condition.Raw` to the condition parser used by simulation and validation.
+
+### Fixed
+- **Escaped double-quoted condition values now round-trip losslessly.** Interior `\"` and `\\` survive parse → `Condition.Raw` → simulate/validate with their literal values intact. Operator- and comment-like text inside the quoted value — including `||` and `#` — remains literal, while a real trailing `#` comment is still stripped. Additional boundary coverage contributed in [PR #183](https://github.com/2389-research/dippin-lang/pull/183) (thanks [@harperreed](https://github.com/harperreed)) caught the comment-boundary/backslash-parity gap and covers even/odd backslash runs, escaped quotes, literal tabs, and UTF-8.
+- **Unterminated double-quoted literals are rejected.** The lexer now reports an unterminated string literal at the opening quote's source line and column instead of fabricating a closing quote and allowing validation to pass. Existing single-quoted condition behavior is unchanged, including YAML-style normalization and literal backslashes.
+
+### Runtime pairing (requires an enforcing runtime)
+- None. This is parser/validator correctness with no new runtime field or behavior to interpret. This `v0.49.0` tag is the release [tracker#444](https://github.com/2389-research/tracker/issues/444) can consume.
+
 ## [v0.48.0] — 2026-07-10
 
 **Shared prompt fragments** ([#175](https://github.com/2389-research/dippin-lang/issues/175)). `prompt_file:` / `system_prompt_file:` load an *entire* prompt from a file — all or nothing — so control-protocol boilerplate that must be byte-identical across many agents (e.g. a STATUS / FINAL-LINE contract) gets hand-pasted and drifts (downstream: pipelines#111, the same block duplicated 65× across 11 files). This release lets a shared fragment be declared once and applied to many agents. Fully additive and non-breaking: every existing `.dip` parses, validates, formats, and packs unchanged, in v1 and `dip 2` alike.
