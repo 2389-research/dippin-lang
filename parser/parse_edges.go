@@ -1,3 +1,5 @@
+// ABOUTME: Parses workflow edge declarations, routing conditions, and edge attributes.
+// ABOUTME: Preserves condition syntax while populating the workflow edge IR.
 package parser
 
 import (
@@ -308,9 +310,21 @@ func (p *Parser) readConditionRaw() string {
 			break
 		}
 		t := p.lexer.NextToken()
+		p.diagnoseUnclosedConditionLiteral(t)
 		parts = append(parts, formatConditionToken(t))
 	}
 	return strings.TrimSpace(strings.Join(parts, " "))
+}
+
+// diagnoseUnclosedConditionLiteral reports a double-quoted condition token that
+// reached the end of its source line without a closing quote.
+func (p *Parser) diagnoseUnclosedConditionLiteral(t Token) {
+	if t.rawLexeme == "" || t.quoteClosed {
+		return
+	}
+	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+		"unterminated double-quoted literal at %d:%d", t.Location.Line, t.Location.Column,
+	))
 }
 
 // conditionTerminates reports whether the upcoming token ends the current
@@ -326,6 +340,9 @@ func (p *Parser) conditionTerminates(pk Token) bool {
 
 // formatConditionToken formats a single token for raw condition text.
 func formatConditionToken(t Token) string {
+	if t.rawLexeme != "" {
+		return t.rawLexeme
+	}
 	if t.Type == TokenLiteral {
 		return "\"" + t.Value + "\""
 	}

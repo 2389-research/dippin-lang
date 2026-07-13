@@ -1,3 +1,5 @@
+// ABOUTME: Parses raw routing conditions and populates their executable condition ASTs.
+// ABOUTME: Tokenizes operators, words, and quoted values for simulation and linting.
 package simulate
 
 import (
@@ -206,16 +208,37 @@ func tryTokenizeQuotedCond(raw string, i int) (token string, consumed int) {
 	}
 
 	quote := raw[i]
-	i++
-	start := i
+	token, end := readQuotedCond(raw, i+1, quote)
+	return token, end - i
+}
+
+// readQuotedCond returns decoded quoted content and the position after its
+// closing quote. Double-quoted backslash escapes match the .dip lexer.
+func readQuotedCond(raw string, i int, quote byte) (string, int) {
+	var token strings.Builder
 	for i < len(raw) && raw[i] != quote {
+		if isQuotedCondEscape(raw, i, quote) {
+			i += appendQuotedCondEscape(&token, raw, i)
+			continue
+		}
+		token.WriteByte(raw[i])
 		i++
 	}
-	token = raw[start:i]
 	if i < len(raw) {
-		i++ // skip closing quote
+		i++
 	}
-	return token, i - (start - 1)
+	return token.String(), i
+}
+
+// isQuotedCondEscape reports whether i starts a complete double-quoted escape.
+func isQuotedCondEscape(raw string, i int, quote byte) bool {
+	return quote == '"' && raw[i] == '\\' && i+1 < len(raw)
+}
+
+// appendQuotedCondEscape decodes one lexer-compatible backslash escape.
+func appendQuotedCondEscape(token *strings.Builder, raw string, i int) int {
+	token.WriteByte(raw[i+1])
+	return 2
 }
 
 // operatorChars is the set of characters that form operators.

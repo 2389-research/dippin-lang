@@ -1,3 +1,5 @@
+// ABOUTME: Verifies condition tokenization, parsing, and workflow AST population.
+// ABOUTME: Covers comparison operators, boolean composition, quoting, and errors.
 package simulate
 
 import (
@@ -25,6 +27,20 @@ func TestParseCondition_SimpleCompare(t *testing.T) {
 	}
 	if cmp.Value != "success" {
 		t.Errorf("Value = %q, want success", cmp.Value)
+	}
+}
+
+func TestParseCondition_DecodesEscapedDoubleQuotedValue(t *testing.T) {
+	expr, err := ParseCondition(`ctx.tool_stdout = "say \"alpha\\beta\""`)
+	if err != nil {
+		t.Fatalf("ParseCondition error: %v", err)
+	}
+	cmp, ok := expr.(ir.CondCompare)
+	if !ok {
+		t.Fatalf("expected CondCompare, got %T", expr)
+	}
+	if cmp.Value != `say "alpha\beta"` {
+		t.Fatalf("Value = %q, want decoded quote and backslash", cmp.Value)
 	}
 }
 

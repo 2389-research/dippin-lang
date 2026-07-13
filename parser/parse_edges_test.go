@@ -1,3 +1,5 @@
+// ABOUTME: Exercises edge parsing, attributes, conditions, and related diagnostics.
+// ABOUTME: Uses complete .dip workflows to verify parser behavior at the public boundary.
 package parser
 
 import (
@@ -27,6 +29,54 @@ func buildEdgeDip(edgeLine string) string {
 		"  edges\n" +
 		"    " + edgeLine + "\n" +
 		"    B -> C\n"
+}
+
+func TestParseConditionPreservesDoubleQuotedLexeme(t *testing.T) {
+	p := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = "say \"alpha||beta\""`), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition.Raw; got != `ctx.tool_stdout = "say \"alpha||beta\""` {
+		t.Fatalf("Condition.Raw = %q, want %q", got, `ctx.tool_stdout = "say \"alpha||beta\""`)
+	}
+}
+
+func TestParseConditionPreservesHashInsideEscapedQuotes(t *testing.T) {
+	p := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = "say \"alpha # beta\""`), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition.Raw; got != `ctx.tool_stdout = "say \"alpha # beta\""` {
+		t.Fatalf("Condition.Raw = %q, want escaped-quote content including hash", got)
+	}
+}
+
+func TestParseConditionRejectsUnterminatedDoubleQuote(t *testing.T) {
+	p := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = "say alpha`), "test.dip")
+	_, err := p.Parse()
+	if err == nil {
+		t.Fatal("expected parse error for unterminated double quote")
+	}
+	diagnostic := strings.Join(p.Diagnostics(), "\n")
+	if !strings.Contains(diagnostic, "unterminated double-quoted literal") {
+		t.Fatalf("diagnostic = %q, want unterminated quote explanation", diagnostic)
+	}
+	if !strings.Contains(diagnostic, "16:") {
+		t.Fatalf("diagnostic = %q, want source line and column", diagnostic)
+	}
+}
+
+func TestParseConditionKeepsSingleQuoteNormalization(t *testing.T) {
+	p := NewParser(buildEdgeDip(`A -> B when ctx.tool_stdout = 'say alpha||beta'`), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition.Raw; got != `ctx.tool_stdout = "say alpha||beta"` {
+		t.Fatalf("Condition.Raw = %q, want normalized single-quoted literal", got)
+	}
 }
 
 // buildOnDip produces a workflow whose first edge originates from a node of the

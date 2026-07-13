@@ -1,3 +1,5 @@
+// ABOUTME: Tokenizes .dip source while retaining source locations and literal details.
+// ABOUTME: Decodes field values and preserves syntax metadata needed by the parser.
 package parser
 
 import (
@@ -30,9 +32,11 @@ const (
 )
 
 type Token struct {
-	Type     TokenType
-	Value    string
-	Location ir.SourceLocation
+	Type        TokenType
+	Value       string
+	rawLexeme   string
+	quoteClosed bool
+	Location    ir.SourceLocation
 }
 
 type Lexer struct {
@@ -101,7 +105,8 @@ func isBlankOrComment(line string) bool {
 }
 
 // findUnquotedHash scans a token-stream line for a # that starts a trailing
-// comment — one not inside a quoted string. Double quotes toggle on every `"`.
+// comment — one not inside a quoted string. Escaped bytes inside double quotes
+// do not close the string.
 // A single quote is a string delimiter only at a token-start boundary (see
 // opensSingleQuote); a `'` mid-word is a prose apostrophe and is ignored, so a
 // value like `goal: it's great # note` still strips its comment. Inside a
@@ -148,8 +153,12 @@ func advanceInQuote(s string, i int, quote byte) (int, byte) {
 	return advanceInSingleQuote(s, i)
 }
 
-// advanceInDoubleQuote closes a `"`-string on a `"`, otherwise stays inside.
+// advanceInDoubleQuote skips escaped bytes, closes on an unescaped `"`, and
+// otherwise stays inside the string.
 func advanceInDoubleQuote(s string, i int) (int, byte) {
+	if s[i] == '\\' && i+1 < len(s) {
+		return i + 1, '"'
+	}
 	if s[i] == '"' {
 		return i, 0
 	}
@@ -499,8 +508,11 @@ func (l *Lexer) tryLexOperator(line string, i int, loc ir.SourceLocation) (int, 
 func (l *Lexer) tryLexQuotedString(line string, i int, loc ir.SourceLocation) (int, bool) {
 	switch line[i] {
 	case '"':
-		content, newI := readQuotedContent(line, i+1)
-		l.tokens = append(l.tokens, Token{Type: TokenLiteral, Value: content, Location: loc})
+		content, newI, closed := readQuotedContent(line, i+1)
+		l.tokens = append(l.tokens, Token{
+			Type: TokenLiteral, Value: content, rawLexeme: line[i:newI],
+			quoteClosed: closed, Location: loc,
+		})
 		return newI, true
 	case '\'':
 		content, newI := readSingleQuotedContent(line, i+1)
@@ -512,8 +524,8 @@ func (l *Lexer) tryLexQuotedString(line string, i int, loc ir.SourceLocation) (i
 }
 
 // readQuotedContent reads characters from line[start:] until an unescaped closing quote.
-// Returns the content string and the position after the closing quote.
-func readQuotedContent(line string, start int) (string, int) {
+// Returns the content string, the next position, and whether a closing quote was found.
+func readQuotedContent(line string, start int) (string, int, bool) {
 	var content strings.Builder
 	i := start
 	for i < len(line) && line[i] != '"' {
@@ -521,8 +533,9 @@ func readQuotedContent(line string, start int) (string, int) {
 	}
 	if i < len(line) {
 		i++ // skip closing quote
+		return content.String(), i, true
 	}
-	return content.String(), i
+	return content.String(), i, false
 }
 
 // readSingleQuotedContent reads characters from line[start:] until the closing
