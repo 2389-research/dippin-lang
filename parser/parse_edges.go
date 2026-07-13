@@ -4,7 +4,6 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -345,7 +344,15 @@ func formatConditionToken(t Token) string {
 		return t.rawLexeme
 	}
 	if t.Type == TokenLiteral {
-		return strconv.Quote(t.Value)
+		return encodeConditionLiteral(t.Value)
 	}
 	return t.Value
+}
+
+var conditionLiteralEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`)
+
+// encodeConditionLiteral wraps decoded content in the condition grammar's
+// double quotes, escaping only the two bytes that grammar treats specially.
+func encodeConditionLiteral(value string) string {
+	return `"` + conditionLiteralEscaper.Replace(value) + `"`
 }

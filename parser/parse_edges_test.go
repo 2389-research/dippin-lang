@@ -90,6 +90,17 @@ func TestParseConditionEscapesNormalizedSingleQuoteValue(t *testing.T) {
 	}
 }
 
+func TestParseConditionPreservesLiteralTabWhenNormalizing(t *testing.T) {
+	p := NewParser(buildEdgeDip("A -> B when ctx.x = 'a\tcafé'"), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got, want := w.Edges[0].Condition.Raw, "ctx.x = \"a\tcafé\""; got != want {
+		t.Fatalf("Condition.Raw = %q, want literal tab and non-ASCII content %q", got, want)
+	}
+}
+
 // buildOnDip produces a workflow whose first edge originates from a node of the
 // given kind, so `on` desugaring can be exercised per source-node channel.
 // kindBlock is the node declaration for A (e.g. an agent, tool, or parallel).
