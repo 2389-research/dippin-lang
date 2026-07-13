@@ -44,6 +44,20 @@ func TestParseCondition_DecodesEscapedDoubleQuotedValue(t *testing.T) {
 	}
 }
 
+func TestParseCondition_DecodesNormalizedSingleQuoteBackslash(t *testing.T) {
+	expr, err := ParseCondition(`ctx.x = "it's \\d+ here"`)
+	if err != nil {
+		t.Fatalf("ParseCondition error: %v", err)
+	}
+	cmp, ok := expr.(ir.CondCompare)
+	if !ok {
+		t.Fatalf("expected CondCompare, got %T", expr)
+	}
+	if cmp.Value != `it's \d+ here` {
+		t.Fatalf("Value = %q, want literal backslash preserved", cmp.Value)
+	}
+}
+
 func TestParseCondition_NotEqual(t *testing.T) {
 	expr, err := ParseCondition("ctx.x != empty")
 	if err != nil {

@@ -79,6 +79,17 @@ func TestParseConditionKeepsSingleQuoteNormalization(t *testing.T) {
 	}
 }
 
+func TestParseConditionEscapesNormalizedSingleQuoteValue(t *testing.T) {
+	p := NewParser(buildEdgeDip(`A -> B when ctx.x = 'it''s \d+ here'`), "test.dip")
+	w, err := p.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v (%v)", err, p.Diagnostics())
+	}
+	if got := w.Edges[0].Condition.Raw; got != `ctx.x = "it's \\d+ here"` {
+		t.Fatalf("Condition.Raw = %q, want escaped double-quoted normalization", got)
+	}
+}
+
 // buildOnDip produces a workflow whose first edge originates from a node of the
 // given kind, so `on` desugaring can be exercised per source-node channel.
 // kindBlock is the node declaration for A (e.g. an agent, tool, or parallel).

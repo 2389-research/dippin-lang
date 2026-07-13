@@ -4,6 +4,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -344,7 +345,7 @@ func formatConditionToken(t Token) string {
 		return t.rawLexeme
 	}
 	if t.Type == TokenLiteral {
-		return "\"" + t.Value + "\""
+		return strconv.Quote(t.Value)
 	}
 	return t.Value
 }
