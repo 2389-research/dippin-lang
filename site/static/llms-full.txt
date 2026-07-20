@@ -40,8 +40,11 @@ workflow <Name>
   fan_in <ID> <- <Source1>, <Source2>[, ...]
 
   edges
-    <From> -> <To> [when <condition>] [label: <text>] [weight: <int>] [restart: true]
+    <From> -> <To> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
+    [else -> <NodeID>]   # success-side default for any node with no matching guard / unconditional edge; at most one per block
 ```
+
+`else` is reserved as the first token of an edges-block line, so a node cannot be used as an edge *source* under the ID `else` (the other contextual keywords `on`/`when`/`loop` are only special after `->` and remain usable as node IDs).
 
 ---
 
@@ -56,7 +59,7 @@ workflow <Name>
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
 
-All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, `fallback_target`.
+All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`. **v1-only (rejected under `dip 2`):** `retry_target`, `fallback_target` — in `dip 2` use a `loop` edge and an `on fail` edge instead (`dippin fmt --migrate` converts).
 
 ---
 
@@ -67,9 +70,12 @@ when <variable> <op> <value>
 when <expr> and <expr>
 when <expr> or <expr>
 when not <expr>
+on <token>                       # sugar: equality vs the source node's outcome channel
 ```
 
 **Comparison operators:** `=`, `==`, `!=`, `contains`, `not contains`, `startswith`, `endswith`, `in` (all string comparison, no numeric ops)
+
+**`on <token>` shorthand:** desugars to `when <channel> = <token>`, where the channel is the source node's natural outcome channel — `ctx.outcome` for agent nodes, `ctx.tool_marker` for tool nodes with `marker_grep`. IR-identical to the equivalent `when`; `dippin fmt` rewrites eligible `when` edges to `on`. The value must be a single bare identifier (`[A-Za-z0-9][A-Za-z0-9_-]*`); quoted, multi-token, or any other values require an explicit `when <channel> = ...`. Source nodes with no outcome channel must use `when`: human gates (which route on the choice/label, not `ctx.outcome`), `conditional` nodes, and tools without `marker_grep`.
 
 **Variables:** Always namespace-qualified: `ctx.outcome`, `ctx.status`, `graph.goal`
 
@@ -151,7 +157,9 @@ workflow ReviewPipeline
 
 **Identifiers:** `[a-zA-Z0-9][a-zA-Z0-9_\-./]*` — letters, digits, underscore, dash, dot, slash.
 
-**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `and`, `or`, `not`, `true`, `false`, `restart`, `label`, `weight`.
+**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `override`, `label`, `weight`.
+
+**Position-reserved keyword:** `else` is the one exception — it is reserved *only* as the first token of an `edges`-block line (where it introduces the section default), so it cannot be an edge *source* node ID there. Everywhere else `else` is an ordinary identifier and may be used as a node ID.
 
 ---
 
@@ -189,10 +197,10 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-56 diagnostic codes across two categories:
+64 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
-- **DIP101–DIP146** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access
+- **DIP101–DIP154** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade)
 
 ---
 
@@ -251,7 +259,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
-| `goal_gate` | bool | Pipeline fails if gate fails. Add `retry_target` or `fallback_target` (DIP115) |
+| `goal_gate` | bool | Pipeline fails if gate fails. Add a failure route — an `on fail` edge (dip 2), or `retry_target`/`fallback_target` (v1). See DIP115 |
 | `response_format` | string | `json_object` or `json_schema` (DIP130) |
 | `response_schema` | multiline JSON | Must be valid JSON (DIP132). Requires `response_format: json_schema` (DIP131) |
 | `reasoning_effort` | string | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` (DIP119) |
@@ -276,13 +284,13 @@ Invalid values fall back to no-tools at runtime (fail-closed) and are flagged by
 
 **Scope is per node, not per pipeline.** `tool_access: none` constrains the executor of *this one node* — it does not taint or restrict what downstream nodes do with this node's output. A bounded summarizer feeding a tool-capable agent is a normal, intended pattern: the restriction is fully intact (this node still cannot call tools), it simply does not extend across edges. Pipeline-level information-flow control is a separate, runtime-layer concern (see [#56](https://github.com/2389-research/dippin-lang/issues/56)).
 
-**Non-goals (deferred):** cross-node propagation / cascade ([#53](https://github.com/2389-research/dippin-lang/issues/53)), chain attacks between agents ([#56](https://github.com/2389-research/dippin-lang/issues/56)). A cross-node static lint for this ([#57](https://github.com/2389-research/dippin-lang/issues/57)) was evaluated and rejected: because `tool_access` is node-scoped (above), a graph-topology lint would misframe the semantics and would have to assume a runtime-specific data-flow model — so the per-node scope note replaces it. The v1 field bounds a single-agent vector; defense-in-depth for graph-level flows is future work.
+**Non-goals (deferred):** cross-node propagation / cascade ([#53](https://github.com/2389-research/dippin-lang/issues/53)). Chain attacks between agents ([#56](https://github.com/2389-research/dippin-lang/issues/56)) are *partially* addressed by [DIP147](https://2389-research.github.io/dippin-lang/validation.html#dip147) (Hint): a `tool_access: none` agent that declares a context key in `writes:` flowing into a downstream tool-bearing agent's `reads:`. DIP147 keys off dippin's existing declared-IO flow model (the same `reads:`/`writes:` analysis as DIP107/DIP112), **not** a runtime-specific data-flow model — which is why the broader cross-node *edge* lint ([#57](https://github.com/2389-research/dippin-lang/issues/57), the bare `none → full` / `${ctx.last_response}` auto-injection edge) remains rejected: it would have to assume the runtime's auto-injection semantics. The `${ctx.last_response}` vector and a `last_response_truncate:` mitigation remain #56 follow-ups; the v1 field bounds a single-agent vector.
 
 **Scope vs. tool-node safety:** `tool_access` gates *LLM-driven* tool calls on agent nodes. It is unrelated to `tool` nodes (shell commands authored directly in `.dip`), whose allowlist/denylist is controlled by the v0.28.x defaults `tool_commands_allow` and `tool_denylist_add`.
 
 `tool_access` may also be set per-branch on a block-form `parallel` node; an omitted branch value inherits the target agent's setting.
 
-**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the rejected in-file graph-topology lint ([#57](https://github.com/2389-research/dippin-lang/issues/57)): it concerns the cross-*file* boundary. Native `dippin lint` now resolves the child across that boundary: [DIP146](https://2389-research.github.io/dippin-lang/validation.html#dip146) (Hint) fires when a resolved child restricts no agent's `tool_access` while a workflow on the path does, superseding DIP143 for boundaries it can resolve ([#89](https://github.com/2389-research/dippin-lang/issues/89)). DIP143 remains the filesystem-free advisory (e.g. the wasm playground) and the fallback when the child can't be resolved.
+**Subgraph boundary:** `tool_access` does not cross a `subgraph_ref` / `ref` file boundary — a referenced child `.dip` (`manager_loop` or `subgraph` node) is governed entirely by its own file. When a workflow declares `tool_access` and also references a subgraph, [DIP143](https://2389-research.github.io/dippin-lang/validation.html#dip143) (Hint) reminds you to give the child's agents their own `tool_access`. This is distinct from the in-file flow lints (DIP147, and the rejected #57 edge warning): it concerns the cross-*file* boundary. Native `dippin lint` now resolves the child across that boundary: [DIP146](https://2389-research.github.io/dippin-lang/validation.html#dip146) (Hint) fires when a resolved child restricts no agent's `tool_access` while a workflow on the path does, superseding DIP143 for boundaries it can resolve ([#89](https://github.com/2389-research/dippin-lang/issues/89)). DIP143 remains the filesystem-free advisory (e.g. the wasm playground) and the fallback when the child can't be resolved.
 
 **Writable Paths (`writable_paths:`)** — *added v0.35.0; an enforcing runtime is required.*
 
@@ -392,7 +400,7 @@ The two slots are independent — an agent may use any combination of inline `pr
 
 **Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. The runtime reads inline prompts from the bundle; no separate file lookup at runtime.
 
-**Non-goals:** defaults-block file-form support ([#72](https://github.com/2389-research/dippin-lang/issues/72)) and bundled-files `.dipx` redesign ([#73](https://github.com/2389-research/dippin-lang/issues/73)) are tracked as follow-up issues.
+**Shared prompt fragments (#175)** — single-source boilerplate shared across agents. In the `defaults` block, `prompt_prefix:`/`prompt_suffix:` (inline) or `prompt_prefix_file:`/`prompt_suffix_file:` (fragment file) cascade to **every agent**; a per-agent `prompt_include: <file>` appends an extra fragment. The effective prompt is composed at resolve time as `prefix → body → include → suffix` (suffix always last — satisfies "final line must be …"). An agent opts out with `prompt_suffix: none` / `prompt_prefix: none` (`DIP154` hints on an opt-out with no matching cascade). Fragment files use the same security envelope as `prompt_file`; `pack` inlines the composed prompt, or ships the fragment files under `--no-inline`.
 
 ### parallel / fan_in — concurrent execution
 
@@ -401,7 +409,7 @@ The two slots are independent — an agent may use any combination of inline `pr
   fan_in Merge <- WorkerA, WorkerB, WorkerC
 ```
 
-Inline syntax only. Every `parallel` must have a matching `fan_in` with identical target/source sets (DIP007). Wire edges from each target to the `fan_in` node in the `edges` block. All targets execute concurrently with independent context copies.
+Both inline (`parallel P -> A, B`) and block form (`parallel P` with `branch:` lines) are supported; block form additionally allows per-branch `model` / `provider` / `fidelity` / `tool_access` / `writable_paths` / `last_response_truncate` overrides (an omitted per-branch value inherits the target agent's setting). Every `parallel` must have a matching `fan_in` with identical target/source sets (DIP007) — this applies to both forms. Wire edges from each target to the `fan_in` node in the `edges` block. All targets execute concurrently with independent context copies.
 
 ### subgraph — embed another workflow
 
@@ -459,8 +467,8 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | `retry_policy` | `standard`, `aggressive`, `patient`, `linear`, `none` (DIP113 if invalid) |
 | `max_retries` | Max retry attempts |
 | `base_delay` | Override base delay, e.g. `500ms`, `2s` |
-| `retry_target` | Node ID to jump to on retry |
-| `fallback_target` | Node ID if retries exhausted |
+| `retry_target` | **v1 only** (rejected under `dip 2`) — node to jump to on retry; use a `loop` edge in dip 2 |
+| `fallback_target` | **v1 only** (rejected under `dip 2`) — node if retries exhausted; use an `on fail` edge in dip 2 |
 
 **Every node must have at least one field.** An empty node body causes a parse error.
 
@@ -472,15 +480,19 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
     Analyze -> Decide
     Decide -> Merge when ctx.outcome = success
     Decide -> Revise when ctx.outcome = fail
-    Revise -> Analyze restart: true
+    Revise -> Analyze loop
 ```
 
 | Attribute | Syntax | Notes |
 |-----------|--------|-------|
 | condition | `when <expr>` | Guard expression |
+| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. `<token>` must be a single bare identifier (`[A-Za-z0-9][A-Za-z0-9_-]*`) — quoted or other values need `when`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
-| weight | `weight: <int>` | Priority (higher wins) |
-| restart | `restart: true` | **Required on back-edges** to avoid DIP005 (unconditional cycle) |
+| choice | `choice: <key>` | Human-gate routing key; carried, not interpreted — `choice:` is preferred when present, and `label:` remains the fallback routing key when `choice:` is absent (DIP150) |
+| weight | `weight: <int>` | Soft-deprecated (DIP151) — parsed but ignored by routing; removal slated for dip 2 |
+| override | `override: true` | Carried, not interpreted by the parser |
+| else default | `else -> <NodeID>` | Section-level success-side default route; at most one per `edges` block; no source node and no attributes (#157) |
+| loop | `loop` | Bare keyword marking a back-edge; **required on back-edges** to avoid DIP005 (unconditional cycle). Legacy `restart: true` still parses; `fmt` rewrites it to `loop` |
 
 ### Conditions
 
@@ -499,6 +511,8 @@ Variables must have namespace prefix: `ctx.`, `params.`, or `graph.` (DIP120 if 
 | `not` | `not ctx.flagged = true` |
 
 Parentheses control precedence. Operator priority: `not` > `and` > `or`.
+
+**Quoted values** *(lossless since v0.49.0)*: condition values may be double-quoted — `when ctx.msg = "hello world"`. Inside double quotes, escaped `\"` and `\\` are preserved losslessly, and operator- or comment-like text (`||`, `#`) is literal — only a real trailing `#` comment is stripped. An unterminated double quote is a parse error, rejected before validation (reported at the opening quote — not a DIP010, which is for conditions that tokenize but fail to parse). Quoting is required when the value is the reserved bare keyword `loop`: `when ctx.x = "loop"` (unquoted `loop` is taken as the back-edge flag).
 
 **Exhaustive detection:** The linter auto-detects exhaustive condition pairs (`success`/`fail`, complementary `contains`/`not contains`). Using `success`/`fail` as condition values suppresses DIP101/DIP102 warnings.
 
@@ -561,27 +575,29 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP146) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP154) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
 | `dippin fmt --write <file>` | Rewrite file in place |
+| `dippin fmt --migrate <file>` | Convert a v1 file to `dip 2` (edges own destinations). Combines with `--check`/`--write`. Exit 3 when the migration flags cases needing author review |
 | `dippin new <template>` | Generate from template: `minimal`, `parallel`, `conditional`, `review-loop`, `human-gate` |
+| `dippin spec` | Print the full embedded language specification |
 
 ### Export
 
 | Command | Purpose |
 |---------|---------|
-| `dippin export-dot <file>` | Export to Graphviz DOT |
+| `dippin export-dot <file>` | Export to Graphviz DOT. `--rankdir` to set layout direction, `--prompts` to include prompts |
 | `dippin export-dip <file>` | Export flattened .dip (resolves subgraph refs) |
-| `dippin migrate <file.dot>` | Convert DOT to .dip |
+| `dippin migrate <file.dot>` | Convert DOT to .dip. `--output <file>` to write instead of stdout |
 | `dippin validate-migration <old.dot> <new.dip>` | Verify migration parity |
 
 ### Analysis
 
 | Command | Purpose |
 |---------|---------|
-| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive |
+| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive. `--interactive` to prompt at human nodes |
 | `dippin cost <file>` | Estimate execution cost by model/provider. Requires model/provider on nodes or in defaults |
 | `dippin coverage <file>` | Edge coverage and reachability |
 | `dippin doctor <file>` | Health report card (grade A-F) |
@@ -590,7 +606,7 @@ Use `dippin help` (not `--help`) to see all commands.
 | `dippin feedback <file>` | Compare predicted vs actual costs |
 | `dippin explain <code>` | Explain a diagnostic code (e.g. `dippin explain DIP005`) |
 | `dippin unused <file>` | Detect dead-branch nodes and wasted cost |
-| `dippin graph <file>` | Render ASCII DAG of the workflow |
+| `dippin graph <file>` | Render ASCII DAG of the workflow. `--compact` for a denser layout |
 | `dippin test <file>` | Run `.test.json` scenario tests. `--verbose --coverage` for details |
 | `dippin watch <file>` | Watch for changes, re-validate on save |
 | `dippin lsp` | Start LSP server on stdio (for editor integration) |
@@ -642,11 +658,12 @@ The primary loop for authoring .dip files:
 | DIP002 | Exit node missing | Add `exit: <NodeID>` to workflow header |
 | DIP003 | Unknown node in edge | Check spelling of node IDs in edges block |
 | DIP004 | Unreachable node | Add an edge path from start to the node |
-| DIP005 | Unconditional cycle | Add `restart: true` to the back-edge |
+| DIP005 | Unconditional cycle | Add `loop` to the back-edge |
 | DIP006 | Exit has outgoing edges | Remove edges from exit node or change exit to a different node |
 | DIP007 | Parallel/fan_in mismatch | Add matching `fan_in` node with identical target set, and wire edges from each target to the fan_in node |
 | DIP008 | Duplicate node ID | Rename one of the duplicate nodes |
 | DIP009 | Duplicate edge | Remove the duplicate. Uniqueness is determined by `(source, target)` pair — two edges to the same target with different labels are still duplicates |
+| DIP010 | Edge condition cannot be parsed | Fix the `when` expression syntax — check operators, quoting (a bare reserved word like `loop` as a value is taken as a flag — quote it), and namespace prefixes. (An *unterminated* `"` is a separate parse-time error, not DIP010.) |
 
 ### Semantic Warnings (should fix)
 
@@ -655,7 +672,7 @@ The primary loop for authoring .dip files:
 | DIP101 | Node only reachable via conditionals | Add unconditional fallback edge or make conditions exhaustive (`success`/`fail`) |
 | DIP102 | No default edge from routing node | Add unconditional edge or exhaustive conditions |
 | DIP103 | Overlapping conditions | Disambiguate condition expressions |
-| DIP104 | Unbounded retry loop | Add `max_retries` or `fallback_target` |
+| DIP104 | Unbounded retry loop | Add `max_retries`, an `on fail` edge (dip 2), or `fallback_target` (v1) |
 | DIP105 | No success path start→exit | Ensure at least one unconditional path exists |
 | DIP106 | Undefined variable in prompt | Check `${var}` references |
 | DIP107 | Written key never read downstream | Remove unused `writes` or add consumer node |
@@ -666,7 +683,7 @@ The primary loop for authoring .dip files:
 | DIP112 | Reads key not written upstream | Add `writes:` to producing node |
 | DIP113 | Invalid retry policy | Use: `standard`, `aggressive`, `patient`, `linear`, `none` |
 | DIP114 | Invalid fidelity | Use: `full`, `summary:high`, `summary:medium`, `summary:low`, `compact`, `truncate` |
-| DIP115 | Goal gate without recovery | Add `retry_target` or `fallback_target` |
+| DIP115 | Goal gate without recovery | Add an `on fail` edge (dip 2), or `retry_target`/`fallback_target` (v1) |
 | DIP116 | Invalid compaction threshold | Use float 0.0-1.0 |
 | DIP117 | Stylesheet class references undefined class | Fix class name in stylesheet block |
 | DIP118 | Stylesheet ID references unknown node | Fix node ID in stylesheet block |
@@ -686,20 +703,27 @@ The primary loop for authoring .dip files:
 | DIP141 | `writable_paths` set with `tool_access: none` (dead config) | Remove `writable_paths` — `tool_access: none` already strips all tools, leaving nothing for `writable_paths` to bound |
 | DIP142 | Unsafe `writable_paths` entry (absolute, `..` escape, `~`, brace fragment) | Use workspace-relative globs (e.g. `.ai/sprints/**`); absolute, `~`, Windows-drive, and `..`-escaping entries are rejected by the runtime fs jail |
 | DIP143 | Workflow uses `tool_access` but references a subgraph — child agents unguarded | Open the referenced `.dip` and set `tool_access` on its agents directly; parent restrictions do not cross the file boundary |
-| DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail`, set `fallback_target`, add `retry_target` with `max_retries`, or declare `on_failure:` in defaults |
+| DIP144 | Agent node has no failure route | Add `-> <node> when ctx.outcome = fail` (dip 2), or set `fallback_target`/`retry_target`+`max_retries` (v1), or declare `on_failure:` in defaults |
 | DIP145 | Graph budget default is negative | Use a positive cap, or omit the field / set `0` to mean no limit |
 | DIP146 | Referenced subgraph child restricts no agent's `tool_access` while a workflow on the path does (cross-file) | Set `tool_access` on the child's agents; native `dippin lint` resolves the child and supersedes DIP143 |
+| DIP147 | A `tool_access: none` agent `writes:` a context key that a downstream tool-bearing agent `reads:` (chain-attack / info-flow) | Confirm the restricted agent's input is trusted; if not, give the consumer `tool_access: none` too or insert a sanitizing step. Detection only — the runtime enforces |
+| DIP149 | A node has 2+ unconditional outgoing edges — which one fires is decided only by the lexical (alphabetical) tiebreak on target node ID | Keep at most one unconditional edge as the default fallback; guard the others with `when`. Restart/`loop` back-edges are exempt |
+| DIP150 | A label-routing `human` gate (mode `choice`, `yes_no`, or unset default) routes an outgoing edge by `label:` with no explicit `choice:` — the label doubles as the routing key, so nothing signals it is load-bearing (Hint). `freeform`/`interview` gates are exempt | Add `choice: "<key>"` to mark the routing key, leaving `label:` for display. `choice:` wins when present; `label:` still routes when it is absent |
+| DIP151 | An edge carries a `weight:` attribute — speculative tier-4 routing priority that the cascade never consults and no real workflow uses. It still parses (carry-only), but the keyword and cascade tier are slated for removal in `dip 2` (Warning) | Remove `weight:`; express priority with conditions — guard edges with `when` / `on`, or rely on a single unconditional fallback |
+| DIP152 | A tool node's `marker_grep` enumerates a literal marker that no edge routes and that no section `else ->` default or unconditional edge covers — the marker would be emitted at runtime with nowhere to go. Only checked for recognizable literal-alternation greps; any compound/negated/other-variable edge makes the node safe (Warning) | Route the marker with an edge (`on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default |
+| DIP153 | An `edges` block re-declares an unconditional, attribute-free edge that already exists as an inline `parallel`/`fan_in` fork — the inline list is authoritative (validation, simulation, DOT all derive fan edges from it), so the re-declaration is redundant (Warning). A conditional/attributed edge between the same nodes is kept | Remove the redundant edge (`dippin fmt` strips it); rejected outright under `dip 2` |
+| DIP154 | An agent sets `prompt_prefix: none` / `prompt_suffix: none` to opt out of the defaults prompt cascade, but no cascade of that kind is declared — the opt-out is a no-op (Hint) | Remove the unnecessary opt-out, or add the intended `prompt_prefix`/`prompt_suffix`(`_file`) cascade to `defaults` |
 
 ## Best Practices
 
 - **Always set `timeout`** on tool nodes — no timeout means infinite hang
-- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel.
+- **Prefer `marker_grep:`** over regexing `ctx.tool_stdout` in edges when the runtime supports it. Typed routing leaves stdout free for diagnostic output and avoids truncation foot-guns. Declaring `marker_grep:` also suppresses DIP101/DIP102 on the source node — the validator treats it as a safe typed-routing channel — but for a recognizable literal-alternation grep, DIP152 still flags any enumerated marker that no edge routes and no `else`/unconditional fallback covers.
 - **Boolean fields** (`goal_gate`, `auto_status`, `cache_tools`, `route_required`) accept `true/false`, `1/0`, `yes/no`, `on/off` case-insensitively. Anything else is a parse diagnostic.
 - **Use `auto_status: true`** on agent nodes that drive conditional routing via `ctx.outcome`
 - **Use `success`/`fail`** as condition values — the linter recognizes these as exhaustive
-- **Mark back-edges `restart: true`** — loops without it trigger DIP005
+- **Mark back-edges `loop`** — loops without it trigger DIP005
 - **Declare `reads`/`writes`** on nodes to document data flow (enables DIP107/DIP112 checks)
-- **Add `retry_target` or `fallback_target`** to `goal_gate: true` nodes
+- **Add a failure route** (an `on fail` edge, or `retry_target`/`fallback_target` in v1) to `goal_gate: true` nodes
 - **Run `dippin check`** after every edit — it catches issues the formatter won't
 - **Use `dippin doctor`** for a health grade and actionable improvement suggestions
 
@@ -716,7 +740,7 @@ The primary loop for authoring .dip files:
   edges
     Implement -> Review
     Review -> Done when ctx.outcome = success
-    Review -> Implement when ctx.outcome = fail restart: true
+    Review -> Implement when ctx.outcome = fail loop
 ```
 
 ### Human Gate
