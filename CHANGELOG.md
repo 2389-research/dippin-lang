@@ -2,6 +2,15 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.50.0] — 2026-07-20
+
+Documentation-only release: brings the **embedded LLM specification** (shipped in the `dippin` binary) into line with the v0.49.0 language surface. No code or behavior change.
+
+### Docs
+- **Embedded spec / `skill.md` refresh for v0.49.0 quoted edge conditions** ([#187](https://github.com/2389-research/dippin-lang/pull/187), thanks [@lra](https://github.com/lra)). Documents lossless double-quoted condition values (`when ctx.msg = "hello world"`, with `\"`/`\\` escaping and literal `||`/`#` inside quotes); the `on <token>` shorthand's single-bare-identifier restriction (`[A-Za-z0-9][A-Za-z0-9_-]*`; quoted/multi-token values require `when`); the requirement to quote the reserved bare keyword `loop` used as a value; adds the missing **DIP010** row; corrects the lint range from DIP001–DIP152 to **DIP001–DIP154**; and fills in the CLI reference (`fmt --migrate`, `spec`, `export-dot --rankdir/--prompts`, `migrate --output`, `simulate --interactive`, `graph --compact`). Regenerated `cmd/dippin/generated-spec.md` and `site/static/llms-full.txt` to stay in sync with `skill.md`.
+- **Review correction (`d1bd93b`)**: fixed a DIP010 mis-attribution in the above — an *unterminated* double quote is a lexer/parse error (`unterminated string literal at L:C`, reported at the opening quote), **not** DIP010 (which is for a condition that tokenizes but fails to parse, e.g. a bare `loop` used as a value). Independently corroborated by CodeRabbit and Copilot review.
+- Added a development-practices reflection note under `docs/notes/`.
+
 ## [v0.49.0] — 2026-07-13
 
 **Lossless quoted edge conditions** ([#182](https://github.com/2389-research/dippin-lang/issues/182)). Double-quoted edge-condition values containing escaped quotes or backslashes were corrupted while the parser reconstructed `Condition.Raw`; embedded operator-like text could then be reinterpreted, and valid workflows failed validation with DIP010. This release makes the double-quoted path escape-aware end to end, from source parsing through `Condition.Raw` to the condition parser used by simulation and validation.
