@@ -299,7 +299,7 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | Attribute | Syntax | Notes |
 |-----------|--------|-------|
 | condition | `when <expr>` | Guard expression |
-| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
+| outcome shorthand | `on <token>` | Sugar for `when ctx.outcome = <token>` (agent) or `when ctx.tool_marker = <token>` (tool + `marker_grep`); `fmt` rewrites eligible `when` to `on`. `<token>` must be a single bare identifier (`[A-Za-z0-9][A-Za-z0-9_-]*`) — quoted or other values need `when`. Not for human gates (route on choice/label) or marker-less tools — use `when` |
 | label | `label: <text>` | Display text / human choice button |
 | choice | `choice: <key>` | Human-gate routing key; carried, not interpreted — `choice:` is preferred when present, and `label:` remains the fallback routing key when `choice:` is absent (DIP150) |
 | weight | `weight: <int>` | Soft-deprecated (DIP151) — parsed but ignored by routing; removal slated for dip 2 |
@@ -324,6 +324,8 @@ Variables must have namespace prefix: `ctx.`, `params.`, or `graph.` (DIP120 if 
 | `not` | `not ctx.flagged = true` |
 
 Parentheses control precedence. Operator priority: `not` > `and` > `or`.
+
+**Quoted values** *(lossless since v0.49.0)*: condition values may be double-quoted — `when ctx.msg = "hello world"`. Inside double quotes, escaped `\"` and `\\` are preserved losslessly, and operator- or comment-like text (`||`, `#`) is literal — only a real trailing `#` comment is stripped. An unterminated double quote is a parse error, rejected before validation (reported at the opening quote — not a DIP010, which is for conditions that tokenize but fail to parse). Quoting is required when the value is the reserved bare keyword `loop`: `when ctx.x = "loop"` (unquoted `loop` is taken as the back-edge flag).
 
 **Exhaustive detection:** The linter auto-detects exhaustive condition pairs (`success`/`fail`, complementary `contains`/`not contains`). Using `success`/`fail` as condition values suppresses DIP101/DIP102 warnings.
 
@@ -386,27 +388,29 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP152) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP154) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
 | `dippin fmt --write <file>` | Rewrite file in place |
+| `dippin fmt --migrate <file>` | Convert a v1 file to `dip 2` (edges own destinations). Combines with `--check`/`--write`. Exit 3 when the migration flags cases needing author review |
 | `dippin new <template>` | Generate from template: `minimal`, `parallel`, `conditional`, `review-loop`, `human-gate` |
+| `dippin spec` | Print the full embedded language specification |
 
 ### Export
 
 | Command | Purpose |
 |---------|---------|
-| `dippin export-dot <file>` | Export to Graphviz DOT |
+| `dippin export-dot <file>` | Export to Graphviz DOT. `--rankdir` to set layout direction, `--prompts` to include prompts |
 | `dippin export-dip <file>` | Export flattened .dip (resolves subgraph refs) |
-| `dippin migrate <file.dot>` | Convert DOT to .dip |
+| `dippin migrate <file.dot>` | Convert DOT to .dip. `--output <file>` to write instead of stdout |
 | `dippin validate-migration <old.dot> <new.dip>` | Verify migration parity |
 
 ### Analysis
 
 | Command | Purpose |
 |---------|---------|
-| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive |
+| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive. `--interactive` to prompt at human nodes |
 | `dippin cost <file>` | Estimate execution cost by model/provider. Requires model/provider on nodes or in defaults |
 | `dippin coverage <file>` | Edge coverage and reachability |
 | `dippin doctor <file>` | Health report card (grade A-F) |
@@ -415,7 +419,7 @@ Use `dippin help` (not `--help`) to see all commands.
 | `dippin feedback <file>` | Compare predicted vs actual costs |
 | `dippin explain <code>` | Explain a diagnostic code (e.g. `dippin explain DIP005`) |
 | `dippin unused <file>` | Detect dead-branch nodes and wasted cost |
-| `dippin graph <file>` | Render ASCII DAG of the workflow |
+| `dippin graph <file>` | Render ASCII DAG of the workflow. `--compact` for a denser layout |
 | `dippin test <file>` | Run `.test.json` scenario tests. `--verbose --coverage` for details |
 | `dippin watch <file>` | Watch for changes, re-validate on save |
 | `dippin lsp` | Start LSP server on stdio (for editor integration) |
@@ -472,6 +476,7 @@ The primary loop for authoring .dip files:
 | DIP007 | Parallel/fan_in mismatch | Add matching `fan_in` node with identical target set, and wire edges from each target to the fan_in node |
 | DIP008 | Duplicate node ID | Rename one of the duplicate nodes |
 | DIP009 | Duplicate edge | Remove the duplicate. Uniqueness is determined by `(source, target)` pair — two edges to the same target with different labels are still duplicates |
+| DIP010 | Edge condition cannot be parsed | Fix the `when` expression syntax — check operators, quoting (a bare reserved word like `loop` as a value is taken as a flag — quote it), and namespace prefixes. (An *unterminated* `"` is a separate parse-time error, not DIP010.) |
 
 ### Semantic Warnings (should fix)
 
