@@ -325,7 +325,7 @@ Variables must have namespace prefix: `ctx.`, `params.`, or `graph.` (DIP120 if 
 
 Parentheses control precedence. Operator priority: `not` > `and` > `or`.
 
-**Quoted values** *(lossless since v0.49.0)*: condition values may be double-quoted — `when ctx.msg = "hello world"`. Inside double quotes, escaped `\"` and `\\` are preserved losslessly, and operator- or comment-like text (`||`, `#`) is literal — only a real trailing `#` comment is stripped. An unterminated double quote is rejected (DIP010, reported at the opening quote). Quoting is required when the value is the reserved bare keyword `loop`: `when ctx.x = "loop"` (unquoted `loop` is taken as the back-edge flag).
+**Quoted values** *(lossless since v0.49.0)*: condition values may be double-quoted — `when ctx.msg = "hello world"`. Inside double quotes, escaped `\"` and `\\` are preserved losslessly, and operator- or comment-like text (`||`, `#`) is literal — only a real trailing `#` comment is stripped. An unterminated double quote is a parse error, rejected before validation (reported at the opening quote — not a DIP010, which is for conditions that tokenize but fail to parse). Quoting is required when the value is the reserved bare keyword `loop`: `when ctx.x = "loop"` (unquoted `loop` is taken as the back-edge flag).
 
 **Exhaustive detection:** The linter auto-detects exhaustive condition pairs (`success`/`fail`, complementary `contains`/`not contains`). Using `success`/`fail` as condition values suppresses DIP101/DIP102 warnings.
 
@@ -476,7 +476,7 @@ The primary loop for authoring .dip files:
 | DIP007 | Parallel/fan_in mismatch | Add matching `fan_in` node with identical target set, and wire edges from each target to the fan_in node |
 | DIP008 | Duplicate node ID | Rename one of the duplicate nodes |
 | DIP009 | Duplicate edge | Remove the duplicate. Uniqueness is determined by `(source, target)` pair — two edges to the same target with different labels are still duplicates |
-| DIP010 | Edge condition cannot be parsed | Fix the `when` expression syntax — check operators, quoting (unterminated `"` is rejected), and namespace prefixes |
+| DIP010 | Edge condition cannot be parsed | Fix the `when` expression syntax — check operators, quoting (a bare reserved word like `loop` as a value is taken as a flag — quote it), and namespace prefixes. (An *unterminated* `"` is a separate parse-time error, not DIP010.) |
 
 ### Semantic Warnings (should fix)
 
