@@ -17,8 +17,14 @@ type Workflow struct {
 	Defaults WorkflowDefaults  // Graph-level config
 	Vars     map[string]string // User-defined workflow variables
 	Requires []string          // Environmental dependencies (e.g. ["git", "docker"]); semantics live in consumers
-	Nodes    []*Node           // Ordered for deterministic processing
-	Edges    []*Edge
+	// Inputs declares the values a caller must supply — a human at the entry
+	// point, or a parent workflow via a subgraph node's params:. This is the
+	// callee-side signature. Declaration order is significant: a host renders
+	// these as an ordered form, so the formatter must not sort them. Values are
+	// untrusted by construction and are read as ${inputs.name}. See issue #190.
+	Inputs []*Input
+	Nodes  []*Node // Ordered for deterministic processing
+	Edges  []*Edge
 	// ElseTarget is the section-level `else -> <node>` default of the edges block:
 	// the destination for any node whose guard edges all fail to match and which
 	// has no explicit unconditional edge of its own. It is the success-side default
@@ -66,6 +72,30 @@ type WorkflowDefaults struct {
 	PromptSuffix      string        // Cascade: inline suffix appended to every agent's prompt (#175)
 	PromptPrefixFile  string        // Cascade: prefix fragment loaded from a file (#175)
 	PromptSuffixFile  string        // Cascade: suffix fragment loaded from a file (#175)
+}
+
+// Input declares one caller-supplied value bound at run start.
+//
+// Default, Min and Max are stored as raw source text rather than typed values so
+// the formatter can round-trip a file byte-for-byte; the CLI's JSON projection
+// coerces them per Type. Unknown Type values are carried verbatim and diagnosed
+// by the validator (DIP155), never rejected by the parser — that keeps a .dip
+// using a future type parseable, formattable, and packable on an older dippin.
+type Input struct {
+	Name        string
+	Type        string   // v1: text | number | bool | enum | file | secret
+	Required    bool     // Host must obtain a value even when Default is set
+	Default     string   // Raw source text; a form prefill, not a substitute for Required
+	HasDefault  bool     // Distinguishes an absent default from an empty-string default
+	Prompt      string   // What a host asks the caller
+	Description string   // Help text
+	Options     []string // enum choices
+	Pattern     string   // text: regex the host enforces
+	Min         string   // number: inclusive lower bound, raw text
+	Max         string   // number: inclusive upper bound, raw text
+	MaxLength   int      // text: character cap
+	Multiline   bool     // text: host renders a textarea
+	Source      SourceLocation
 }
 
 // Node represents a single step in the workflow.

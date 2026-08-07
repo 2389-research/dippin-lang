@@ -12,6 +12,18 @@ func (w *Workflow) Node(id string) *Node {
 	return nil
 }
 
+// Input returns the declared input with the given name, or nil if the workflow
+// declares no such input. Used by the validator to resolve ${inputs.x} against
+// the declaration — inputs is the only closed namespace in the language.
+func (w *Workflow) Input(name string) *Input {
+	for _, in := range w.Inputs {
+		if in.Name == name {
+			return in
+		}
+	}
+	return nil
+}
+
 // OutcomeChannel returns the node's natural outcome channel — the context
 // variable the `on <token>` edge shorthand routes against — and whether the
 // node has one. Agent nodes route on ctx.outcome; tool nodes that declare

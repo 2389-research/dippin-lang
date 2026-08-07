@@ -159,7 +159,7 @@ func (p *Parser) dispatchWorkflowField(t Token) {
 	p.dispatchWorkflowBlock(t)
 }
 
-// dispatchWorkflowSimpleField handles header fields and config blocks (defaults, vars). Returns true if handled.
+// dispatchWorkflowSimpleField handles header fields and config blocks (defaults, vars, inputs). Returns true if handled.
 func dispatchWorkflowSimpleField(p *Parser, t Token) bool {
 	switch t.Value {
 	case "goal", "start", "exit":
@@ -168,6 +168,8 @@ func dispatchWorkflowSimpleField(p *Parser, t Token) bool {
 		p.parseDefaults()
 	case "vars":
 		p.parseVars()
+	case "inputs":
+		p.parseInputs()
 	default:
 		return dispatchWorkflowTailField(p, t)
 	}
