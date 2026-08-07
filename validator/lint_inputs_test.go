@@ -1,6 +1,7 @@
 package validator_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/parser"
@@ -175,5 +176,75 @@ func TestDIP156DeclaredRefInEdgeConditionIsClean(t *testing.T) {
 	}
 	if hasCode(diags, "DIP120") {
 		t.Errorf("DIP120 fired on the inputs namespace: %v", diags)
+	}
+}
+
+func TestDIP157InputRefInToolCommand(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: T
+  exit: T
+
+  inputs
+    idea: text
+
+  tool T
+    command:
+      echo ${inputs.idea}
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, "DIP157") {
+		t.Fatalf("want DIP157 for an input ref in a tool command, got %v", diags)
+	}
+	for _, d := range diags {
+		if d.Code == "DIP157" && d.Severity != validator.SeverityError {
+			t.Errorf("DIP157 severity = %v, want Error", d.Severity)
+		}
+	}
+}
+
+func TestDIP157SecretGetsSharperHelp(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: T
+  exit: T
+
+  inputs
+    token: secret
+
+  tool T
+    command:
+      curl -H "Authorization: ${inputs.token}" https://example.com
+`
+	diags := lintSrc(t, src)
+	var help string
+	for _, d := range diags {
+		if d.Code == "DIP157" {
+			help = d.Help
+		}
+	}
+	if help == "" {
+		t.Fatalf("want DIP157, got %v", diags)
+	}
+	if !strings.Contains(help, "secret") {
+		t.Errorf("help for a secret should mention it, got %q", help)
+	}
+}
+
+func TestDIP157CleanWhenInputRefIsInAnAgentPrompt(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  inputs
+    idea: text
+
+  agent A
+    prompt:
+      Build ${inputs.idea}.
+`
+	if diags := lintSrc(t, src); hasCode(diags, "DIP157") {
+		t.Errorf("DIP157 fired on an agent prompt, which interpolates fine: %v", diags)
 	}
 }

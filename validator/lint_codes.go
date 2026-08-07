@@ -61,6 +61,7 @@ const (
 	DIP154 = "DIP154" // agent opts out (prompt_prefix/suffix: none) of a defaults cascade that is not declared (no-op)
 	DIP155 = "DIP155" // input declares a type this dippin does not recognize
 	DIP156 = "DIP156" // reference to an input the workflow does not declare
+	DIP157 = "DIP157" // input reference inside a tool command never interpolates
 )
 
 func init() {
@@ -127,4 +128,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP154: "agent opts out of a defaults prompt cascade that is not declared (no-op)",
 	DIP155: "input declares an unrecognized type",
 	DIP156: "reference to an undeclared input",
+	DIP157: "input reference in a tool command is never interpolated",
 }

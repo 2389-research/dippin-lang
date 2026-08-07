@@ -131,3 +131,47 @@ func undeclaredInputName(w *ir.Workflow, ref string) (string, bool) {
 	}
 	return name, true
 }
+
+// lintInputInToolCommand checks DIP157: an ${inputs.x} reference inside a tool
+// node's command body never interpolates. The runtime keeps the whole inputs.
+// namespace off its shell-interpolation allowlist (the same mechanism that
+// blocks LLM-origin ctx.* keys from reaching a shell), so the reference is dead
+// text that expands to nothing — silently, for every input type. See #190.
+func lintInputInToolCommand(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	for _, n := range w.Nodes {
+		cfg, ok := n.Config.(ir.ToolConfig)
+		if !ok || cfg.Command == "" {
+			continue
+		}
+		diags = append(diags, inputRefsInCommand(w, n, cfg.Command)...)
+	}
+	return diags
+}
+
+// inputRefsInCommand reports every inputs.-namespaced reference in one command body.
+func inputRefsInCommand(w *ir.Workflow, n *ir.Node, command string) []Diagnostic {
+	var diags []Diagnostic
+	for _, m := range varRefPattern.FindAllStringSubmatch(command, -1) {
+		if !strings.HasPrefix(m[1], inputsPrefix) {
+			continue
+		}
+		name := strings.TrimPrefix(m[1], inputsPrefix)
+		diags = append(diags, Diagnostic{
+			Code:     DIP157,
+			Severity: SeverityError,
+			Message:  fmt.Sprintf("tool %q references ${inputs.%s}, which never interpolates in a command", n.ID, name),
+			Location: n.Source,
+			Help:     inputInCommandHelp(w, name),
+		})
+	}
+	return diags
+}
+
+// inputInCommandHelp tailors the fix hint, sharpening it for a secret.
+func inputInCommandHelp(w *ir.Workflow, name string) string {
+	if in := w.Input(name); in != nil && in.Type == "secret" {
+		return "the runtime never expands inputs into a shell — a secret least of all; pass it through the runtime's credential mechanism instead"
+	}
+	return "the runtime keeps the inputs namespace off its shell allowlist; route the value through an agent or a declared context key instead"
+}
