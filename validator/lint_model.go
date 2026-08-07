@@ -292,7 +292,32 @@ func providerKnown(provider string, extra ExtraModels) bool {
 // modelKnown reports whether the model is registered for the provider in either
 // the base catalog or the scoped extra catalog.
 func modelKnown(provider, model string, extra ExtraModels) bool {
-	return knownModelProviders[provider][model] || extra[provider][model]
+	if knownModelProviders[provider][model] || extra[provider][model] {
+		return true
+	}
+	// Fall back to a version-separator-insensitive match so a dotted ID
+	// (claude-haiku-4.5, the Vercel AI Gateway spelling) is recognized as the
+	// dashed catalog key (claude-haiku-4-5), and vice versa (issue #188).
+	return modelKnownNormalized(knownModelProviders[provider], model) ||
+		modelKnownNormalized(extra[provider], model)
+}
+
+// modelKnownNormalized reports whether any key in catalog matches model once
+// their version separators are folded (dots to dashes). See #188.
+func modelKnownNormalized(catalog map[string]bool, model string) bool {
+	want := canonicalModelID(model)
+	for k := range catalog {
+		if canonicalModelID(k) == want {
+			return true
+		}
+	}
+	return false
+}
+
+// canonicalModelID folds the model version separator so dotted and dashed
+// spellings compare equal (claude-haiku-4.5 == claude-haiku-4-5). See #188.
+func canonicalModelID(model string) string {
+	return strings.ReplaceAll(model, ".", "-")
 }
 
 // knownProviderList returns a sorted comma-separated list of known providers,

@@ -495,3 +495,33 @@ func TestTopCostsSorting(t *testing.T) {
 		t.Errorf("expected top cost to be 'expensive', got %q", r.TopCosts[0].NodeID)
 	}
 }
+
+// TestLookupPriceDottedDashedEquivalence covers #188: the Anthropic pricing
+// keys are dashed (claude-haiku-4-5) but the Vercel-gateway-documented ID a
+// .dip must carry is dotted (claude-haiku-4.5). Both spellings must resolve to
+// the same price; a genuinely unknown model must still miss.
+func TestLookupPriceDottedDashedEquivalence(t *testing.T) {
+	pricing := DefaultPricing()
+
+	dashed, ok := lookupPrice("anthropic", "claude-haiku-4-5", pricing)
+	if !ok {
+		t.Fatal("dashed claude-haiku-4-5 should be known")
+	}
+	dotted, ok := lookupPrice("anthropic", "claude-haiku-4.5", pricing)
+	if !ok {
+		t.Fatal("dotted claude-haiku-4.5 must resolve (issue #188)")
+	}
+	if dotted != dashed {
+		t.Errorf("dotted price %+v != dashed price %+v", dotted, dashed)
+	}
+
+	// Exact dotted keys (OpenAI/Gemini) must still resolve unchanged.
+	if _, ok := lookupPrice("openai", "gpt-5.5", pricing); !ok {
+		t.Error("exact dotted OpenAI key gpt-5.5 regressed")
+	}
+
+	// A genuinely unknown model must still miss (no false positive from normalization).
+	if _, ok := lookupPrice("anthropic", "claude-nonexistent-9-9", pricing); ok {
+		t.Error("unknown model must not resolve")
+	}
+}

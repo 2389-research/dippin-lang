@@ -406,6 +406,13 @@ warning[DIP108]: unknown model/provider combination
 
 **How to fix**: Check for typos. Use recognized model/provider combinations.
 
+**Version-separator spelling**: the model catalog and cost table treat `.` and
+`-` in the version portion as equivalent, so a dotted ID and its dashed form are
+the same model — `anthropic/claude-haiku-4.5` (the
+Vercel AI Gateway spelling) resolves to the dashed catalog key
+`claude-haiku-4-5`, and both price identically under `dippin cost`. Carry
+whichever spelling your executing runtime requires.
+
 ---
 
 ### DIP109: Duplicate Subgraph Reference
