@@ -1,0 +1,875 @@
+{
+  "provider_aliases": {
+    "google": "gemini",
+    "xai": "grok",
+    "kimi": "moonshot"
+  },
+  "models": [
+    {
+      "provider": "anthropic",
+      "model": "claude-fable-5",
+      "input_per_m": 10,
+      "output_per_m": 50,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-3-5",
+      "input_per_m": 0.8,
+      "output_per_m": 4,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5",
+      "input_per_m": 1,
+      "output_per_m": 5,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-mythos-5",
+      "input_per_m": 10,
+      "output_per_m": 50,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-mythos-preview",
+      "priced": false,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-0",
+      "input_per_m": 15,
+      "output_per_m": 75,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-1",
+      "input_per_m": 15,
+      "output_per_m": 75,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-5",
+      "input_per_m": 5,
+      "output_per_m": 25,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-6",
+      "input_per_m": 5,
+      "output_per_m": 25,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-7",
+      "input_per_m": 5,
+      "output_per_m": 25,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-4-8",
+      "input_per_m": 5,
+      "output_per_m": 25,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-5",
+      "input_per_m": 5,
+      "output_per_m": 25,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-0",
+      "input_per_m": 3,
+      "output_per_m": 15,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "input_per_m": 3,
+      "output_per_m": 15,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "input_per_m": 3,
+      "output_per_m": 15,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "input_per_m": 3,
+      "output_per_m": 15,
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-a-03-2025",
+      "input_per_m": 2.5,
+      "output_per_m": 10,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-r",
+      "input_per_m": 0.5,
+      "output_per_m": 1.5,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-r-08-2024",
+      "input_per_m": 0.5,
+      "output_per_m": 1.5,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-r-plus",
+      "input_per_m": 2.5,
+      "output_per_m": 10,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-r-plus-08-2024",
+      "input_per_m": 2.5,
+      "output_per_m": 10,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-r7b",
+      "input_per_m": 0.0375,
+      "output_per_m": 0.15,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "cohere",
+      "model": "command-r7b-12-2024",
+      "input_per_m": 0.0375,
+      "output_per_m": 0.15,
+      "source": "https://docs.cohere.com/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "input_per_m": 0.14,
+      "output_per_m": 0.28,
+      "source": "https://api-docs.deepseek.com/quick_start/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-reasoner",
+      "input_per_m": 0.14,
+      "output_per_m": 0.28,
+      "source": "https://api-docs.deepseek.com/quick_start/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "input_per_m": 0.14,
+      "output_per_m": 0.28,
+      "source": "https://api-docs.deepseek.com/quick_start/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "input_per_m": 1.74,
+      "output_per_m": 3.48,
+      "source": "https://api-docs.deepseek.com/quick_start/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "input_per_m": 0.1,
+      "output_per_m": 0.4,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "input_per_m": 0.3,
+      "output_per_m": 2.5,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.5-flash-lite",
+      "input_per_m": 0.1,
+      "output_per_m": 0.4,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "input_per_m": 1.25,
+      "output_per_m": 10,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3-flash-preview",
+      "input_per_m": 0.5,
+      "output_per_m": 3,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "input_per_m": 0.25,
+      "output_per_m": 1.5,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite-preview",
+      "input_per_m": 0.25,
+      "output_per_m": 1.5,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.1-pro-preview",
+      "input_per_m": 2,
+      "output_per_m": 12,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.1-pro-preview-customtools",
+      "input_per_m": 2,
+      "output_per_m": 12,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.5-flash",
+      "input_per_m": 1.5,
+      "output_per_m": 9,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "input_per_m": 0.3,
+      "output_per_m": 2.5,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "input_per_m": 1.5,
+      "output_per_m": 7.5,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4-1-fast-non-reasoning",
+      "input_per_m": 1.25,
+      "output_per_m": 2.5,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4-1-fast-reasoning",
+      "input_per_m": 1.25,
+      "output_per_m": 2.5,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.20-0309-non-reasoning",
+      "input_per_m": 1.25,
+      "output_per_m": 2.5,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.20-0309-reasoning",
+      "input_per_m": 1.25,
+      "output_per_m": 2.5,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.20-multi-agent-0309",
+      "input_per_m": 1.25,
+      "output_per_m": 2.5,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.3",
+      "input_per_m": 1.25,
+      "output_per_m": 2.5,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.5",
+      "input_per_m": 2,
+      "output_per_m": 6,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "grok",
+      "model": "grok-build-0.1",
+      "input_per_m": 1,
+      "output_per_m": 2,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.1",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7-highspeed",
+      "input_per_m": 0.6,
+      "output_per_m": 2.4,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M3",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "mistral",
+      "model": "codestral",
+      "input_per_m": 0.3,
+      "output_per_m": 0.9,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "magistral-medium",
+      "input_per_m": 2,
+      "output_per_m": 5,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "ministral-3-14b-2512",
+      "input_per_m": 0.2,
+      "output_per_m": 0.2,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "ministral-3-3b-2512",
+      "input_per_m": 0.1,
+      "output_per_m": 0.1,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "ministral-3-8b-2512",
+      "input_per_m": 0.15,
+      "output_per_m": 0.15,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "ministral-8b",
+      "input_per_m": 0.1,
+      "output_per_m": 0.1,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-large-3",
+      "input_per_m": 0.5,
+      "output_per_m": 1.5,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-medium-3",
+      "input_per_m": 0.4,
+      "output_per_m": 2,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-medium-3-1-2508",
+      "input_per_m": 0.4,
+      "output_per_m": 2,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-medium-3-5-2604",
+      "input_per_m": 1.5,
+      "output_per_m": 7.5,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-nemo",
+      "input_per_m": 0.02,
+      "output_per_m": 0.04,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-small",
+      "input_per_m": 0.1,
+      "output_per_m": 0.3,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-small-2603",
+      "input_per_m": 0.1,
+      "output_per_m": 0.3,
+      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "moonshot",
+      "model": "kimi-k3",
+      "input_per_m": 3,
+      "output_per_m": 15,
+      "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "input_per_m": 2,
+      "output_per_m": 8,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "input_per_m": 0.4,
+      "output_per_m": 1.6,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "input_per_m": 0.05,
+      "output_per_m": 0.2,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "input_per_m": 2.5,
+      "output_per_m": 10,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "input_per_m": 0.15,
+      "output_per_m": 0.6,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5",
+      "input_per_m": 1.25,
+      "output_per_m": 10,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "input_per_m": 0.25,
+      "output_per_m": 2,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5-nano",
+      "input_per_m": 0.05,
+      "output_per_m": 0.4,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5-pro",
+      "input_per_m": 15,
+      "output_per_m": 120,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.1",
+      "input_per_m": 1.25,
+      "output_per_m": 10,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.2",
+      "input_per_m": 1.75,
+      "output_per_m": 14,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.2-pro",
+      "input_per_m": 21,
+      "output_per_m": 168,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.3-codex",
+      "input_per_m": 1.75,
+      "output_per_m": 14,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "input_per_m": 2.5,
+      "output_per_m": 15,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "input_per_m": 0.75,
+      "output_per_m": 4.5,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "input_per_m": 0.2,
+      "output_per_m": 1.25,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.4-pro",
+      "input_per_m": 30,
+      "output_per_m": 180,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.5",
+      "input_per_m": 5,
+      "output_per_m": 30,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.5-pro",
+      "input_per_m": 30,
+      "output_per_m": 180,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "input_per_m": 0.2,
+      "output_per_m": 1.2,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "input_per_m": 5,
+      "output_per_m": 30,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.6-terra",
+      "input_per_m": 2,
+      "output_per_m": 12,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "openai",
+      "model": "o3",
+      "input_per_m": 2,
+      "output_per_m": 8,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "o3-mini",
+      "input_per_m": 1.1,
+      "output_per_m": 4.4,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "o3-pro",
+      "input_per_m": 20,
+      "output_per_m": 80,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "openai",
+      "model": "o4-mini",
+      "input_per_m": 1.1,
+      "output_per_m": 4.4,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-06-10"
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.6-flash",
+      "priced": false,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/models",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.7-max",
+      "priced": false,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/models",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.7-plus",
+      "priced": false,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/models",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.5",
+      "input_per_m": 0.6,
+      "output_per_m": 2.2,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.5-air",
+      "input_per_m": 0.2,
+      "output_per_m": 1.1,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.5-airx",
+      "input_per_m": 1.1,
+      "output_per_m": 4.5,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.5-flash",
+      "priced": false,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.5-x",
+      "input_per_m": 2.2,
+      "output_per_m": 8.9,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.6",
+      "input_per_m": 0.6,
+      "output_per_m": 2.2,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.7",
+      "input_per_m": 0.6,
+      "output_per_m": 2.2,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.7-flash",
+      "priced": false,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.7-flashx",
+      "input_per_m": 0.07,
+      "output_per_m": 0.4,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-5",
+      "input_per_m": 1,
+      "output_per_m": 3.2,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-5-turbo",
+      "input_per_m": 1.2,
+      "output_per_m": 4,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-5.1",
+      "input_per_m": 1.4,
+      "output_per_m": 4.4,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-5.2",
+      "input_per_m": 1.4,
+      "output_per_m": 4.4,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-08-07"
+    }
+  ]
+}
