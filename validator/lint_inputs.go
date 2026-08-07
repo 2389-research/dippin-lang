@@ -4,6 +4,7 @@ package validator
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
 )
@@ -38,4 +39,95 @@ func lintUnknownInputType(w *ir.Workflow) []Diagnostic {
 		})
 	}
 	return diags
+}
+
+// inputsPrefix is the namespace prefix for declared-input references.
+const inputsPrefix = "inputs."
+
+// lintUndeclaredInputRef checks DIP156: every ${inputs.x} in a prompt and every
+// bare inputs.x in an edge condition must resolve to a declared input. inputs is
+// the only closed namespace in the language — ctx is open, so a typo there is
+// undetectable, which is precisely why caller input does not live in ctx.
+func lintUndeclaredInputRef(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	diags = append(diags, undeclaredInputRefsInPrompts(w)...)
+	diags = append(diags, undeclaredInputRefsInConditions(w)...)
+	return diags
+}
+
+// undeclaredInputRefsInPrompts scans ${inputs.x} references in node prompts.
+func undeclaredInputRefsInPrompts(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	for _, n := range w.Nodes {
+		if prompt := nodePrompt(n); prompt != "" {
+			diags = append(diags, undeclaredInputRefsInNodePrompt(w, n, prompt)...)
+		}
+	}
+	return diags
+}
+
+// undeclaredInputRefsInNodePrompt scans a single node's prompt text for
+// undeclared ${inputs.x} references.
+func undeclaredInputRefsInNodePrompt(w *ir.Workflow, n *ir.Node, prompt string) []Diagnostic {
+	var diags []Diagnostic
+	for _, m := range varRefPattern.FindAllStringSubmatch(prompt, -1) {
+		name, ok := undeclaredInputName(w, m[1])
+		if !ok {
+			continue
+		}
+		diags = append(diags, Diagnostic{
+			Code:     DIP156,
+			Severity: SeverityError,
+			Message:  fmt.Sprintf("node %q references undeclared input ${inputs.%s}", n.ID, name),
+			Location: n.Source,
+			Help:     "declare it in the workflow's inputs block, or correct the name",
+		})
+	}
+	return diags
+}
+
+// undeclaredInputRefsInConditions scans bare inputs.x variables in edge
+// conditions. Conditions reference variables without ${} — see docs/context.md.
+func undeclaredInputRefsInConditions(w *ir.Workflow) []Diagnostic {
+	var diags []Diagnostic
+	for _, e := range w.Edges {
+		if e.Condition == nil || e.Condition.Parsed == nil {
+			continue
+		}
+		diags = append(diags, undeclaredInputRefsInEdge(w, e)...)
+	}
+	return diags
+}
+
+// undeclaredInputRefsInEdge scans a single edge's parsed condition for
+// undeclared inputs.x references.
+func undeclaredInputRefsInEdge(w *ir.Workflow, e *ir.Edge) []Diagnostic {
+	var diags []Diagnostic
+	for _, cmp := range extractComparisons(e.Condition.Parsed) {
+		name, ok := undeclaredInputName(w, cmp.Variable)
+		if !ok {
+			continue
+		}
+		diags = append(diags, Diagnostic{
+			Code:     DIP156,
+			Severity: SeverityError,
+			Message:  fmt.Sprintf("edge %s → %s references undeclared input %q", e.From, e.To, "inputs."+name),
+			Location: e.Source,
+			Help:     "declare it in the workflow's inputs block, or correct the name",
+		})
+	}
+	return diags
+}
+
+// undeclaredInputName returns the input name from an inputs.-prefixed reference
+// when that input is not declared. ok is false for any other reference.
+func undeclaredInputName(w *ir.Workflow, ref string) (string, bool) {
+	if !strings.HasPrefix(ref, inputsPrefix) {
+		return "", false
+	}
+	name := strings.TrimPrefix(ref, inputsPrefix)
+	if name == "" || w.Input(name) != nil {
+		return "", false
+	}
+	return name, true
 }

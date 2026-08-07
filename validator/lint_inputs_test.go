@@ -79,3 +79,101 @@ func TestDIP155AcceptsEveryKnownType(t *testing.T) {
 		t.Errorf("DIP155 fired on a known type: %v", diags)
 	}
 }
+
+func TestDIP156UndeclaredRefInPrompt(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  inputs
+    idea: text
+
+  agent A
+    prompt:
+      Build ${inputs.idae} for me.
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, "DIP156") {
+		t.Fatalf("want DIP156 for a typo'd input ref, got %v", diags)
+	}
+}
+
+func TestDIP156DeclaredRefInPromptIsClean(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  inputs
+    idea: text
+
+  agent A
+    prompt:
+      Build ${inputs.idea} for me.
+`
+	diags := lintSrc(t, src)
+	if hasCode(diags, "DIP156") {
+		t.Errorf("DIP156 fired on a declared input: %v", diags)
+	}
+	if hasCode(diags, "DIP106") {
+		t.Errorf("DIP106 fired on the inputs namespace — it must be in knownNamespaces: %v", diags)
+	}
+}
+
+func TestDIP156UndeclaredRefInEdgeCondition(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: B
+
+  inputs
+    risk: enum
+      options: low, high
+
+  agent A
+    prompt:
+      hi
+
+  agent B
+    prompt:
+      bye
+
+  edges
+    A -> B when inputs.rsk = high
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, "DIP156") {
+		t.Fatalf("want DIP156 for a typo'd input ref in a condition, got %v", diags)
+	}
+}
+
+func TestDIP156DeclaredRefInEdgeConditionIsClean(t *testing.T) {
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: B
+
+  inputs
+    risk: enum
+      options: low, high
+
+  agent A
+    prompt:
+      hi
+
+  agent B
+    prompt:
+      bye
+
+  edges
+    A -> B when inputs.risk = high
+`
+	diags := lintSrc(t, src)
+	if hasCode(diags, "DIP156") {
+		t.Errorf("DIP156 fired on a declared input: %v", diags)
+	}
+	if hasCode(diags, "DIP120") {
+		t.Errorf("DIP120 fired on the inputs namespace: %v", diags)
+	}
+}

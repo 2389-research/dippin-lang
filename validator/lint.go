@@ -5,7 +5,7 @@ import (
 	"github.com/2389-research/dippin-lang/simulate"
 )
 
-// Lint runs all semantic quality checks (DIP101–DIP155, except DIP138 —
+// Lint runs all semantic quality checks (DIP101–DIP156, except DIP138 —
 // reserved, no firing logic — and DIP146 — which the CLI's cross-file pass
 // emits, not this function) on the workflow
 // and returns all diagnostics found. These are warnings, not errors —
@@ -112,6 +112,7 @@ func lintPasses(opts Options) []func(*ir.Workflow) []Diagnostic {
 		lintRedundantFanEdge,
 		lintPromptOptOut,
 		lintUnknownInputType,
+		lintUndeclaredInputRef,
 	}
 }
 
@@ -122,11 +123,17 @@ func lintPasses(opts Options) []func(*ir.Workflow) []Diagnostic {
 // node.* is intentionally excluded: it requires structural validation
 // (node ID must exist, ref must have exactly 3 parts) handled in isVarRefValid.
 // Used by lint_context.go (DIP106) and lint_conditions.go (DIP120).
+//
+// inputs. (declared caller-supplied values) is unlike the others: membership
+// here only stops DIP106/DIP120 flagging the prefix. It is a *closed*
+// namespace — every key is additionally resolved against Workflow.Inputs by
+// DIP156 in lint_inputs.go.
 var knownNamespaces = map[string]bool{
 	"ctx":    true,
 	"graph":  true,
 	"params": true,
 	"stack":  true,
+	"inputs": true,
 }
 
 // buildForwardAdjacency builds a forward adjacency map for non-restart edges,

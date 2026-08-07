@@ -201,6 +201,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Correct the type to one of text, number, bool, enum, file, secret, or upgrade dippin if this type is newer than this build.",
 			Example: "inputs\n  when: duration  # DIP155: \"duration\" is not a recognized input type",
 		},
+		DIP156: {
+			Code:    DIP156,
+			Summary: "reference to an undeclared input",
+			Trigger: "A prompt uses ${inputs.x} or an edge condition uses bare inputs.x, but no input named x is declared in the workflow's inputs block. inputs is the only closed namespace in the language — every key is resolved against the declaration, unlike ctx. and the other open namespaces.",
+			Fix:     "Declare the input in the workflow's inputs block, or correct the name to match an existing declaration.",
+			Example: "inputs\n  idea: text\nagent A\n  prompt:\n    Build ${inputs.idae} for me.  # DIP156: no input named \"idae\"",
+		},
 	}
 }
 
