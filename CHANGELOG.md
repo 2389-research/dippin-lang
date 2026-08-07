@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.53.0] — 2026-08-07
 
 ### Changed
 - **Single source of truth for model pricing + catalog: the new leaf `pricing` package.** Model prices lived in `cost/pricing.go` and were mirrored by hand in `validator/lint_model.go`'s DIP108 catalog (and again in tracker) — the exact drift trap #189 had to maintain by hand. Prices now live in one embedded data file, **`pricing/prices.json`**, loaded by a leaf `pricing` package (imports nothing from dippin) that exposes `ModelPrice`, a neutral `Usage`, one `Cost()` calc, and a total alias-resolving `Lookup()`. `cost.DefaultPricing()` projects the catalog (public API unchanged); `validator`'s DIP108 derives its known-model set from it (the hand-mirrored maps are deleted). Each entry carries a `source` URL + `as_of` date (provenance travels with the number), and a `"priced": false` flag marks known-but-unpriced models (e.g. Qwen). Purely internal — `dippin cost`/`lint` output is unchanged, verified by the existing price-assertion and `TestLintExamples` suites. Downstream consumers (tracker) can now import `github.com/2389-research/dippin-lang/pricing` directly instead of maintaining their own table. Phase 1 of the pricing-tooling design (`docs/superpowers/specs/2026-08-07-pricing-package-and-autosync-design.md`); the daily auto-sync via machine-readable aggregators follows.
