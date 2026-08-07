@@ -2,6 +2,11 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Pricing staleness checker + assistive sync tool** (`cmd/pricing-sync`, Phase 2 of the pricing-tooling design). `just check-prices` reports catalog entries whose `as_of` is older than a freshness window (default 45 days) or missing a source, and exits non-zero — usable as a CI/pre-commit re-verification reminder (it currently flags the 2026-06-10 batch). `just sync-prices` fetches the machine-readable **models.dev** aggregator (JSON, no auth, no HTML scraping), diffs it against `pricing/prices.json`, and reports candidate changes — new models, price deltas (with a `--tolerance` to suppress small ones), and upstream deprecations. It is **report-only** and never edits the catalog: detection is mechanical, but authoritative verification is not (no provider publishes price as data), so a human confirms each candidate against its official `source`. The staleness logic lives in the `pricing` package (`StaleEntries`, pure/deterministic); the diff engine is pure and fixture-tested.
+
 ## [v0.53.0] — 2026-08-07
 
 ### Changed

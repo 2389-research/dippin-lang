@@ -168,3 +168,11 @@ clean:
     rm -f dippin cover.out cover_filtered.out cover_check.out site/static/dippin.wasm site/static/wasm_exec.js
     rm -rf site/public
     @echo "Cleaned."
+
+# Report catalog entries overdue for price re-verification (as_of age)
+check-prices:
+    go run ./cmd/pricing-sync check
+
+# Diff the catalog against models.dev and report candidate changes (report-only)
+sync-prices:
+    go run ./cmd/pricing-sync sync
