@@ -388,6 +388,46 @@ func TestCmdCheck_NonexistentFile(t *testing.T) {
 	}
 }
 
+// TestCmdCheck_ErrorSeverityLint verifies that dippin check fails (exit code
+// and JSON valid field) when the diagnostics include an error-severity LINT
+// diagnostic (e.g. DIP155) even though the workflow is structurally valid, so
+// check stays consistent with lint/doctor on the same file.
+func TestCmdCheck_ErrorSeverityLint(t *testing.T) {
+	tmpDir := t.TempDir()
+	dipFile := filepath.Join(tmpDir, "unknown_input_type.dip")
+	content := `workflow W
+  goal: "t"
+  start: A
+  exit: A
+
+  inputs
+    when: duration
+
+  agent A
+    prompt:
+      hi
+`
+	if err := os.WriteFile(dipFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout, _, code := runCLI(t, "check", "--format=json", dipFile)
+	if code != ExitError {
+		t.Fatalf("expected exit 1 (ExitError) for DIP155 error-severity lint, got %d; stdout: %s", code, stdout)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(stdout)), &result); err != nil {
+		t.Fatalf("stdout is not valid JSON: %v\nstdout: %s", err, stdout)
+	}
+	if result["valid"] != false {
+		t.Errorf("expected valid=false, got %v", result["valid"])
+	}
+	if errors := result["errors"].(float64); errors != 1 {
+		t.Errorf("expected errors=1, got %v", errors)
+	}
+}
+
 // --- New Command ---
 
 func TestCmdNew_AllTemplates(t *testing.T) {

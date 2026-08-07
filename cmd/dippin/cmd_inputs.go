@@ -102,7 +102,7 @@ func oneInputJSON(in *ir.Input) inputJSON {
 // coerceInputValue converts raw declaration text to a JSON-native value per the
 // declared type. The IR keeps raw text so the formatter round-trips a file
 // byte-for-byte; typing happens here. An uncoercible value falls back to the
-// raw string — DIP155/DIP158 report the declaration defect, not this projection.
+// raw string — DIP155 reports the declaration defect, not this projection.
 func coerceInputValue(typ, raw string) any {
 	switch typ {
 	case "number":
