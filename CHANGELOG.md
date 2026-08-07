@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Daily pricing-drift detection (Phase 3), human-gated.** A scheduled GitHub Action (`.github/workflows/pricing-sync.yml`) runs `pricing-sync` daily and, when it finds **price or deprecation drift for models already in the catalog**, opens/updates a single rolling `pricing-drift` issue with the evidence. It **never edits `prices.json` or opens a code PR** — a human confirms each candidate against its official `source` (models.dev can reflect intro/discounted rates, so this stays gated). New `sync --existing-only` flag keeps the daily signal actionable (drops the hundreds of upstream image/tts/embedding models dippin doesn't price); `sync --fail-on-changes` for CI gating.
+- **`docs/pricing-integration.md`** — how a downstream consumer (tracker) pins and integrates the `pricing` package: version floor (`v0.53.0`), the `Lookup`/`Cost` API, mapping `llm.Usage → pricing.Usage`, keeping capability metadata in the consumer, and the current **cache-pricing caveat** (the `ModelPrice` cache fields exist but `prices.json` doesn't populate them yet, so `Cost` computes cache traffic at $0 until it does).
+
 ## [v0.54.0] — 2026-08-07
 
 ### Added

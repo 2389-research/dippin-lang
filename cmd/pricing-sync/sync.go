@@ -36,6 +36,8 @@ type change struct {
 func runSync(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("sync", flag.ContinueOnError)
 	tol := fs.Float64("tolerance", 0.0, "ignore price deltas at or below this fraction (e.g. 0.05 = 5%)")
+	existingOnly := fs.Bool("existing-only", false, "report only price/deprecation drift for models already in the catalog (drop 'new'); the low-noise daily signal")
+	failOnChanges := fs.Bool("fail-on-changes", false, "exit non-zero when any candidate is reported (for CI gating)")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -44,9 +46,34 @@ func runSync(ctx context.Context, args []string) int {
 		fmt.Fprintf(errOut, "pricing-sync: fetch failed: %v\n", err)
 		return 1
 	}
-	changes := diff(cands, *tol)
+	return reportChanges(cands, *tol, *existingOnly, *failOnChanges)
+}
+
+// reportChanges diffs, optionally filters, prints, and returns the exit code.
+func reportChanges(cands []candidate, tol float64, existingOnly, failOnChanges bool) int {
+	changes := diff(cands, tol)
+	if existingOnly {
+		changes = dropNew(changes)
+	}
 	printChanges(changes, len(cands))
+	if failOnChanges && len(changes) > 0 {
+		return 1
+	}
 	return 0
+}
+
+// dropNew filters out "new" (upstream-only) candidates, leaving price and
+// deprecation drift for models already in our catalog — the actionable,
+// low-noise signal (models.dev lists hundreds of image/tts/embedding models we
+// deliberately don't price).
+func dropNew(changes []change) []change {
+	out := changes[:0]
+	for _, c := range changes {
+		if c.Kind != "new" {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // diff compares aggregator candidates against the embedded catalog. It is pure

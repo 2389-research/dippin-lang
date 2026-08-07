@@ -1,0 +1,91 @@
+name: Pricing sync
+
+# Daily drift detection for pricing/prices.json. HUMAN-GATED by design: this
+# job never edits the catalog or opens a code PR — it opens/updates a single
+# rolling issue when it finds actionable drift, and a human confirms each change
+# against the model's official `source` before editing prices.json.
+#
+# Detection is mechanical (models.dev is machine-readable JSON); authoritative
+# verification is not (no provider publishes price as data). See
+# docs/superpowers/specs/2026-08-07-pricing-package-and-autosync-design.md and
+# docs/pricing-integration.md.
+
+on:
+  schedule:
+    - cron: "17 7 * * *" # daily 07:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: pricing-sync
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    name: Detect pricing drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Staleness report
+        id: stale
+        run: |
+          go run ./cmd/pricing-sync check > stale.txt 2>&1 || true
+          cat stale.txt
+
+      - name: Drift report (existing-model price/deprecation changes vs models.dev)
+        id: drift
+        run: |
+          # --existing-only keeps the signal actionable: price and deprecation
+          # drift for models we already carry, not the hundreds of upstream
+          # image/tts/embedding models we don't price.
+          set +e
+          go run ./cmd/pricing-sync sync --existing-only --tolerance 0.02 > drift.txt 2>&1
+          cat drift.txt
+          # A candidate line is indented and starts with "[".
+          if grep -qE '^\s+\[' drift.txt; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upsert drift issue
+        if: steps.drift.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Assemble the issue body from the tool's own output files (trusted;
+          # no github.event.* input is used anywhere in this workflow).
+          {
+            echo "Automated daily check found **price or deprecation drift** for models already in \`pricing/prices.json\`, and/or entries overdue for re-verification."
+            echo
+            echo "> ⚠️ **Human-gated.** Confirm each candidate against the model's official \`source\` URL before editing \`pricing/prices.json\`. models.dev is a detection aid, not an authority — it can reflect introductory or discounted rates (an intro price vs. the durable list price)."
+            echo
+            echo '### Price / deprecation drift (`sync --existing-only --tolerance 0.02`)'
+            echo '```'
+            cat drift.txt
+            echo '```'
+            echo
+            echo '### Staleness (`check`)'
+            echo '```'
+            cat stale.txt
+            echo '```'
+            echo
+            echo "Re-run locally: \`just sync-prices\` and \`just check-prices\`."
+          } > body.md
+
+          gh label create pricing-drift --color BFD4F2 --description "Automated pricing catalog drift" 2>/dev/null || true
+          existing="$(gh issue list --state open --label pricing-drift --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Pricing drift detected vs models.dev" --label pricing-drift --body-file body.md
+          fi

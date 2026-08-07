@@ -84,3 +84,20 @@ func TestParseModelsDevMapsProvidersAndSkipsUnknown(t *testing.T) {
 		t.Error("unknown provider must be skipped")
 	}
 }
+
+func TestDropNewKeepsOnlyExistingModelDrift(t *testing.T) {
+	changes := []change{
+		{Kind: "new", Provider: "openai", Model: "gpt-6-imaginary"},
+		{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5"},
+		{Kind: "deprecated", Provider: "gemini", Model: "gemini-2.0-flash"},
+	}
+	got := dropNew(changes)
+	if len(got) != 2 {
+		t.Fatalf("dropNew kept %d, want 2 (price+deprecated)", len(got))
+	}
+	for _, c := range got {
+		if c.Kind == "new" {
+			t.Errorf("dropNew leaked a 'new' change: %+v", c)
+		}
+	}
+}
