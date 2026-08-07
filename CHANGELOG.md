@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.51.1] — 2026-08-07
 
 ### Fixed
 - **Dotted Anthropic model IDs now price and lint correctly** ([#188](https://github.com/2389-research/dippin-lang/issues/188)). The pricing table and model catalog key Anthropic models with dashed versions (`claude-haiku-4-5`), but a Vercel AI Gateway–routed runtime documents the dotted spelling (`anthropic/claude-haiku-4.5`) — which a `.dip` must carry, since the first-party API rejects dotted IDs. The exact-match lookup missed the dotted form, so `dippin cost` silently reported **$0** and `dippin lint` fired a spurious **DIP108** "unknown model". Both `cost.lookupPrice` and the validator's `modelKnown` now fall back to a version-separator-insensitive match (`.` and `-` fold together) after the exact match, so a dotted ID resolves to its dashed catalog key and vice versa. Exact matches are unchanged — the legitimately dotted OpenAI/Gemini keys (`gpt-5.5`, `gemini-3.1-flash-lite`) still resolve as before, and no two keys in any provider collide under the fold, so the fallback can only turn a miss into the intended hit.
