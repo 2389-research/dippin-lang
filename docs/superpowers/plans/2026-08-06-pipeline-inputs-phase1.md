@@ -511,7 +511,13 @@ func TestParseInputsUnknownAttributeHints(t *testing.T) {
     prompt:
       hi
 `
-	w, diags := parseSrc(t, src)
+	// Parser.Parse() returns a non-nil error whenever ANY diagnostic
+	// accumulates, so a test that EXPECTS diagnostics cannot use parseSrc
+	// (which fatals on error). Call Parse() directly and inspect
+	// Diagnostics(), matching the existing TestParseElseDuplicate convention.
+	p := NewParser(src, "test.dip")
+	w, _ := p.Parse()
+	diags := p.Diagnostics()
 	if len(diags) == 0 {
 		t.Fatal("expected an unknown-attribute hint")
 	}
