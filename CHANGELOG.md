@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.51.0] — 2026-08-07
 
 **Native `inputs` declaration — typed, introspectable input schema** ([#190](https://github.com/2389-research/dippin-lang/issues/190)). Phase 1 of pipeline inputs. A workflow-level `inputs` block is the callee-side signature declaring what a caller must supply — a human at the entry point, or a parent workflow via a subgraph's `params:`. One-line form (`name: type`) or an indented attribute block; six types (text, number, bool, enum, file, secret) and ten attributes (required, default, prompt, description, options, pattern, min, max, max_length, multiline). `${inputs.x}` is the first **closed** namespace in the language: unlike the open `ctx` namespace, a reference to an undeclared input is a lint error, not a maybe-valid pass-through — values are untrusted by construction. Fully additive to dip 1: a `.dip` with no `inputs` block is unchanged, and the parser accepts an unknown input type verbatim (only the lint complains), so a `.dip` using a future type still parses, formats, and packs on an older dippin.
 
