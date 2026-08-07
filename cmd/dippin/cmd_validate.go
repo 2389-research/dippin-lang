@@ -58,7 +58,7 @@ func lintOptions(extraModels string) validator.Options {
 }
 
 // CmdLint runs both structural validation and semantic linting.
-// Errors cause exit 1; warnings alone exit 0.
+// Errors — structural or error-severity lint — cause exit 1; warnings alone exit 0.
 func (c *CLI) CmdLint(args []string) ExitCode {
 	path, extraModels, code := parseLintArgs("lint", "usage: dippin lint [--extra-models spec] <file>", args, c)
 	if code != ExitCode(-1) {
@@ -82,9 +82,22 @@ func (c *CLI) CmdLint(args []string) ExitCode {
 	allDiags = applyCrossFileToolAccess(allDiags, w, path)
 	c.renderDiagnostics(allDiags)
 
-	// Exit 1 only if there are errors; warnings alone pass.
-	if valRes.HasErrors() {
+	// Exit 1 on any error-severity diagnostic, whether structural (Validate) or
+	// semantic (Lint). Lint gained its first error-severity codes with the
+	// inputs block (DIP155-DIP157, #190); before that every lint diagnostic was
+	// a warning, so checking valRes alone was sufficient.
+	if valRes.HasErrors() || hasErrorSeverity(lintRes.Diagnostics) {
 		return ExitError
 	}
 	return ExitOK
+}
+
+// hasErrorSeverity reports whether any diagnostic is error-severity.
+func hasErrorSeverity(diags []validator.Diagnostic) bool {
+	for _, d := range diags {
+		if d.Severity == validator.SeverityError {
+			return true
+		}
+	}
+	return false
 }

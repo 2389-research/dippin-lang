@@ -194,6 +194,13 @@ func reachabilityExplanations() map[string]Explanation {
 			Fix:     "Remove the unnecessary `prompt_prefix: none` / `prompt_suffix: none`, or add the intended cascade to the `defaults` block.",
 			Example: "agent A\n  prompt: \"x\"\n  prompt_suffix: none  # DIP154: no defaults prompt_suffix cascade to opt out of",
 		},
+		DIP155: {
+			Code:    DIP155,
+			Summary: "input declares an unrecognized type",
+			Trigger: "A workflow-level `inputs` block declares an input whose type is outside the v1 closed set (text, number, bool, enum, file, secret). The parser carries the type through verbatim for forward compatibility, so only this lint catches it.",
+			Fix:     "Correct the type to one of text, number, bool, enum, file, secret, or upgrade dippin if this type is newer than this build.",
+			Example: "inputs\n  when: duration  # DIP155: \"duration\" is not a recognized input type",
+		},
 	}
 }
 

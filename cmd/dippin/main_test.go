@@ -2194,3 +2194,28 @@ func TestCmdSimulate_MultipleScenarios(t *testing.T) {
 		t.Fatalf("expected exit 0, got %d", code)
 	}
 }
+
+func TestLintExitsNonZeroOnErrorSeverityLint(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "unknown_type.dip")
+	src := `workflow W
+  goal: "test"
+  start: A
+  exit: A
+
+  inputs
+    when: duration
+
+  agent A
+    prompt:
+      hi
+`
+	if err := os.WriteFile(path, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	cli := &CLI{Stdout: &stdout, Stderr: &stderr}
+	if got := cli.CmdLint([]string{path}); got != ExitError {
+		t.Errorf("CmdLint exit = %v, want ExitError — an error-severity lint must fail the command", got)
+	}
+}

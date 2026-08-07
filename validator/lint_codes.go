@@ -59,6 +59,7 @@ const (
 	DIP152 = "DIP152" // marker_grep enumerates a marker not routed by any edge or else default
 	DIP153 = "DIP153" // edges-block edge redundantly repeats an inline parallel/fan_in fork (inline list is authoritative)
 	DIP154 = "DIP154" // agent opts out (prompt_prefix/suffix: none) of a defaults cascade that is not declared (no-op)
+	DIP155 = "DIP155" // input declares a type this dippin does not recognize
 )
 
 func init() {
@@ -123,4 +124,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP152: "marker_grep enumerates a marker no edge routes and no else default covers",
 	DIP153: "edges-block edge redundantly repeats an inline parallel/fan_in fork",
 	DIP154: "agent opts out of a defaults prompt cascade that is not declared (no-op)",
+	DIP155: "input declares an unrecognized type",
 }
