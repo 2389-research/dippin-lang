@@ -525,3 +525,33 @@ func TestLookupPriceDottedDashedEquivalence(t *testing.T) {
 		t.Error("unknown model must not resolve")
 	}
 }
+
+// TestNewFrontierProvidersPriced covers #189: current frontier models across
+// all providers — including the new zai/moonshot/minimax providers — must
+// resolve to a non-zero price. Guards against the "unknown model → $0" gap.
+func TestNewFrontierProvidersPriced(t *testing.T) {
+	p := DefaultPricing()
+	cases := []struct{ provider, model string }{
+		{"anthropic", "claude-opus-5"},
+		{"anthropic", "claude-sonnet-5"},
+		{"openai", "gpt-5.6-sol"},
+		{"openai", "gpt-5.6-terra"},
+		{"gemini", "gemini-3.6-flash"},
+		{"xai", "grok-4.5"},
+		{"grok", "grok-4.5"},
+		{"zai", "glm-5.2"},
+		{"moonshot", "kimi-k3"},
+		{"kimi", "kimi-k3"},
+		{"minimax", "MiniMax-M3"},
+	}
+	for _, c := range cases {
+		price, ok := lookupPrice(c.provider, c.model, p)
+		if !ok {
+			t.Errorf("%s/%s not in pricing table", c.provider, c.model)
+			continue
+		}
+		if price.InputPer1M <= 0 || price.OutputPer1M <= 0 {
+			t.Errorf("%s/%s priced at %+v, want non-zero", c.provider, c.model, price)
+		}
+	}
+}

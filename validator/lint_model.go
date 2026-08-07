@@ -26,6 +26,9 @@ import (
 //	Cohere:     https://docs.cohere.com/docs/models
 var knownModelProviders = map[string]map[string]bool{
 	"anthropic": {
+		// Claude 5 line (verified 2026-08-07, platform.claude.com models overview).
+		"claude-opus-5":     true,
+		"claude-sonnet-5":   true,
 		"claude-opus-4-8":   true,
 		"claude-opus-4-7":   true,
 		"claude-opus-4-6":   true,
@@ -52,6 +55,10 @@ var knownModelProviders = map[string]map[string]bool{
 	"google": geminiModels(),
 	"gemini": geminiModels(),
 	"openai": {
+		// GPT-5.6 line (verified 2026-08-07, developers.openai.com/api/docs/pricing).
+		"gpt-5.6-sol":   true,
+		"gpt-5.6-terra": true,
+		"gpt-5.6-luna":  true,
 		// Current frontier (May 2026).
 		"gpt-5.5":      true,
 		"gpt-5.5-pro":  true,
@@ -92,6 +99,20 @@ var knownModelProviders = map[string]map[string]bool{
 	},
 	"xai":  grokModels(),
 	"grok": grokModels(),
+	"zai":  zaiModels(),
+	// Moonshot AI (Kimi) — aliased under both provider keys.
+	"moonshot": moonshotModels(),
+	"kimi":     moonshotModels(),
+	"minimax":  minimaxModels(),
+	// Alibaba Qwen — recognized so DIP108 doesn't fire (IDs verified 2026-08-07,
+	// alibabacloud.com/help/en/model-studio/models). Not in the cost table: the
+	// international per-token USD pricing is console-gated and could not be
+	// verified from an official page (tracked in a follow-up).
+	"qwen": {
+		"qwen3.7-max":   true,
+		"qwen3.7-plus":  true,
+		"qwen3.6-flash": true,
+	},
 	"mistral": {
 		"mistral-large-3":         true,
 		"mistral-medium-3":        true,
@@ -123,6 +144,10 @@ var knownModelProviders = map[string]map[string]bool{
 // geminiModels returns the set of known Gemini model IDs.
 func geminiModels() map[string]bool {
 	return map[string]bool{
+		// Gemini 3.5/3.6 flash line (verified 2026-08-07, ai.google.dev/gemini-api/docs/pricing).
+		"gemini-3.6-flash":      true,
+		"gemini-3.5-flash":      true,
+		"gemini-3.5-flash-lite": true,
 		// Gemini 3.x
 		"gemini-3.1-pro-preview":             true,
 		"gemini-3.1-pro-preview-customtools": true,
@@ -138,6 +163,48 @@ func geminiModels() map[string]bool {
 	}
 }
 
+// zaiModels returns the set of known Z.AI GLM model IDs (verified 2026-08-07,
+// docs.z.ai/guides/overview/pricing). Includes the free-tier flash models, which
+// are recognized here even though they carry no cost-table row.
+func zaiModels() map[string]bool {
+	return map[string]bool{
+		"glm-5.2":        true,
+		"glm-5.1":        true,
+		"glm-5":          true,
+		"glm-5-turbo":    true,
+		"glm-4.7":        true,
+		"glm-4.7-flashx": true,
+		"glm-4.7-flash":  true,
+		"glm-4.6":        true,
+		"glm-4.5":        true,
+		"glm-4.5-x":      true,
+		"glm-4.5-air":    true,
+		"glm-4.5-airx":   true,
+		"glm-4.5-flash":  true,
+	}
+}
+
+// moonshotModels returns the set of known Moonshot AI (Kimi) model IDs (verified
+// 2026-08-07, platform.kimi.ai/docs/pricing).
+func moonshotModels() map[string]bool {
+	return map[string]bool{
+		"kimi-k3": true,
+	}
+}
+
+// minimaxModels returns the set of known MiniMax model IDs (verified 2026-08-07,
+// platform.minimax.io/docs/guides/pricing-paygo).
+func minimaxModels() map[string]bool {
+	return map[string]bool{
+		"MiniMax-M3":             true,
+		"MiniMax-M2.7":           true,
+		"MiniMax-M2.7-highspeed": true,
+		"MiniMax-M2.5":           true,
+		"MiniMax-M2.1":           true,
+		"MiniMax-M2":             true,
+	}
+}
+
 // grokModels returns the set of known xAI Grok model IDs.
 //
 // grok-4-1-fast-reasoning and grok-4-1-fast-non-reasoning were retired
@@ -148,6 +215,9 @@ func geminiModels() map[string]bool {
 // "deprecated alias" diagnostic can replace this comment.
 func grokModels() map[string]bool {
 	return map[string]bool{
+		// Verified 2026-08-07 (docs.x.ai/docs/models).
+		"grok-4.5":                     true,
+		"grok-build-0.1":               true,
 		"grok-4.3":                     true, // Current flagship (Apr 2026).
 		"grok-4.20-0309-reasoning":     true,
 		"grok-4.20-0309-non-reasoning": true,

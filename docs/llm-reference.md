@@ -13,6 +13,12 @@ workflow <Name>
   start: <NodeID>
   exit: <NodeID>
 
+  [inputs
+    <name>: <text|number|bool|enum|file|secret>
+      [required: true] [default: <value>] [prompt: "<text>"] [description: "<text>"]
+      [options: <a>, <b>] [pattern: "<regex>"] [min: <n>] [max: <n>] [max_length: <int>] [multiline: true]
+    ...]
+
   [defaults
     model: <string>
     provider: <string>
@@ -75,7 +81,7 @@ on <token>                       # sugar: equality vs the source node's outcome 
 
 **`on <token>` shorthand:** desugars to `when <channel> = <token>`, where the channel is the source node's natural outcome channel — `ctx.outcome` for agent nodes, `ctx.tool_marker` for tool nodes with `marker_grep`. IR-identical to the equivalent `when`; `dippin fmt` rewrites eligible `when` edges to `on`. The value must be a single bare identifier (`[A-Za-z0-9][A-Za-z0-9_-]*`); quoted, multi-token, or any other values require an explicit `when <channel> = ...`. Source nodes with no outcome channel must use `when`: human gates (which route on the choice/label, not `ctx.outcome`), `conditional` nodes, and tools without `marker_grep`.
 
-**Variables:** Always namespace-qualified: `ctx.outcome`, `ctx.status`, `graph.goal`
+**Variables:** Always namespace-qualified: `ctx.outcome`, `ctx.status`, `graph.goal`, `params.*` (subgraph params), `inputs.*` (declared workflow inputs — a closed namespace; an undeclared reference is DIP156)
 
 ---
 
@@ -155,7 +161,7 @@ workflow ReviewPipeline
 
 **Identifiers:** `[a-zA-Z0-9][a-zA-Z0-9_\-./]*` — letters, digits, underscore, dash, dot, slash.
 
-**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `override`, `label`, `weight`.
+**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `inputs`, `vars`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `override`, `label`, `weight`.
 
 **Position-reserved keyword:** `else` is the one exception — it is reserved *only* as the first token of an `edges`-block line (where it introduces the section default), so it cannot be an edge *source* node ID there. Everywhere else `else` is an ordinary identifier and may be used as a node ID.
 
@@ -195,7 +201,7 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-64 diagnostic codes across two categories:
+67 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
-- **DIP101–DIP154** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade)
+- **DIP101–DIP157** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade), unknown input type (DIP155), reference to an undeclared input in a prompt or edge condition (DIP156), `${inputs.x}` inside a tool `command:` which never interpolates (DIP157). DIP155–DIP157 are error-severity — they cause `dippin lint` and `dippin check` to exit non-zero.
