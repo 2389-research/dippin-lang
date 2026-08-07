@@ -2079,31 +2079,48 @@ EOF
 A host should be able to enumerate what to collect from a `.dipx` without unpacking it.
 
 **Files:**
-- Modify: `cmd/dippin/cmd_inspect.go`
+- Modify: `cmd/dippin/cmd_inspect.go` (`printInspectJSON`, `printManifestJSON`)
 - Test: `cmd/dippin/cmd_inspect_test.go`
 
 **Interfaces:**
-- Consumes: `(*dipx.Bundle).Entry() *ir.Workflow`, `inputsJSON(w)` from Task 7
+- Consumes: `(*dipx.Bundle).Entry() *ir.Workflow`, `inputsJSON(w) []inputJSON` from Task 7
+- Existing helpers in this package (do **not** invent new names): `packForTest(t) string` (in `cmd_unpack_test.go`) packs the fixed `minimalDip` source and returns a bundle path; `writeMinimalEntry(t) (dir, entry string)` (in `cmd_pack_test.go`) writes that source; `runPack(stdout, stderr, args) int`; `runInspect(stdout, stderr, args) int`; exit codes are `exitDipxOK` / `exitDipxUserError` / `exitDipxIOError`, **not** `ExitOK`.
+
+**Key structural constraint:** `printManifestJSON` is shared by both the verify path (`printInspectJSON`, which has a parsed `*dipx.Bundle`) and the `--no-verify` path (`runInspectNoVerify`, which reads the manifest only and has **no** parsed workflow). Inputs exist only on the verify path. Pass them down as a parameter that the no-verify path sets to `nil`, and omit the JSON key entirely when nil — the `--no-verify` contract must not gain an `"inputs": null`.
 
 - [ ] **Step 1: Write the failing test**
 
-Read `cmd/dippin/cmd_inspect_test.go` first to reuse its existing bundle-building helper rather than writing a new one. Append a test in that file's established style which:
-
-1. Packs a `.dip` whose source is the `inputsFixture` constant from `cmd_inputs_test.go` (same package, so it is directly available).
-2. Runs `CmdInspect` with `--format=json`.
-3. Unmarshals stdout and asserts the payload has an `inputs` array of length 4 whose first element's `name` is `idea`.
+`packForTest` packs a fixed minimal workflow with no inputs, so this task needs its own packer for a source with inputs. Append to `cmd/dippin/cmd_inspect_test.go`, matching that file's existing style:
 
 ```go
-func TestCmdInspectSurfacesEntryInputs(t *testing.T) {
-	bundlePath := buildTestBundle(t, inputsFixture) // reuse the existing helper name from this file
+// packInputsBundleForTest packs a workflow that declares inputs and returns the
+// bundle path. packForTest packs the fixed minimalDip source, which has none.
+func packInputsBundleForTest(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(inputsFixture), 0o644); err != nil {
+		t.Fatalf("write entry: %v", err)
+	}
+	out := filepath.Join(dir, "a.dipx")
+	var so, se bytes.Buffer
+	if code := runPack(&so, &se, []string{"-o", out, entry}); code != exitDipxOK {
+		t.Fatalf("pack failed: %d; %s", code, se.String())
+	}
+	return out
+}
+
+func TestRunInspect_JSONSurfacesEntryInputs(t *testing.T) {
+	bundle := packInputsBundleForTest(t)
 	var stdout, stderr bytes.Buffer
-	cli := &CLI{Stdout: &stdout, Stderr: &stderr}
-	if got := cli.CmdInspect([]string{"--format=json", bundlePath}); got != ExitOK {
-		t.Fatalf("exit = %v, stderr = %s", got, stderr.String())
+	if code := runInspect(&stdout, &stderr, []string{"--format=json", bundle}); code != exitDipxOK {
+		t.Fatalf("exit code = %d; stderr=%s", code, stderr.String())
 	}
 	var payload struct {
 		Inputs []struct {
-			Name string `json:"name"`
+			Name     string `json:"name"`
+			Type     string `json:"type"`
+			Required bool   `json:"required"`
 		} `json:"inputs"`
 	}
 	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
@@ -2112,43 +2129,113 @@ func TestCmdInspectSurfacesEntryInputs(t *testing.T) {
 	if len(payload.Inputs) != 4 {
 		t.Fatalf("got %d inputs, want 4", len(payload.Inputs))
 	}
-	if payload.Inputs[0].Name != "idea" {
-		t.Errorf("first input = %q, want idea", payload.Inputs[0].Name)
+	if payload.Inputs[0].Name != "idea" || payload.Inputs[0].Type != "text" {
+		t.Errorf("first input = %q/%q, want idea/text", payload.Inputs[0].Name, payload.Inputs[0].Type)
+	}
+	if !payload.Inputs[0].Required {
+		t.Error("idea.required = false, want true")
+	}
+}
+
+func TestRunInspect_NoVerifyOmitsInputsKey(t *testing.T) {
+	bundle := packInputsBundleForTest(t)
+	var stdout, stderr bytes.Buffer
+	if code := runInspect(&stdout, &stderr, []string{"--format=json", "--no-verify", bundle}); code != exitDipxOK {
+		t.Fatalf("exit code = %d; stderr=%s", code, stderr.String())
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatalf("output is not JSON: %v", err)
+	}
+	if _, present := payload["inputs"]; present {
+		t.Error("--no-verify emitted an inputs key; that path never parses a workflow")
+	}
+}
+
+func TestRunInspect_JSONInputsEmptyArrayWhenNoneDeclared(t *testing.T) {
+	bundle := packForTest(t) // the fixed minimalDip source declares no inputs
+	var stdout, stderr bytes.Buffer
+	if code := runInspect(&stdout, &stderr, []string{"--format=json", bundle}); code != exitDipxOK {
+		t.Fatalf("exit code = %d; stderr=%s", code, stderr.String())
+	}
+	var payload struct {
+		Inputs []interface{} `json:"inputs"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatalf("output is not JSON: %v", err)
+	}
+	if payload.Inputs == nil {
+		t.Error("inputs = null, want an empty array")
+	}
+	if len(payload.Inputs) != 0 {
+		t.Errorf("got %d inputs, want 0", len(payload.Inputs))
 	}
 }
 ```
 
-If the existing test file has no bundle-building helper, write one that shells the pack path the other tests in that file already use, matching their approach exactly.
+Confirm `bytes`, `encoding/json`, `os`, and `path/filepath` are imported in that file; add any that are missing.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `just test-pkg cmd/dippin`
 Expected: FAIL — the JSON payload has no `inputs` key.
 
-- [ ] **Step 3: Add inputs to the verified-inspect JSON payload**
+- [ ] **Step 3: Thread inputs through the JSON renderer**
 
-In `cmd/dippin/cmd_inspect.go`, find the struct that models the JSON output of `runInspectVerify` and add:
-
-```go
-	Inputs []inputJSON `json:"inputs"`
-```
-
-Populate it where that struct is built, from the bundle's entry workflow:
+In `cmd/dippin/cmd_inspect.go`, add the parameter to the shared renderer and emit the key only when non-nil:
 
 ```go
-	// The entry workflow's declared inputs, so a host can enumerate what to
-	// collect without unpacking the bundle (#190).
-	payload.Inputs = inputsJSON(bundle.Entry())
+// printManifestJSON is the shared JSON renderer. Used by both Open-side
+// and OpenManifest-side (--no-verify, Task 4) paths.
+//
+// inputs carries the entry workflow's declared input schema (#190) on the
+// Open-side path. The --no-verify path reads the manifest only and never
+// parses a workflow, so it passes nil and the key is omitted entirely —
+// an "inputs": null there would read as "this bundle declares none".
+func printManifestJSON(stdout, stderr io.Writer, m dipx.Manifest, id [32]byte, status InspectStatus, inputs []inputJSON) int {
+	out := map[string]interface{}{
+		"format_version": m.FormatVersion,
+		"entry":          m.Entry,
+		"identity":       "sha256:" + hex.EncodeToString(id[:]),
+		"files":          m.Files,
+		"status":         status,
+	}
+	if inputs != nil {
+		out["inputs"] = inputs
+	}
+	enc := json.NewEncoder(stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(out); err != nil {
+		fmt.Fprintln(stderr, err)
+		return exitDipxIOError
+	}
+	return exitDipxOK
+}
 ```
 
-Leave the `--no-verify` path untouched: it reads the manifest only and never parses a workflow, so it has no `Inputs` to report.
+Update the two call sites:
+
+```go
+func printInspectJSON(stdout, stderr io.Writer, b *dipx.Bundle) int {
+	m := b.Manifest()
+	id := b.Identity()
+	status := buildInspectStatus(m, b.ByteTotal(), false)
+	return printManifestJSON(stdout, stderr, m, id, status, inputsJSON(b.Entry()))
+}
+```
+
+and in `runInspectNoVerify`, pass `nil` as the final argument to `printManifestJSON`.
+
+`inputsJSON` returns a non-nil empty slice for a workflow with no inputs, so the verify path always emits `"inputs": []` rather than null.
+
+Leave `printInspectText` and `printManifestText` unchanged — this task adds the machine-readable surface only.
 
 - [ ] **Step 4: Run the tests**
 
 Run: `just test-pkg cmd/dippin`
-Expected: PASS.
+Expected: PASS, including the pre-existing `TestRunInspect_JSON`, `TestRunInspect_NoVerifyEmitsVerifySkippedTrue`, and `TestRunInspect_JSONIsParseable`.
 
-- [ ] **Step 5: Run the full suite**
+- [ ] **Step 5: Run the full suite and complexity**
 
 Run: `just test && just complexity`
 Expected: PASS, clean.
@@ -2161,8 +2248,9 @@ git commit -m "$(cat <<'EOF'
 feat(cli): surface entry-workflow inputs in dippin inspect (#190)
 
 A host can enumerate what to collect from a .dipx without unpacking it.
-The --no-verify path is untouched — it reads the manifest only and never
-parses a workflow.
+The shared JSON renderer takes the schema as a parameter; the --no-verify
+path passes nil and the key is omitted, since that path reads the
+manifest only and never parses a workflow.
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 EOF
