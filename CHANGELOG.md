@@ -2,6 +2,15 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Frontier model pricing + catalog refresh** ([#189](https://github.com/2389-research/dippin-lang/issues/189)). `dippin cost` reported **$0** and `dippin lint` fired spurious **DIP108** for a raft of current frontier models simply absent from the tables. Added, each verified against official provider docs on 2026-08-07 (source URLs recorded in `cost/pricing.go`): **Anthropic** `claude-opus-5` ($5/$25), `claude-sonnet-5` ($3/$15 durable; intro $2/$10 through 2026-08-31); **OpenAI** `gpt-5.6-sol` ($5/$30), `gpt-5.6-terra` ($2/$12), `gpt-5.6-luna` ($0.20/$1.20); **Gemini** `gemini-3.6-flash` ($1.50/$7.50), `gemini-3.5-flash` ($1.50/$9), `gemini-3.5-flash-lite` ($0.30/$2.50); **xAI** `grok-4.5` ($2/$6 base), `grok-build-0.1` ($1/$2). Plus three **new providers**: **Z.AI / GLM** (`zai` — glm-5.2/5.1/5/5-turbo/4.7/4.6/4.5 family), **Moonshot / Kimi** (`moonshot`+`kimi` — `kimi-k3` $3/$15), and **MiniMax** (`minimax` — MiniMax-M3/M2.7/M2.5/M2.1/M2). All base-tier list prices (large-prompt and cache tiers are out of dippin's schema).
+- **Qwen recognized by the linter** (`qwen` — qwen3.7-max/plus, qwen3.6-flash). Its international per-token USD pricing is console-gated and could not be verified from an official page, so Qwen is in the model catalog (no more DIP108) but has **no cost-table row yet** — a follow-up.
+
+### Docs
+- Swept the living docs and website to current code: diagnostic-code counts and ranges corrected to **67 codes (DIP001–DIP010, DIP101–DIP157)** across `CLAUDE.md`, `AGENTS.md`, `README.md`, `docs/`, and `site/content/`; the `inputs` block and `${inputs.*}` namespace added to `docs/llm-reference.md` (feeds the embedded spec) with DIP155–DIP157; corrected the `skill.md` canonical section order (**inputs → defaults → vars**, not defaults → inputs); updated the supported-provider list.
+
 ## [v0.51.1] — 2026-08-07
 
 ### Fixed

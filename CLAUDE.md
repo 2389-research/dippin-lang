@@ -76,13 +76,13 @@ GoReleaser is configured (`.goreleaser.yml`) — pushing a tag triggers GitHub A
 
 Model names and pricing in `validator/lint_model.go` and `cost/pricing.go` must be verified against official provider documentation before committing. Source URLs and "Last verified" dates are maintained as code comments. Never use training data for pricing — it goes stale.
 
-Supported providers: Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistral, Cohere.
+Supported providers: Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistral, Cohere, Z.AI/GLM, Moonshot/Kimi, MiniMax, Qwen (Qwen is recognized by the linter but has no cost-table pricing yet — its international USD rates weren't verifiable from an official page; see the follow-up).
 
 `TestLintExamples` in `validator/lint_examples_test.go` parses all example .dip files through the real parser and asserts zero DIP108 warnings — this catches model catalog staleness and invalid model IDs.
 
 ## Lint Rules
 
-62 diagnostic codes: DIP001-DIP010 (structural errors), DIP101-DIP152 (semantic warnings). DIP101/DIP102 suppress automatically when source node conditions are exhaustive (success/fail pairs, contains/not-contains complementary pairs). DIP121/DIP122 only fire when source nodes declare writes/outputs (advisory metadata).
+67 diagnostic codes: DIP001-DIP010 (structural errors), DIP101-DIP157 (semantic lint — mostly warnings; DIP155-DIP157 are error-severity and fail `lint`/`check`). DIP101/DIP102 suppress automatically when source node conditions are exhaustive (success/fail pairs, contains/not-contains complementary pairs). DIP121/DIP122 only fire when source nodes declare writes/outputs (advisory metadata).
 
 ## Testing
 

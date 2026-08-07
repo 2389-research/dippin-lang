@@ -72,3 +72,37 @@ func TestLintDIP108DottedAnthropicID(t *testing.T) {
 		t.Errorf("genuinely unknown dotted model must still trip DIP108: %v", codes(diags))
 	}
 }
+
+// TestDIP108FrontierCatalog covers #189: current frontier models across every
+// provider (incl. the new zai/moonshot/minimax/qwen providers) must be
+// recognized so they don't trip a spurious DIP108.
+func TestDIP108FrontierCatalog(t *testing.T) {
+	cases := []struct{ provider, model string }{
+		{"anthropic", "claude-opus-5"},
+		{"anthropic", "claude-sonnet-5"},
+		{"openai", "gpt-5.6-sol"},
+		{"gemini", "gemini-3.6-flash"},
+		{"xai", "grok-4.5"},
+		{"zai", "glm-5.2"},
+		{"moonshot", "kimi-k3"},
+		{"minimax", "MiniMax-M3"},
+		{"qwen", "qwen3.7-max"},
+	}
+	for _, c := range cases {
+		src := fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: %s
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, c.provider, c.model)
+		if diags := lintSrc(t, src); hasCode(diags, DIP108) {
+			t.Errorf("%s/%s tripped DIP108 (should be known): %v", c.provider, c.model, codes(diags))
+		}
+	}
+}
