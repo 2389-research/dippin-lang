@@ -105,6 +105,9 @@ func buildLintExplanations() map[string]Explanation {
 	for k, v := range advancedExplanations() {
 		m[k] = v
 	}
+	for k, v := range inputsExplanations() {
+		m[k] = v
+	}
 	return m
 }
 
@@ -193,6 +196,33 @@ func reachabilityExplanations() map[string]Explanation {
 			Trigger: "An agent sets `prompt_prefix: none` or `prompt_suffix: none` to opt out of the defaults cascade, but the `defaults` block declares no cascade of that kind (no `prompt_prefix`/`prompt_prefix_file`, or no `prompt_suffix`/`prompt_suffix_file`). The opt-out is a no-op — likely a leftover or a mistake.",
 			Fix:     "Remove the unnecessary `prompt_prefix: none` / `prompt_suffix: none`, or add the intended cascade to the `defaults` block.",
 			Example: "agent A\n  prompt: \"x\"\n  prompt_suffix: none  # DIP154: no defaults prompt_suffix cascade to opt out of",
+		},
+	}
+}
+
+// inputsExplanations covers the workflow-level inputs block (DIP155-DIP157).
+func inputsExplanations() map[string]Explanation {
+	return map[string]Explanation{
+		DIP155: {
+			Code:    DIP155,
+			Summary: "input declares an unrecognized type",
+			Trigger: "A workflow-level `inputs` block declares an input whose type is outside the v1 closed set (text, number, bool, enum, file, secret). The parser carries the type through verbatim for forward compatibility, so only this lint catches it.",
+			Fix:     "Correct the type to one of text, number, bool, enum, file, secret, or upgrade dippin if this type is newer than this build.",
+			Example: "inputs\n  when: duration  # DIP155: \"duration\" is not a recognized input type",
+		},
+		DIP156: {
+			Code:    DIP156,
+			Summary: "reference to an undeclared input",
+			Trigger: "A prompt uses ${inputs.x} or an edge condition uses bare inputs.x, but no input named x is declared in the workflow's inputs block. inputs is the only closed namespace in the language — every key is resolved against the declaration, unlike ctx. and the other open namespaces.",
+			Fix:     "Declare the input in the workflow's inputs block, or correct the name to match an existing declaration.",
+			Example: "inputs\n  idea: text\nagent A\n  prompt:\n    Build ${inputs.idae} for me.  # DIP156: no input named \"idae\"",
+		},
+		DIP157: {
+			Code:    DIP157,
+			Summary: "input reference in a tool command is never interpolated",
+			Trigger: "A tool node's command: body contains ${inputs.x}. The runtime keeps the whole inputs. namespace off its shell-interpolation allowlist, so the reference expands to nothing at run time — silently, for every input type.",
+			Fix:     "Route the value through an agent's prompt or a declared context key instead; for a secret-typed input, use the runtime's credential mechanism rather than a command.",
+			Example: "inputs\n  idea: text\ntool T\n  command:\n    echo ${inputs.idea}  # DIP157: inputs. never interpolates in a command",
 		},
 	}
 }

@@ -2,6 +2,22 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.51.0] — 2026-08-07
+
+**Native `inputs` declaration — typed, introspectable input schema** ([#190](https://github.com/2389-research/dippin-lang/issues/190)). Phase 1 of pipeline inputs. A workflow-level `inputs` block is the callee-side signature declaring what a caller must supply — a human at the entry point, or a parent workflow via a subgraph's `params:`. One-line form (`name: type`) or an indented attribute block; six types (text, number, bool, enum, file, secret) and ten attributes (required, default, prompt, description, options, pattern, min, max, max_length, multiline). `${inputs.x}` is the first **closed** namespace in the language: unlike the open `ctx` namespace, a reference to an undeclared input is a lint error, not a maybe-valid pass-through — values are untrusted by construction. Fully additive to dip 1: a `.dip` with no `inputs` block is unchanged, and the parser accepts an unknown input type verbatim (only the lint complains), so a `.dip` using a future type still parses, formats, and packs on an older dippin.
+
+### Added
+- **`inputs` block** — declares the workflow's input signature; one-line `name: type` or an attribute block with `required`, `default`, `prompt`, `description`, `options`, `pattern`, `min`, `max`, `max_length`, `multiline`.
+- **`${inputs.x}` namespace** — resolves against the declaration; referencing an undeclared input is a lint error in both prompts and edge conditions.
+- **`DIP155` — unknown input type.** **`DIP156` — reference to an undeclared input** (prompts and edge conditions). **`DIP157` — `${inputs.x}` inside a tool `command:`**, which never interpolates (the runtime keeps the `inputs` namespace off its shell allowlist). All three are **error severity** — the catalog's first error-severity lint codes. Brings the catalog to 67 codes (DIP101–DIP157).
+- **`dippin inputs <file> --format=json|text`** — typed JSON introspection surface for a host to collect values before a run (number/bool defaults coerced to real JSON types, declaration order preserved, empty inputs serialize to `[]` not `null`). `dippin inspect` on a `.dipx` bundle also surfaces the entry workflow's inputs.
+
+### Changed
+- **`dippin lint` exit code.** DIP155–157 are the first error-severity LINT diagnostics; `dippin lint` previously exited non-zero only on a structural `Validate` error, so an error-severity lint diagnostic would print and still exit 0. It now exits non-zero on either. This is the one non-additive behavior change in this release — CI pipelines pinned to `dippin lint`'s exit code should note it.
+
+### Runtime pairing (requires an enforcing runtime)
+- dippin carries the schema: it declares, lints, and introspects `inputs`, but does not collect, validate, or inject values at run start — that is the engine's job, paired with [tracker#553](https://github.com/2389-research/tracker/issues/553). The engine must collect input values at run start, validate them against the declared type/attributes, and inject them under `${inputs.x}`, honoring the untrusted-by-construction framing (an input value is caller-supplied and must never be trusted implicitly) and the shell-interpolation exclusion DIP157 signals (`inputs` must stay off the tool `command:` shell allowlist). dippin ships this independently and is not gated on the runtime (per `never-gate-dippin-on-tracker`).
+
 ## [v0.50.0] — 2026-07-20
 
 Documentation-only release: brings the **embedded LLM specification** (shipped in the `dippin` binary) into line with the v0.49.0 language surface. No code or behavior change.

@@ -45,7 +45,7 @@
     },
 
     "section-keyword": {
-      "match": "^\\s*(defaults|vars|edges)\\b",
+      "match": "^\\s*(defaults|vars|inputs|edges)\\b",
       "captures": {
         "1": { "name": "keyword.control.section.dippin" }
       }
@@ -152,7 +152,7 @@
           "name": "keyword.operator.comparison.dippin"
         },
         {
-          "match": "\\b(ctx|graph|params|stack)(\\.)([\\w.-]+)\\b",
+          "match": "\\b(ctx|graph|params|stack|inputs)(\\.)([\\w.-]+)\\b",
           "captures": {
             "1": { "name": "variable.language.namespace.dippin" },
             "2": { "name": "punctuation.accessor.dippin" },

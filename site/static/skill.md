@@ -30,13 +30,20 @@ workflow <Name>
     model: claude-sonnet-4-6
     provider: anthropic
 
+  inputs
+    idea: text
+      required: true
+      prompt: "What do you want built?"
+
   <node declarations>
 
   edges
     <edge declarations>
 ```
 
-Four sections in order: **header** (workflow name, goal, optional `requires`, start, exit) → **defaults** (optional) → **nodes** (any order) → **edges** (optional). `defaults` and `edges` are bare keywords — no colon after them. `requires:` is a comma-separated list of environmental dependencies (e.g. `git, docker, jq`); semantics live in downstream consumers and unknown entries are accepted without a parser diagnostic.
+Five sections in order: **header** (workflow name, goal, optional `requires`, start, exit) → **defaults** (optional) → **inputs** (optional) → **nodes** (any order) → **edges** (optional). `defaults`, `inputs`, and `edges` are bare keywords — no colon after them. `requires:` is a comma-separated list of environmental dependencies (e.g. `git, docker, jq`); semantics live in downstream consumers and unknown entries are accepted without a parser diagnostic.
+
+`inputs` declares the workflow's callee-side signature: entries are `name: type` (types: `text`, `number`, `bool`, `enum`, `file`, `secret`) with an optional indented block of attributes (`required`, `prompt`, `description`, `default`, `options`, `pattern`, `min`, `max`, `max_length`, `multiline`). Declaration order is significant and never reordered by the formatter. Reference a declared input as `${inputs.name}` in a prompt — never inside a tool `command:`, which never interpolates it (DIP157); an undeclared reference is DIP156, and an unrecognized type is DIP155.
 
 Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blocks).
 

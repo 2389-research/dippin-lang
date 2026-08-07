@@ -2,6 +2,7 @@
 [
   "workflow"
   "defaults"
+  "inputs"
   "edges"
   "else"
   "stylesheet"

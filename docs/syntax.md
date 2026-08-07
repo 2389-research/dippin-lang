@@ -136,6 +136,62 @@ All budget fields use `0` (or unset) to mean **no limit** — `0` does not mean
 
 ---
 
+## Inputs Block
+
+The optional `inputs` block declares the workflow's callee-side signature: the named values a caller (a human at the entry point, or a parent workflow via a `subgraph` node's `params:`) must or may supply at run start. Each entry is `name: type` followed by an optional indented block of attributes.
+
+```dippin
+  inputs
+    idea: text
+      required: true
+      prompt: "What do you want built?"
+      description: "One or two sentences describing the change."
+      max_length: 4000
+      multiline: true
+    target_branch: text
+      default: main
+      pattern: "^[A-Za-z0-9._/-]+$"
+    risk: enum
+      default: medium
+      options: low, medium, high
+```
+
+Declaration order is significant — a host renders inputs as an ordered form — so the formatter never reorders entries the way it does `defaults` fields.
+
+### Input Types
+
+The v1 closed set of input types:
+
+| Type | Description |
+|------|-------------|
+| `text` | Free-form string |
+| `number` | Numeric value |
+| `bool` | Boolean value |
+| `enum` | One of a fixed set of `options` |
+| `file` | Path to a file |
+| `secret` | Sensitive string (a host should mask it in a form and avoid logging it) |
+
+An unrecognized type is not a parse error — it is diagnosed by the validator as **DIP155**.
+
+### Input Attributes
+
+| Field | Type | Applies to | Description |
+|-------|------|------------|--------------|
+| `required` | Boolean | all | Caller must supply a value; combined with `default`, the default only prefills a form — it does not satisfy `required` |
+| `prompt` | String | all | What a host asks the caller for this input |
+| `description` | String | all | Help text shown alongside the prompt |
+| `default` | String | all | Prefill value used when the caller does not supply one |
+| `options` | String | `enum` | Comma-separated list of valid choices |
+| `pattern` | String | `text` | Regex the host enforces against the supplied value |
+| `min` | String | `number` | Inclusive lower bound |
+| `max` | String | `number` | Inclusive upper bound |
+| `max_length` | Integer | `text` | Character cap |
+| `multiline` | Boolean | `text` | Host renders a textarea instead of a single-line field |
+
+Reference an input's value in a prompt or field value as `${inputs.name}`. The `inputs` namespace is closed: referencing an undeclared input is **DIP156**, and `${inputs.x}` is never interpolated inside a tool node's `command:` (**DIP157**) — see [context.md](context.md) for why.
+
+---
+
 ## Node Definitions
 
 Nodes are defined with `<kind> <ID>` followed by an indented block of fields.

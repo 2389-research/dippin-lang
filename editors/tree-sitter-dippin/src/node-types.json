@@ -312,6 +312,63 @@
     }
   },
   {
+    "type": "input_decl",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "field_value",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "input_field",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "input_field",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "field_name",
+          "named": true
+        },
+        {
+          "type": "field_value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "inputs_section",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "input_decl",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "manager_loop_node",
     "named": true,
     "fields": {},
@@ -646,6 +703,10 @@
           "named": true
         },
         {
+          "type": "inputs_section",
+          "named": true
+        },
+        {
           "type": "node_decl",
           "named": true
         },
@@ -816,6 +877,10 @@
   },
   {
     "type": "in",
+    "named": false
+  },
+  {
+    "type": "inputs",
     "named": false
   },
   {

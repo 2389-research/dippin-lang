@@ -53,20 +53,26 @@ func (c *CLI) CmdCheck(args []string) ExitCode {
 	return runCheckPipeline(c.Stdout, *formatStr, w, path)
 }
 
-// runCheckPipeline validates, lints, and renders the check result.
+// runCheckPipeline validates, lints, and renders the check result. Both the
+// JSON "valid" field and the exit code are based on allDiags — the full set
+// of structural + lint diagnostics after cross-file adjustments — so an
+// error-severity lint (e.g. DIP155/156/157) fails check the same way it
+// fails lint and doctor.
 func runCheckPipeline(stdout io.Writer, formatStr string, w *ir.Workflow, path string) ExitCode {
 	valRes := validator.Validate(w)
 	lintRes := validator.Lint(w)
 	allDiags := append(valRes.Diagnostics, lintRes.Diagnostics...)
 	allDiags = applyCrossFileToolAccess(allDiags, w, path)
 
+	hasErr := hasErrorSeverity(allDiags)
+
 	if formatStr == "json" {
-		renderCheckJSON(stdout, !valRes.HasErrors(), allDiags, "")
+		renderCheckJSON(stdout, !hasErr, allDiags, "")
 	} else {
 		renderCheckTextResult(stdout, allDiags)
 	}
 
-	if valRes.HasErrors() {
+	if hasErr {
 		return ExitError
 	}
 	return ExitOK

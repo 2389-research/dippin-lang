@@ -25,6 +25,10 @@ func Format(w *ir.Workflow) string {
 
 // writeWorkflowSections emits all optional top-level sections in canonical order.
 func writeWorkflowSections(wr *writer, w *ir.Workflow) {
+	if len(w.Inputs) > 0 {
+		wr.blank()
+		writeInputs(wr, w.Inputs)
+	}
 	if !isDefaultsZero(w.Defaults) {
 		wr.blank()
 		writeDefaults(wr, w.Defaults)
@@ -247,6 +251,71 @@ func writeDefaultsToolSafetyFields(wr *writer, d ir.WorkflowDefaults) {
 	}
 	if d.ToolDenylistAdd != "" {
 		wr.line("tool_denylist_add: %s", quoteValue(d.ToolDenylistAdd))
+	}
+}
+
+// writeInputs emits the inputs section. Declaration order is significant —
+// a host renders these as an ordered form — so unlike vars, it is not sorted.
+func writeInputs(wr *writer, inputs []*ir.Input) {
+	wr.line("inputs")
+	wr.push()
+	for _, in := range inputs {
+		writeOneInput(wr, in)
+	}
+	wr.pop()
+}
+
+// writeOneInput emits `name: type` plus any non-zero attributes, in canonical
+// order: required, prompt, description, default, options, pattern, min, max,
+// max_length, multiline.
+func writeOneInput(wr *writer, in *ir.Input) {
+	wr.line("%s: %s", in.Name, in.Type)
+	wr.push()
+	writeInputTextAttrs(wr, in)
+	writeInputValueAttrs(wr, in)
+	writeInputNumericAttrs(wr, in)
+	wr.pop()
+}
+
+// writeInputTextAttrs emits required, prompt, and description.
+func writeInputTextAttrs(wr *writer, in *ir.Input) {
+	if in.Required {
+		wr.line("required: true")
+	}
+	if in.Prompt != "" {
+		wr.line("prompt: %s", quoteValue(in.Prompt))
+	}
+	if in.Description != "" {
+		wr.line("description: %s", quoteValue(in.Description))
+	}
+}
+
+// writeInputValueAttrs emits default, options, and pattern.
+func writeInputValueAttrs(wr *writer, in *ir.Input) {
+	if in.HasDefault {
+		wr.line("default: %s", quoteValue(in.Default))
+	}
+	if len(in.Options) > 0 {
+		wr.line("options: %s", strings.Join(in.Options, ", "))
+	}
+	if in.Pattern != "" {
+		wr.line("pattern: %s", quoteValue(in.Pattern))
+	}
+}
+
+// writeInputNumericAttrs emits min, max, max_length, and multiline.
+func writeInputNumericAttrs(wr *writer, in *ir.Input) {
+	if in.Min != "" {
+		wr.line("min: %s", in.Min)
+	}
+	if in.Max != "" {
+		wr.line("max: %s", in.Max)
+	}
+	if in.MaxLength > 0 {
+		wr.line("max_length: %d", in.MaxLength)
+	}
+	if in.Multiline {
+		wr.line("multiline: true")
 	}
 }
 
