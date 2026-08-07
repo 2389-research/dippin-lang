@@ -31,7 +31,7 @@ version_decl ::= "dip" INTEGER NEWLINE
 
 workflow_decl ::= "workflow" IDENTIFIER NEWLINE INDENT workflow_body OUTDENT
 
-workflow_body ::= ( workflow_field | defaults_section | vars_section
+workflow_body ::= ( workflow_field | defaults_section | vars_section | inputs_section
                   | node_decl | edges_section | stylesheet_section | NEWLINE )*
 
 workflow_field ::= "goal" ":" field_value
@@ -74,6 +74,37 @@ defaults_field ::= "model" ":" field_value
 vars_section ::= "vars" NEWLINE INDENT vars_field* OUTDENT
 
 vars_field ::= IDENTIFIER ":" field_value
+
+/* ============================================================ */
+/* Inputs Section                                               */
+/* ============================================================ */
+
+/* The callee-side signature: what a caller must supply, whether a  */
+/* human at the entry point or a parent workflow via a subgraph     */
+/* node's params:. Declaration order is significant (a host renders */
+/* an ordered form) so the formatter does not sort it. Values are   */
+/* untrusted by construction and are read as ${inputs.name}.        */
+
+inputs_section ::= "inputs" NEWLINE INDENT input_decl* OUTDENT
+
+input_decl ::= IDENTIFIER ":" input_type NEWLINE ( INDENT input_field* OUTDENT )?
+
+/* The named types are the v1 closed set. IDENTIFIER makes the      */
+/* production forward-compatible: the parser accepts any type token */
+/* and an unrecognized one is diagnosed by the validator (DIP155),  */
+/* never by the parser.                                             */
+input_type ::= "text" | "number" | "bool" | "enum" | "file" | "secret" | IDENTIFIER
+
+input_field ::= "required" ":" BOOLEAN
+              | "default" ":" field_value       /* form prefill; does not satisfy required */
+              | "prompt" ":" field_value        /* what a host asks the caller */
+              | "description" ":" field_value   /* help text */
+              | "options" ":" field_value       /* enum: comma-separated choices */
+              | "pattern" ":" field_value       /* text: regex the host enforces */
+              | "min" ":" field_value           /* number: inclusive lower bound */
+              | "max" ":" field_value           /* number: inclusive upper bound */
+              | "max_length" ":" INTEGER        /* text: character cap */
+              | "multiline" ":" BOOLEAN         /* text: host renders a textarea */
 
 /* ============================================================ */
 /* Node Declarations                                            */
@@ -319,7 +350,7 @@ Char ::= [#x9#xA#xD#x20-#x10FFFF]
 
 /* These identifiers have special meaning in context but can be used as node  */
 /* IDs without conflict: workflow, agent, human, tool, subgraph, conditional,  */
-/* parallel, fan_in, manager_loop, edges, defaults, vars, when, on, and, or,   */
+/* parallel, fan_in, manager_loop, edges, defaults, vars, inputs, when, on, and, or, */
 /* not, contains, startswith, endswith, in, true, false, restart, loop,        */
 /* override, label, choice, weight. The sole exception is "else", which is     */
 /* reserved as the first token of an edges-block line (the section default).   */

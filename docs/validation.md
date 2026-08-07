@@ -1430,6 +1430,63 @@ add the intended cascade (`prompt_suffix_file:` / `prompt_suffix:`) to `defaults
 
 ---
 
+### DIP155: Unrecognized Input Type
+
+**Severity**: Error
+
+An entry in the `inputs` block declares a type outside the v1 closed set
+(`text`, `number`, `bool`, `enum`, `file`, `secret`). The parser accepts any
+type token so a `.dip` using a future type stays parseable, formattable and
+packable on an older `dippin` — only the lint complains.
+
+```text
+error[DIP155]: input "when" declares unrecognized type "duration"
+```
+
+**Fix:** Use one of the known types, or upgrade `dippin` if this type is newer
+than this build.
+
+---
+
+### DIP156: Reference to an Undeclared Input
+
+**Severity**: Error
+
+A prompt or edge condition references `${inputs.x}` (or bare `inputs.x` in a
+condition) for a name the workflow's `inputs` block does not declare. `inputs`
+is the only closed namespace in the language — `ctx` is open, so a typo there
+is undetectable, which is precisely why caller input does not live in `ctx`
+(see [context.md](context.md)).
+
+```text
+error[DIP156]: node "Plan" references undeclared input ${inputs.idae}
+```
+
+**Fix:** Declare the input in the workflow's `inputs` block, or correct the
+name.
+
+---
+
+### DIP157: Input Reference in a Tool Command
+
+**Severity**: Error
+
+A tool node's `command:` references `${inputs.x}`. The runtime keeps the
+entire `inputs` namespace off its shell-interpolation allowlist (the same
+mechanism that blocks LLM-origin `ctx.*` keys from reaching a shell), so the
+reference is dead text that silently expands to nothing, regardless of input
+type.
+
+```text
+error[DIP157]: tool "RunScript" references ${inputs.idea}, which never interpolates in a command
+```
+
+**Fix:** Move the reference to an `agent`/`human` node's prompt. If the value
+is a `secret`, pass it through the runtime's credential mechanism instead of
+interpolating it — the runtime never expands `inputs` into a shell command.
+
+---
+
 ## Running Validation
 
 ### Structural validation only

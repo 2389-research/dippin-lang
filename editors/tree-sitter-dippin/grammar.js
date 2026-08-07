@@ -34,6 +34,7 @@ module.exports = grammar({
         choice(
           $.workflow_field,
           $.defaults_section,
+          $.inputs_section,
           $.node_decl,
           $.edges_section,
           $.stylesheet_section,
@@ -49,6 +50,20 @@ module.exports = grammar({
       seq("defaults", $._indent, repeat1(choice($.defaults_field, $._newline)), $._dedent),
 
     defaults_field: ($) => seq($.field_name, ":", $.field_value),
+
+    // ── Inputs ────────────────────────────────────────────────
+    inputs_section: ($) =>
+      seq("inputs", $._indent, repeat1(choice($.input_decl, $._newline)), $._dedent),
+
+    input_decl: ($) =>
+      seq(
+        $.identifier,
+        ":",
+        $.field_value,
+        optional(seq($._indent, repeat1(choice($.input_field, $._newline)), $._dedent))
+      ),
+
+    input_field: ($) => seq($.field_name, ":", $.field_value),
 
     // ── Nodes ─────────────────────────────────────────────────
     node_decl: ($) =>

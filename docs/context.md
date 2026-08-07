@@ -29,7 +29,7 @@ graph LR
 
 ## Variable Namespaces
 
-In `.dip` source files, variables use explicit namespaces for clarity and validation. There are three namespaces:
+In `.dip` source files, variables use explicit namespaces for clarity and validation. There are four namespaces:
 
 ### ctx — Runtime Context
 
@@ -85,6 +85,25 @@ Available inside subgraph workflows. These are the parameters passed from the pa
 ```
 
 Parameters are substituted at expansion time — they don't persist in runtime context.
+
+### inputs — Workflow Inputs
+
+Values supplied by the caller — a human at the entry point, or a parent workflow via a `subgraph` node's `params:` — and bound once at run start:
+
+```dippin
+  inputs
+    idea: text
+      required: true
+      prompt: "What do you want built?"
+
+  agent Plan
+    prompt:
+      Request: ${inputs.idea}
+```
+
+Unlike `ctx`, the `inputs` namespace is **closed**: it contains exactly the names declared in the workflow's `inputs` block, and a reference to an undeclared input is a lint error (**DIP156**), not silently treated as defined.
+
+Input values are **untrusted by construction** — they come from outside the workflow author's control, so a host should frame them as data to reason about rather than instructions to follow. For the same reason, `${inputs.x}` is never interpolated inside a tool node's `command:` (**DIP157**): a shell command built from caller-supplied text is an injection vector, so `inputs` references belong in `agent`/`human` prompts, not in a shell command line.
 
 ---
 

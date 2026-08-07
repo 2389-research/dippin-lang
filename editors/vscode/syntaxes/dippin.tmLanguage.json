@@ -45,7 +45,7 @@
     },
 
     "section-keyword": {
-      "match": "^\\s*(defaults|vars|edges)\\b",
+      "match": "^\\s*(defaults|vars|inputs|edges)\\b",
       "captures": {
         "1": { "name": "keyword.control.section.dippin" }
       }

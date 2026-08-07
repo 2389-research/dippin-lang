@@ -124,6 +124,30 @@ Values can be quoted strings or bare identifiers. Keys must be unique — duplic
 
 Vars are exported as graph-level DOT attributes so they round-trip through `dippin export-dot` and `dippin migrate`.
 
+## Inputs Block
+
+The optional `inputs` block declares the workflow's callee-side signature — the named values a caller (a human at the entry point, or a parent workflow via a `subgraph` node's `params:`) must or may supply at run start:
+
+```
+  inputs
+    idea: text
+      required: true
+      prompt: "What do you want built?"
+      description: "One or two sentences describing the change."
+      max_length: 4000
+      multiline: true
+    target_branch: text
+      default: main
+      pattern: "^[A-Za-z0-9._/-]+$"
+    risk: enum
+      default: medium
+      options: low, medium, high
+```
+
+Each entry is `name: type` with an optional indented block of attributes (`required`, `prompt`, `description`, `default`, `options`, `pattern`, `min`, `max`, `max_length`, `multiline`). The six v1 types are `text`, `number`, `bool`, `enum`, `file`, `secret`. Declaration order is significant — a host renders inputs as an ordered form — so the formatter never reorders entries.
+
+Reference a declared input as `${inputs.name}` in prompts. The `inputs` namespace is closed: an unrecognized type is DIP155, a reference to an undeclared input is DIP156, and a reference inside a tool node's `command:` is DIP157 (inputs never interpolate into a shell).
+
 ## Node Kinds
 
 There are 8 node kinds, each with its own syntax and configuration:

@@ -1,0 +1,39 @@
+workflow IdeaToPR
+  goal: "Turn a user's idea into a shipped PR."
+  start: Plan
+  exit: Done
+
+  inputs
+    idea: text
+      required: true
+      prompt: "What do you want built?"
+      description: "One or two sentences describing the change."
+      max_length: 4000
+      multiline: true
+    target_branch: text
+      default: main
+      pattern: "^[A-Za-z0-9._/-]+$"
+    spec: file
+      default: SPEC.md
+    risk: enum
+      default: medium
+      options: low, medium, high
+
+  agent Plan
+    label: "Plan the change"
+    fallback_target: Done
+    prompt:
+      Read ${inputs.spec} and plan how to implement this request.
+
+      Request: ${inputs.idea}
+
+      Target branch: ${inputs.target_branch}
+      Risk tolerance: ${inputs.risk}
+
+  agent Done
+    label: Summarize
+    prompt:
+      Summarize what was planned.
+
+  edges
+    Plan -> Done
