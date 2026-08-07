@@ -61,7 +61,7 @@ func runInspectNoVerify(stdout, stderr io.Writer, opts inspectOpts) int {
 	case "text":
 		return printManifestText(stdout, manifest, identity, status)
 	case "json":
-		return printManifestJSON(stdout, stderr, manifest, identity, status)
+		return printManifestJSON(stdout, stderr, manifest, identity, status, nil)
 	default:
 		fmt.Fprintf(stderr, "unknown --format value: %q (expected text or json)\n", opts.format)
 		return exitDipxUserError
@@ -139,18 +139,26 @@ func printInspectJSON(stdout, stderr io.Writer, b *dipx.Bundle) int {
 	m := b.Manifest()
 	id := b.Identity()
 	status := buildInspectStatus(m, b.ByteTotal(), false)
-	return printManifestJSON(stdout, stderr, m, id, status)
+	return printManifestJSON(stdout, stderr, m, id, status, inputsJSON(b.Entry()))
 }
 
 // printManifestJSON is the shared JSON renderer. Used by both Open-side
 // and OpenManifest-side (--no-verify, Task 4) paths.
-func printManifestJSON(stdout, stderr io.Writer, m dipx.Manifest, id [32]byte, status InspectStatus) int {
+//
+// inputs carries the entry workflow's declared input schema (#190) on the
+// Open-side path. The --no-verify path reads the manifest only and never
+// parses a workflow, so it passes nil and the key is omitted entirely —
+// an "inputs": null there would read as "this bundle declares none".
+func printManifestJSON(stdout, stderr io.Writer, m dipx.Manifest, id [32]byte, status InspectStatus, inputs []inputJSON) int {
 	out := map[string]interface{}{
 		"format_version": m.FormatVersion,
 		"entry":          m.Entry,
 		"identity":       "sha256:" + hex.EncodeToString(id[:]),
 		"files":          m.Files,
 		"status":         status,
+	}
+	if inputs != nil {
+		out["inputs"] = inputs
 	}
 	enc := json.NewEncoder(stdout)
 	enc.SetIndent("", "  ")

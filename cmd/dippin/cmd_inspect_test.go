@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -170,6 +171,85 @@ func TestRunInspect_BadFormat(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "unknown --format value") {
 		t.Errorf("expected diagnostic on stderr, got: %s", stderr.String())
+	}
+}
+
+// packInputsBundleForTest packs a workflow that declares inputs and returns the
+// bundle path. packForTest packs the fixed minimalDip source, which has none.
+func packInputsBundleForTest(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "a.dip")
+	if err := os.WriteFile(entry, []byte(inputsFixture), 0o644); err != nil {
+		t.Fatalf("write entry: %v", err)
+	}
+	out := filepath.Join(dir, "a.dipx")
+	var so, se bytes.Buffer
+	if code := runPack(&so, &se, []string{"-o", out, entry}); code != exitDipxOK {
+		t.Fatalf("pack failed: %d; %s", code, se.String())
+	}
+	return out
+}
+
+func TestRunInspect_JSONSurfacesEntryInputs(t *testing.T) {
+	bundle := packInputsBundleForTest(t)
+	var stdout, stderr bytes.Buffer
+	if code := runInspect(&stdout, &stderr, []string{"--format=json", bundle}); code != exitDipxOK {
+		t.Fatalf("exit code = %d; stderr=%s", code, stderr.String())
+	}
+	var payload struct {
+		Inputs []struct {
+			Name     string `json:"name"`
+			Type     string `json:"type"`
+			Required bool   `json:"required"`
+		} `json:"inputs"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatalf("output is not JSON: %v\n%s", err, stdout.String())
+	}
+	if len(payload.Inputs) != 4 {
+		t.Fatalf("got %d inputs, want 4", len(payload.Inputs))
+	}
+	if payload.Inputs[0].Name != "idea" || payload.Inputs[0].Type != "text" {
+		t.Errorf("first input = %q/%q, want idea/text", payload.Inputs[0].Name, payload.Inputs[0].Type)
+	}
+	if !payload.Inputs[0].Required {
+		t.Error("idea.required = false, want true")
+	}
+}
+
+func TestRunInspect_NoVerifyOmitsInputsKey(t *testing.T) {
+	bundle := packInputsBundleForTest(t)
+	var stdout, stderr bytes.Buffer
+	if code := runInspect(&stdout, &stderr, []string{"--format=json", "--no-verify", bundle}); code != exitDipxOK {
+		t.Fatalf("exit code = %d; stderr=%s", code, stderr.String())
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatalf("output is not JSON: %v", err)
+	}
+	if _, present := payload["inputs"]; present {
+		t.Error("--no-verify emitted an inputs key; that path never parses a workflow")
+	}
+}
+
+func TestRunInspect_JSONInputsEmptyArrayWhenNoneDeclared(t *testing.T) {
+	bundle := packForTest(t) // the fixed minimalDip source declares no inputs
+	var stdout, stderr bytes.Buffer
+	if code := runInspect(&stdout, &stderr, []string{"--format=json", bundle}); code != exitDipxOK {
+		t.Fatalf("exit code = %d; stderr=%s", code, stderr.String())
+	}
+	var payload struct {
+		Inputs []interface{} `json:"inputs"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+		t.Fatalf("output is not JSON: %v", err)
+	}
+	if payload.Inputs == nil {
+		t.Error("inputs = null, want an empty array")
+	}
+	if len(payload.Inputs) != 0 {
+		t.Errorf("got %d inputs, want 0", len(payload.Inputs))
 	}
 }
 
