@@ -76,6 +76,7 @@ func (c *CLI) commandDispatch() map[string]func([]string) ExitCode {
 		"spec":               c.CmdSpec,
 		"pack":               c.CmdPack,
 		"unpack":             c.CmdUnpack,
+		"inputs":             c.CmdInputs,
 		"inspect":            c.CmdInspect,
 	}
 }
@@ -211,6 +212,8 @@ func printGlobalUsage(w io.Writer) {
 	fmt.Fprintln(w, "                                    Build a .dipx bundle from a .dip entry")
 	fmt.Fprintln(w, "  unpack [-o dir] [--force] <bundle.dipx>")
 	fmt.Fprintln(w, "                                    Extract a .dipx bundle to a directory")
+	fmt.Fprintln(w, "  inputs [--format text|json] <file>")
+	fmt.Fprintln(w, "                                    Print a workflow's declared input schema")
 	fmt.Fprintln(w, "  inspect [--format text|json] <bundle.dipx>")
 	fmt.Fprintln(w, "                                    Print manifest, identity, and file list of a .dipx")
 	fmt.Fprintln(w, "  version                           Show version info")
