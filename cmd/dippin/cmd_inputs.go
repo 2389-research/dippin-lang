@@ -48,10 +48,22 @@ func (c *CLI) CmdInputs(args []string) ExitCode {
 		c.renderError(err, fs.Arg(0))
 		return ExitError
 	}
-	if *format == "json" {
-		return writeInputsJSON(c.Stdout, w)
+	return writeInputsInFormat(c.Stdout, c.Stderr, w, *format)
+}
+
+// writeInputsInFormat dispatches to the requested output format, rejecting
+// anything other than "text" or "json" so a typo'd --format fails loudly
+// instead of silently falling back to human text.
+func writeInputsInFormat(out, stderr io.Writer, w *ir.Workflow, format string) ExitCode {
+	switch format {
+	case "json":
+		return writeInputsJSON(out, w)
+	case "text":
+		return writeInputsText(out, w)
+	default:
+		fmt.Fprintf(stderr, "unknown --format value: %q (expected text or json)\n", format)
+		return ExitError
 	}
-	return writeInputsText(c.Stdout, w)
 }
 
 // writeInputsJSON emits the schema array. A workflow with no inputs emits [],
@@ -136,6 +148,13 @@ func writeInputsText(out io.Writer, w *ir.Workflow) ExitCode {
 
 // writeOneInputTextDetail emits the indented detail lines for one input.
 func writeOneInputTextDetail(out io.Writer, in *ir.Input) {
+	writeInputTextBasics(out, in)
+	writeInputRangeConstraints(out, in)
+	writeInputLengthConstraints(out, in)
+}
+
+// writeInputTextBasics emits prompt/description/default/options.
+func writeInputTextBasics(out io.Writer, in *ir.Input) {
 	if in.Prompt != "" {
 		fmt.Fprintf(out, "    prompt: %s\n", in.Prompt)
 	}
@@ -147,5 +166,28 @@ func writeOneInputTextDetail(out io.Writer, in *ir.Input) {
 	}
 	if len(in.Options) > 0 {
 		fmt.Fprintf(out, "    options: %v\n", in.Options)
+	}
+}
+
+// writeInputRangeConstraints emits pattern/min/max.
+func writeInputRangeConstraints(out io.Writer, in *ir.Input) {
+	if in.Pattern != "" {
+		fmt.Fprintf(out, "    pattern: %s\n", in.Pattern)
+	}
+	if in.Min != "" {
+		fmt.Fprintf(out, "    min: %s\n", in.Min)
+	}
+	if in.Max != "" {
+		fmt.Fprintf(out, "    max: %s\n", in.Max)
+	}
+}
+
+// writeInputLengthConstraints emits max_length/multiline.
+func writeInputLengthConstraints(out io.Writer, in *ir.Input) {
+	if in.MaxLength > 0 {
+		fmt.Fprintf(out, "    max_length: %d\n", in.MaxLength)
+	}
+	if in.Multiline {
+		fmt.Fprintf(out, "    multiline: %v\n", in.Multiline)
 	}
 }

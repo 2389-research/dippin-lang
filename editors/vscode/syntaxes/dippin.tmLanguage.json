@@ -152,7 +152,7 @@
           "name": "keyword.operator.comparison.dippin"
         },
         {
-          "match": "\\b(ctx|graph|params|stack)(\\.)([\\w.-]+)\\b",
+          "match": "\\b(ctx|graph|params|stack|inputs)(\\.)([\\w.-]+)\\b",
           "captures": {
             "1": { "name": "variable.language.namespace.dippin" },
             "2": { "name": "punctuation.accessor.dippin" },

@@ -18,8 +18,12 @@ const inputsFixture = `workflow W
       required: true
       prompt: "What do you want built?"
       max_length: 4000
+      multiline: true
+      pattern: "^[a-z]+$"
     retries: number
       default: 3
+      min: 1
+      max: 10
     verbose: bool
       default: false
     risk: enum
@@ -120,9 +124,28 @@ func TestCmdInputsTextFormat(t *testing.T) {
 		t.Fatalf("exit = %v, stderr = %s", got, stderr.String())
 	}
 	out := stdout.String()
-	for _, want := range []string{"idea", "text", "required", "retries"} {
+	for _, want := range []string{
+		"idea", "text", "required", "retries",
+		"pattern: ^[a-z]+$", "multiline: true", "max_length: 4000",
+		"min: 1", "max: 10",
+	} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Errorf("text output missing %q:\n%s", want, out)
 		}
+	}
+}
+
+func TestCmdInputsUnknownFormatIsAnError(t *testing.T) {
+	path := writeInputsFixture(t)
+	var stdout, stderr bytes.Buffer
+	cli := &CLI{Stdout: &stdout, Stderr: &stderr}
+	if got := cli.CmdInputs([]string{"--format=yaml", path}); got != ExitError {
+		t.Fatalf("exit = %v, want ExitError", got)
+	}
+	if stdout.Len() != 0 {
+		t.Errorf("stdout should be empty on an unknown --format, got: %s", stdout.String())
+	}
+	if stderr.Len() == 0 {
+		t.Errorf("expected an error message on stderr")
 	}
 }

@@ -140,7 +140,7 @@ formatter sorts alphabetically because it has no such semantics.
 
 Canonical section order becomes:
 
-```
+```text
 header (goal, requires, start, exit) → inputs → defaults → vars → nodes → stylesheet → edges
 ```
 

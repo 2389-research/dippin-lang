@@ -1471,11 +1471,13 @@ name.
 
 **Severity**: Error
 
-A tool node's `command:` references `${inputs.x}`. The runtime keeps the
-entire `inputs` namespace off its shell-interpolation allowlist (the same
-mechanism that blocks LLM-origin `ctx.*` keys from reaching a shell), so the
-reference is dead text that silently expands to nothing, regardless of input
-type.
+A tool node's `command:` body references `${inputs.x}`. The lint scans the
+node's resolved `Command` text, so a `command_file:` directive is checked the
+same way once it has been read into `Command` — the lint never reads an
+unresolved external file off disk itself. The runtime keeps the entire
+`inputs` namespace off its shell-interpolation allowlist (the same mechanism
+that blocks LLM-origin `ctx.*` keys from reaching a shell), so the reference
+is dead text that silently expands to nothing, regardless of input type.
 
 ```text
 error[DIP157]: tool "RunScript" references ${inputs.idea}, which never interpolates in a command
