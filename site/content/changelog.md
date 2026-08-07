@@ -4,6 +4,11 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.51.1] — 2026-08-07
+
+### Fixed
+- **Dotted Anthropic model IDs now price and lint correctly** ([#188](https://github.com/2389-research/dippin-lang/issues/188)). The pricing table and model catalog key Anthropic models with dashed versions (`claude-haiku-4-5`), but a Vercel AI Gateway–routed runtime documents the dotted spelling (`anthropic/claude-haiku-4.5`) — which a `.dip` must carry, since the first-party API rejects dotted IDs. The exact-match lookup missed the dotted form, so `dippin cost` silently reported **$0** and `dippin lint` fired a spurious **DIP108** "unknown model". Both `cost.lookupPrice` and the validator's `modelKnown` now fall back to a version-separator-insensitive match (`.` and `-` fold together) after the exact match, so a dotted ID resolves to its dashed catalog key and vice versa. Exact matches are unchanged — the legitimately dotted OpenAI/Gemini keys (`gpt-5.5`, `gemini-3.1-flash-lite`) still resolve as before, and no two keys in any provider collide under the fold, so the fallback can only turn a miss into the intended hit.
+
 ## [v0.51.0] — 2026-08-07
 
 **Native `inputs` declaration — typed, introspectable input schema** ([#190](https://github.com/2389-research/dippin-lang/issues/190)). Phase 1 of pipeline inputs. A workflow-level `inputs` block is the callee-side signature declaring what a caller must supply — a human at the entry point, or a parent workflow via a subgraph's `params:`. One-line form (`name: type`) or an indented attribute block; six types (text, number, bool, enum, file, secret) and ten attributes (required, default, prompt, description, options, pattern, min, max, max_length, multiline). `${inputs.x}` is the first **closed** namespace in the language: unlike the open `ctx` namespace, a reference to an undeclared input is a lint error, not a maybe-valid pass-through — values are untrusted by construction. Fully additive to dip 1: a `.dip` with no `inputs` block is unchanged, and the parser accepts an unknown input type verbatim (only the lint complains), so a `.dip` using a future type still parses, formats, and packs on an older dippin.

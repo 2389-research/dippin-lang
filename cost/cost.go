@@ -220,13 +220,33 @@ func outputTokensForModel(model string) int {
 }
 
 // lookupPrice finds pricing for a provider/model pair.
+//
+// An exact key match wins. On a miss it retries with a version-separator-
+// insensitive comparison so a dotted ID (claude-haiku-4.5, the Vercel AI
+// Gateway spelling) resolves to a dashed catalog key (claude-haiku-4-5), and
+// vice versa (issue #188). No two keys in any provider collide under this
+// normalization, so the fallback can only turn a miss into the intended hit.
 func lookupPrice(provider, model string, pricing PricingTable) (ModelPrice, bool) {
 	models, ok := pricing[provider]
 	if !ok {
 		return ModelPrice{}, false
 	}
-	p, ok := models[model]
-	return p, ok
+	if p, ok := models[model]; ok {
+		return p, true
+	}
+	want := canonicalModelID(model)
+	for k, p := range models {
+		if canonicalModelID(k) == want {
+			return p, true
+		}
+	}
+	return ModelPrice{}, false
+}
+
+// canonicalModelID folds the model version separator so dotted and dashed
+// spellings compare equal (claude-haiku-4.5 == claude-haiku-4-5). See #188.
+func canonicalModelID(model string) string {
+	return strings.ReplaceAll(model, ".", "-")
 }
 
 // computeCostRange calculates cost for each turn scenario.

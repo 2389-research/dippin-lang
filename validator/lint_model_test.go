@@ -34,3 +34,41 @@ func TestLintDIP108NewAnthropicModels(t *testing.T) {
 		}
 	}
 }
+
+// TestLintDIP108DottedAnthropicID covers #188: a dotted Anthropic model ID
+// (claude-haiku-4.5, the Vercel-gateway-documented spelling) must be recognized
+// as the same model as the dashed catalog key (claude-haiku-4-5), so it does not
+// trip DIP108. A genuinely unknown model must still be flagged.
+func TestLintDIP108DottedAnthropicID(t *testing.T) {
+	known := fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: anthropic
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, "claude-haiku-4.5")
+	if diags := lintSrc(t, known); hasCode(diags, DIP108) {
+		t.Errorf("dotted claude-haiku-4.5 tripped DIP108 (issue #188): %v", codes(diags))
+	}
+
+	unknown := fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: anthropic
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, "claude-nonexistent-9.9")
+	if diags := lintSrc(t, unknown); !hasCode(diags, DIP108) {
+		t.Errorf("genuinely unknown dotted model must still trip DIP108: %v", codes(diags))
+	}
+}
