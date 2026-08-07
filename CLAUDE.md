@@ -74,9 +74,9 @@ GoReleaser is configured (`.goreleaser.yml`) — pushing a tag triggers GitHub A
 
 ## Model Catalog & Pricing
 
-Model names and pricing in `validator/lint_model.go` and `cost/pricing.go` must be verified against official provider documentation before committing. Source URLs and "Last verified" dates are maintained as code comments. Never use training data for pricing — it goes stale.
+The model catalog + pricing is a single source of truth: **`pricing/prices.json`**, embedded (`//go:embed`) by the leaf **`pricing`** package. `cost` (estimator) and `validator` (DIP108) both derive from it — never hand-maintain a second table. Each entry carries its published-price `source` URL and an `as_of` date; verify prices against official provider docs before committing and set `as_of`. Never use training data for pricing — it goes stale. An entry with `"priced": false` is a known-but-unpriced model (recognized by DIP108, priced $0) — used when a provider's USD rate isn't verifiable from an official page (e.g. Qwen). The `pricing` package is a leaf (imports nothing from dippin), so both consumers importing it does not violate the "packages import `ir`, not each other" rule.
 
-Supported providers: Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistral, Cohere, Z.AI/GLM, Moonshot/Kimi, MiniMax, Qwen (Qwen is recognized by the linter but has no cost-table pricing yet — its international USD rates weren't verifiable from an official page; see the follow-up).
+Supported providers: Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistral, Cohere, Z.AI/GLM, Moonshot/Kimi, MiniMax, Qwen.
 
 `TestLintExamples` in `validator/lint_examples_test.go` parses all example .dip files through the real parser and asserts zero DIP108 warnings — this catches model catalog staleness and invalid model IDs.
 

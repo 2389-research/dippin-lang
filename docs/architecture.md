@@ -101,9 +101,14 @@ dippin-lang/
 ├── event/              # Execution protocol event types
 │   └── event.go        # pipeline_start, node_enter, node_exit, edge_traverse, pipeline_end
 │
+├── pricing/            # Leaf: single source of truth for model catalog + prices
+│   ├── prices.json     # Embedded catalog (provider, price, aliases, source, as_of)
+│   ├── pricing.go      # ModelPrice, Usage, Cost(), Lookup() — no dippin imports
+│   └── load.go         # //go:embed loader → lookup index
+│
 ├── cost/               # Cost estimation engine
 │   ├── cost.go         # Per-node cost analysis with turn/token heuristics
-│   └── pricing.go      # Model pricing tables by provider
+│   └── pricing.go      # Adapter: projects the pricing catalog to cost's table
 │
 ├── coverage/           # Edge coverage analysis
 │   └── coverage.go     # Tool output extraction, reachability, termination
@@ -512,7 +517,8 @@ graph BT
     unused --> coverage
 ```
 
-- **cost** — Heuristic token counting, turn estimation, per-model pricing. Pure analysis, no side effects.
+- **pricing** — Leaf package (imports nothing from dippin): the embedded `prices.json` catalog, `ModelPrice`, a neutral `Usage`, one `Cost()` calc, and a total alias-resolving `Lookup()`. Single source of truth for models + prices; `cost` and `validator` both derive from it, and downstream consumers (e.g. tracker) can import it directly.
+- **cost** — Heuristic token counting, turn estimation, per-model pricing (projected from `pricing`). Pure analysis, no side effects.
 - **coverage** — Tool output extraction via regex, edge condition matching, reachability/termination via BFS.
 - **doctor** — Aggregation layer. Computes a score from lint + coverage + cost, maps to grade A–F, generates suggestions.
 - **optimize** — Rule-based model substitution. Identifies simple prompts, retry-loop nodes, and bookkeeping tasks that can use cheaper models.
