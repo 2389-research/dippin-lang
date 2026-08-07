@@ -39,7 +39,7 @@
       function (_, kw, n) { return s("kw", kw) + " " + s("node", n); });
     // Inline edge forms follow via the arrow regex below; no special case needed.
     // Section keywords.
-    h = h.replace(/\b(edges|defaults|vars|stylesheet)\b/g, function (_, k) { return s("kw", k); });
+    h = h.replace(/\b(edges|defaults|vars|inputs|stylesheet)\b/g, function (_, k) { return s("kw", k); });
     // Condition keywords.
     h = h.replace(/\b(when|and|or|not|contains|startswith|endswith)\b/g, function (_, k) { return s("cond", k); });
     // Booleans.
@@ -117,7 +117,7 @@
 
   // ── Detection ───────────────────────────────────────────
   function isDippin(t) {
-    return /\b(workflow|agent|human|tool|subgraph|conditional|manager_loop|parallel|fan_in|edges|defaults|vars|stylesheet)\b/.test(t);
+    return /\b(workflow|agent|human|tool|subgraph|conditional|manager_loop|parallel|fan_in|edges|defaults|vars|inputs|stylesheet)\b/.test(t);
   }
   function isShell(t) { return /^(\s*#!\/bin\/|set -e)/.test(t.trim()); }
   function isTerminal(t) { return /^\$\s/.test(t.trim()); }
