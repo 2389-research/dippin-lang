@@ -177,3 +177,42 @@ func TestMigrate_ExamplesRoundTripToValidV2(t *testing.T) {
 		}
 	}
 }
+
+// TestMigrate_NonSelfRetryTargetIsNonEquivalent covers #186: a non-self
+// retry_target has no dip 2 representation the retry engine reads, so the
+// migration is flagged NonEquivalent (not merely needs-review).
+func TestMigrate_NonSelfRetryTargetIsNonEquivalent(t *testing.T) {
+	w := &ir.Workflow{
+		Version: "1",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
+				Retry: ir.RetryConfig{MaxRetries: 3, RetryTarget: "B"}},
+			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
+		},
+	}
+	notes := MigrateToV2(w)
+	var found bool
+	for _, n := range notes {
+		if n.Node == "A" && n.NonEquivalent {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("non-self retry_target A->B must yield a NonEquivalent note, got %+v", notes)
+	}
+}
+
+// TestMigrate_SelfRetryTargetIsEquivalent: a self retry_target (re-run in place)
+// is equivalent — no note.
+func TestMigrate_SelfRetryTargetIsEquivalent(t *testing.T) {
+	w := &ir.Workflow{
+		Version: "1",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
+				Retry: ir.RetryConfig{MaxRetries: 2, RetryTarget: "A"}},
+		},
+	}
+	if notes := MigrateToV2(w); len(notes) != 0 {
+		t.Errorf("self retry_target should migrate cleanly, got %+v", notes)
+	}
+}

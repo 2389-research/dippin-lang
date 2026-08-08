@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **`fmt --migrate` now signals non-runtime-equivalent conversions with a distinct exit code 4** ([#186](https://github.com/2389-research/dippin-lang/issues/186)). A non-self `retry_target` (retry jumps to a *different* node) migrates to a `loop` edge, but the engine dispatches the retry outcome on a channel that reads node attributes, never the edges block — so the loop edge is ignored and the retry silently becomes a self-retry. Previously this exited `3` ("review needed"), indistinguishable from equivalent-but-review cases. It now exits **`4`** (`ExitMigrateNonEquivalent`) with an explicit `NOT runtime-equivalent … do not use as a drop-in` error, so bulk migrations can separate safe conversions (0), review-but-equivalent (3), and non-equivalent (4). The output is still emitted (best-effort) with a sharper in-file marker. This is an interim safety signal; the underlying design gap — dip 2 has no representation the retry engine reads for non-self retry routing or retry-exhaustion fallback — is tracked separately for a proper fix.
+
+
 ## [v0.54.1] — 2026-08-08
 
 ### Fixed

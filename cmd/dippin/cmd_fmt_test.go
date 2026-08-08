@@ -111,3 +111,35 @@ func TestFmtMigrate_CheckCleanOnAlreadyV2(t *testing.T) {
 		t.Fatalf("--migrate --check on an already-v2 file should exit OK, got %d; stderr=%s", code, e2.String())
 	}
 }
+
+const v1NonSelfRetry = `workflow W
+  goal: "t"
+  start: Review
+  exit: Done
+  agent Review
+    prompt: r
+    max_retries: 3
+    retry_target: Implement
+  agent Implement
+    prompt: i
+  agent Done
+    prompt: d
+  edges
+    Review -> Done  on success
+`
+
+// TestFmtMigrate_NonSelfRetryExitsNonEquivalent covers #186: a non-self
+// retry_target migration is not runtime-equivalent, so fmt --migrate must exit
+// with the distinct ExitMigrateNonEquivalent code (not the review code) so bulk
+// migration can separate it from safe conversions.
+func TestFmtMigrate_NonSelfRetryExitsNonEquivalent(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	cli := &CLI{Stdout: &stdout, Stderr: &stderr, Format: FormatText}
+	code := cli.CmdFmt([]string{"--migrate", writeTmp(t, v1NonSelfRetry)})
+	if code != ExitMigrateNonEquivalent {
+		t.Fatalf("non-self retry_target migrate should exit ExitMigrateNonEquivalent (4), got %d", code)
+	}
+	if !strings.Contains(stderr.String(), "NOT runtime-equivalent") {
+		t.Errorf("expected a NOT runtime-equivalent error on stderr, got:\n%s", stderr.String())
+	}
+}

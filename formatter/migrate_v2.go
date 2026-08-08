@@ -9,9 +9,13 @@ import (
 )
 
 // MigrationNote records a case the v1->v2 transform could not express 1:1.
+// NonEquivalent marks a case whose migrated output does not preserve v1 runtime
+// behavior (not merely one needing an author's eye) — the caller signals these
+// distinctly so the output is never mistaken for a drop-in replacement.
 type MigrationNote struct {
-	Node    string
-	Message string
+	Node          string
+	Message       string
+	NonEquivalent bool
 }
 
 // MigrateToV2 rewrites a v1 workflow into dip 2 in place and returns review
@@ -68,9 +72,15 @@ func migrateRetryTarget(w *ir.Workflow, n *ir.Node) []MigrationNote {
 	if r == n.ID || hasLoopEdgeTo(w, n.ID, r) {
 		return nil
 	}
-	msg := fmt.Sprintf("MIGRATION: v1 retry_target -> %q (non-self) became a loop edge — verify the loop intent", r)
+	// A non-self retry_target with no existing loop edge is NOT runtime-
+	// equivalent: the engine dispatches the retry outcome on a channel that
+	// reads node attributes, never the edges block, so the loop edge we
+	// synthesize below is ignored and the retry silently becomes a self-retry.
+	// (Whether a fallback_target should instead migrate to a retry-exhaustion
+	// attribute is the separate design question in #186 — not flagged here.)
+	msg := fmt.Sprintf("MIGRATION (NOT runtime-equivalent, see #186): v1 retry_target -> %q became a loop edge the retry engine does not read — the retry silently becomes a self-retry", r)
 	w.Edges = append(w.Edges, &ir.Edge{From: n.ID, To: r, Restart: true, Comment: msg})
-	return []MigrationNote{{Node: n.ID, Message: msg}}
+	return []MigrationNote{{Node: n.ID, Message: msg, NonEquivalent: true}}
 }
 
 // hasFailEdgeTo reports whether nodeID already has an on-fail edge to target.
