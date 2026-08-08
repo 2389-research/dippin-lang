@@ -4,6 +4,18 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.54.1] — 2026-08-08
+
+### Fixed
+- **Corrected two stale prices flagged by the daily drift check** (#201, verified against official docs 2026-08-08): `openai/gpt-4.1-nano` was $0.05/$0.20 but is **$0.10/$0.40**; `deepseek/deepseek-v4-pro` was $1.74/$3.48 (pre-discount list) but the launch discount has become the standing price at **$0.435/$0.87**. Other drift candidates were dispositioned as non-issues — `claude-sonnet-5` 2/10 is the intro rate through 2026-08-31 (durable 3/15 kept); `o3-mini`/`o4-mini`/`gpt-4.1-nano` "deprecated" were false positives from models.dev (official docs list them active). `mistral-nemo`, `mistral-small-2603`, and `cohere/command-r-08-2024` could not be verified from official pages (JS-gated) and were left unchanged pending manual verification.
+
+
+## [v0.54.1] — 2026-08-08
+
+### Added
+- **Daily pricing-drift detection (Phase 3), human-gated.** A scheduled GitHub Action (`.github/workflows/pricing-sync.yml`) runs `pricing-sync` daily and, when it finds **price or deprecation drift for models already in the catalog**, opens/updates a single rolling `pricing-drift` issue with the evidence. It **never edits `prices.json` or opens a code PR** — a human confirms each candidate against its official `source` (models.dev can reflect intro/discounted rates, so this stays gated). New `sync --existing-only` flag keeps the daily signal actionable (drops the hundreds of upstream image/tts/embedding models dippin doesn't price); `sync --fail-on-changes` for CI gating.
+- **`docs/pricing-integration.md`** — how a downstream consumer (tracker) pins and integrates the `pricing` package: version floor (`v0.53.0`), the `Lookup`/`Cost` API, mapping `llm.Usage → pricing.Usage`, keeping capability metadata in the consumer, and the current **cache-pricing caveat** (the `ModelPrice` cache fields exist but `prices.json` doesn't populate them yet, so `Cost` computes cache traffic at $0 until it does).
+
 ## [v0.54.0] — 2026-08-07
 
 ### Added
