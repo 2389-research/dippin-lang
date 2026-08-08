@@ -215,10 +215,10 @@
     {
       "provider": "deepseek",
       "model": "deepseek-v4-pro",
-      "input_per_m": 1.74,
-      "output_per_m": 3.48,
+      "input_per_m": 0.435,
+      "output_per_m": 0.87,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-08"
     },
     {
       "provider": "gemini",
@@ -559,10 +559,10 @@
     {
       "provider": "openai",
       "model": "gpt-4.1-nano",
-      "input_per_m": 0.05,
-      "output_per_m": 0.2,
+      "input_per_m": 0.1,
+      "output_per_m": 0.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-08"
     },
     {
       "provider": "openai",
