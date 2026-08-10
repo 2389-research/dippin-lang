@@ -4,6 +4,15 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.58.0] — 2026-08-10
+
+### Added
+- **DIP160 — cross-file subgraph input arity (inputs Phase 3)** ([#190](https://github.com/2389-research/dippin-lang/issues/190)). A `subgraph` node whose `params:` omits an input the referenced child declares `required: true` now warns: the child would start with that input unset. It's a cross-file check (like DIP146) run by `validate`/`check`/`watch` — it resolves and parses the child to read its `inputs`, skipped for `.dipx` bundles and unreadable children. Catalog now **70 codes (DIP101–DIP160)**.
+
+### Note
+- **DIP161 dropped from the plan.** The originally-planned "untrusted input flows into a tool-bearing agent" lint has no clean, non-noisy trigger: for `text`/`number`/`enum` inputs, feeding caller input into a tool-capable agent is the normal agentic pattern (every idea-to-pr workflow), and for `file`/`secret` inputs `${inputs.x}` resolves to a staged *path*, not the value (see #215), so flagging it would repeat the DIP159 false-positive mistake. The genuinely-dangerous case — an input reference in a tool `command:` — is already covered by DIP157. Phase 3 is DIP160 only; #190's input lints are complete.
+
+
 ## [v0.57.0] — 2026-08-10
 
 ### Added
