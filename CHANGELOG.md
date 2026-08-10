@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`prices.json` now carries cache read/write rates for the verified providers** ([#210](https://github.com/2389-research/dippin-lang/issues/210)). `pricing.ModelPrice`/`pricing.Cost` have always honored cache fields, but the data left them unset, so cache traffic priced at $0 and consumers (tracker) overlaid their own cache table — two tables that could drift. Verified 2026-08-10 against official docs and populated: **Anthropic** `cache_read_mult: 0.1` + `cache_write_mult: 1.25` (0.1× read, 1.25× 5-minute write, uniform across models); **OpenAI** and **Gemini** `cache_read_mult: 0.1` (0.1× read; OpenAI has no per-token write charge, Gemini's cache cost is an hourly storage fee outside the per-token schema). The other providers (DeepSeek, Mistral, Cohere, xAI, Z.AI, Moonshot, MiniMax, Qwen) are left at 0 — their cache conventions weren't verifiable from official pages, so a consumer keeps overlaying those until they are. A downstream consumer can now drop its cache overlay for Anthropic/OpenAI/Gemini and read the rates from `pricing`.
+
+
 ## [v0.56.1] — 2026-08-10
 
 ### Fixed
