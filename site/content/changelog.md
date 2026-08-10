@@ -4,6 +4,11 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.62.0] — 2026-08-10
+
+### Added
+- **Shared `system_prompt_file` default** ([#72](https://github.com/2389-research/dippin-lang/issues/72)). The `defaults` block now accepts `system_prompt_file:` — a shared system prompt (persona/role) authored once in an external file. It is a **fallback default**: an agent that declares no `system_prompt`/`system_prompt_file` of its own inherits it, and any agent that sets its own fully overrides it (node wins, like `model`/`provider`). File form only — an inline `system_prompt:` under `defaults` remains an unknown-field error; there is no `system_prompt: none` opt-out. Resolved with the same containment/symlink/size envelope as every other file directive, and packed (inline or `--no-inline`) like the existing `prompt_prefix_file` cascade. Complements #175 (which cascades the prompt *body*); this covers the system-prompt half of #72. Design: `docs/superpowers/specs/2026-08-10-issue-72-defaults-system-prompt-design.md`.
+
 ## [v0.61.0] — 2026-08-10
 
 ### Added
