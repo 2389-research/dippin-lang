@@ -17,22 +17,22 @@ workflow Example
 
 The declaration is `dip` followed by an integer. A file with **no** declaration defaults to version **1**. The formatter only emits the `dip N` line when the version is greater than 1, so a v1 file never gains a declaration. (As with any `fmt` run, byte-identical output is only guaranteed when the input is already canonical.)
 
-The version is parsed before the workflow body, which lets later format versions change edge syntax wholesale. `dippin fmt --migrate` converts a v1 file to dip 2 — it folds `retry_target` and `fallback_target` node fields into `on fail` edges and flags any case it cannot express 1:1 with a `# MIGRATION:` comment; run it and review the output before committing.
+The version is parsed before the workflow body, which lets later format versions change edge syntax wholesale. `dippin fmt --migrate` converts a v1 file to dip 2 — a lossless version bump: the retry channel (`retry_target`, `fallback_target`) stays on the node, with `fallback_target` relabeled to its dip-2 spelling `fallback_retry_target`.
 
-### dip 2: retry budgets vs failure destinations
+### dip 2: the retry channel is a node attribute, not an edge
 
-Under `dip 2`, a node carries only retry **budgets** — `max_retries`, `base_delay`,
-`retry_policy`. The `retry_target` and `fallback_target` node fields are removed:
-`max_retries: N` means "re-run this node up to N times," and the post-exhaustion
-destination is the node's `on fail` edge. Convert a v1 file with `dippin fmt
---migrate` (it rewrites the fields into edges and flags any case it cannot express
-1:1).
+The **retry channel** — `retry_target` and the retry-exhaustion route — is
+addressed to the engine's retry dispatcher and lives on the node in every format
+version. It is deliberately *not* an edge: the engine reads these attributes
+directly and never consults the `edges` block to route a retry. `dip 2` only
+changes the spelling of the exhaustion route from `fallback_target` (dip 1) to
+`fallback_retry_target` (dip 2); `retry_target` keeps its name. `max_retries: N`
+bounds the retries.
 
-**Runtime ordering note (spec delta):** in `dip 2` a node exhausts its
-`max_retries` in place *before* control follows the `on fail` edge — the retry
-budget is consumed first, then the failure edge is taken. This differs from the
-v1 cascade where a matching `fail` edge preempts node retry. dippin ships the
-syntax and IR; the enforcing runtime converges on this ordering.
+An `on fail` edge is a **distinct channel** — the genuine-failure route taken
+when a node fails outright. A node may carry both a `fallback_retry_target`
+(where retry exhaustion lands) and an `on fail` edge (where an unretried failure
+lands); they do not conflict and both survive migration.
 
 ---
 
@@ -271,7 +271,7 @@ When an agent node finishes with outcome `fail` or errors, the runtime resolves 
 |----------|-----------|-------------|
 | 1 | **Explicit fail edge** | An outgoing edge with `when ctx.outcome = fail` (or `failure`) on the node |
 | 2 | **Bounded node retry** | `retry_target` + `max_retries` — node retries before propagating failure |
-| 3 | **Node fallback_target** | The node's own `fallback_target` field — used when retries are exhausted |
+| 3 | **Node fallback_target** | The node's own `fallback_target` (dip 1) / `fallback_retry_target` (dip 2) field — used when retries are exhausted |
 | 4 | **Graph on_failure** | The workflow's `defaults.on_failure` node ID — catch-all for any agent without a more specific route |
 | 5 | **Halt** | No route found — the pipeline stops |
 

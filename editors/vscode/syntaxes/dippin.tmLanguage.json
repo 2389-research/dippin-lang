@@ -179,7 +179,7 @@
           }
         },
         {
-          "match": "^\\s*(label|model|provider|mode|default|ref|subgraph_ref|timeout|poll_interval|max_cycles|fidelity|reasoning_effort|goal_gate|auto_status|max_turns|max_retries|marker_grep|command_file|prompt_file|system_prompt_file|prompt_include|prompt_prefix|prompt_suffix|prompt_prefix_file|prompt_suffix_file|route_required|output_limit|base_delay|retry_policy|retry_target|fallback_target|max_restarts|restart_target|cache_tools|compaction|stop_condition|steer_condition|steer_context|tool_access|writable_paths|last_response_truncate|response_format|response_schema|compaction_threshold|backend|working_dir|cmd_timeout|class|reads|writes)\\s*(:)",
+          "match": "^\\s*(label|model|provider|mode|default|ref|subgraph_ref|timeout|poll_interval|max_cycles|fidelity|reasoning_effort|goal_gate|auto_status|max_turns|max_retries|marker_grep|command_file|prompt_file|system_prompt_file|prompt_include|prompt_prefix|prompt_suffix|prompt_prefix_file|prompt_suffix_file|route_required|output_limit|base_delay|retry_policy|retry_target|fallback_target|fallback_retry_target|max_restarts|restart_target|cache_tools|compaction|stop_condition|steer_condition|steer_context|tool_access|writable_paths|last_response_truncate|response_format|response_schema|compaction_threshold|backend|working_dir|cmd_timeout|class|reads|writes)\\s*(:)",
           "captures": {
             "1": { "name": "entity.name.tag.field.dippin" },
             "2": { "name": "punctuation.separator.key-value.dippin" }

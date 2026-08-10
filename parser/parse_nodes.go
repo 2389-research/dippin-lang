@@ -169,9 +169,9 @@ func (p *Parser) applySecondaryConfigField(n *ir.Node, key, val string, loc ir.S
 // tryApplyCommonField applies fields that are common to all node types.
 // Returns true if the field was handled, false otherwise.
 func (p *Parser) tryApplyCommonField(n *ir.Node, key, val string, loc ir.SourceLocation) bool {
-	if p.version >= 2 && isV2RejectedNodeField(key) {
+	if p.version >= 2 && key == "fallback_target" {
 		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
-			"%q is not a node field in dip 2 — express the failure destination as an `on fail` edge (run `dippin fmt --migrate`) at %d:%d",
+			"%q is not a node field in dip 2 — use `fallback_retry_target` for the retry-exhaustion route (run `dippin fmt --migrate`) at %d:%d",
 			key, loc.Line, loc.Column))
 		return true // handled (rejected) — do not fall through to unknown-field hint
 	}
@@ -179,12 +179,6 @@ func (p *Parser) tryApplyCommonField(n *ir.Node, key, val string, loc ir.SourceL
 		return true
 	}
 	return p.applyCommonComplexField(n, key, val, loc)
-}
-
-// isV2RejectedNodeField lists node fields removed under dip 2 (their destinations
-// move to the edges block; see #134).
-func isV2RejectedNodeField(key string) bool {
-	return key == "retry_target" || key == "fallback_target"
 }
 
 // applyCommonStringField handles simple string/slice assignments for common fields.
@@ -219,7 +213,10 @@ func applyCommonRetryField(n *ir.Node, key, val string) bool {
 		n.Retry.Policy = val
 	case "retry_target":
 		n.Retry.RetryTarget = val
-	case "fallback_target":
+	case "fallback_target", "fallback_retry_target":
+		// fallback_target is the dip-1 spelling; fallback_retry_target the dip-2
+		// spelling. Both name the retry-exhaustion route (IR FallbackTarget).
+		// dip 2 rejects the fallback_target spelling upstream (tryApplyCommonField).
 		n.Retry.FallbackTarget = val
 	default:
 		return false

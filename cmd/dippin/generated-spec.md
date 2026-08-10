@@ -65,7 +65,7 @@ workflow <Name>
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
 
-All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`. **v1-only (rejected under `dip 2`):** `retry_target`, `fallback_target` — in `dip 2` use a `loop` edge and an `on fail` edge instead (`dippin fmt --migrate` converts).
+All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, and the retry-exhaustion route — spelled `fallback_target` in `dip 1`, `fallback_retry_target` in `dip 2` (`dippin fmt --migrate` relabels it). These are the engine's retry channel, read from the node, not the `edges` block.
 
 ---
 
@@ -480,8 +480,8 @@ Runtime state: `stack.child.cycles`, `stack.child.outcome`, `stack.child.status`
 | `retry_policy` | `standard`, `aggressive`, `patient`, `linear`, `none` (DIP113 if invalid) |
 | `max_retries` | Max retry attempts |
 | `base_delay` | Override base delay, e.g. `500ms`, `2s` |
-| `retry_target` | **v1 only** (rejected under `dip 2`) — node to jump to on retry; use a `loop` edge in dip 2 |
-| `fallback_target` | **v1 only** (rejected under `dip 2`) — node if retries exhausted; use an `on fail` edge in dip 2 |
+| `retry_target` | Node to jump to on retry — the engine's retry channel, read from the node (not an edge). Same spelling in `dip 1` and `dip 2`. |
+| `fallback_target` / `fallback_retry_target` | Node to route to when retries are exhausted (read from the node, not an edge). Spelled `fallback_target` in `dip 1`, `fallback_retry_target` in `dip 2`; `dippin fmt --migrate` relabels it. |
 
 **Every node must have at least one field.** An empty node body causes a parse error.
 

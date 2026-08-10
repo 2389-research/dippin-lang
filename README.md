@@ -362,7 +362,7 @@ Comments are not stripped inside multiline blocks — a `#` inside a prompt or c
 | `max_retries` | all | Max retry count |
 | `base_delay` | all | Override policy's base delay (e.g. 500ms, 2s) |
 | `retry_target` | all | Node to retry from |
-| `fallback_target` | all | Fallback if retries exhausted |
+| `fallback_target` | all | Fallback if retries exhausted (spelled `fallback_retry_target` under `dip 2`) |
 | `reads` | all | Context keys read (advisory, comma-separated) |
 | `writes` | all | Context keys written (advisory, comma-separated) |
 

@@ -276,11 +276,16 @@ func (ManagerLoopConfig) nodeConfig() {}
 
 // RetryConfig specifies retry behavior for a node.
 type RetryConfig struct {
-	Policy         string        // Named policy: "standard", "aggressive", "patient", "linear", "none"
-	MaxRetries     int           // Override default
-	BaseDelay      time.Duration // Override policy's default base delay (optional)
-	RetryTarget    string        // Node to jump to on retry
-	FallbackTarget string        // Fallback if retries exhausted
+	Policy      string        // Named policy: "standard", "aggressive", "patient", "linear", "none"
+	MaxRetries  int           // Override default
+	BaseDelay   time.Duration // Override policy's default base delay (optional)
+	RetryTarget string        // Node to jump to on retry (dip 1 + dip 2 spelling: retry_target)
+	// FallbackTarget is the retry-EXHAUSTION route — where control goes when the
+	// retry budget is spent. It is a distinct runtime channel from the edges block
+	// (which routes on genuine node failure), which the engine reads from a node
+	// attribute. Spelled fallback_target in dip 1 and fallback_retry_target in
+	// dip 2 (the dip-2 name disambiguates it from `on fail` edges). See #186/#204.
+	FallbackTarget string
 }
 
 // NodeIO declares what context keys a node reads and writes.

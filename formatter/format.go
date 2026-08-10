@@ -17,7 +17,11 @@ import (
 // Format renders a workflow to canonical Dippin source text.
 // The output always ends with exactly one trailing newline.
 func Format(w *ir.Workflow) string {
-	wr := &writer{}
+	dip2 := false
+	if v, err := strconv.Atoi(w.Version); err == nil && v > 1 {
+		dip2 = true
+	}
+	wr := &writer{dip2: dip2}
 	writeWorkflowHeader(wr, w)
 	writeWorkflowSections(wr, w)
 	return wr.String()
@@ -71,7 +75,8 @@ func hasVisibleEdges(w *ir.Workflow) bool {
 // writer wraps a strings.Builder with indentation tracking.
 type writer struct {
 	buf    strings.Builder
-	indent int // current indent level (each level = 2 spaces)
+	indent int  // current indent level (each level = 2 spaces)
+	dip2   bool // emit dip-2 spellings (e.g. fallback_retry_target vs fallback_target)
 }
 
 // line writes a single indented line followed by a newline.
@@ -623,13 +628,19 @@ func writeRetryPolicyFields(wr *writer, r ir.RetryConfig) {
 	}
 }
 
-// writeRetryTargetFields writes retry_target and fallback_target fields.
+// writeRetryTargetFields writes the retry-channel node attributes. The retry-
+// exhaustion route is spelled fallback_target in dip 1 and fallback_retry_target
+// in dip 2 (disambiguating it from `on fail` edges). See #204.
 func writeRetryTargetFields(wr *writer, r ir.RetryConfig) {
 	if r.RetryTarget != "" {
 		wr.line("retry_target: %s", r.RetryTarget)
 	}
 	if r.FallbackTarget != "" {
-		wr.line("fallback_target: %s", r.FallbackTarget)
+		key := "fallback_target"
+		if wr.dip2 {
+			key = "fallback_retry_target"
+		}
+		wr.line("%s: %s", key, r.FallbackTarget)
 	}
 }
 

@@ -63,7 +63,7 @@ workflow <Name>
 | `fan_in` | `<- Source1, Source2` (inline) | — |
 | `subgraph` | `ref` | `params` |
 
-All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`. **v1-only (rejected under `dip 2`):** `retry_target`, `fallback_target` — in `dip 2` use a `loop` edge and an `on fail` edge instead (`dippin fmt --migrate` converts).
+All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, and the retry-exhaustion route — spelled `fallback_target` in `dip 1`, `fallback_retry_target` in `dip 2` (`dippin fmt --migrate` relabels it). These are the engine's retry channel, read from the node, not the `edges` block.
 
 ---
 
