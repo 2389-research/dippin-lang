@@ -53,15 +53,28 @@ type Suggestion struct {
 
 // DiagnoseWithOptions produces a health Report, threading per-invocation lint
 // options (e.g. a scoped extra-models catalog) into the lint pass so doctor's
-// DIP108 summary matches `dippin lint --extra-models`.
+// DIP108 summary matches `dippin lint --extra-models`. It computes validate +
+// lint internally and therefore does NOT apply the CLI-layer cross-file DIP146
+// resolution; a caller that has run that pass should use DiagnoseFromDiagnostics.
 func DiagnoseWithOptions(w *ir.Workflow, opts validator.Options) *Report {
 	valResult := validator.Validate(w)
 	lintResult := validator.LintWithOptions(w, opts)
+	diags := append(append([]validator.Diagnostic{}, valResult.Diagnostics...), lintResult.Diagnostics...)
+	return DiagnoseFromDiagnostics(w, diags)
+}
+
+// DiagnoseFromDiagnostics builds a health Report from a caller-supplied diagnostic
+// set (validate + lint, plus any adjustments the caller made). This is the seam
+// that lets the CLI thread in its cross-file DIP146/DIP143 supersession — the
+// native pass lives in cmd/dippin, which doctor must not import, so the CLI runs
+// it and hands doctor the corrected diagnostics. Score/Grade react only to errors
+// and warnings, so a cross-file hint adjustment changes only the hint count.
+func DiagnoseFromDiagnostics(w *ir.Workflow, diags []validator.Diagnostic) *Report {
 	covReport := coverage.Analyze(w)
 	costReport := cost.Analyze(w, cost.DefaultPricing())
 
 	r := &Report{}
-	r.Lint = buildLintSummary(valResult, lintResult)
+	r.Lint = buildLintSummary(diags)
 	r.Coverage = buildCovSummary(covReport)
 	r.Cost = CostSummary{Total: costReport.Total}
 	r.Score = computeScore(r)
@@ -70,13 +83,10 @@ func DiagnoseWithOptions(w *ir.Workflow, opts validator.Options) *Report {
 	return r
 }
 
-// buildLintSummary counts errors, warnings, and hints from both passes.
-func buildLintSummary(val, lint validator.Result) LintSummary {
+// buildLintSummary counts errors, warnings, and hints across the diagnostic set.
+func buildLintSummary(diags []validator.Diagnostic) LintSummary {
 	var s LintSummary
-	for _, d := range val.Diagnostics {
-		classifyDiagnostic(&s, d)
-	}
-	for _, d := range lint.Diagnostics {
+	for _, d := range diags {
 		classifyDiagnostic(&s, d)
 	}
 	return s
