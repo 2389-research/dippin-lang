@@ -25,7 +25,7 @@ func parseFmtFlags(args []string, stderr io.Writer) (fmtFlags, ExitCode) {
 	fs.SetOutput(stderr)
 	check := fs.Bool("check", false, "exit 1 if not canonically formatted")
 	write := fs.Bool("write", false, "write formatted output back to source file")
-	migrate := fs.Bool("migrate", false, "convert a v1 file to dip 2 (edges own destinations)")
+	migrate := fs.Bool("migrate", false, "convert a v1 file to dip 2 (lossless version bump)")
 	if err := fs.Parse(args); err != nil {
 		return fmtFlags{}, ExitUsageError
 	}
@@ -40,7 +40,7 @@ func parseFmtFlags(args []string, stderr io.Writer) (fmtFlags, ExitCode) {
 //   - Default: print formatted output to stdout
 //   - --check: exit 1 if input is not already canonical (for CI)
 //   - --write: write formatted output back to the file in-place
-//   - --migrate: convert a v1 file to dip 2 (edges own destinations)
+//   - --migrate: convert a v1 file to dip 2 (lossless version bump)
 func (c *CLI) CmdFmt(args []string) ExitCode {
 	flags, code := parseFmtFlags(args, c.Stderr)
 	if code != ExitCode(-1) {

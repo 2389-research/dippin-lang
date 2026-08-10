@@ -28,7 +28,7 @@ DOT was never designed for AI pipelines. The pain points stack up:
 | Problem in DOT | How Dippin fixes it |
 |----------------|---------------------|
 | Prompts need `\n` escaping and `\"` quoting | Indentation-based multi-line blocks, no escaping |
-| No validation beyond syntax | [34 diagnostic codes](../validation.html): structural errors + semantic warnings |
+| No validation beyond syntax | [70 diagnostic codes](../validation.html): structural errors + semantic warnings |
 | No testing framework | [Scenario testing](scenario-testing.html) with `.test.json` files |
 | No formatting standard | Idempotent `dippin fmt` with canonical field ordering |
 | No cost estimation | `dippin cost` and `dippin optimize` |

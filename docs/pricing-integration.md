@@ -11,12 +11,15 @@ table, tracker #518) but applies to any consumer.
 ## Version to pin
 
 - **Floor:** `v0.53.0` — the release that introduced the `pricing` package.
-- **Recommended:** the latest tag (currently **`v0.54.0`**), which adds
-  `pricing.StaleEntries` and the sync tooling. Nothing in `v0.54.0` changes the
-  `Lookup`/`Cost` API a consumer uses.
+- **Recommended:** the latest tag (currently **`v0.62.1`**). Everything since the
+  floor is additive to the catalog data and the `ModelPrice` shape; the
+  `Lookup`/`Cost` API a consumer calls is unchanged. Notable additions: cache
+  read/write rates (`v0.57.0`+, see below), `ModelPrice.Deprecated` (`v0.59.0`),
+  per-family OpenAI cache multipliers (`v0.59.1`), and the drift suppress-list
+  tooling.
 
 ```sh
-go get github.com/2389-research/dippin-lang@v0.54.0
+go get github.com/2389-research/dippin-lang@v0.62.1
 ```
 
 Consumers **pin a specific tag** — never `@latest` — per dippin's release model.
@@ -29,10 +32,11 @@ import "github.com/2389-research/dippin-lang/pricing"
 type ModelPrice struct {
     InputPerM, OutputPerM float64 // USD per 1M tokens
     CachedInputPerM       float64 // OpenAI-style absolute cached-input price (0 = use mult)
-    CacheReadMult         float64 // Anthropic/Gemini "0.1x" convention (0 = default)
+    CacheReadMult         float64 // cache-read/input ratio (0 = unverified; 1 = verified no discount)
     CacheWriteMult        float64
     Aliases               []string
     Priced                bool    // false = in catalog but no established price (e.g. Qwen)
+    Deprecated            bool    // true = retired on the first-party provider API, still priced for Bedrock/Vertex passthrough (#224)
     Source, AsOf          string  // provenance: published-price URL + verification date
 }
 
@@ -86,24 +90,27 @@ func LookupProvider(provider, model string) (ModelPrice, bool)
    truth" guarantee now lives in `pricing/prices_test.go` (every entry has a
    `Source` + well-formed `AsOf`, no duplicate keys). Delete tracker's copy.
 
-## Important caveat: cache pricing is not yet populated
+## Cache pricing
 
-`ModelPrice` carries the cache fields (matching tracker #518's shape), **but
-dippin's `prices.json` does not populate them yet** — dippin's own estimator
-models base input/output only. So today `CachedInputPerM`, `CacheReadMult`, and
-`CacheWriteMult` are all `0`, and `pricing.Cost` therefore computes **cache
-traffic at $0**.
+Cache read rates **are** populated (as of `v0.57.0`+), so `pricing.Cost` bills
+cache traffic for most providers directly — no consumer overlay needed. Read the
+cache fields per entry rather than assuming a global convention:
 
-If tracker prices cache reads/writes, you have two choices until dippin's
-`prices.json` carries cache rates:
+- **Populated with a verified rate:** Anthropic (`0.1×` read / `1.25×` write),
+  OpenAI (per-family — gpt-4o `0.5×`, gpt-4.1 `0.25×`, GPT-5 `0.1×`), Gemini
+  (`0.1×` read), and DeepSeek, Z.AI/GLM, xAI/Grok, Moonshot/Kimi (absolute
+  `CachedInputPerM` from their published cache-hit prices).
+- **Verified no discount:** Mistral and Cohere carry `CacheReadMult: 1` — their
+  official pages publish no cached-input rate, so a cache read bills at the full
+  input rate. `1` is deliberately distinct from `0`.
+- **Still unverified (`0`):** MiniMax (official page is audio-only) and Qwen
+  (unpriced/console-gated). For these two only, `Cost` prices cache reads at `$0`,
+  so a consumer that bills their cache traffic should overlay its own default
+  until dippin verifies them.
 
-- **Keep tracker's cache-rate table** for the cache terms only, and use
-  `pricing` for base input/output; or
-- **Accept base-only costing** for now.
-
-Populating cache rates in `prices.json` (and teaching the sync tool to pull them
-from the aggregators) is planned — track it so the day it lands, tracker can
-drop its remaining cache table.
+So the rule for a consumer: **overlay a default cache rate only where both
+`CacheReadMult` and `CachedInputPerM` are `0`** (i.e. MiniMax/Qwen today) — every
+other provider is authoritative in the catalog.
 
 ## Keeping prices current
 

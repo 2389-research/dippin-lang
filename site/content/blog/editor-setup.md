@@ -39,7 +39,7 @@ Any editor with LSP support can connect.<sup>1</sup>
 <div class="feature-grid">
   <div class="feature-item">
     <h4>Diagnostics</h4>
-    <p>Parse errors and every lint diagnostic on every keystroke — DIP001-DIP010 structural, DIP101-DIP157 semantic (67 codes). Same checks as <code>dippin lint</code>.</p>
+    <p>Parse errors and every lint diagnostic on every keystroke — DIP001-DIP010 structural, DIP101-DIP160 semantic (70 codes total). Same checks as <code>dippin lint</code>.</p>
   </div>
   <div class="feature-item">
     <h4>Hover</h4>
