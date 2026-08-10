@@ -167,6 +167,28 @@ func TestProviderCachedInputPrices(t *testing.T) {
 	}
 }
 
+// TestNoCacheDiscountProviders covers #232 (tail): Mistral and Cohere publish no
+// cached-input discount on their official pages, so their cache_read_mult is a
+// verified 1.0 — cache reads bill at the full input rate. This is distinct from
+// an unverified 0 (which prices cache reads at $0 and signals "overlay me"), so a
+// consumer stops applying a default cache overlay to these providers.
+func TestNoCacheDiscountProviders(t *testing.T) {
+	for _, model := range []string{"mistral-small", "mistral-large-3", "command-r", "command-a-03-2025"} {
+		p, ok := Lookup(model)
+		if !ok {
+			t.Errorf("%s not found in catalog", model)
+			continue
+		}
+		if p.CacheReadMult != 1 {
+			t.Errorf("%s cache_read_mult = %v, want 1 (verified: no cached-input discount)", model, p.CacheReadMult)
+		}
+		// A cache read bills at the input rate — never cheaper, since no discount.
+		if got := Cost(Usage{CacheRead: 1_000_000}, p); got != p.InputPerM {
+			t.Errorf("%s cache-read cost = %v, want the input rate %v", model, got, p.InputPerM)
+		}
+	}
+}
+
 // TestOpenAICacheReadMultPerFamily covers #225: OpenAI's cached-input discount
 // is per-family, not a flat 0.1x. The gpt-4o family is 0.5x and the gpt-4.1
 // family is 0.25x (verified against developers.openai.com/api/docs/pricing);
