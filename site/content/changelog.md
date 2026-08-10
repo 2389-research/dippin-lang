@@ -4,6 +4,11 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.59.1] — 2026-08-10
+
+### Fixed
+- **OpenAI `cache_read_mult` is now per-family, not a flat 0.1×** ([#225](https://github.com/2389-research/dippin-lang/issues/225)). v0.57.0 (#210) set `cache_read_mult: 0.1` for every OpenAI model, but OpenAI's cached-input discount varies by family: the **gpt-4o** family is **0.5×** ($2.50 → $1.25 cached) and the **gpt-4.1** family is **0.25×** ($2.00 → $0.50 cached); only the **GPT-5** family is **0.1×**. The flat value underpriced gpt-4o/gpt-4.1 cache reads by 2.5–5×, so a consumer trusting `pricing.Cost` under-enforced cost caps for those models. Verified 2026-08-10 against developers.openai.com/api/docs/pricing and corrected: `gpt-4o`/`gpt-4o-mini` → 0.5, `gpt-4.1`/`gpt-4.1-mini`/`gpt-4.1-nano` → 0.25; GPT-5 family unchanged. Found adopting v0.57.0 in tracker (tracker#562).
+
 ## [v0.59.0] — 2026-08-10
 
 ### Changed
