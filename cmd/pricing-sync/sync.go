@@ -28,6 +28,10 @@ type change struct {
 	Provider string
 	Model    string
 	Detail   string
+	// Agg is the canonical aggregator-side value used to match a suppression:
+	// "%.4g/%.4g" input/output for new/price changes, "deprecated" for a
+	// deprecation flag. A suppression only applies while this value is unchanged.
+	Agg string
 }
 
 // runSync fetches machine-readable aggregators, diffs against the embedded
@@ -41,21 +45,32 @@ func runSync(ctx context.Context, args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	sups, err := loadSuppressions()
+	if err != nil {
+		fmt.Fprintf(errOut, "pricing-sync: bad drift_suppressions.json: %v\n", err)
+		return 1
+	}
 	cands, err := modelsDevFetcher{}.Fetch(ctx)
 	if err != nil {
 		fmt.Fprintf(errOut, "pricing-sync: fetch failed: %v\n", err)
 		return 1
 	}
-	return reportChanges(cands, *tol, *existingOnly, *failOnChanges)
+	return reportChanges(cands, *tol, *existingOnly, *failOnChanges, sups, time.Now())
 }
 
-// reportChanges diffs, optionally filters, prints, and returns the exit code.
-func reportChanges(cands []candidate, tol float64, existingOnly, failOnChanges bool) int {
+// reportChanges diffs, filters (drop-new + suppress-list), prints, and returns
+// the exit code. Suppressed candidates are dispositioned drift the daily Action
+// should not re-open an issue for (see drift_suppressions.json).
+func reportChanges(cands []candidate, tol float64, existingOnly, failOnChanges bool, sups []suppression, now time.Time) int {
 	changes := diff(cands, tol)
 	if existingOnly {
 		changes = dropNew(changes)
 	}
+	changes, suppressed := applySuppressions(changes, sups, now)
 	printChanges(changes, len(cands))
+	if suppressed > 0 {
+		printfOut("pricing-sync: %d dispositioned candidate(s) suppressed via drift_suppressions.json\n", suppressed)
+	}
 	if failOnChanges && len(changes) > 0 {
 		return 1
 	}
@@ -96,22 +111,23 @@ func diff(cands []candidate, tol float64) []change {
 }
 
 func appendChange(out []change, c candidate, tol float64) []change {
+	agg := fmt.Sprintf("%.4g/%.4g", c.InputPerM, c.OutputPerM)
 	p, found := pricing.LookupProvider(c.Provider, c.Model)
 	if !found {
 		return append(out, change{Kind: "new", Provider: c.Provider, Model: c.Model,
-			Detail: fmt.Sprintf("%.4g/%.4g per MTok (not in catalog)", c.InputPerM, c.OutputPerM)})
+			Detail: fmt.Sprintf("%s per MTok (not in catalog)", agg), Agg: agg})
 	}
 	if !p.Priced {
 		return out
 	}
 	if c.Deprecated {
 		out = append(out, change{Kind: "deprecated", Provider: c.Provider, Model: c.Model,
-			Detail: "aggregator marks deprecated"})
+			Detail: "aggregator marks deprecated", Agg: "deprecated"})
 	}
 	if priceDiffers(p, c, tol) {
 		out = append(out, change{Kind: "price", Provider: c.Provider, Model: c.Model,
-			Detail: fmt.Sprintf("catalog %.4g/%.4g → aggregator %.4g/%.4g",
-				p.InputPerM, p.OutputPerM, c.InputPerM, c.OutputPerM)})
+			Detail: fmt.Sprintf("catalog %.4g/%.4g → aggregator %s",
+				p.InputPerM, p.OutputPerM, agg), Agg: agg})
 	}
 	return out
 }

@@ -1,0 +1,74 @@
+[
+  {
+    "provider": "anthropic",
+    "model": "claude-sonnet-5",
+    "kind": "price",
+    "aggregator_value": "2/10",
+    "reason": "models.dev reports the introductory rate; catalog 3/15 is the durable list price. Dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-r-08-2024",
+    "kind": "price",
+    "aggregator_value": "0.15/0.6",
+    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable; catalog value is the last human-verified rate. Dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-nemo",
+    "kind": "price",
+    "aggregator_value": "0.15/0.15",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable; catalog value is the last human-verified rate. Dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-small-2603",
+    "kind": "price",
+    "aggregator_value": "0.15/0.6",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable; catalog value is the last human-verified rate. Dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-2.0-flash",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "models.dev flags this deprecated, but it remains callable on the first-party Google API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-3.1-flash-lite-preview",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "models.dev flags this deprecated, but it remains callable on the first-party Google API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-4.1-nano",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "openai",
+    "model": "o3-mini",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "openai",
+    "model": "o4-mini",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
+    "review_by": "2026-11-08"
+  }
+]

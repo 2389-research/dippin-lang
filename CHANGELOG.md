@@ -2,6 +2,11 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **pricing-sync drift suppress-list** ([#211](https://github.com/2389-research/dippin-lang/issues/211)). The daily drift Action re-opened the same issue (#201, #206) for the same persistently-deferred candidates — models.dev's intro-vs-durable price for `claude-sonnet-5`, JS-gated Mistral/Cohere pages, and unreliable `deprecated` flags on active OpenAI/Gemini models. `cmd/pricing-sync` now carries a checked-in `drift_suppressions.json` (keyed on `provider`/`model`/`kind` + the dispositioned `aggregator_value`, with a `reason` and a `review_by` date). `sync` filters a suppressed candidate **unless** the aggregator's reported value has changed from the dispositioned one, or the `review_by` date has passed — either re-surfaces it for fresh review. So the daily Action only opens/updates an issue on a genuinely new or changed candidate. Seeded with the nine entries stable across #201 and #206.
+
 ## [v0.59.1] — 2026-08-10
 
 ### Fixed
