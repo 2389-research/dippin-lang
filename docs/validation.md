@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 69 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (68 documented sections):
+Dippin registers 70 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (69 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP159): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP160): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP159<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP160<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP159)
+## Semantic Lint Warnings (DIP101–DIP160)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1542,6 +1542,27 @@ declaration.
 
 ---
 
+### DIP160: Subgraph Omits a Required Child Input
+
+**Severity**: Warning
+
+A `subgraph` node's `params:` block does not provide a value for an input the
+referenced child workflow declares as `required: true`, so the child would start
+with that input unset. This is a **cross-file** check: the CLI (`validate`,
+`check`, `watch`) resolves and parses the referenced child to read its `inputs`
+block. It is skipped for `.dipx` bundles (whose refs are in-bundle paths) and
+when the child file cannot be read or parsed — matching the DIP146 cross-file
+pass.
+
+```text
+warning[DIP160]: subgraph "Interview" omits required input "topic" of "interview_loop.dip" — the child starts with it unset
+```
+
+**Fix:** Add the missing key to the subgraph node's `params:`, or give the child
+input a `default:` so it is no longer required.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1558,7 +1579,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP159 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP160 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

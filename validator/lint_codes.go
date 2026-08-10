@@ -64,6 +64,7 @@ const (
 	DIP157 = "DIP157" // input reference inside a tool command never interpolates
 	DIP158 = "DIP158" // input declares an invalid or inapplicable constraint
 	DIP159 = "DIP159" // declared input is never referenced (dead input)
+	DIP160 = "DIP160" // subgraph params omits a required input of the referenced child (cross-file)
 )
 
 func init() {
@@ -133,4 +134,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP157: "input reference in a tool command is never interpolated",
 	DIP158: "input declares an invalid or inapplicable constraint",
 	DIP159: "declared input is never referenced (dead input)",
+	DIP160: "subgraph params omits a required input of the referenced child",
 }
