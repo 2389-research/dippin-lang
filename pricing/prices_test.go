@@ -134,6 +134,32 @@ func TestCacheRatesVerifiedProviders(t *testing.T) {
 	}
 }
 
+// TestOpenAICacheReadMultPerFamily covers #225: OpenAI's cached-input discount
+// is per-family, not a flat 0.1x. The gpt-4o family is 0.5x and the gpt-4.1
+// family is 0.25x (verified against developers.openai.com/api/docs/pricing);
+// only the GPT-5 family is 0.1x. A flat 0.1x underprices 4o/4.1 cache reads 2.5-5x.
+func TestOpenAICacheReadMultPerFamily(t *testing.T) {
+	want := map[string]float64{
+		"gpt-4o":       0.5,
+		"gpt-4o-mini":  0.5,
+		"gpt-4.1":      0.25,
+		"gpt-4.1-mini": 0.25,
+		"gpt-4.1-nano": 0.25,
+		"gpt-5":        0.1,
+		"gpt-5-mini":   0.1,
+	}
+	for model, mult := range want {
+		p, ok := Lookup(model)
+		if !ok {
+			t.Errorf("%s not found in catalog", model)
+			continue
+		}
+		if p.CacheReadMult != mult {
+			t.Errorf("%s cache_read_mult = %v, want %v", model, p.CacheReadMult, mult)
+		}
+	}
+}
+
 // TestDeprecatedModelsMarked covers #224: models retired on the first-party
 // provider API are still priced (they bill on Bedrock/Vertex passthrough) but
 // carry Deprecated=true so a consumer treating the catalog as a first-party
