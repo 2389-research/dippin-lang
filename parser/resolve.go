@@ -39,9 +39,12 @@ func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
 }
 
 // promptCascade holds the resolved defaults prompt prefix/suffix (inline value or
-// loaded file content), applied to every agent unless a node opts out (#175).
+// loaded file content) applied to every agent unless a node opts out (#175), plus
+// the shared system-prompt fallback (loaded file content) an agent inherits when
+// it sets no system prompt of its own (#72).
 type promptCascade struct {
 	prefix, suffix string
+	systemPrompt   string
 }
 
 // loadPromptCascade resolves the defaults-block prompt cascade once per workflow
@@ -52,6 +55,9 @@ func loadPromptCascade(d *ir.WorkflowDefaults, baseDir string) (promptCascade, e
 		return c, err
 	}
 	if err := loadDirectiveInto(&c.suffix, d.PromptSuffixFile, baseDir, "defaults", "prompt_suffix_file"); err != nil {
+		return c, err
+	}
+	if err := loadDirectiveInto(&c.systemPrompt, d.SystemPromptFile, baseDir, "defaults", "system_prompt_file"); err != nil {
 		return c, err
 	}
 	return c, nil
@@ -88,6 +94,12 @@ func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string, casca
 	}
 	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
 		return err
+	}
+	// Fallback default (#72): an agent that set no system prompt of its own
+	// inherits the shared defaults system_prompt_file. A node's own value (inline
+	// or file) is already non-empty here, so it always wins.
+	if cfg.SystemPrompt == "" {
+		cfg.SystemPrompt = cascade.systemPrompt
 	}
 	include := ""
 	if err := loadDirectiveInto(&include, cfg.PromptInclude, baseDir, n.ID, "prompt_include"); err != nil {

@@ -66,6 +66,7 @@ defaults_field ::= "model" ":" field_value
                  | "prompt_suffix" ":" field_value        /* cascade: inline suffix appended to every agent prompt (#175) */
                  | "prompt_prefix_file" ":" field_value   /* cascade: prefix fragment file; mutually exclusive with prompt_prefix */
                  | "prompt_suffix_file" ":" field_value   /* cascade: suffix fragment file; mutually exclusive with prompt_suffix */
+                 | "system_prompt_file" ":" field_value   /* fallback default: shared system prompt for agents that set none of their own (#72) */
 
 /* ============================================================ */
 /* Vars Section                                                 */
