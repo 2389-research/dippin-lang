@@ -244,7 +244,8 @@
       "input_per_m": 0.14,
       "output_per_m": 0.28,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.0028
     },
     {
       "provider": "deepseek",
@@ -252,7 +253,8 @@
       "input_per_m": 0.435,
       "output_per_m": 0.87,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-08-08"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.003625
     },
     {
       "provider": "gemini",
@@ -384,7 +386,8 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "grok",
@@ -392,7 +395,8 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "grok",
@@ -408,7 +412,8 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "grok",
@@ -416,7 +421,8 @@
       "input_per_m": 2,
       "output_per_m": 6,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.3
     },
     {
       "provider": "grok",
@@ -584,7 +590,8 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.3
     },
     {
       "provider": "openai",
@@ -850,7 +857,8 @@
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.11
     },
     {
       "provider": "zai",
@@ -858,7 +866,8 @@
       "input_per_m": 0.2,
       "output_per_m": 1.1,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.03
     },
     {
       "provider": "zai",
@@ -866,7 +875,8 @@
       "input_per_m": 1.1,
       "output_per_m": 4.5,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.22
     },
     {
       "provider": "zai",
@@ -881,7 +891,8 @@
       "input_per_m": 2.2,
       "output_per_m": 8.9,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.45
     },
     {
       "provider": "zai",
@@ -889,7 +900,8 @@
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.11
     },
     {
       "provider": "zai",
@@ -897,7 +909,8 @@
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.11
     },
     {
       "provider": "zai",
@@ -912,7 +925,8 @@
       "input_per_m": 0.07,
       "output_per_m": 0.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.01
     },
     {
       "provider": "zai",
@@ -920,7 +934,8 @@
       "input_per_m": 1,
       "output_per_m": 3.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "zai",
@@ -928,7 +943,8 @@
       "input_per_m": 1.2,
       "output_per_m": 4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.24
     },
     {
       "provider": "zai",
@@ -936,7 +952,8 @@
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.26
     },
     {
       "provider": "zai",
@@ -944,7 +961,8 @@
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cached_input_per_m": 0.26
     }
   ]
 }

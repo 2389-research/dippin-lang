@@ -134,6 +134,39 @@ func TestCacheRatesVerifiedProviders(t *testing.T) {
 	}
 }
 
+// TestProviderCachedInputPrices covers #232: absolute cached-input prices for
+// DeepSeek, Z.AI/GLM, xAI/Grok, and Moonshot/Kimi, each verified against the
+// provider's official pricing page (2026-08-10). These providers publish a
+// per-model cached price, so the catalog carries the absolute cached_input_per_m
+// (not a multiplier), which Cost() honors directly.
+func TestProviderCachedInputPrices(t *testing.T) {
+	want := map[string]float64{
+		"deepseek-v4-flash": 0.0028,
+		"deepseek-v4-pro":   0.003625,
+		"glm-5.2":           0.26,
+		"glm-5":             0.2,
+		"glm-4.5":           0.11,
+		"glm-4.7-flashx":    0.01,
+		"grok-4.5":          0.30,
+		"grok-4.3":          0.20,
+		"kimi-k3":           0.30,
+	}
+	for model, cached := range want {
+		p, ok := Lookup(model)
+		if !ok {
+			t.Errorf("%s not found in catalog", model)
+			continue
+		}
+		if p.CachedInputPerM != cached {
+			t.Errorf("%s cached_input_per_m = %v, want %v", model, p.CachedInputPerM, cached)
+		}
+		// Cost must bill cache reads at the absolute cached price, not input.
+		if got := Cost(Usage{CacheRead: 1_000_000}, p); got != cached {
+			t.Errorf("%s cache-read cost = %v, want %v", model, got, cached)
+		}
+	}
+}
+
 // TestOpenAICacheReadMultPerFamily covers #225: OpenAI's cached-input discount
 // is per-family, not a flat 0.1x. The gpt-4o family is 0.5x and the gpt-4.1
 // family is 0.25x (verified against developers.openai.com/api/docs/pricing);
