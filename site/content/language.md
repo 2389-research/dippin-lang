@@ -127,7 +127,7 @@ Vars are exported as graph-level DOT attributes so they round-trip through `dipp
 
 ## Inputs Block
 
-The optional `inputs` block declares the workflow's callee-side signature — the named values a caller (a human at the entry point, or a parent workflow via a `subgraph` node's `params:`) must or may supply at run start:
+The optional `inputs` block declares the workflow's callee-side signature — the named values a caller (a human at the entry point, or a parent workflow via a `subgraph` node's call-site binding — `inputs:` in `dip 2`, `params:` in `dip 1`) must or may supply at run start:
 
 ```
   inputs

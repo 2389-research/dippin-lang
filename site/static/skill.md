@@ -246,7 +246,7 @@ Both inline (`parallel P -> A, B`) and block form (`parallel P` with `branch:` l
 | Field | Type | Notes |
 |-------|------|-------|
 | `ref` | string | Path to .dip file (DIP126 if missing) |
-| `params` | key: value | Passed to child via `${params.key}` |
+| `params` / `inputs` | key: value | Call-site binding (`params:` dip 1, `inputs:` dip 2). A key matching a declared child input seeds `${inputs.key}`; others seed `${params.key}` |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
@@ -538,7 +538,7 @@ The primary loop for authoring .dip files:
 | DIP157 | `${inputs.x}` appears inside a tool `command:`, which never interpolates it — the literal reaches the shell (Error) | Read a `file`/`secret` input via its staged path, not `${inputs.x}` in the command |
 | DIP158 | An input constraint is invalid or inapplicable — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (Error) | Fix the constraint or move it to an applicable type |
 | DIP159 | A declared input is never referenced — a dead input (Warning). `file`/`secret` inputs are exempt (consumed out-of-band by staged path) | Reference the input, or remove it |
-| DIP160 | A `subgraph` node's `params:` omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's `params:` |
+| DIP160 | A `subgraph` node's call-site binding omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's binding (`inputs:` dip 2 / `params:` dip 1) |
 
 ## Best Practices
 

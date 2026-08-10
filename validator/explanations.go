@@ -206,9 +206,9 @@ func inputsExplanations() map[string]Explanation {
 		DIP160: {
 			Code:    DIP160,
 			Summary: "subgraph params omits a required input of the referenced child",
-			Trigger: "A subgraph node's params: block does not provide a value for an input the referenced child workflow declares as required: true. The child would start with that input unset. This is a cross-file check run by the CLI (validate/check/watch), not the in-file linter, so it is skipped for .dipx bundles and when the child file cannot be read or parsed.",
-			Fix:     "Add the missing key to the subgraph node's params:, or give the child input a default so it is no longer required.",
-			Example: "subgraph Scan\n  ref: child.dip\n  params:\n    severity: high   # DIP160 if child.dip declares a required input that params omits",
+			Trigger: "A subgraph node's call-site input binding (spelled `inputs:` in dip 2, `params:` in dip 1) does not provide a value for an input the referenced child workflow declares as required: true. The child would start with that input unset. This is a cross-file check run by the CLI (validate/check/watch), not the in-file linter, so it is skipped for .dipx bundles and when the child file cannot be read or parsed.",
+			Fix:     "Add the missing key to the subgraph node's input binding (`inputs:` in dip 2, `params:` in dip 1), or give the child input a default so it is no longer required.",
+			Example: "subgraph Scan\n  ref: child.dip\n  params:\n    severity: high   # dip 1; DIP160 if child.dip declares a required input this omits",
 		},
 		DIP158: {
 			Code:    DIP158,

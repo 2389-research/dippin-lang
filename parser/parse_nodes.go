@@ -607,14 +607,34 @@ func (p *Parser) applyToolParsedField(cfg *ir.ToolConfig, key, val string, loc i
 
 // applySubgraphField applies subgraph-specific configuration fields.
 func (p *Parser) applySubgraphField(cfg *ir.SubgraphConfig, key, val string, loc ir.SourceLocation) {
+	if p.rejectV2SubgraphParams(key, loc) {
+		return // handled (rejected) — dip 2 spells the call-site binding `inputs:`
+	}
 	switch key {
 	case "ref":
 		cfg.Ref = val
-	case "params":
+	case "params", "inputs":
+		// The subgraph call-site binding (#227). `params` is the dip-1 spelling;
+		// `inputs` the dip-2 spelling (dip 2 rejects `params` upstream). Both map
+		// to SubgraphConfig.Params; the runtime seeds the child's declared
+		// `inputs.*` from keys matching its inputs and `params.*` from the rest.
 		cfg.Params = p.parseParamsBlock(val)
 	default:
 		p.emitUnknownFieldHint("subgraph", key, loc)
 	}
+}
+
+// rejectV2SubgraphParams rejects `params:` on a subgraph node under dip 2, where
+// the call-site input binding is spelled `inputs:` (#227). Returns true when the
+// field was rejected (handled).
+func (p *Parser) rejectV2SubgraphParams(key string, loc ir.SourceLocation) bool {
+	if p.version >= 2 && key == "params" {
+		p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+			"%q is not a subgraph field in dip 2 — use `inputs:` to bind the child's declared inputs (run `dippin fmt --migrate`) at %d:%d",
+			key, loc.Line, loc.Column))
+		return true
+	}
+	return false
 }
 
 // applyManagerLoopField applies manager_loop-specific configuration fields.

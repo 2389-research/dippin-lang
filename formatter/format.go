@@ -736,7 +736,17 @@ func writeSubgraphFields(wr *writer, n *ir.Node, cfg ir.SubgraphConfig) {
 	if cfg.Ref != "" {
 		wr.line("ref: %s", quoteValue(cfg.Ref))
 	}
-	writeSortedMapBlock(wr, "params", cfg.Params)
+	writeSortedMapBlock(wr, subgraphBindingLabel(wr), cfg.Params)
+}
+
+// subgraphBindingLabel is the subgraph call-site binding keyword: `inputs` in
+// dip 2, `params` in dip 1 (#227). Only the subgraph binding is renamed —
+// parallel/fan_in/manager_loop `params:` are opaque runtime pass-through.
+func subgraphBindingLabel(wr *writer) string {
+	if wr.dip2 {
+		return "inputs"
+	}
+	return "params"
 }
 
 // writeSortedMapBlock emits a named block containing sorted "key: value"

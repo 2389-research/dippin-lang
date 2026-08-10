@@ -524,22 +524,24 @@ Subgraph nodes embed another workflow as a single step.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `ref` | String | — | Name or file path of the workflow to embed. |
-| `params` | Map | — | Key-value parameter overrides passed to the sub-workflow. Parameters are substituted via the `params.*` namespace in the embedded workflow. |
+| `params` / `inputs` | Map | — | The call-site binding: key-value values passed to the child. Spelled `params:` in `dip 1`, **`inputs:` in `dip 2`** (dip 2 rejects `params:` on a subgraph; `dippin fmt --migrate` relabels it). A key that matches an input the child declares in its `inputs` block seeds the child's `${inputs.*}`; any other key seeds `${params.*}` (the legacy undeclared namespace). [DIP160](validation.md#dip160) warns cross-file when a required child input is omitted. |
 
 ### Parameter Passing
 
-Parameters let you customize a reusable workflow at invocation time:
+The call-site binding lets you customize a reusable workflow at invocation time. Use `inputs:` under `dip 2`, `params:` under `dip 1`:
 
 ```dippin
+dip 2
+
 # In the parent workflow:
   subgraph SecurityScan
     ref: security/scan_pipeline
-    params:
-      severity: critical
+    inputs:
+      severity: critical   # -> child ${inputs.severity} if declared, else ${params.severity}
       fail_fast: true
 ```
 
-The embedded workflow can reference these via `${params.severity}`.
+The embedded workflow reads a declared value as `${inputs.severity}` and an undeclared one as `${params.severity}`. (Under `dip 1` the block is spelled `params:` and reads back as `${params.*}` unless the runtime binds declared inputs.)
 
 ### Reusable Interview Loop
 

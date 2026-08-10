@@ -27,10 +27,11 @@ subgraph Interview
     focus: "resources, auth, consumers, scale"
 ```
 
-`ref` points to the workflow file. `params` passes key-value pairs
-into it. Inside `interview_loop.dip`, those values are available as
-`${params.topic}` and `${params.focus}` — the same interpolation
-syntax used for context variables, but in a dedicated namespace that
+`ref` points to the workflow file. The call-site binding — spelled `params:`
+in `dip 1` and `inputs:` in `dip 2` (#227) — passes key-value pairs
+into it. Inside `interview_loop.dip`, a value bound to a declared input is read
+as `${inputs.topic}`; an undeclared one is read as `${params.topic}` — the same
+interpolation syntax used for context variables, but in a dedicated namespace that
 keeps parent and child workflows from stepping on each other.
 
 The referenced workflow is a complete, self-contained `.dip` file.

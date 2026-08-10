@@ -1546,9 +1546,10 @@ declaration.
 
 **Severity**: Warning
 
-A `subgraph` node's `params:` block does not provide a value for an input the
-referenced child workflow declares as `required: true`, so the child would start
-with that input unset. This is a **cross-file** check: the CLI (`validate`,
+A `subgraph` node's call-site binding — spelled `inputs:` in `dip 2`, `params:`
+in `dip 1` (#227) — does not provide a value for an input the referenced child
+workflow declares as `required: true`, so the child would start with that input
+unset. This is a **cross-file** check: the CLI (`validate`,
 `check`, `watch`) resolves and parses the referenced child to read its `inputs`
 block. It is skipped for `.dipx` bundles (whose refs are in-bundle paths) and
 when the child file cannot be read or parsed — matching the DIP146 cross-file
@@ -1558,8 +1559,8 @@ pass.
 warning[DIP160]: subgraph "Interview" omits required input "topic" of "interview_loop.dip" — the child starts with it unset
 ```
 
-**Fix:** Add the missing key to the subgraph node's `params:`, or give the child
-input a `default:` so it is no longer required.
+**Fix:** Add the missing key to the subgraph node's binding (`inputs:` in dip 2,
+`params:` in dip 1), or give the child input a `default:` so it is no longer required.
 
 ---
 

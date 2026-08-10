@@ -166,7 +166,8 @@ tool_field ::= "command" ":" field_value
 subgraph_node ::= "subgraph" IDENTIFIER NEWLINE INDENT ( subgraph_field | common_field )* OUTDENT
 
 subgraph_field ::= "ref" ":" field_value
-                 | "params" ":" params_block
+                 | "params" ":" params_block             /* dip 1 call-site binding */
+                 | "inputs" ":" params_block              /* dip 2 spelling of the same binding (#227) */
 
 params_block ::= NEWLINE INDENT ( IDENTIFIER ":" field_value )* OUTDENT
 
