@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.61.0] — 2026-08-10
 
 ### Added
 - **Cache-read rates for DeepSeek, Z.AI/GLM, xAI/Grok, and Moonshot/Kimi** ([#232](https://github.com/2389-research/dippin-lang/issues/232)). These providers publish a per-model cached-input (cache-hit) price, so the catalog now carries the absolute `cached_input_per_m`, verified 2026-08-10 against each official page: **DeepSeek** (`deepseek-v4-flash` $0.0028, `deepseek-v4-pro` $0.003625/MTok), **Z.AI/GLM** (11 models, e.g. `glm-5.2` $0.26, `glm-4.5` $0.11), **xAI/Grok** (`grok-4.5` $0.30, `grok-4.3` + `grok-4.20-0309-*` $0.20 — base tier), and **Moonshot/Kimi** (`kimi-k3` $0.30). `pricing.Cost` now bills cache reads for these at the published rate instead of $0. The rest stay 0 (consumer overlays until verified): **MiniMax** (no token cache price on its official page), **Mistral**/**Cohere** (pricing pages JS-gated, not machine-verifiable), **Qwen** (unpriced). Pairs with tracker#558.
