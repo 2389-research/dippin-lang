@@ -6,6 +6,7 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ### Fixed
 - **`gpt-5.2-codex` now prices instead of escaping cost ceilings** ([#209](https://github.com/2389-research/dippin-lang/issues/209)). tracker's cutover to `dippin-lang/pricing` (tracker#558) surfaced that `gpt-5.2-codex` was absent from the catalog, so `pricing.Lookup` returned `found=false` and it priced at **$0**, silently escaping `--max-cost`. Verified 2026-08-10 (LiteLLM + OpenRouter agree, consistent with `gpt-5.3-codex` at its base rate on OpenAI's official page): it bills at the `gpt-5.2` rate ($1.75/$14), so it's now an **alias** of `gpt-5.2`. (`gpt-5.2-mini`, the other model in #209, does not exist in any source — official, LiteLLM, or OpenRouter — and remains a tracker-side catalog fix.)
+- **DIP159 no longer false-positives a `file`/`secret` input consumed via its staged path** ([#215](https://github.com/2389-research/dippin-lang/issues/215), regression in v0.56.0). A `file` or `secret` input is consumed out-of-band by reading its staged path in a shell command — and DIP157 forbids `${inputs.x}` inside a `command:` — so it is legitimately never `${inputs.x}`-referenced. DIP159 was flagging it as a dead input, a DIP157/DIP159 pincer that made the documented staged-file pattern un-lintable (surfaced adopting v0.56.0 in tracker). `file` and `secret` inputs are now exempt from DIP159; `text`/`number`/`bool`/`enum` are still dead-input-checked.
 
 
 ## [v0.56.0] — 2026-08-10

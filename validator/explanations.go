@@ -213,7 +213,7 @@ func inputsExplanations() map[string]Explanation {
 		DIP159: {
 			Code:    DIP159,
 			Summary: "declared input is never referenced (dead input)",
-			Trigger: "An input is declared but never referenced as ${inputs.x} in a prompt or tool command, nor as inputs.x in an edge condition. It is dead within the graph — likely a leftover or a typo in the reference — though a host may still collect it. Advisory, mirroring DIP107 for dead node outputs.",
+			Trigger: "A text/number/bool/enum input is declared but never referenced as ${inputs.x} in a prompt or tool command, nor as inputs.x in an edge condition — dead within the graph, likely a leftover or a typo. file and secret inputs are exempt: they are consumed out-of-band by reading their staged path in a shell (DIP157 forbids ${inputs.x} in a command), so they are legitimately never interpolation-referenced. Advisory, mirroring DIP107 for dead node outputs.",
 			Fix:     "Reference the input where it is meant to be used, or remove the declaration.",
 			Example: "inputs\n  used: text\n  unused: text  # DIP159: no node references ${inputs.unused}",
 		},
