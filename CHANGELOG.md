@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Input constraint + dead-input lints (DIP158, DIP159) — Phase 2 of the `inputs` feature** ([#190](https://github.com/2389-research/dippin-lang/issues/190)). **DIP158** (error) validates an input's constraints against its declared type: an `enum` `default` must be one of its `options`, a `number`'s `min` must not exceed its `max`, a `pattern` must be a valid regex, and a constraint must apply to the type it's set on (`pattern`/`max_length`/`multiline` → text/secret, `min`/`max` → number, `options` → enum) — so `max_length` on a `bool` or `options` on a `text` is flagged. **DIP159** (warning) flags a declared input that no prompt, tool command, or edge condition references (a dead input, mirroring DIP107). Brings the catalog to **69 codes (DIP101–DIP159)**. Remaining Phase 3: DIP160 (cross-file subgraph arity), DIP161 (chain-attack input flow).
+
+
 ## [v0.55.0] — 2026-08-10
 
 ### Changed

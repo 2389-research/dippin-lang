@@ -200,9 +200,23 @@ func reachabilityExplanations() map[string]Explanation {
 	}
 }
 
-// inputsExplanations covers the workflow-level inputs block (DIP155-DIP157).
+// inputsExplanations covers the workflow-level inputs block (DIP155-DIP159).
 func inputsExplanations() map[string]Explanation {
 	return map[string]Explanation{
+		DIP158: {
+			Code:    DIP158,
+			Summary: "input declares an invalid or inapplicable constraint",
+			Trigger: "An input's constraint is malformed or does not apply to its type: an enum default that is not one of its options, a number whose min exceeds its max, an unparseable pattern regex, or a constraint on a type that has no such constraint (e.g. max_length or options on a bool). Each constraint applies only to certain types — pattern/max_length/multiline to text and secret, min/max to number, options to enum.",
+			Fix:     "Correct the constraint value, or move it to an input whose type supports it.",
+			Example: "inputs\n  risk: enum\n    options: low, high\n    default: medium  # DIP158: default is not one of the options",
+		},
+		DIP159: {
+			Code:    DIP159,
+			Summary: "declared input is never referenced (dead input)",
+			Trigger: "An input is declared but never referenced as ${inputs.x} in a prompt or tool command, nor as inputs.x in an edge condition. It is dead within the graph — likely a leftover or a typo in the reference — though a host may still collect it. Advisory, mirroring DIP107 for dead node outputs.",
+			Fix:     "Reference the input where it is meant to be used, or remove the declaration.",
+			Example: "inputs\n  used: text\n  unused: text  # DIP159: no node references ${inputs.unused}",
+		},
 		DIP155: {
 			Code:    DIP155,
 			Summary: "input declares an unrecognized type",

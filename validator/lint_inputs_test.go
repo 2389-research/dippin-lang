@@ -248,3 +248,202 @@ func TestDIP157CleanWhenInputRefIsInAnAgentPrompt(t *testing.T) {
 		t.Errorf("DIP157 fired on an agent prompt, which interpolates fine: %v", diags)
 	}
 }
+
+// --- DIP158: invalid or inapplicable input constraint ---
+
+func TestDIP158EnumDefaultNotInOptions(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    risk: enum
+      options: low, high
+      default: medium
+  agent A
+    prompt:
+      hi
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, "DIP158") {
+		t.Fatalf("enum default not in options should fire DIP158, got %v", diags)
+	}
+	for _, d := range diags {
+		if d.Code == "DIP158" && d.Severity != validator.SeverityError {
+			t.Errorf("DIP158 severity = %v, want Error", d.Severity)
+		}
+	}
+}
+
+func TestDIP158EnumDefaultInOptionsClean(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    risk: enum
+      options: low, medium, high
+      default: medium
+  agent A
+    prompt:
+      hi
+`
+	if hasCode(lintSrc(t, src), "DIP158") {
+		t.Error("a valid enum default must not fire DIP158")
+	}
+}
+
+func TestDIP158MinGreaterThanMax(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    n: number
+      min: 10
+      max: 5
+  agent A
+    prompt:
+      hi
+`
+	if !hasCode(lintSrc(t, src), "DIP158") {
+		t.Error("min > max should fire DIP158")
+	}
+}
+
+func TestDIP158MalformedPattern(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    s: text
+      pattern: "[unterminated"
+  agent A
+    prompt:
+      hi
+`
+	if !hasCode(lintSrc(t, src), "DIP158") {
+		t.Error("a malformed pattern regex should fire DIP158")
+	}
+}
+
+func TestDIP158ConstraintOnWrongType(t *testing.T) {
+	// max_length is a text constraint; on a bool it is inapplicable.
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    flag: bool
+      max_length: 4
+  agent A
+    prompt:
+      hi
+`
+	if !hasCode(lintSrc(t, src), "DIP158") {
+		t.Error("max_length on a bool should fire DIP158")
+	}
+}
+
+func TestDIP158OptionsOnNonEnum(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    name: text
+      options: a, b
+  agent A
+    prompt:
+      hi
+`
+	if !hasCode(lintSrc(t, src), "DIP158") {
+		t.Error("options on a non-enum should fire DIP158")
+	}
+}
+
+func TestDIP158ValidConstraintsClean(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    idea: text
+      pattern: "^[a-z]+$"
+      max_length: 100
+      multiline: true
+    n: number
+      min: 1
+      max: 10
+  agent A
+    prompt:
+      Build ${inputs.idea} x${inputs.n}.
+`
+	if hasCode(lintSrc(t, src), "DIP158") {
+		t.Errorf("valid constraints must not fire DIP158: %v", lintSrc(t, src))
+	}
+}
+
+// --- DIP159: declared input never referenced (dead input) ---
+
+func TestDIP159DeadInput(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    used: text
+    unused: text
+  agent A
+    prompt:
+      Only ${inputs.used} here.
+`
+	diags := lintSrc(t, src)
+	if !hasCode(diags, "DIP159") {
+		t.Fatalf("an unreferenced input should fire DIP159, got %v", diags)
+	}
+	for _, d := range diags {
+		if d.Code == "DIP159" && d.Severity != validator.SeverityWarning {
+			t.Errorf("DIP159 severity = %v, want Warning", d.Severity)
+		}
+		if d.Code == "DIP159" && !contains(d.Message, "unused") {
+			t.Errorf("DIP159 should name the dead input; got %q", d.Message)
+		}
+	}
+}
+
+func TestDIP159ReferencedInputsClean(t *testing.T) {
+	// referenced in a prompt, an edge condition, and a tool command respectively.
+	src := `workflow W
+  goal: t
+  start: A
+  exit: B
+  inputs
+    p: text
+    c: enum
+      options: x, y
+    t: text
+  agent A
+    prompt:
+      ${inputs.p}
+  tool B
+    command:
+      echo ${inputs.t}
+  edges
+    A -> B when inputs.c = x
+`
+	if hasCode(lintSrc(t, src), "DIP159") {
+		t.Errorf("inputs referenced in prompt/condition/command must not fire DIP159: %v", lintSrc(t, src))
+	}
+}
+
+func contains(s, sub string) bool { return len(s) >= len(sub) && (indexOf(s, sub) >= 0) }
+func indexOf(s, sub string) int {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return i
+		}
+	}
+	return -1
+}
