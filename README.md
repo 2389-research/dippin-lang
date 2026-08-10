@@ -161,7 +161,8 @@ Every analysis command (`validate`, `lint`, `doctor`, `parse`, `cost`, `coverage
 |---------|-------------|
 | `dippin pack [-o <out>] [--dry-run] <entry.dip>` | Build a deterministic `.dipx` bundle from a `.dip` entry |
 | `dippin unpack [-o <dir>] [--force] <bundle.dipx>` | Atomic extract via staging dir + rename |
-| `dippin inspect [--format text\|json] <bundle.dipx>` | Print manifest, identity hash, and file list |
+| `dippin inspect [--format text\|json] <bundle.dipx>` | Print manifest, identity hash, file list, and the entry workflow's declared inputs |
+| `dippin inputs [--format text\|json] <file>` | Print a workflow's declared `inputs` schema (typed JSON for host collection) |
 
 ### Editor & Tooling
 

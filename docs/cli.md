@@ -777,9 +777,31 @@ dippin unpack [-o <destdir>] [--force] <bundle.dipx>
 
 ---
 
+### inputs
+
+Print a workflow's declared `inputs` schema — the typed, introspectable contract a host uses to collect values before a run.
+
+```bash
+dippin inputs [--format text|json] <file>
+```
+
+**Flags**:
+
+- `--format text|json` — output format (default `text`); an unrecognized value is a usage error
+
+**Output**: the declared inputs in declaration order. `--format json` emits a stable array a host can render into a form or walk conversationally — each entry carries `name`, `type`, `required`, and any declared attributes (`default`, `prompt`, `description`, `options`, `pattern`, `min`, `max`, `max_length`, `multiline`). Defaults are **typed** (a `number` default is a JSON number, a `bool` a JSON bool); a workflow with no `inputs` block emits `[]`, never `null`. See [Context and Variables](context.md) for the `${inputs.x}` namespace and the DIP155–DIP157 lints.
+
+```bash
+dippin inputs --format json build_product.dip
+```
+
+**Exit codes**: `0` ok; `1` load/parse error; `2` usage error.
+
+---
+
 ### inspect
 
-Print a `.dipx` bundle's manifest, identity hash, and file list.
+Print a `.dipx` bundle's manifest, identity hash, file list, and — for the verified (default) path — the entry workflow's declared `inputs` schema, so a host can enumerate what to collect without unpacking.
 
 ```bash
 dippin inspect [--format text|json] [--no-verify] <bundle.dipx>
@@ -790,7 +812,7 @@ dippin inspect [--format text|json] [--no-verify] <bundle.dipx>
 - `--format text|json` — output format (default `text`)
 - `--no-verify` — reserved; v1 always integrity-verifies (the flag prints a stderr advisory)
 
-The bundle's `identity` is the SHA-256 of the manifest bytes as stored on disk — a stable content-addressable id suitable for caching and runtime resolution.
+The bundle's `identity` is the SHA-256 of the manifest bytes as stored on disk — a stable content-addressable id suitable for caching and runtime resolution. The `--format json` payload includes an `inputs` array (the entry workflow's schema, same shape as `dippin inputs`); the manifest-only `--no-verify` path omits the key.
 
 **Exit codes**: bundle ladder.
 

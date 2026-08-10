@@ -104,7 +104,8 @@ dippin-lang/
 ├── pricing/            # Leaf: single source of truth for model catalog + prices
 │   ├── prices.json     # Embedded catalog (provider, price, aliases, source, as_of)
 │   ├── pricing.go      # ModelPrice, Usage, Cost(), Lookup() — no dippin imports
-│   └── load.go         # //go:embed loader → lookup index
+│   ├── load.go         # //go:embed loader → lookup index
+│   └── staleness.go    # StaleEntries: flags entries overdue for re-verification
 │
 ├── cost/               # Cost estimation engine
 │   ├── cost.go         # Per-node cost analysis with turn/token heuristics
@@ -166,9 +167,10 @@ dippin-lang/
 │   ├── flatten.go      # Inline referenced workflows into one flat ir.Workflow
 │   └── resolver.go     # Resolver interface + disk-backed ref loading (imports parser)
 │
-└── cmd/dippin/         # CLI entry point
+├── cmd/dippin/         # CLI entry point
     ├── main.go         # os.Args → Run()
     ├── cli.go          # Command dispatch and global flag handling
+    ├── cmd_inputs.go   # inputs command (typed inputs-schema introspection)
     ├── cmd_parse.go    # parse command
     ├── cmd_validate.go # validate command
     ├── cmd_check.go    # check command
@@ -192,8 +194,12 @@ dippin-lang/
     ├── cmd_lsp.go      # lsp command
     ├── cmd_pack.go     # pack command (.dipx producer)
     ├── cmd_unpack.go   # unpack command (.dipx → directory)
-    ├── cmd_inspect.go  # inspect command (.dipx → manifest summary)
+    ├── cmd_inspect.go  # inspect command (.dipx → manifest + entry inputs schema)
     └── cmd_spec.go     # spec command (print full language specification)
+
+└── cmd/pricing-sync/   # Maintainer tool: pricing freshness (not part of the dippin binary)
+    ├── check.go        # `check`: staleness report over prices.json (exits non-zero if overdue)
+    └── sync.go         # `sync`: diff prices.json against models.dev, report candidates
 ```
 
 ### Loader Tier (dipx)

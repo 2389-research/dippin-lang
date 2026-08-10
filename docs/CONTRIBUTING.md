@@ -30,7 +30,7 @@ When changing code that affects observable behavior, check these before committi
 2. **New/changed DIP codes** → update `validation.md`, `README.md` diagnostics table, `llm-reference.md`
 3. **New/changed CLI commands** → update `cli.md`, `README.md` commands table
 4. **New/changed operators** → update `syntax.md`, `edges.md`, `llm-reference.md`, `docs/GRAMMAR.ebnf`
-5. **New/changed providers or models** → verify against live sources, update `lint_model.go`, `pricing.go`, `llm-reference.md`
+5. **New/changed providers or models** → verify against official provider docs, then edit the single source of truth **`pricing/prices.json`** (embedded by the leaf `pricing` package; both `cost` and `validator`'s DIP108 catalog derive from it — do **not** hand-edit `cost/pricing.go` or `validator/lint_model.go` model tables). Set each entry's `source` URL and `as_of` date; use `"priced": false` for a recognized-but-unverifiable model. Run `just check-prices` to surface overdue entries and `just sync-prices` to diff against models.dev. Update `docs/pricing-integration.md` and the supported-provider list if a provider is added.
 6. **New analysis output** → update `analysis.md` JSON schemas
 7. **Architecture changes** → update `architecture.md` package map and dependency graph
 8. **Version release** → update `CHANGELOG.md`, create GitHub release with notes
@@ -51,4 +51,4 @@ When auditing docs for accuracy:
 
 6. **JSON schemas vs struct tags**: Every field in `analysis.md` JSON examples must match the `json:` struct tags in the corresponding Go types.
 
-7. **Model catalog vs reality**: Model names and pricing must be verified against official provider documentation. Source URLs must be current. The "Last verified" date in code comments must be updated.
+7. **Model catalog vs reality**: Model names and pricing live in `pricing/prices.json` and must be verified against official provider documentation. Each entry's `source` URL must be current and its `as_of` date updated on verification (`just check-prices` flags overdue entries). `cost/pricing.go` and `validator/lint_model.go` derive from this file — they carry no hand-maintained model table.
