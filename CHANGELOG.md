@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **DIP159 no longer false-positives a `file`/`secret` input consumed via its staged path** ([#215](https://github.com/2389-research/dippin-lang/issues/215), regression in v0.56.0). A `file` or `secret` input is consumed out-of-band by reading its staged path in a shell command — and DIP157 forbids `${inputs.x}` inside a `command:` — so it is legitimately never `${inputs.x}`-referenced. DIP159 was flagging it as a dead input, a DIP157/DIP159 pincer that made the documented staged-file pattern un-lintable (surfaced adopting v0.56.0 in tracker). `file` and `secret` inputs are now exempt from DIP159; `text`/`number`/`bool`/`enum` are still dead-input-checked.
+
+
 ## [v0.56.0] — 2026-08-10
 
 ### Added

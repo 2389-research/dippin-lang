@@ -323,7 +323,7 @@ func lintDeadInputs(w *ir.Workflow) []Diagnostic {
 	referenced := referencedInputNames(w)
 	var diags []Diagnostic
 	for _, in := range w.Inputs {
-		if referenced[in.Name] {
+		if deadInputExempt(in) || referenced[in.Name] {
 			continue
 		}
 		diags = append(diags, Diagnostic{
@@ -335,6 +335,14 @@ func lintDeadInputs(w *ir.Workflow) []Diagnostic {
 		})
 	}
 	return diags
+}
+
+// deadInputExempt reports whether an input is exempt from the DIP159 dead-input
+// check. file and secret inputs are consumed out-of-band by reading their staged
+// path in a shell (DIP157 forbids ${inputs.x} in a command), so they are
+// legitimately never interpolation-referenced (issue #215).
+func deadInputExempt(in *ir.Input) bool {
+	return in.Type == "file" || in.Type == "secret"
 }
 
 // referencedInputNames collects every input name mentioned as ${inputs.x} in a
