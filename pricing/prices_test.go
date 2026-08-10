@@ -133,3 +133,28 @@ func TestCacheRatesVerifiedProviders(t *testing.T) {
 		t.Errorf("glm-5.2 (unverified) cache read = %v, want 0", glm.CacheReadMult)
 	}
 }
+
+// TestDeprecatedModelsMarked covers #224: models retired on the first-party
+// provider API are still priced (they bill on Bedrock/Vertex passthrough) but
+// carry Deprecated=true so a consumer treating the catalog as a first-party
+// allowlist can filter them; current models are Deprecated=false.
+func TestDeprecatedModelsMarked(t *testing.T) {
+	retired := []string{"claude-opus-4-1", "claude-opus-4-0", "claude-sonnet-4-0", "claude-haiku-3-5"}
+	for _, m := range retired {
+		p, ok := Lookup(m)
+		if !ok {
+			t.Errorf("%s should still be in the catalog (priced for passthrough)", m)
+			continue
+		}
+		if !p.Deprecated {
+			t.Errorf("%s should be Deprecated=true (retired on the first-party API)", m)
+		}
+		if p.InputPerM <= 0 {
+			t.Errorf("%s should still carry a price (Bedrock/Vertex passthrough)", m)
+		}
+	}
+	// A current model is not deprecated.
+	if p, _ := Lookup("claude-opus-5"); p.Deprecated {
+		t.Error("claude-opus-5 must not be Deprecated")
+	}
+}

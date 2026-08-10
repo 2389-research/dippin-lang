@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`ModelPrice.Deprecated` marks models retired on the first-party provider API** ([#224](https://github.com/2389-research/dippin-lang/issues/224)). The catalog carries some Anthropic models (`claude-opus-4-1`, `claude-opus-4-0`, `claude-sonnet-4-0`, `claude-haiku-3-5`) that the live first-party Anthropic API rejects with `not_found` — they're retired there but still bill on Bedrock/Vertex passthrough, so they stay priced in the catalog. They now carry `"deprecated": true` (exposed as `ModelPrice.Deprecated`), so a consumer treating the catalog as a first-party allowlist can filter them out. Catalog membership ≠ first-party callability; `priced` (is there a price) and `deprecated` (retired on the first-party API) are independent. Current models are `Deprecated=false`.
+
+
 ## [v0.58.0] — 2026-08-10
 
 ### Added

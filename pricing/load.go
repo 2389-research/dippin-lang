@@ -14,6 +14,7 @@ type fileEntry struct {
 	CacheWriteMult  float64  `json:"cache_write_mult,omitempty"`
 	Aliases         []string `json:"aliases,omitempty"`
 	Priced          *bool    `json:"priced,omitempty"` // nil = priced
+	Deprecated      bool     `json:"deprecated,omitempty"`
 	Source          string   `json:"source"`
 	AsOf            string   `json:"as_of"`
 }
@@ -63,6 +64,7 @@ func (idx *catalogIndex) add(e fileEntry) {
 		CacheWriteMult:  e.CacheWriteMult,
 		Aliases:         e.Aliases,
 		Priced:          e.Priced == nil || *e.Priced,
+		Deprecated:      e.Deprecated,
 		Source:          e.Source,
 		AsOf:            e.AsOf,
 	}
