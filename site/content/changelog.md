@@ -4,6 +4,11 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.62.1] — 2026-08-10
+
+### Changed
+- **Mistral and Cohere marked as verified no cached-input discount** ([#232](https://github.com/2389-research/dippin-lang/issues/232) tail). Their official pricing pages publish no cached-input rate, so their `cache_read_mult` is now a **verified `1.0`** — a cache read bills at the full input rate. This is deliberately distinct from an unverified `0` (which prices cache reads at $0 and signals "a consumer may overlay a default"): `1.0` says "we checked, there is no discount." A consumer can now stop overlaying a default cache rate for Mistral/Cohere and trust the catalog. Only **MiniMax** (official page is audio-only) and **Qwen** (unpriced/console-gated) remain unverified (cache fields `0`). Closes the pricing half of #232 / tracker#558 for all but those two.
+
 ## [v0.62.0] — 2026-08-10
 
 ### Added
