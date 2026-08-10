@@ -23,7 +23,8 @@
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
       "as_of": "2026-08-10",
       "cache_read_mult": 0.1,
-      "cache_write_mult": 1.25
+      "cache_write_mult": 1.25,
+      "deprecated": true
     },
     {
       "provider": "anthropic",
@@ -60,7 +61,8 @@
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
       "as_of": "2026-08-10",
       "cache_read_mult": 0.1,
-      "cache_write_mult": 1.25
+      "cache_write_mult": 1.25,
+      "deprecated": true
     },
     {
       "provider": "anthropic",
@@ -70,7 +72,8 @@
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
       "as_of": "2026-08-10",
       "cache_read_mult": 0.1,
-      "cache_write_mult": 1.25
+      "cache_write_mult": 1.25,
+      "deprecated": true
     },
     {
       "provider": "anthropic",
@@ -130,7 +133,8 @@
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
       "as_of": "2026-08-10",
       "cache_read_mult": 0.1,
-      "cache_write_mult": 1.25
+      "cache_write_mult": 1.25,
+      "deprecated": true
     },
     {
       "provider": "anthropic",
