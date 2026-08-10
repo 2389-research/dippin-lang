@@ -63,7 +63,7 @@ workflow <Name>
 | `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
-| `subgraph` | `ref` | `params` |
+| `subgraph` | `ref` | `params` (dip 1) / `inputs` (dip 2, #227) |
 
 All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, and the retry-exhaustion route — spelled `fallback_target` in `dip 1`, `fallback_retry_target` in `dip 2` (`dippin fmt --migrate` relabels it). These are the engine's retry channel, read from the node, not the `edges` block.
 
@@ -439,7 +439,7 @@ Both inline (`parallel P -> A, B`) and block form (`parallel P` with `branch:` l
 | Field | Type | Notes |
 |-------|------|-------|
 | `ref` | string | Path to .dip file (DIP126 if missing) |
-| `params` | key: value | Passed to child via `${params.key}` |
+| `params` / `inputs` | key: value | Call-site binding (`params:` dip 1, `inputs:` dip 2). A key matching a declared child input seeds `${inputs.key}`; others seed `${params.key}` |
 | `reads` | CSV | Context keys read |
 | `writes` | CSV | Context keys written |
 
@@ -731,7 +731,7 @@ The primary loop for authoring .dip files:
 | DIP157 | `${inputs.x}` appears inside a tool `command:`, which never interpolates it — the literal reaches the shell (Error) | Read a `file`/`secret` input via its staged path, not `${inputs.x}` in the command |
 | DIP158 | An input constraint is invalid or inapplicable — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (Error) | Fix the constraint or move it to an applicable type |
 | DIP159 | A declared input is never referenced — a dead input (Warning). `file`/`secret` inputs are exempt (consumed out-of-band by staged path) | Reference the input, or remove it |
-| DIP160 | A `subgraph` node's `params:` omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's `params:` |
+| DIP160 | A `subgraph` node's call-site binding omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's binding (`inputs:` dip 2 / `params:` dip 1) |
 
 ## Best Practices
 
