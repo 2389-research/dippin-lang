@@ -4,6 +4,11 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.63.0] — 2026-08-10
+
+### Added
+- **dip-2 `inputs:` subgraph call-site binding** ([#227](https://github.com/2389-research/dippin-lang/issues/227)). A `subgraph` node's call-site binding — how a parent supplies values to a child — is now spelled **`inputs:`** in `dip 2` (the dip-1 spelling `params:` is unchanged), completing the call-site half of the inputs epic (#190). This gives the child's declared `inputs` signature a caller: a key matching an input the child declares seeds its `${inputs.*}` namespace; any other key seeds the legacy `${params.*}`. Semantics mirror the retry-channel rename (Option A): `dip 2` rejects `params:` on a subgraph (pointing to `inputs:`), and `dippin fmt --migrate` relabels it losslessly. The existing [DIP160](https://2389-research.github.io/dippin-lang/validation.html#dip160) cross-file "omits a required child input" check works against either spelling. Unblocks the engine runtime half (tracker#556) — the runtime seeds `inputs.*` from the call site.
+
 ## [v0.62.2] — 2026-08-10
 
 ### Changed
