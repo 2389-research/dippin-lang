@@ -70,6 +70,6 @@ func missingRequiredInputDiag(n *ir.Node, ref, name string) validator.Diagnostic
 		Message: fmt.Sprintf("subgraph %q omits required input %q of %q — the child starts with it unset",
 			n.ID, name, ref),
 		Location: n.Source,
-		Help:     fmt.Sprintf("add %q to this subgraph's params:, or give the child input a default", name),
+		Help:     fmt.Sprintf("add %q to this subgraph's input binding (`inputs:` in dip 2, `params:` in dip 1), or give the child input a default", name),
 	}
 }
