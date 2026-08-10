@@ -1,8 +1,8 @@
 ---
 title: "Validation & Linting"
-description: "67 diagnostic codes for AI pipeline workflows. 10 structural errors and 57 semantic checks catch bugs before runtime."
+description: "69 diagnostic codes for AI pipeline workflows. 10 structural errors and 59 semantic checks catch bugs before runtime."
 section_label: "Diagnostics"
-subtitle: "67 diagnostic codes — 10 structural errors and 57 semantic checks — to catch problems before runtime."
+subtitle: "69 diagnostic codes — 10 structural errors and 59 semantic checks — to catch problems before runtime."
 ---
 
 ## Overview
@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP157): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP159): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
@@ -107,7 +107,7 @@ These must be fixed for a workflow to be valid. Each causes exit code 1.
   = help: valid operators: = == != contains startswith endswith in</pre>
 </div>
 
-## Semantic Warnings (DIP101-DIP157)
+## Semantic Warnings (DIP101-DIP159)
 
 These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
@@ -378,4 +378,4 @@ An agent sets `prompt_prefix: none` or `prompt_suffix: none` to opt out of the d
 hint[DIP154]: agent "A" sets prompt_suffix: none but no defaults prompt_suffix cascade is declared — the opt-out is a no-op
 ```
 
-> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP157) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.
+> **Full catalog:** This page highlights the most common diagnostics. For every code (DIP001–DIP010, DIP101–DIP159) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 are documented there.

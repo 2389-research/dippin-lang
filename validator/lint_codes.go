@@ -62,6 +62,8 @@ const (
 	DIP155 = "DIP155" // input declares a type this dippin does not recognize
 	DIP156 = "DIP156" // reference to an input the workflow does not declare
 	DIP157 = "DIP157" // input reference inside a tool command never interpolates
+	DIP158 = "DIP158" // input declares an invalid or inapplicable constraint
+	DIP159 = "DIP159" // declared input is never referenced (dead input)
 )
 
 func init() {
@@ -129,4 +131,6 @@ var linterCodeDescriptions = map[string]string{
 	DIP155: "input declares an unrecognized type",
 	DIP156: "reference to an undeclared input",
 	DIP157: "input reference in a tool command is never interpolated",
+	DIP158: "input declares an invalid or inapplicable constraint",
+	DIP159: "declared input is never referenced (dead input)",
 }

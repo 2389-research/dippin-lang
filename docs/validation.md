@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 67 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (66 documented sections):
+Dippin registers 69 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (68 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP157): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP159): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP157<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP159<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP157)
+## Semantic Lint Warnings (DIP101–DIP159)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1496,6 +1496,49 @@ interpolating it — the runtime never expands `inputs` into a shell command.
 
 ---
 
+### DIP158: Invalid or Inapplicable Input Constraint
+
+**Severity**: Error
+
+An input's constraint is malformed or does not apply to its declared type. Each
+constraint attribute is scoped to certain types: `pattern`, `max_length`, and
+`multiline` apply to `text` (and `secret`); `min`/`max` to `number`; `options`
+to `enum`. DIP158 fires when:
+
+- an `enum` `default` is not one of its `options`,
+- a `number`'s `min` exceeds its `max`,
+- a `pattern` is not a valid regular expression, or
+- any constraint is set on a type that has no such constraint (e.g. `max_length`
+  on a `bool`, `options` on a `text`).
+
+```text
+error[DIP158]: input "risk": enum default "medium" is not one of its options
+```
+
+**Fix:** Correct the constraint value, or move it to an input whose type
+supports it.
+
+---
+
+### DIP159: Dead Input (Never Referenced)
+
+**Severity**: Warning
+
+A declared input is never referenced — not as `${inputs.x}` in any prompt or
+tool command, nor as `inputs.x` in any edge condition. It is dead within the
+graph, usually a leftover declaration or a typo in the reference. (A host may
+still collect it out of band, which is why this is advisory, mirroring DIP107
+for dead node outputs.)
+
+```text
+warning[DIP159]: declared input "target_branch" is never referenced
+```
+
+**Fix:** Reference the input where it is meant to be used, or remove the
+declaration.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1512,7 +1555,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP157 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP159 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 
