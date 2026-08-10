@@ -2,6 +2,11 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [v0.62.2] — 2026-08-10
+
+### Changed
+- **Documentation, website, and syntax-package currency sweep** ([#243](https://github.com/2389-research/dippin-lang/pull/243)). Aligned every author-facing surface with the current state: diagnostic-code counts now read **70** everywhere (the agent-facing `skill.md`/`llms-full.txt`/embedded spec were missing the DIP155–DIP160 rows), the pricing-integration guide was rewritten (current version pin, `ModelPrice.Deprecated`, real populated cache-pricing state instead of the old "not populated / $0" section), and stale blog counts were corrected. **VSCode** syntax highlighting gained 13 missing field keywords (`timeout_action`, `questions_key`, `answers_key`, `outputs`, `params`, `on_resume`, `on_failure`, `tool_commands_allow`, `tool_denylist_add`, `max_total_tokens`, `max_cost_cents`, `max_wall_time`, `stall_timeout`) + the `stylesheet` section; **tree-sitter** highlighting gained the `inputs` section keyword. The `fmt --migrate` flag help now reads "lossless version bump" rather than "edges own destinations" (Option A keeps the retry channel on the node). No runtime behavior change.
+
 ## [v0.62.1] — 2026-08-10
 
 ### Changed
