@@ -65,13 +65,14 @@ The optional `defaults` block sets graph-level configuration that applies to all
     prompt_suffix_file: protocols/status-contract.md
 ```
 
-The `prompt_prefix`/`prompt_suffix` (inline) and `prompt_prefix_file`/`prompt_suffix_file` (fragment file) defaults **cascade a shared prompt fragment to every agent** (#175) — the effective prompt is composed as `prefix → body → prompt_include → suffix` at resolve time, with the suffix always last. An agent opts out with `prompt_suffix: none` / `prompt_prefix: none`.
+The `prompt_prefix`/`prompt_suffix` (inline) and `prompt_prefix_file`/`prompt_suffix_file` (fragment file) defaults **cascade a shared prompt fragment to every agent** (#175) — the effective prompt is composed as `prefix → body → prompt_include → suffix` at resolve time, with the suffix always last. An agent opts out with `prompt_suffix: none` / `prompt_prefix: none`. The `system_prompt_file` default (#72) is different in kind: it is a **fallback** shared system prompt (persona) — used only by agents that declare no `system_prompt`/`system_prompt_file` of their own, which fully override it.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `model` | String | Default LLM model for all agent nodes |
 | `prompt_prefix` / `prompt_suffix` | String | Inline prompt fragment cascaded to every agent as a prefix/suffix (#175) |
 | `prompt_prefix_file` / `prompt_suffix_file` | String | Prompt fragment loaded from a file and cascaded to every agent (mutually exclusive with the inline form) |
+| `system_prompt_file` | String | Shared system prompt (persona) loaded from a file; a fallback default for agents that set none of their own — a node's own `system_prompt`/`system_prompt_file` overrides it (#72). File form only |
 | `provider` | String | Default LLM provider (e.g., "openai", "anthropic") |
 | `retry_policy` | String | Default retry strategy name |
 | `max_retries` | Integer | Default max retry attempts per node |

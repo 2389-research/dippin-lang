@@ -706,11 +706,12 @@ func collectDirectiveAssets(wf *ir.Workflow, wfAbsPath, rootDir string, visited 
 	return append(results, cascade...), nil
 }
 
-// collectDefaultsCascadeFiles gathers the defaults-block prompt cascade fragment
-// files (prompt_prefix_file / prompt_suffix_file) for a workflow (#175).
+// collectDefaultsCascadeFiles gathers the defaults-block cascade fragment files
+// (prompt_prefix_file / prompt_suffix_file, #175) and the shared system-prompt
+// fallback default (system_prompt_file, #72) for a workflow.
 func collectDefaultsCascadeFiles(wf *ir.Workflow, wfDir, rootDir string, visited map[string]struct{}) ([]packedFile, error) {
 	var results []packedFile
-	for _, rel := range []string{wf.Defaults.PromptPrefixFile, wf.Defaults.PromptSuffixFile} {
+	for _, rel := range []string{wf.Defaults.PromptPrefixFile, wf.Defaults.PromptSuffixFile, wf.Defaults.SystemPromptFile} {
 		if rel == "" {
 			continue
 		}

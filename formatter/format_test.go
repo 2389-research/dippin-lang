@@ -2844,3 +2844,31 @@ func TestFormat_PromptFragmentDirectives(t *testing.T) {
 		t.Fatalf("not idempotent:\n--- first ---\n%s\n--- second ---\n%s", out, Format(w2))
 	}
 }
+
+// TestFormat_DefaultsSystemPromptFile covers #72: the shared system-prompt
+// fallback default round-trips through the defaults block.
+func TestFormat_DefaultsSystemPromptFile(t *testing.T) {
+	src := `workflow W
+  start: A
+  exit: A
+  defaults
+    system_prompt_file: personas/reviewer.md
+  agent A
+    prompt: "body A"
+`
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "system_prompt_file: personas/reviewer.md") {
+		t.Errorf("formatted output missing defaults system_prompt_file:\n%s", out)
+	}
+	w2, err := parser.NewParser(out, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse: %v\n%s", err, out)
+	}
+	if Format(w2) != out {
+		t.Fatalf("not idempotent:\n--- first ---\n%s\n--- second ---\n%s", out, Format(w2))
+	}
+}

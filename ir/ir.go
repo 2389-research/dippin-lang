@@ -72,6 +72,7 @@ type WorkflowDefaults struct {
 	PromptSuffix      string        // Cascade: inline suffix appended to every agent's prompt (#175)
 	PromptPrefixFile  string        // Cascade: prefix fragment loaded from a file (#175)
 	PromptSuffixFile  string        // Cascade: suffix fragment loaded from a file (#175)
+	SystemPromptFile  string        // Fallback default: shared system prompt (path) for agents that set none of their own (#72)
 }
 
 // Input declares one caller-supplied value bound at run start.

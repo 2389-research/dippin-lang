@@ -193,6 +193,17 @@ The effective prompt of each agent is assembled at resolve time as **`prefix →
 
 An agent opts out of a cascade side with `prompt_suffix: none` / `prompt_prefix: none` (see the field table above); `DIP154` hints when an opt-out matches no declared cascade. A packed bundle inlines the fully-composed prompt by default, or ships the fragment files under `pack --no-inline`.
 
+### Shared system prompt (`system_prompt_file`)
+
+The `defaults` block also carries a shared **system prompt** — a persona/role that applies to every agent that declares none of its own:
+
+```dippin
+  defaults
+    system_prompt_file: personas/reviewer.md   # shared persona (file form only)
+```
+
+Unlike the prompt cascade above (which *wraps* the prompt body), `defaults.system_prompt_file` is a **fallback default**: an agent with its own `system_prompt` or `system_prompt_file` keeps that and never sees the default (node wins, like `model`/`provider`). The file form is the only form under `defaults` — an inline `system_prompt:` there is an unknown-field error. Same security envelope and packing behavior as the other file directives.
+
 ---
 
 ## Human Nodes

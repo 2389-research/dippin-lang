@@ -74,6 +74,9 @@ func (p *Parser) applyDefaultStringField(key, val string) bool {
 	if applyDefaultPromptField(&p.workflow.Defaults, key, val) {
 		return true
 	}
+	if applyDefaultSystemPromptField(&p.workflow.Defaults, key, val) {
+		return true
+	}
 	return applyDefaultToolField(&p.workflow.Defaults, key, val)
 }
 
@@ -93,6 +96,17 @@ func applyDefaultPromptField(d *ir.WorkflowDefaults, key, val string) bool {
 		return false
 	}
 	return true
+}
+
+// applyDefaultSystemPromptField handles the shared system-prompt fallback default
+// (#72). File form only — an inline `system_prompt` under defaults falls through
+// to the unknown-field diagnostic.
+func applyDefaultSystemPromptField(d *ir.WorkflowDefaults, key, val string) bool {
+	if key == "system_prompt_file" {
+		d.SystemPromptFile = val
+		return true
+	}
+	return false
 }
 
 // applyDefaultCoreField handles model, provider, retry_policy defaults.

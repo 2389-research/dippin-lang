@@ -77,7 +77,7 @@ fmt.Println(workflow.Start)  // "AskUser"
 fmt.Println(workflow.Exit)   // "Done"
 ```
 
-**Unresolved-IR view and `ResolveFileDirectives`.** `parser.NewParser().Parse()` is intentionally pure — it does **not** read files referenced by `command_file:`, `prompt_file:`, `system_prompt_file:`, `prompt_include:`, or the defaults `prompt_prefix_file:`/`prompt_suffix_file:` cascade. Nodes that use these directives arrive with the `*File` field set (e.g., `AgentConfig.PromptFile`) and the content field (`Prompt`, `SystemPrompt`, `Command`) empty. This is the correct *unresolved view* for LSP, WASM, and most consumers.
+**Unresolved-IR view and `ResolveFileDirectives`.** `parser.NewParser().Parse()` is intentionally pure — it does **not** read files referenced by `command_file:`, `prompt_file:`, `system_prompt_file:`, `prompt_include:`, or the defaults `prompt_prefix_file:`/`prompt_suffix_file:`/`system_prompt_file:` cascade. Nodes that use these directives arrive with the `*File` field set (e.g., `AgentConfig.PromptFile`) and the content field (`Prompt`, `SystemPrompt`, `Command`) empty. This is the correct *unresolved view* for LSP, WASM, and most consumers.
 
 A Go consumer that needs inlined content (e.g., a runtime that will execute the node) must call `parser.ResolveFileDirectives` after `Parse()`:
 
@@ -159,7 +159,7 @@ child, err := src.Workflow("phases/review.dip", entry.SourceLocation.File)
 
 `dipx.Pack(ctx, entry, w, opts)` writes a deterministic ZIP from a `.dip` entry; `dipx.Extract(ctx, src, dest, allowOverwrite)` atomically unpacks one. Both refuse symlinks anywhere in the source tree (Pack) or staging tree (Extract) and enforce the spec's per-file (50 MB) and total-bundle (100 MB) caps.
 
-`PackOptions{}` (the zero value) is the default: every `command_file:` / `prompt_file:` / `system_prompt_file:` body — plus `prompt_include:` and the defaults `prompt_prefix_file:`/`prompt_suffix_file:` cascade, composed into the agent prompt — is inlined into the bundled `.dip`, producing a self-contained `format_version 1` bundle. `PackOptions{NoInline: true, Include: []string{...}}` instead ships those directive targets — plus any extra sibling files or directories listed in `Include` (relative to the entry's directory) — as separate entries under `workflows/`, keeps the `*_file:` directives, and produces `format_version 2`. `Include` requires `NoInline`.
+`PackOptions{}` (the zero value) is the default: every `command_file:` / `prompt_file:` / `system_prompt_file:` body — plus `prompt_include:`, the defaults `prompt_prefix_file:`/`prompt_suffix_file:` cascade composed into the agent prompt, and the defaults `system_prompt_file:` fallback — is inlined into the bundled `.dip`, producing a self-contained `format_version 1` bundle. `PackOptions{NoInline: true, Include: []string{...}}` instead ships those directive targets — plus any extra sibling files or directories listed in `Include` (relative to the entry's directory) — as separate entries under `workflows/`, keeps the `*_file:` directives, and produces `format_version 2`. `Include` requires `NoInline`.
 
 **Note:** `dipx` does not run `validate`/`lint`/`cost` on the bundled workflow — call `validator.Validate(src.Entry())` from your code if needed. `dippin pack` does this at the CLI layer because `dipx` is bound by the loader-tier rule and cannot import `validator`.
 

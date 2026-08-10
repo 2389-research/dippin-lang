@@ -564,3 +564,30 @@ func TestPack_NoInlinePromptFragments(t *testing.T) {
 		}
 	}
 }
+
+// TestPack_NoInlineDefaultsSystemPromptFile confirms the #72 defaults
+// system_prompt_file fallback is shipped under --no-inline like the other
+// defaults cascade files.
+func TestPack_NoInlineDefaultsSystemPromptFile(t *testing.T) {
+	dir := t.TempDir()
+	writeTree(t, dir, map[string]string{
+		"a.dip": `workflow A
+  goal: "shared persona no-inline"
+  start: R
+  exit: R
+
+  defaults
+    system_prompt_file: personas/reviewer.md
+
+  agent R
+    model: claude-sonnet-4-6
+    prompt: "do the thing"
+`,
+		"personas/reviewer.md": "SHARED PERSONA\n",
+	})
+	raw := packBytes(t, filepath.Join(dir, "a.dip"), PackOptions{NoInline: true})
+	m := openBundle(t, raw).Manifest()
+	if _, ok := manifestPaths(m)["workflows/personas/reviewer.md"]; !ok {
+		t.Errorf("manifest missing workflows/personas/reviewer.md; files=%v", m.Files)
+	}
+}

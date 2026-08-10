@@ -177,6 +177,14 @@ func writeDefaultsPromptFields(wr *writer, d ir.WorkflowDefaults) {
 	if d.PromptSuffixFile != "" {
 		wr.line("prompt_suffix_file: %s", quoteValue(d.PromptSuffixFile))
 	}
+	writeDefaultsSystemPromptField(wr, d)
+}
+
+// writeDefaultsSystemPromptField writes the shared system-prompt fallback default (#72).
+func writeDefaultsSystemPromptField(wr *writer, d ir.WorkflowDefaults) {
+	if d.SystemPromptFile != "" {
+		wr.line("system_prompt_file: %s", quoteValue(d.SystemPromptFile))
+	}
 }
 
 // writeDefaultsModelFields writes model/provider/fidelity fields.
