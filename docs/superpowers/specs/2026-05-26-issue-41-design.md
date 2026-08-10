@@ -102,7 +102,7 @@ func lintToolAccessValues(res *Result, w *ir.Workflow) {
 
 Diagnostic Help (`validator/explanations.go`):
 
-```
+```text
 DIP139 Trigger: tool_access value is not "none" (case-insensitive) or empty
 DIP139 Fix:     Use `tool_access: none` to disable LLM tools, or omit the field for the full catalog
 DIP139 Example: agent X
@@ -246,7 +246,7 @@ This is enforced in the runtime, not in dippin's validator. The dippin spec does
 
 One file. Lint-clean. Mirrors `examples/tool_safety.dip` syntactic style. Demonstrates the field on a summarizer agent:
 
-```
+```dippin
 workflow AgentToolAccess
   goal: "Demonstrate the tool_access agent-node safety primitive (issue #41)"
   start: Plan

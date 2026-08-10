@@ -19,7 +19,7 @@
 - Run all builds/tests via `just`, never raw `go`. Key commands: `just test-pkg <pkg>` (one package), `just test` (all), `just lint-go`, `just complexity` (cyclo ≤ 5 / cognit ≤ 7), `just fmt`, `just spec-check`.
 - Work entirely inside the worktree `.claude/worktrees/56-last-response-truncate`. Stage **explicit paths** (never `git add -A`).
 - Commit trailer on every commit:
-  ```
+  ```text
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
   ```
 - `0` / unset always means "no truncation" for an agent; `0` on a branch means "inherit the agent's value". The formatter/exporter emit the field only when `> 0`, so a negative value never round-trips — it is a lint concern only.

@@ -70,7 +70,7 @@ declaring `tool_access: none` is fully safe — the supervisory/steering channel
 (`SteerContext`, `stack.child.*`) is information-flow, a separate concern (#56). It leads with
 the boundary and points the author at the actionable check (security I4, DX M1).
 
-```
+```text
 Message: <kind> %q references subgraph %q, defined in its own file; this workflow's
          tool_access restrictions do not extend across the subgraph boundary
 Help:    audit the agents in %q for their own tool_access — restrictions declared in this
@@ -98,7 +98,7 @@ because it `os.Stat`s the child path). `path/filepath` path-math (`refIsSelf`) i
 only `os` syscalls are not. Decomposed to stay within cyclomatic ≤5 / cognitive ≤7
 (security/arch review: a single type-switch-with-branch-loop would blow the cognitive gate):
 
-```
+```go
 lintSubgraphToolAccess(w)      → if !workflowDeclaresToolAccess(w) { return nil }; loop → checkSubgraphBoundary(n)
 workflowDeclaresToolAccess(w)  → loop → nodeDeclaresToolAccess(n)
 nodeDeclaresToolAccess(n)      → type switch: AgentConfig → toolAccessSet(cfg.ToolAccess)

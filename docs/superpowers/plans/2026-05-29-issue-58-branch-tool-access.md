@@ -468,7 +468,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 Edit the `parallel split` block in `src` so the `fast` branch reads:
 
-```
+```dippin
   parallel split
     branch: fast
       model: claude-haiku-4-5

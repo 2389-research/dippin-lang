@@ -67,7 +67,7 @@ A lex-error mechanism, since none exists:
 
 ### Data-flow summary
 
-```
+```text
 source  --lexer(unescape)-->  TokenLiteral.Value (literal content)
         --formatConditionToken(escape)-->  Condition.Raw (escaped, quoted)
         --tryTokenizeQuotedCond(unescape)-->  CondCompare.Value (literal content)   ← round-trips

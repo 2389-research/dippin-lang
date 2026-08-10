@@ -25,7 +25,7 @@
 
 For each non-goal in the spec (§ Non-goals 1–9), file one GitHub issue with title + body. Use `gh issue create`. Title pattern: `follow-up: <non-goal title> (deferred from #41)`. Body template:
 
-```
+```text
 Filed per v0.32.0 spec § Follow-up issues #N.
 See: https://github.com/2389-research/dippin-lang/blob/main/docs/superpowers/specs/2026-05-26-issue-41-design.md#non-goals-v1
 
@@ -51,7 +51,7 @@ Record the assigned issue numbers (e.g., `#56, #57, #58, ...`) for Step 2.
 
 Edit `docs/superpowers/specs/2026-05-26-issue-41-design.md`. For each non-goal bullet, append ` ([#N](https://github.com/2389-research/dippin-lang/issues/N))` to the bullet text. Example:
 
-```
+```text
 1. **`defaults:`-block cascade.** Workflow-level ... Defer until incident data shows per-node annotation is insufficient. ([#56](https://github.com/2389-research/dippin-lang/issues/56))
 ```
 
@@ -846,7 +846,7 @@ git commit -m "test(migrate): round-trip preserves tool_access"
 
 Write `examples/agent_tool_access.dip`:
 
-```
+```dippin
 workflow AgentToolAccess
   goal: "Demonstrate the tool_access agent-node safety primitive (issue #41)"
   start: Plan
@@ -1057,7 +1057,7 @@ Required test set (all live in the runtime repo, under the agent layer or wherev
 
 Open a PR against the runtime repo with an appropriate branch name. The PR body should include:
 
-```
+```markdown
 ## Summary
 
 Coordinated runtime release with dippin-lang v0.32.0. Implements runtime enforcement for the new `tool_access:` agent-node field — see dippin spec at https://github.com/2389-research/dippin-lang/blob/main/docs/superpowers/specs/2026-05-26-issue-41-design.md for the full design.

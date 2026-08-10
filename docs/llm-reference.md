@@ -6,7 +6,7 @@ Compact reference for LLMs generating `.dip` workflow files. Paste into system p
 
 ## Grammar (simplified BNF)
 
-```
+```dippin
 workflow <Name>
   goal: "<text>"
   [requires: <dep1>, <dep2>, ...]
@@ -69,7 +69,7 @@ All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`
 
 ## Edge Conditions
 
-```
+```dippin
 when <variable> <op> <value>
 when <expr> and <expr>
 when <expr> or <expr>
@@ -114,7 +114,7 @@ Tool nodes that declare `marker_grep:` are also treated as exhaustive (typed rou
 
 This means the common pattern below is valid with zero warnings:
 
-```
+```dippin
 Gate -> Fix when ctx.outcome = fail
 Gate -> Next when ctx.outcome = success
 ```
@@ -123,7 +123,7 @@ Gate -> Next when ctx.outcome = success
 
 ## Example: Conditional Routing
 
-```
+```dippin
 workflow ReviewPipeline
   goal: "Review code and route by outcome"
   start: Analyze

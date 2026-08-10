@@ -169,13 +169,13 @@ In `validator/explanations.go`, in `safetyExplanations()`:
 
 In `validator/explanations.go`, the `DIP143` entry's `Trigger` ends with `Cross-file effective-access enforcement is deferred (#89).` Replace that final sentence with:
 
-```
+```text
 Native `dippin lint` resolves the child and may upgrade this to DIP146 (gap) or silence; DIP143 is the filesystem-free advisory (e.g. the wasm playground) or the fallback when the child cannot be resolved.
 ```
 
 In `validator/lint_subgraph_tool_access.go`, `checkSubgraphBoundary`'s `Help` string currently ends `Cross-file enforcement is tracked as #89.` Replace that trailing sentence with:
 
-```
+```text
 Native `dippin lint` resolves the child (DIP146); this advisory is the filesystem-free check or the fallback when the child cannot be resolved.
 ```
 
@@ -1043,7 +1043,7 @@ result means every resolvable child is fully locked down or had no restriction t
 escape — not that the child's tools are restricted at runtime.
 
 ---
-```
+```markdown
 
 - [ ] **Step 4: `docs/llm-reference.md`**
 
@@ -1056,7 +1056,7 @@ In the `**Subgraph boundary:**` paragraph (line ~106), the final sentence ends `
 
 ```
 ...and native `dippin lint` now resolves the child across the file boundary: [DIP146](https://2389-research.github.io/dippin-lang/validation.html#dip146) (Hint) fires when a resolved child restricts no agent's `tool_access` while a workflow on the path does, superseding DIP143 for boundaries it can resolve ([#89](https://github.com/2389-research/dippin-lang/issues/89)). DIP143 remains the filesystem-free advisory (e.g. the wasm playground) and the fallback when the child can't be resolved.
-```
+```markdown
 
 - [ ] **Step 6: Regenerate the spec and verify**
 

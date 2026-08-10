@@ -780,7 +780,7 @@ Path canonicalization is the front line against zip-slip and Unicode-confusion a
 
 - [ ] **Dispatch security subagent.**
 
-```
+```text
 Agent({
   description: "Phase 2 security gate — Canonicalize",
   subagent_type: "general-purpose",
@@ -807,7 +807,7 @@ Format: severity-ranked list (critical / important / minor). Reference file:line
 
 - [ ] **PAL spot-check** (parallel with the squad subagent):
 
-```
+```text
 mcp__pal__chat({
   prompt: "Audit dipx/resolve.go vs spec § 'Path canonicalization' and § 'Subgraph ref resolution'. Is the resolveLexically + Canonicalize composition sound under adversarial input? Specific concern: do the regular Canonicalize rules and resolveLexically's `..`-tolerance compose without leaving a window where a clever ref string ends up resolving to a path that bypasses one of Canonicalize's rules?",
   model: "gpt-5.2",
@@ -1299,7 +1299,7 @@ The manifest is the trust-on-first-use surface. Bypass here defeats every defens
 
 - [ ] **Dispatch crypto-discipline subagent.**
 
-```
+```text
 Agent({
   description: "Phase 3 gate — manifest TOFU hardening",
   subagent_type: "general-purpose",
@@ -1327,7 +1327,7 @@ Format: severity-ranked list (critical / important / minor). Reference file:line
 
 - [ ] **PAL spot-check**:
 
-```
+```text
 mcp__pal__chat({
   prompt: "Review dipx/manifest.go end-to-end vs the spec's Manifest schema and JSON encoding sections. Specifically: is the duplicate-key detection algorithm correct (no false negatives on nested objects)? Does the format_version validation match the spec's integer-only rule? Is the signatures-key-rejection rule applied at the correct level (top-level only, or recursively)?",
   model: "gpt-5.2",
@@ -1724,7 +1724,7 @@ ZIP I/O is the largest attack surface in the entire format. Parser-confusion, zi
 
 - [ ] **Dispatch security subagent.**
 
-```
+```text
 Agent({
   description: "Phase 4 gate — ZIP feature constraints + streaming caps",
   subagent_type: "general-purpose",
@@ -1750,7 +1750,7 @@ Do NOT propose new features. Format: severity-ranked list. Reference file:line.
 
 - [ ] **Dispatch crypto-discipline subagent (in parallel with security).**
 
-```
+```text
 Agent({
   description: "Phase 4 gate — verifiedBytes type-encoded ordering",
   subagent_type: "general-purpose",
@@ -2743,7 +2743,7 @@ This is the highest-risk phase: the Open orchestrator wires every defense togeth
 
 - [ ] **Dispatch crypto-discipline subagent.**
 
-```
+```text
 Agent({
   description: "Phase 5 gate — Open ordering invariants",
   subagent_type: "general-purpose",
@@ -2773,7 +2773,7 @@ Do NOT propose new features. Format: severity-ranked list. Reference file:line.
 
 - [ ] **PAL end-to-end pass:**
 
-```
+```text
 mcp__pal__chat({
   prompt: "Read the dipx/dipx.go orchestrator + helpers.go + bundle.go end-to-end. Independently verify the spec's Open post-conditions (numbered 1-9) hold. For each post-condition, state which line(s) of code prove it. Flag any post-condition that the code claims to satisfy but actually does not.",
   model: "gpt-5.2",
@@ -3207,7 +3207,7 @@ The Source interface is the contract the runtime swaps in. A subtle wrong shape 
 
 - [ ] **Dispatch runtime-integration subagent.**
 
-```
+```text
 Agent({
   description: "Phase 6 gate — Source interface and runtime contract",
   subagent_type: "general-purpose",
@@ -3600,7 +3600,7 @@ Pack is the single seam where attacker-controlled source trees compromise the *p
 
 - [ ] **Dispatch security subagent.**
 
-```
+```text
 Agent({
   description: "Phase 7 gate — Pack TOCTOU and reproducibility",
   subagent_type: "general-purpose",
@@ -4215,7 +4215,7 @@ CLI is operator-facing. Exit codes, atomicity, and error messages determine whet
 
 - [ ] **Dispatch ops-reliability subagent.**
 
-```
+```text
 Agent({
   description: "Phase 8 gate — CLI operational ergonomics",
   subagent_type: "general-purpose",
@@ -4246,7 +4246,7 @@ Do NOT propose new features. Format: severity-ranked list.
 
 - [ ] **PAL spot-check on the CLI seam:**
 
-```
+```text
 mcp__pal__chat({
   prompt: "Review cmd/dippin/cmd_pack.go, cmd_unpack.go, cmd_inspect.go and the loadSource helper for: (1) error-handling consistency across the three new commands; (2) exit-code mapping correctness; (3) any place where the CLI silently catches and ignores an error.",
   model: "gpt-5.2",
@@ -4328,7 +4328,7 @@ cat /home/clint/code/2389/dippin-lang/Justfile | head -100
 
 Append to `Justfile`:
 
-```
+```shell
 pack-examples:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -4342,7 +4342,7 @@ pack-examples:
 
 Find the existing `check` recipe and add `pack-examples` after `validate-examples`:
 
-```
+```text
 check: build vet fmt-check lint-go test-race releasecheck complexity validate-examples pack-examples tree-sitter-test
 ```
 
@@ -4406,7 +4406,7 @@ Each command exits 0 (or for `lint`, exits 0 with warnings printed but no errors
 
 - [ ] **PAL spec-coverage audit:**
 
-```
+```text
 mcp__pal__chat({
   prompt: "Read the spec at docs/superpowers/specs/2026-05-06-dipx-bundle-format-design.md and the implementation in dipx/ + cmd/dippin/cmd_{pack,unpack,inspect}.go. For every normative MUST in the spec, identify whether there is implementation code that enforces it. List any spec MUST that is NOT enforced. Also list any spec § that is implicitly missing entirely.",
   model: "gpt-5.2",
@@ -4538,7 +4538,7 @@ This is the last gate before declaring the implementation ready for human review
 
 - [ ] **Dispatch three subagents in parallel** (one Agent message with three tool calls):
 
-```
+```text
 [Security squad — final pass]
 Agent({
   description: "Phase 10 final gate — security",
@@ -4594,7 +4594,7 @@ Severity-ranked list.
 
 - [ ] **Final PAL synthesis** (after the three subagents return):
 
-```
+```text
 mcp__pal__chat({
   prompt: "Three squad reviewers just completed final-pass audits of the .dipx implementation. Synthesize their findings into a single severity-ranked list. Identify any cross-cutting issues that no single domain caught (e.g., a security gap that's only exploitable because of an ops gap). Recommend whether this is ready for human PR review.",
   model: "gpt-5.2",

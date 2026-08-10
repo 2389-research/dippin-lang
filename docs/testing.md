@@ -19,7 +19,7 @@ flowchart LR
 
 Test files use `.test.json` extension and are auto-discovered from the workflow path:
 
-```
+```text
 pipeline.dip       → pipeline.test.json
 src/flow.dip       → src/flow.test.json
 ```

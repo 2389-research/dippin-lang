@@ -35,7 +35,7 @@ Two distinct categories of files must reach the bundle:
 dippin's deliverable is **structural and tracker-free**: for every file in the
 entry's reachable closure (`.dip` workflows + shipped assets),
 
-```
+```text
 extract(pack(S, --no-inline --include …))/workflows/<rel>  ==  S/<rel>   (byte-for-byte)
 ```
 
@@ -65,7 +65,7 @@ The end-to-end shell-parity check (`tracker run dev_loop.dip` vs
 
 ## CLI surface
 
-```
+```shell
 dippin pack --no-inline [--include <path> ...] -o out.dipx entry.dip
 ```
 
@@ -100,7 +100,7 @@ Assets ship under `workflows/` as **siblings of the `.dip` that references
 them**, reusing the existing `bundlePathFor` mapping (`"workflows/" + rel`,
 `dipx/helpers.go:441-448`) unchanged.
 
-```
+```text
 out.dipx (format_version: 2)
   manifest.json
   workflows/dev_loop.dip              # workflow (entry)

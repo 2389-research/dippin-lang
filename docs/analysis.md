@@ -33,7 +33,7 @@ dippin cost pipeline.dip
 
 **Output:**
 
-```
+```text
 ═══ Cost Estimate ═════════════════════════════════════════
                                 Min Expected      Max
   ──────────────────────── ──────── ──────── ────────
@@ -96,7 +96,7 @@ dippin coverage pipeline.dip
 
 **Output:**
 
-```
+```text
 ═══ Coverage Analysis ═════════════════════════════════════
 ─── Edge Coverage ─────────────────────────────────────────
   ✓ SetupWorkspace               no_conditions
@@ -157,7 +157,7 @@ dippin doctor pipeline.dip
 
 **Output:**
 
-```
+```text
 ═══ Health Report Card ════════════════════════════════════
   Grade: A  Score: 95/100
 
@@ -217,7 +217,7 @@ dippin optimize pipeline.dip
 
 **Output:**
 
-```
+```text
 ═══ Optimization Report ═══════════════════════════════════
 ─── Cost Summary ──────────────────────────────────────────
   Current:   $3.59 (expected)
@@ -293,7 +293,7 @@ dippin diff v1.dip v2.dip
 
 **Output:**
 
-```
+```text
 ═══ Semantic Diff ═════════════════════════════════════════
 ─── Nodes ─────────────────────────────────────────────────
   + FinalQualityGate
@@ -385,7 +385,7 @@ dippin unused pipeline.dip
 
 **Output:**
 
-```
+```text
 ═══ Unused Nodes ══════════════════════════════════════════
   ✗ AbandonedReview              agent (Abandoned Review)
   ✗ OrphanCleanup                tool

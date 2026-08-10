@@ -777,7 +777,7 @@ Read `docs/GRAMMAR.ebnf` and add `"conditional"` to the node kind production rul
 
 Create `examples/conditional_gate.dip`:
 
-```
+```dippin
 workflow ConditionalGate
   goal: "Demonstrate conditional routing without LLM calls"
   start: Analyze

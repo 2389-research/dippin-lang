@@ -10,7 +10,7 @@ The runtime is a production Go pipeline engine that executes AI-driven workflows
 
 **Dippin** replaces DOT as the authoring format while keeping DOT as an export target. The architecture is:
 
-```
+```text
 Dippin source → Parser → Canonical IR → Execution Engine
                                       → DOT Export (visualization)
                                       → Linter / Validator
@@ -808,7 +808,7 @@ This is critical for predictable behavior. When multiple sources can set the sam
 
 ### Precedence (lowest to highest, higher wins)
 
-```
+```text
 1. Built-in engine defaults     (e.g., model: claude-sonnet-4-5, max_retries: 2)
 2. Workflow defaults             (the `defaults` block in the .dip file)
 3. Imported module defaults      (the `defaults` block in an imported .dip file)
@@ -988,7 +988,7 @@ type SuggestedFix struct {
 
 ### Example diagnostic output
 
-```
+```text
 error[DIP003]: unknown node reference "InterpretX" in edge
   --> pipeline.dip:45:5
    |
@@ -1431,7 +1431,7 @@ All runtime-generated Dippin output goes through the same validator pipeline tha
 
 ## Appendix A: Suggested Repo Layout
 
-```
+```text
 dippin/
 ├── SPEC.md                    # Formal syntax specification
 ├── ir/

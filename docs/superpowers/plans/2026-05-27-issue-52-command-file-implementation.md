@@ -25,7 +25,7 @@
 
 Use `gh issue create -R 2389-research/dippin-lang`. Title pattern: `follow-up: <topic> (deferred from #52)`. Body template:
 
-```
+```text
 Filed per v0.33.0 spec § Follow-up issues #N.
 See: https://github.com/2389-research/dippin-lang/blob/main/docs/superpowers/specs/2026-05-27-issue-52-command-file-design.md
 
@@ -941,7 +941,7 @@ Mutually exclusive with `command:` — specifying both is a parse error.
 Loading: CLI entry points (`dippin lint`, `dippin pack`, `dippin validate`, `dippin doctor`) load the file contents into the IR after parse. The LSP and the playground (cmd/wasm) skip loading; they show the path unresolved. The runtime reads `.dipx` bundles where content is already inlined, so the runtime sees no difference from inline `command:`.
 
 Non-goals (deferred): `prompt_file:` / `system_prompt_file:` directives, glob expansion, configurable size cap, DOT round-trip preservation of the directive form. See follow-up issues linked from issue [#52](https://github.com/2389-research/dippin-lang/issues/52).
-```
+```markdown
 
 - [ ] **Step 5: Add CHANGELOG entry stub**
 

@@ -26,7 +26,7 @@ graph LR
     CMD --> E["Info / Testing<br>version, help, explain, test, spec"]
 ```
 
-```
+```shell
 dippin [--format text|json] <command> [args]
 ```
 

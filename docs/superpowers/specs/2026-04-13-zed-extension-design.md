@@ -18,7 +18,7 @@ The Zed extension is a thin packaging layer:
 
 ## Files
 
-```
+```text
 editors/zed-dippin/
   extension.toml                    # Extension metadata + grammar + LSP declaration
   Cargo.toml                        # Rust crate for WASM compilation

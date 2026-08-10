@@ -57,7 +57,7 @@ The formatter runs on **unresolved** IR (`dippin fmt` calls `parser.NewParser(..
 
 Effective prompt assembly (each part omitted when empty), per agent:
 
-```
+```text
 body_with_include = join_nonempty("\n\n", [ Prompt, <content of prompt_include> ])
 effective         = join_nonempty("\n\n", [ prefix, body_with_include, suffix ])
 ```

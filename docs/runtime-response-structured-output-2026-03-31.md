@@ -134,7 +134,7 @@ for k, v := range cfg.Params {
 
 ### Canonical field ordering in formatted output
 
-```
+```text
 label → model → provider → reasoning_effort → fidelity →
 response_format → response_schema →
 goal_gate → auto_status → max_turns → cmd_timeout →

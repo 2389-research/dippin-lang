@@ -45,7 +45,7 @@ Three new fields in `applyToolField`:
 
 `writeToolFields` emits new fields when non-default, clustering routing/output-shape fields:
 
-```
+```text
 outputs → marker_grep → route_required → output_limit → timeout → reads → writes → command
 ```
 

@@ -537,7 +537,7 @@ Read the tool node's current shape.
 
 Edit the existing tool node block to include:
 
-```
+```dippin
     marker_grep: '^(pass|fail)$'
     route_required: true
     output_limit: 65536
@@ -1334,7 +1334,7 @@ After the existing prose, append:
 ```
 
 When `marker_grep` is declared, the runtime populates `ctx.tool_marker` and routing edges can reference it instead of `ctx.tool_stdout`. `route_required: true` makes the absence of any match a hard failure. `output_limit` overrides the per-node stdout cap when the command genuinely needs a larger window.
-```
+```markdown
 
 - [ ] **Step 3: Commit**
 
@@ -1515,7 +1515,7 @@ These fields forward to the runtime via DOT export. Routing semantics require an
 - **#42** — DIP138, lint warning when a tool node parses stdout for routing without declaring `marker_grep` / `outputs`.
 - **#43** — normalize boolean parsing (`true` / `yes` / `1` accepted consistently).
 - **#44** — close the existing `outputs` DOT round-trip gap.
-```
+```markdown
 
 - [ ] **Step 3: Verify Hugo build**
 

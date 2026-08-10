@@ -49,7 +49,7 @@ All edges are defined in the `edges` block at the bottom of a workflow:
 
 Each edge is a single line:
 
-```
+```dippin
 <FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
 ```
 

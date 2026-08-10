@@ -16,7 +16,7 @@ marker-coverage lint at all**.
 
 Example of the hole (silent today):
 
-```
+```dippin
 tool RunTests
   marker_grep: ^(tests-ok|tests-failed)$
 edges
@@ -162,7 +162,7 @@ the helper names above are the pre-planned extractions.
 
 ## Diagnostic shape
 
-```
+```text
 warning[DIP152]: node "RunTests": marker_grep enumerates markers that no edge
   routes and no else default covers: tests-failed
   = help: route each marker (e.g. `RunTests -> <node> on tests-failed`), add an

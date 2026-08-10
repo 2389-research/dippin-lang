@@ -199,7 +199,7 @@ opposite of intent — the single highest-leverage clarity fix in this issue):
 > **Help:** `use a positive cap (e.g. max_cost_cents: 1000 for $10.00), or omit it / set 0 for no limit`
 
 ### Explanations entry (4-field, test-gated)
-```
+```go
 DIP145: {
     Code:    DIP145,
     Summary: "graph budget default is negative",
