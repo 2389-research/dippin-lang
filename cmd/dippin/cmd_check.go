@@ -62,7 +62,7 @@ func runCheckPipeline(stdout io.Writer, formatStr string, w *ir.Workflow, path s
 	valRes := validator.Validate(w)
 	lintRes := validator.Lint(w)
 	allDiags := append(valRes.Diagnostics, lintRes.Diagnostics...)
-	allDiags = applyCrossFileToolAccess(allDiags, w, path)
+	allDiags = applyCrossFileChecks(allDiags, w, path)
 
 	hasErr := hasErrorSeverity(allDiags)
 

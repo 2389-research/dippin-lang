@@ -79,7 +79,7 @@ func (c *CLI) CmdLint(args []string) ExitCode {
 	// Merge all diagnostics, then apply the native cross-file tool_access pass
 	// (DIP146) — it supersedes DIP143 for boundaries whose child it resolved.
 	allDiags := append(valRes.Diagnostics, lintRes.Diagnostics...)
-	allDiags = applyCrossFileToolAccess(allDiags, w, path)
+	allDiags = applyCrossFileChecks(allDiags, w, path)
 	c.renderDiagnostics(allDiags)
 
 	// Exit 1 on any error-severity diagnostic, whether structural (Validate) or
