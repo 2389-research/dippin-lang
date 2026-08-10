@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/2389-research/dippin-lang/doctor"
+	"github.com/2389-research/dippin-lang/validator"
 )
 
 // CmdDoctor produces a health report card for a workflow.
@@ -20,14 +21,16 @@ func (c *CLI) CmdDoctor(args []string) ExitCode {
 		return ExitError
 	}
 
-	// Note: doctor's lint summary does NOT apply the cross-file DIP146 pass /
-	// DIP143 supersession. doctor.DiagnoseWithOptions composes validator.LintWithOptions inside the
-	// doctor package and surfaces only hint COUNTS, not per-line diagnostics, so
-	// the CLI-layer cross-file pass can't reach it without a layering change. The
-	// effect is minor (a DIP143 vs DIP146 hint is counted the same; only a
-	// fully-restricted child differs by one hint). `dippin lint`/`check`/`watch`
-	// carry the precise DIP146 behavior. (#89)
-	report := doctor.DiagnoseWithOptions(w, lintOptions(extraModels))
+	// doctor's hint count now reflects the cross-file DIP146 pass / DIP143
+	// supersession: the native pass lives here in cmd/dippin (which doctor must
+	// not import), so we run it and hand doctor the corrected diagnostics via
+	// DiagnoseFromDiagnostics. Only the tool_access pass is applied — DIP160
+	// cross-file input arity is a Warning and folding it in would change doctor's
+	// score, out of scope for this hint-count fix. (#101, follows #89)
+	diags := append(validator.Validate(w).Diagnostics,
+		validator.LintWithOptions(w, lintOptions(extraModels)).Diagnostics...)
+	diags = applyCrossFileToolAccess(diags, w, path)
+	report := doctor.DiagnoseFromDiagnostics(w, diags)
 	return c.renderDoctorReport(report)
 }
 

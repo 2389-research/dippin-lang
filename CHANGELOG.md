@@ -7,6 +7,9 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 ### Added
 - **pricing-sync drift suppress-list** ([#211](https://github.com/2389-research/dippin-lang/issues/211)). The daily drift Action re-opened the same issue (#201, #206) for the same persistently-deferred candidates — models.dev's intro-vs-durable price for `claude-sonnet-5`, JS-gated Mistral/Cohere pages, and unreliable `deprecated` flags on active OpenAI/Gemini models. `cmd/pricing-sync` now carries a checked-in `drift_suppressions.json` (keyed on `provider`/`model`/`kind` + the dispositioned `aggregator_value`, with a `reason` and a `review_by` date). `sync` filters a suppressed candidate **unless** the aggregator's reported value has changed from the dispositioned one, or the `review_by` date has passed — either re-surfaces it for fresh review. So the daily Action only opens/updates an issue on a genuinely new or changed candidate. Seeded with the nine entries stable across #201 and #206.
 
+### Fixed
+- **`dippin doctor` now applies the cross-file DIP146 pass / DIP143 supersession** ([#101](https://github.com/2389-research/dippin-lang/issues/101), deferred from #89). Doctor's lint summary previously computed lint inside the `doctor` package and never saw the CLI-layer cross-file resolution, so a fully-restricted (or agent-less) resolved child left a stale DIP143 hint in the health card that `lint`/`check`/`watch` had already superseded. Doctor now receives the cross-file-adjusted diagnostics via a new `doctor.DiagnoseFromDiagnostics` seam (the CLI owns the native pass; `doctor` still imports no CLI code), so its hint count matches the other commands. Only the tool_access pass is threaded in — DIP160 cross-file input arity is a Warning and folding it into the score is a separate change. Score/Grade are unaffected (they react only to errors and warnings).
+
 ## [v0.59.1] — 2026-08-10
 
 ### Fixed
