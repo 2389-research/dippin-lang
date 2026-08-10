@@ -1,6 +1,72 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+var testNow = time.Date(2026, 8, 10, 0, 0, 0, 0, time.UTC)
+
+func TestApplySuppressions_FiltersActiveDispositioned(t *testing.T) {
+	changes := []change{
+		{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5", Agg: "2/10"},
+		{Kind: "deprecated", Provider: "openai", Model: "o3-mini", Agg: "deprecated"},
+		{Kind: "price", Provider: "openai", Model: "gpt-9-real", Agg: "5/20"}, // not suppressed
+	}
+	sups := []suppression{
+		{Provider: "anthropic", Model: "claude-sonnet-5", Kind: "price", Aggregator: "2/10", ReviewBy: "2026-11-08"},
+		{Provider: "openai", Model: "o3-mini", Kind: "deprecated", Aggregator: "deprecated", ReviewBy: "2026-11-08"},
+	}
+	kept, n := applySuppressions(changes, sups, testNow)
+	if n != 2 {
+		t.Fatalf("suppressed = %d, want 2", n)
+	}
+	if len(kept) != 1 || kept[0].Model != "gpt-9-real" {
+		t.Errorf("kept = %+v, want only gpt-9-real", kept)
+	}
+}
+
+func TestApplySuppressions_ReSurfacesOnChangedAggValue(t *testing.T) {
+	// The aggregator now reports 1/8 instead of the dispositioned 2/10 — the
+	// disposition no longer applies, so it must re-surface.
+	changes := []change{{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5", Agg: "1/8"}}
+	sups := []suppression{{Provider: "anthropic", Model: "claude-sonnet-5", Kind: "price", Aggregator: "2/10", ReviewBy: "2026-11-08"}}
+	kept, n := applySuppressions(changes, sups, testNow)
+	if n != 0 || len(kept) != 1 {
+		t.Errorf("changed aggregator value must re-surface; kept=%+v suppressed=%d", kept, n)
+	}
+}
+
+func TestApplySuppressions_ExpiredReviewByReSurfaces(t *testing.T) {
+	changes := []change{{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5", Agg: "2/10"}}
+	sups := []suppression{{Provider: "anthropic", Model: "claude-sonnet-5", Kind: "price", Aggregator: "2/10", ReviewBy: "2026-01-01"}}
+	kept, n := applySuppressions(changes, sups, testNow)
+	if n != 0 || len(kept) != 1 {
+		t.Errorf("expired suppression (past review_by) must re-surface; kept=%+v suppressed=%d", kept, n)
+	}
+}
+
+// TestEmbeddedSuppressionsWellFormed guards the checked-in drift_suppressions.json:
+// it parses, every entry has the required fields, a valid kind, and a parseable
+// review_by date (a malformed date silently disables a suppression, so fail loud).
+func TestEmbeddedSuppressionsWellFormed(t *testing.T) {
+	sups, err := loadSuppressions()
+	if err != nil {
+		t.Fatalf("embedded drift_suppressions.json does not parse: %v", err)
+	}
+	validKind := map[string]bool{"price": true, "deprecated": true, "new": true}
+	for _, s := range sups {
+		if s.Provider == "" || s.Model == "" || s.Aggregator == "" || s.Reason == "" {
+			t.Errorf("incomplete suppression: %+v", s)
+		}
+		if !validKind[s.Kind] {
+			t.Errorf("%s/%s: invalid kind %q", s.Provider, s.Model, s.Kind)
+		}
+		if _, err := time.Parse("2006-01-02", s.ReviewBy); err != nil {
+			t.Errorf("%s/%s: review_by %q is not YYYY-MM-DD", s.Provider, s.Model, s.ReviewBy)
+		}
+	}
+}
 
 // findChange returns the change for a model, or nil.
 func findChange(changes []change, model string) *change {

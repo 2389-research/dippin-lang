@@ -69,6 +69,8 @@ jobs:
             echo
             echo "> ⚠️ **Human-gated.** Confirm each candidate against the model's official \`source\` URL before editing \`pricing/prices.json\`. models.dev is a detection aid, not an authority — it can reflect introductory or discounted rates (an intro price vs. the durable list price)."
             echo
+            echo "> Already-dispositioned candidates are filtered by \`cmd/pricing-sync/drift_suppressions.json\` (they re-surface if the aggregator value changes or the entry's \`review_by\` passes). To silence a persistent false alarm, add an entry there."
+            echo
             echo '### Price / deprecation drift (`sync --existing-only --tolerance 0.02`)'
             echo '```'
             cat drift.txt
