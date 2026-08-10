@@ -172,7 +172,8 @@
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "cohere",
@@ -180,7 +181,8 @@
       "input_per_m": 0.5,
       "output_per_m": 1.5,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "cohere",
@@ -188,7 +190,8 @@
       "input_per_m": 0.5,
       "output_per_m": 1.5,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "cohere",
@@ -196,7 +199,8 @@
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "cohere",
@@ -204,7 +208,8 @@
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "cohere",
@@ -212,7 +217,8 @@
       "input_per_m": 0.0375,
       "output_per_m": 0.15,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "cohere",
@@ -220,7 +226,8 @@
       "input_per_m": 0.0375,
       "output_per_m": 0.15,
       "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "deepseek",
@@ -486,7 +493,8 @@
       "input_per_m": 0.3,
       "output_per_m": 0.9,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -494,7 +502,8 @@
       "input_per_m": 2,
       "output_per_m": 5,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -502,7 +511,8 @@
       "input_per_m": 0.2,
       "output_per_m": 0.2,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -510,7 +520,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.1,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -518,7 +529,8 @@
       "input_per_m": 0.15,
       "output_per_m": 0.15,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -526,7 +538,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.1,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -534,7 +547,8 @@
       "input_per_m": 0.5,
       "output_per_m": 1.5,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -542,7 +556,8 @@
       "input_per_m": 0.4,
       "output_per_m": 2,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -550,7 +565,8 @@
       "input_per_m": 0.4,
       "output_per_m": 2,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -558,7 +574,8 @@
       "input_per_m": 1.5,
       "output_per_m": 7.5,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -566,7 +583,8 @@
       "input_per_m": 0.02,
       "output_per_m": 0.04,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -574,7 +592,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.3,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "mistral",
@@ -582,7 +601,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.3,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 1
     },
     {
       "provider": "moonshot",
