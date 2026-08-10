@@ -92,3 +92,21 @@ func TestCost(t *testing.T) {
 		t.Errorf("absolute cached-input cost = %v, want 0.5", got)
 	}
 }
+
+// TestGPT52CodexAlias covers #209: gpt-5.2-codex bills at the gpt-5.2 rate
+// (confirmed 2026-08-10 by LiteLLM + OpenRouter; consistent with gpt-5.3-codex
+// pricing at its base rate on the official page), modeled as an alias.
+func TestGPT52CodexAlias(t *testing.T) {
+	base, ok := LookupProvider("openai", "gpt-5.2")
+	if !ok {
+		t.Fatal("gpt-5.2 must be priced")
+	}
+	codex, ok := LookupProvider("openai", "gpt-5.2-codex")
+	if !ok {
+		t.Fatal("gpt-5.2-codex must resolve (issue #209 budget escape)")
+	}
+	if codex.InputPerM != base.InputPerM || codex.OutputPerM != base.OutputPerM {
+		t.Errorf("gpt-5.2-codex %v/%v != gpt-5.2 %v/%v",
+			codex.InputPerM, codex.OutputPerM, base.InputPerM, base.OutputPerM)
+	}
+}

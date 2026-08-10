@@ -2,6 +2,12 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **`gpt-5.2-codex` now prices instead of escaping cost ceilings** ([#209](https://github.com/2389-research/dippin-lang/issues/209)). tracker's cutover to `dippin-lang/pricing` (tracker#558) surfaced that `gpt-5.2-codex` was absent from the catalog, so `pricing.Lookup` returned `found=false` and it priced at **$0**, silently escaping `--max-cost`. Verified 2026-08-10 (LiteLLM + OpenRouter agree, consistent with `gpt-5.3-codex` at its base rate on OpenAI's official page): it bills at the `gpt-5.2` rate ($1.75/$14), so it's now an **alias** of `gpt-5.2`. (`gpt-5.2-mini`, the other model in #209, does not exist in any source — official, LiteLLM, or OpenRouter — and remains a tracker-side catalog fix.)
+
+
 ## [v0.56.0] — 2026-08-10
 
 ### Added
