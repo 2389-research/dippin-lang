@@ -447,3 +447,40 @@ func indexOf(s, sub string) int {
 	}
 	return -1
 }
+
+// TestDIP159FileSecretExempt covers #215: a file/secret input is consumed by
+// reading its staged path in a command (DIP157 forbids ${inputs.x} there), so
+// it is legitimately never ${inputs.x}-referenced and must NOT trip DIP159.
+func TestDIP159FileSecretExempt(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: Setup
+  exit: Setup
+  inputs
+    spec: file
+    token: secret
+  tool Setup
+    command:
+      if [ -f .tracker/inputs/spec ]; then cp .tracker/inputs/spec SPEC.md; fi
+`
+	if hasCode(lintSrc(t, src), "DIP159") {
+		t.Errorf("file/secret inputs consumed via staged path must not trip DIP159: %v", lintSrc(t, src))
+	}
+}
+
+// TestDIP159StillFiresForValueTypes: text/number/bool/enum are still checked.
+func TestDIP159StillFiresForValueTypes(t *testing.T) {
+	src := `workflow W
+  goal: t
+  start: A
+  exit: A
+  inputs
+    unused: text
+  agent A
+    prompt:
+      nothing referenced
+`
+	if !hasCode(lintSrc(t, src), "DIP159") {
+		t.Error("a dead text input should still fire DIP159")
+	}
+}

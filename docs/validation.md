@@ -1524,11 +1524,14 @@ supports it.
 
 **Severity**: Warning
 
-A declared input is never referenced — not as `${inputs.x}` in any prompt or
-tool command, nor as `inputs.x` in any edge condition. It is dead within the
-graph, usually a leftover declaration or a typo in the reference. (A host may
-still collect it out of band, which is why this is advisory, mirroring DIP107
-for dead node outputs.)
+A `text`/`number`/`bool`/`enum` input is never referenced — not as `${inputs.x}`
+in any prompt or tool command, nor as `inputs.x` in any edge condition. It is
+dead within the graph, usually a leftover declaration or a typo in the
+reference. `file` and `secret` inputs are **exempt**: they are consumed
+out-of-band by reading their staged path in a shell (and `${inputs.x}` is
+forbidden in a `command:` by DIP157), so they are legitimately never
+interpolation-referenced. (A host may still collect any input out of band,
+which is why this is advisory, mirroring DIP107 for dead node outputs.)
 
 ```text
 warning[DIP159]: declared input "target_branch" is never referenced
