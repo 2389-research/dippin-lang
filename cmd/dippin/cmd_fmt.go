@@ -100,16 +100,8 @@ func (c *CLI) reportMigrationNotes(notes []formatter.MigrationNote) ExitCode {
 		return ExitOK
 	}
 	fmt.Fprintf(c.Stderr, "migrated with %d case(s) that need review:\n", len(notes))
-	nonEquivalent := false
 	for _, n := range notes {
 		fmt.Fprintf(c.Stderr, "  node %q: %s\n", n.Node, n.Message)
-		if n.NonEquivalent {
-			nonEquivalent = true
-		}
-	}
-	if nonEquivalent {
-		fmt.Fprintln(c.Stderr, "ERROR: one or more nodes are NOT runtime-equivalent after migration (the retry channel is altered) — this output is not a drop-in replacement; migrate those nodes by hand. See dippin-lang#186.")
-		return ExitMigrateNonEquivalent
 	}
 	return ExitMigrateReview
 }

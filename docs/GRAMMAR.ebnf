@@ -211,7 +211,8 @@ common_field ::= "label" ":" field_value
                | "max_retries" ":" INTEGER
                | "base_delay" ":" DURATION
                | "retry_target" ":" IDENTIFIER
-               | "fallback_target" ":" IDENTIFIER
+               | "fallback_target" ":" IDENTIFIER        /* dip 1 spelling of the retry-exhaustion route */
+               | "fallback_retry_target" ":" IDENTIFIER  /* dip 2 spelling of the same route */
 
 /* ============================================================ */
 /* Edges Section                                                */

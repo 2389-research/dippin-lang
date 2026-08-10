@@ -33,7 +33,10 @@ const v1Fallback = `workflow W
     T -> Done  on success
 `
 
-func TestFmtMigrate_SynthesizesFailEdge(t *testing.T) {
+// v1 fallback_target migrates to the dip-2 spelling fallback_retry_target as a
+// node attribute — the retry-exhaustion route the engine reads — NOT an on-fail
+// edge (#204 Option A). Lossless, exit OK.
+func TestFmtMigrate_FallbackBecomesRetryAttr(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cli := &CLI{Stdout: &stdout, Stderr: &stderr, Format: FormatText}
 	code := cli.CmdFmt([]string{"--migrate", writeTmp(t, v1Fallback)})
@@ -44,11 +47,15 @@ func TestFmtMigrate_SynthesizesFailEdge(t *testing.T) {
 	if !strings.HasPrefix(out, "dip 2\n") {
 		t.Errorf("migrated output should declare dip 2:\n%s", out)
 	}
-	if strings.Contains(out, "fallback_target") {
-		t.Errorf("migrated output must not keep fallback_target:\n%s", out)
+	if !strings.Contains(out, "fallback_retry_target: Esc") {
+		t.Errorf("expected fallback_retry_target node attr:\n%s", out)
 	}
-	if !strings.Contains(out, "T -> Esc  on fail") {
-		t.Errorf("expected synthesized on-fail edge:\n%s", out)
+	if strings.Contains(out, "on fail") {
+		t.Errorf("must NOT synthesize an on-fail edge (retry-exhaustion is a node attr):\n%s", out)
+	}
+	// dip-1 spelling must be gone.
+	if strings.Contains(out, "fallback_target:") {
+		t.Errorf("dip-1 fallback_target spelling must not survive:\n%s", out)
 	}
 }
 
@@ -70,18 +77,22 @@ const v1Divergent = `workflow W
     T -> Fix   on fail
 `
 
-func TestFmtMigrate_DivergentFlagsReviewExit(t *testing.T) {
+// A fallback_target alongside an on-fail edge to a different node is no longer a
+// conflict: they are distinct channels (retry-exhaustion attr vs. genuine-failure
+// edge), so both survive and migration is clean (no review note).
+func TestFmtMigrate_FallbackAndFailEdgeCoexist(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cli := &CLI{Stdout: &stdout, Stderr: &stderr, Format: FormatText}
 	code := cli.CmdFmt([]string{"--migrate", writeTmp(t, v1Divergent)})
-	if code != ExitMigrateReview {
-		t.Fatalf("divergent migrate should exit ExitMigrateReview, got %d", code)
+	if code != ExitOK {
+		t.Fatalf("fallback + on-fail edge should migrate cleanly, got %d; stderr=%s", code, stderr.String())
 	}
-	if !strings.Contains(stdout.String(), "# MIGRATION:") {
-		t.Errorf("expected inline MIGRATION comment:\n%s", stdout.String())
+	out := stdout.String()
+	if !strings.Contains(out, "fallback_retry_target: Esc") {
+		t.Errorf("expected fallback_retry_target node attr:\n%s", out)
 	}
-	if !strings.Contains(stderr.String(), "need review") {
-		t.Errorf("expected stderr review summary, got:\n%s", stderr.String())
+	if !strings.Contains(out, "T -> Fix  on fail") {
+		t.Errorf("the pre-existing on-fail edge must survive:\n%s", out)
 	}
 }
 
@@ -128,18 +139,21 @@ const v1NonSelfRetry = `workflow W
     Review -> Done  on success
 `
 
-// TestFmtMigrate_NonSelfRetryExitsNonEquivalent covers #186: a non-self
-// retry_target migration is not runtime-equivalent, so fmt --migrate must exit
-// with the distinct ExitMigrateNonEquivalent code (not the review code) so bulk
-// migration can separate it from safe conversions.
-func TestFmtMigrate_NonSelfRetryExitsNonEquivalent(t *testing.T) {
+// A non-self retry_target migrates losslessly to a dip-2 retry_target node attr
+// (#204 Option A) — the retry channel the engine reads — instead of the old
+// lossy loop-edge conversion. Exit OK, no review note.
+func TestFmtMigrate_NonSelfRetryKeptAsAttr(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	cli := &CLI{Stdout: &stdout, Stderr: &stderr, Format: FormatText}
 	code := cli.CmdFmt([]string{"--migrate", writeTmp(t, v1NonSelfRetry)})
-	if code != ExitMigrateNonEquivalent {
-		t.Fatalf("non-self retry_target migrate should exit ExitMigrateNonEquivalent (4), got %d", code)
+	if code != ExitOK {
+		t.Fatalf("non-self retry_target should migrate cleanly, got %d; stderr=%s", code, stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "NOT runtime-equivalent") {
-		t.Errorf("expected a NOT runtime-equivalent error on stderr, got:\n%s", stderr.String())
+	out := stdout.String()
+	if !strings.Contains(out, "retry_target: Implement") {
+		t.Errorf("retry_target must be kept as a node attr:\n%s", out)
+	}
+	if strings.Contains(out, "loop") {
+		t.Errorf("must NOT synthesize a loop edge:\n%s", out)
 	}
 }

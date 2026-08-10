@@ -255,7 +255,7 @@ dippin fmt [--check] [--write] [--migrate] <file>
 |------|-------------|
 | `--check` | Don't output anything. Exit 1 if the file is not already in canonical format. Useful for CI checks. |
 | `--write` | Write the formatted output back to the source file in-place. |
-| `--migrate` | Convert a v1 file to `dip 2` and emit canonical output. Folds `fallback_target` into an `on fail` edge and a non-self `retry_target` into a `loop` edge, flagging any case it can't express 1:1 with an inline `# MIGRATION:` comment plus a stderr summary. Exit codes: `3` when a case needs author review but the output is runtime-equivalent; **`4` when the output is NOT runtime-equivalent** — currently a non-self `retry_target`, whose loop edge the engine's retry channel does not read (the retry silently becomes a self-retry), so the output must not be used as a drop-in ([#186](https://github.com/2389-research/dippin-lang/issues/186)). `--migrate --check` writes nothing and exits non-zero when the file is not already canonical `dip 2`. An already-`dip 2` file is an idempotent no-op. |
+| `--migrate` | Convert a v1 file to `dip 2` and emit canonical output. A **lossless** version bump: the retry channel stays on the node (`retry_target` unchanged; `fallback_target` relabeled to its dip-2 spelling `fallback_retry_target`) because the engine reads it there, not from an edge ([#186](https://github.com/2389-research/dippin-lang/issues/186), [#204](https://github.com/2389-research/dippin-lang/issues/204)). `--migrate --check` writes nothing and exits non-zero when the file is not already canonical `dip 2`. An already-`dip 2` file is an idempotent no-op. |
 
 **Default behavior** (no flags): Print the canonically formatted output to stdout.
 

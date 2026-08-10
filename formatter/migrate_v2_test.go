@@ -3,6 +3,7 @@ package formatter
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -10,12 +11,11 @@ import (
 	"github.com/2389-research/dippin-lang/simulate"
 )
 
-// v1wf builds a v1 workflow with the given retry config on node "T" and the
-// given extra edges from T; conditions are parsed so EdgeRoutesOnFail works.
+// v1wf builds a v1 workflow with the given retry config on node "T".
 func v1wf(t *testing.T, retry ir.RetryConfig, extra []*ir.Edge) *ir.Workflow {
 	t.Helper()
 	nodes := []*ir.Node{
-		{ID: "T", Kind: ir.NodeTool, Config: ir.ToolConfig{Command: "run"}, Retry: retry},
+		{ID: "T", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "run"}, Retry: retry},
 		{ID: "Done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "d"}},
 		{ID: "Esc", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "e"}},
 	}
@@ -29,131 +29,107 @@ func failTo(to string) *ir.Edge {
 	return &ir.Edge{From: "T", To: to, Condition: &ir.Condition{Raw: "ctx.outcome = fail"}}
 }
 
-func edgeTo(w *ir.Workflow, to string) *ir.Edge {
+func edgeCount(w *ir.Workflow, to string) int {
+	n := 0
 	for _, e := range w.Edges {
 		if e.From == "T" && e.To == to {
-			return e
+			n++
 		}
 	}
-	return nil
+	return n
 }
 
-func TestMigrate_FallbackNoFailEdge_Synthesizes(t *testing.T) {
+// Under #204 Option A the retry channel stays on the node — migration is a
+// lossless version bump. fallback_target is kept as FallbackTarget (emitted as
+// the dip-2 spelling fallback_retry_target by the formatter), NOT converted to
+// an on-fail edge.
+func TestMigrate_FallbackKeptAsAttr(t *testing.T) {
 	w := v1wf(t, ir.RetryConfig{FallbackTarget: "Esc"}, nil)
 	notes := MigrateToV2(w)
 	if len(notes) != 0 {
-		t.Fatalf("clean synthesize should have no notes, got %v", notes)
+		t.Fatalf("lossless migration should have no notes, got %v", notes)
 	}
-	if w.Version != "2" || w.Nodes[0].Retry.FallbackTarget != "" {
-		t.Fatalf("version/field not cleared: v=%s fb=%q", w.Version, w.Nodes[0].Retry.FallbackTarget)
+	if w.Version != "2" {
+		t.Fatalf("version = %q, want 2", w.Version)
 	}
-	e := edgeTo(w, "Esc")
-	if e == nil || !ir.EdgeRoutesOnFail(e) {
-		t.Fatalf("expected synthesized on-fail edge T->Esc, edges=%v", w.Edges)
+	if w.Nodes[0].Retry.FallbackTarget != "Esc" {
+		t.Errorf("FallbackTarget must be kept, got %q", w.Nodes[0].Retry.FallbackTarget)
+	}
+	if edgeCount(w, "Esc") != 0 {
+		t.Errorf("must NOT synthesize an edge to Esc")
+	}
+	if !strings.Contains(Format(w), "fallback_retry_target: Esc") {
+		t.Errorf("formatter must emit the dip-2 spelling:\n%s", Format(w))
 	}
 }
 
-func TestMigrate_FallbackMatchesFailEdge_Dedupes(t *testing.T) {
-	w := v1wf(t, ir.RetryConfig{FallbackTarget: "Esc"}, []*ir.Edge{failTo("Esc")})
-	notes := MigrateToV2(w)
-	if len(notes) != 0 {
-		t.Fatalf("matching target should dedupe with no notes, got %v", notes)
-	}
-	count := 0
-	for _, e := range w.Edges {
-		if e.To == "Esc" {
-			count++
+// retry_target (self or non-self) is kept as a node attr — no loop edge.
+func TestMigrate_RetryTargetKeptAsAttr(t *testing.T) {
+	for _, target := range []string{"Esc", "T"} {
+		w := v1wf(t, ir.RetryConfig{RetryTarget: target, MaxRetries: 2}, nil)
+		if notes := MigrateToV2(w); len(notes) != 0 {
+			t.Fatalf("retry_target=%s: lossless, want no notes, got %v", target, notes)
+		}
+		if w.Nodes[0].Retry.RetryTarget != target {
+			t.Errorf("retry_target=%s: RetryTarget must be kept, got %q", target, w.Nodes[0].Retry.RetryTarget)
+		}
+		if edgeCount(w, target) != 0 {
+			t.Errorf("retry_target=%s: must NOT synthesize a loop edge", target)
 		}
 	}
-	if count != 1 {
-		t.Fatalf("expected exactly one T->Esc edge after dedupe, got %d", count)
-	}
 }
 
-func TestMigrate_FallbackDivergesFromFailEdge_FlagsAndKeepsBoth(t *testing.T) {
+// A fallback_target and a genuine on-fail edge to a different node are distinct
+// channels and both survive migration (no conversion, no conflict).
+func TestMigrate_FallbackAndFailEdgeCoexist(t *testing.T) {
 	w := v1wf(t, ir.RetryConfig{FallbackTarget: "Esc"}, []*ir.Edge{failTo("Done")})
-	notes := MigrateToV2(w)
-	if len(notes) != 1 {
-		t.Fatalf("divergent fallback should produce exactly one review note, got %v", notes)
+	if notes := MigrateToV2(w); len(notes) != 0 {
+		t.Fatalf("want no notes, got %v", notes)
 	}
-	e := edgeTo(w, "Esc")
-	if e == nil || e.Comment == "" {
-		t.Fatalf("expected a flagged T->Esc on-fail edge with a comment, edges=%v", w.Edges)
+	if w.Nodes[0].Retry.FallbackTarget != "Esc" {
+		t.Errorf("FallbackTarget must survive, got %q", w.Nodes[0].Retry.FallbackTarget)
 	}
-}
-
-func TestMigrate_SelfRetryTarget_Dropped(t *testing.T) {
-	w := v1wf(t, ir.RetryConfig{RetryTarget: "T", MaxRetries: 2}, nil)
-	notes := MigrateToV2(w)
-	if len(notes) != 0 || w.Nodes[0].Retry.RetryTarget != "" {
-		t.Fatalf("self retry_target should drop silently, notes=%v rt=%q", notes, w.Nodes[0].Retry.RetryTarget)
-	}
-	if edgeTo(w, "T") != nil {
-		t.Fatalf("self retry_target must not synthesize a loop edge")
+	if edgeCount(w, "Done") != 2 { // the success edge + the pre-existing on-fail edge
+		t.Errorf("the pre-existing on-fail edge to Done must survive, edges=%v", w.Edges)
 	}
 }
 
-func TestMigrate_NonSelfRetryTarget_LoopEdgeAndNote(t *testing.T) {
-	w := v1wf(t, ir.RetryConfig{RetryTarget: "Esc", MaxRetries: 2}, nil)
-	notes := MigrateToV2(w)
-	if len(notes) != 1 {
-		t.Fatalf("non-self retry_target should produce one note, got %v", notes)
-	}
-	e := edgeTo(w, "Esc")
-	if e == nil || !e.Restart {
-		t.Fatalf("expected a loop edge T->Esc, edges=%v", w.Edges)
-	}
-}
+// dip 2 round-trips the retry attrs: parse a dip-2 file with the attrs, format,
+// re-parse — the attrs are preserved.
+func TestMigrate_Dip2RetryAttrsRoundTrip(t *testing.T) {
+	src := `dip 2
 
-// A fallback_target pointing at the node itself carries no destination beyond
-// the retry budget — it must be dropped, never synthesized into a self-cycle.
-func TestMigrate_SelfFallbackTarget_Dropped(t *testing.T) {
-	w := v1wf(t, ir.RetryConfig{FallbackTarget: "T"}, nil)
-	notes := MigrateToV2(w)
-	if len(notes) != 0 || w.Nodes[0].Retry.FallbackTarget != "" {
-		t.Fatalf("self fallback should drop silently, notes=%v fb=%q", notes, w.Nodes[0].Retry.FallbackTarget)
-	}
-	for _, e := range w.Edges {
-		if e.From == "T" && e.To == "T" {
-			t.Fatalf("self fallback must not synthesize a self-cycle edge")
-		}
-	}
-}
+workflow W
+  goal: "t"
+  start: A
+  exit: B
 
-// When a node has multiple on-fail edges and the fallback_target matches one of
-// them (not the first), dedupe against it — never synthesize a duplicate edge.
-func TestMigrate_FallbackMatchesSecondFailEdge_NoDuplicate(t *testing.T) {
-	w := v1wf(t, ir.RetryConfig{FallbackTarget: "Esc"}, []*ir.Edge{failTo("Done"), failTo("Esc")})
-	notes := MigrateToV2(w)
-	if len(notes) != 0 {
-		t.Fatalf("fallback matching an existing fail edge should dedupe, got notes %v", notes)
-	}
-	count := 0
-	for _, e := range w.Edges {
-		if e.To == "Esc" && ir.EdgeRoutesOnFail(e) {
-			count++
-		}
-	}
-	if count != 1 {
-		t.Fatalf("expected exactly one on-fail edge to Esc, got %d", count)
-	}
-}
+  agent A
+    prompt: a
+    max_retries: 3
+    retry_target: B
+    fallback_retry_target: B
 
-// A non-self retry_target that already has a loop edge to it must dedupe.
-func TestMigrate_RetryTargetExistingLoopEdge_NoDuplicate(t *testing.T) {
-	w := v1wf(t, ir.RetryConfig{RetryTarget: "Esc", MaxRetries: 2}, []*ir.Edge{{From: "T", To: "Esc", Restart: true}})
-	notes := MigrateToV2(w)
-	if len(notes) != 0 {
-		t.Fatalf("retry_target matching an existing loop edge should dedupe, got %v", notes)
+  agent B
+    prompt: b
+
+  edges
+    A -> B
+`
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
 	}
-	count := 0
-	for _, e := range w.Edges {
-		if e.To == "Esc" && e.Restart {
-			count++
-		}
+	if w.Nodes[0].Retry.RetryTarget != "B" || w.Nodes[0].Retry.FallbackTarget != "B" {
+		t.Fatalf("parsed retry attrs = %q/%q, want B/B", w.Nodes[0].Retry.RetryTarget, w.Nodes[0].Retry.FallbackTarget)
 	}
-	if count != 1 {
-		t.Fatalf("expected exactly one loop edge to Esc, got %d", count)
+	out := Format(w)
+	w2, err := parser.NewParser(out, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("re-parse: %v\n%s", err, out)
+	}
+	if w2.Nodes[0].Retry.RetryTarget != "B" || w2.Nodes[0].Retry.FallbackTarget != "B" {
+		t.Errorf("round-trip lost retry attrs: %q/%q\n%s", w2.Nodes[0].Retry.RetryTarget, w2.Nodes[0].Retry.FallbackTarget, out)
 	}
 }
 
@@ -171,48 +147,8 @@ func TestMigrate_ExamplesRoundTripToValidV2(t *testing.T) {
 		_ = simulate.EnsureConditionsParsed(w)
 		MigrateToV2(w)
 		out := Format(w)
-		// The migrated text must re-parse as a valid dip 2 file.
 		if _, err := parser.NewParser(out, path).Parse(); err != nil {
 			t.Errorf("%s: migrated v2 does not re-parse: %v\n%s", path, err, out)
 		}
-	}
-}
-
-// TestMigrate_NonSelfRetryTargetIsNonEquivalent covers #186: a non-self
-// retry_target has no dip 2 representation the retry engine reads, so the
-// migration is flagged NonEquivalent (not merely needs-review).
-func TestMigrate_NonSelfRetryTargetIsNonEquivalent(t *testing.T) {
-	w := &ir.Workflow{
-		Version: "1",
-		Nodes: []*ir.Node{
-			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
-				Retry: ir.RetryConfig{MaxRetries: 3, RetryTarget: "B"}},
-			{ID: "B", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "b"}},
-		},
-	}
-	notes := MigrateToV2(w)
-	var found bool
-	for _, n := range notes {
-		if n.Node == "A" && n.NonEquivalent {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("non-self retry_target A->B must yield a NonEquivalent note, got %+v", notes)
-	}
-}
-
-// TestMigrate_SelfRetryTargetIsEquivalent: a self retry_target (re-run in place)
-// is equivalent — no note.
-func TestMigrate_SelfRetryTargetIsEquivalent(t *testing.T) {
-	w := &ir.Workflow{
-		Version: "1",
-		Nodes: []*ir.Node{
-			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "a"},
-				Retry: ir.RetryConfig{MaxRetries: 2, RetryTarget: "A"}},
-		},
-	}
-	if notes := MigrateToV2(w); len(notes) != 0 {
-		t.Errorf("self retry_target should migrate cleanly, got %+v", notes)
 	}
 }
