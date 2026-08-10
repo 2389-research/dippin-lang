@@ -117,7 +117,7 @@ Run `dippin validate` to check structural correctness:
 
 Validation catches structural errors: missing start/exit nodes, references to
 undefined nodes in edges, duplicate node names, unreachable nodes, and cycles.
-These are the [DIP001-DIP009 error codes](../validation.html). If any
+These are the [DIP001-DIP010 error codes](../validation.html). If any
 fire, the file is invalid.
 
 Try breaking it -- rename `Exit` to `Done` in the header
@@ -147,8 +147,8 @@ Clean. If you'd used a nonexistent model name, you'd see:
   <span class="hl-warn">DIP108</span>: node "Summarize": unknown model "claude-5-opus" for provider "anthropic"
 </pre>
 
-34 diagnostic codes in total: 9 structural errors (DIP001-DIP009) and
-25 semantic warnings (DIP101-DIP125). Run `dippin explain DIP108`
+70 diagnostic codes in total: 10 structural errors (DIP001-DIP010) and
+60 semantic warnings (DIP101-DIP160). Run `dippin explain DIP108`
 to see what any code means.
 
 ## <span class="step-num">5</span> Format for Consistency
@@ -285,8 +285,8 @@ Validate them all at once:
 
 | Command | What it does |
 |---------|-------------|
-| `dippin validate file.dip` | Structural correctness (DIP001-DIP009) |
-| `dippin lint file.dip` | Semantic warnings (DIP101-DIP125) |
+| `dippin validate file.dip` | Structural correctness (DIP001-DIP010) |
+| `dippin lint file.dip` | Semantic warnings (DIP101-DIP160) |
 | `dippin check file.dip` | Validate + lint combined |
 | `dippin fmt file.dip` | Canonical formatting to stdout |
 | `dippin fmt --write file.dip` | Format in place |

@@ -395,7 +395,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP154) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP160) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -533,6 +533,12 @@ The primary loop for authoring .dip files:
 | DIP152 | A tool node's `marker_grep` enumerates a literal marker that no edge routes and that no section `else ->` default or unconditional edge covers — the marker would be emitted at runtime with nowhere to go. Only checked for recognizable literal-alternation greps; any compound/negated/other-variable edge makes the node safe (Warning) | Route the marker with an edge (`on <marker>`), add an unconditional fallback edge, or add a section `else -> <node>` default |
 | DIP153 | An `edges` block re-declares an unconditional, attribute-free edge that already exists as an inline `parallel`/`fan_in` fork — the inline list is authoritative (validation, simulation, DOT all derive fan edges from it), so the re-declaration is redundant (Warning). A conditional/attributed edge between the same nodes is kept | Remove the redundant edge (`dippin fmt` strips it); rejected outright under `dip 2` |
 | DIP154 | An agent sets `prompt_prefix: none` / `prompt_suffix: none` to opt out of the defaults prompt cascade, but no cascade of that kind is declared — the opt-out is a no-op (Hint) | Remove the unnecessary opt-out, or add the intended `prompt_prefix`/`prompt_suffix`(`_file`) cascade to `defaults` |
+| DIP155 | An `inputs` entry declares an unknown `type:` (not text/number/bool/enum/file/secret) (Error) | Use a supported input type |
+| DIP156 | A prompt or edge condition references an input name that no `inputs` block declares (Error) | Declare the input, or fix the reference |
+| DIP157 | `${inputs.x}` appears inside a tool `command:`, which never interpolates it — the literal reaches the shell (Error) | Read a `file`/`secret` input via its staged path, not `${inputs.x}` in the command |
+| DIP158 | An input constraint is invalid or inapplicable — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (Error) | Fix the constraint or move it to an applicable type |
+| DIP159 | A declared input is never referenced — a dead input (Warning). `file`/`secret` inputs are exempt (consumed out-of-band by staged path) | Reference the input, or remove it |
+| DIP160 | A `subgraph` node's `params:` omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's `params:` |
 
 ## Best Practices
 

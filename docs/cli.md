@@ -132,7 +132,7 @@ dippin lint [--extra-models <spec>] <file>
 
 **Input**: `.dip` or `.dot` file
 
-**Checks**: All 67 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP160) are reported but don't affect the exit code.
+**Checks**: All 70 diagnostic rules. Errors (DIP001–DIP010) cause exit code 1. Warnings (DIP101–DIP160) are reported but don't affect the exit code.
 
 **Output**: All diagnostics (errors and warnings) to stderr.
 

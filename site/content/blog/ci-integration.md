@@ -38,8 +38,8 @@ of problem:
 
 | Stage | Command | What it catches | Exit code on failure |
 |-------|---------|----------------|---------------------|
-| Validate | `dippin validate` | Structural errors ([DIP001-DIP009](../validation.html)) | 1 |
-| Lint | `dippin lint` | Semantic warnings ([DIP101-DIP125](../validation.html)) | 0 (warnings don't fail) |
+| Validate | `dippin validate` | Structural errors ([DIP001-DIP010](../validation.html)) | 1 |
+| Lint | `dippin lint` | Semantic warnings ([DIP101-DIP160](../validation.html)) | 0 (warnings don't fail) |
 | Test | `dippin test` | [Scenario test](scenario-testing.html) failures | 1 |
 | Format | `dippin fmt --check` | Non-canonical formatting | 1 |
 
