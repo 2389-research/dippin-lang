@@ -23,6 +23,8 @@ subtitle: "Terms you'll encounter authoring .dip files and using the dippin tool
 
 **marker_grep / ctx.tool_marker** — `marker_grep` is a regex on a `tool` node, matched line-by-line against the command's stdout; the matched value populates `ctx.tool_marker`, the tool's outcome channel for routing (e.g. via `on` or `when`).
 
+**inputs** — A workflow-level block declaring what a caller must supply (the callee-side signature), whether a human at the entry point or a parent via a subgraph's `params:`. Each entry is `name: type` (`text`, `number`, `bool`, `enum`, `file`, `secret`) with optional attributes (`required`, `default`, `prompt`, `description`, `options`, `pattern`, `min`, `max`, `max_length`, `multiline`). Read in prompts/conditions as `${inputs.name}` — a **closed** namespace: a reference to an undeclared input is a lint error (DIP156), unlike the open `ctx`. Introspect with `dippin inputs`.
+
 **Defaults** — A workflow-wide block setting values inherited by all nodes unless overridden. Common keys: `model`, `provider`, `fidelity`, `retry`, `tool_commands_allow`, `tool_denylist_add`.
 
 **Goal** — A short string at the top of a workflow stating the pipeline's purpose. Surfaces in `dippin doctor` reports and is shown to operators.

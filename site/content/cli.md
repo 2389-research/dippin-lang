@@ -1,6 +1,6 @@
 ---
 title: "CLI Reference"
-description: "Complete command reference for the Dippin toolchain: 18 commands for authoring, export, analysis, and bundling AI pipeline workflows — parse, validate, lint, check, fmt, simulate, cost, coverage, doctor, test, watch, pack, unpack, inspect, and more."
+description: "Complete command reference for the Dippin toolchain: commands for authoring, export, analysis, introspection, and bundling AI pipeline workflows — parse, validate, lint, check, fmt, simulate, cost, coverage, doctor, test, watch, inputs, pack, unpack, inspect, and more."
 section_label: "Reference"
 subtitle: "Every command in the dippin toolchain — authoring, export, analysis, and bundles."
 ---
@@ -165,7 +165,13 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 </div>
 
 <div class="cmd-card">
+  <h3>inputs</h3>
+  <div class="cmd-usage">dippin inputs [--format text|json] &lt;file&gt;</div>
+  <p>Print a workflow's declared <code>inputs</code> schema — the typed, introspectable contract a host uses to collect values before a run. <code>--format json</code> emits a stable array in declaration order (each entry with <code>name</code>, <code>type</code>, <code>required</code>, and any declared attributes); defaults are typed (a <code>number</code> default is a JSON number), and a workflow with no inputs emits <code>[]</code>, never <code>null</code>.</p>
+</div>
+
+<div class="cmd-card">
   <h3>inspect</h3>
   <div class="cmd-usage">dippin inspect [--no-verify] [--format text|json] &lt;bundle.dipx&gt;</div>
-  <p>Print a bundle's manifest, identity hash (SHA-256 over the manifest bytes-as-stored), and per-file checksums. Integrity-verifies by default; <code>--no-verify</code> skips hash verification (forensic mode).</p>
+  <p>Print a bundle's manifest, identity hash (SHA-256 over the manifest bytes-as-stored), and per-file checksums. The verified <code>--format json</code> payload also includes the entry workflow's declared <code>inputs</code> schema (so a host can enumerate what to collect without unpacking). Integrity-verifies by default; <code>--no-verify</code> skips hash verification (forensic mode).</p>
 </div>

@@ -128,7 +128,7 @@ These flag likely bugs or questionable patterns. Warnings alone exit 0.
 
 <div class="diag-card warning">
   <span class="diag-code">DIP108</span> — Unknown Model/Provider
-  <p>The model or provider isn't in the recognized list. Verified against official provider documentation.</p>
+  <p>The model or provider isn't in the recognized catalog (Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistral, Cohere, Z.AI/GLM, Moonshot/Kimi, MiniMax, Qwen), which is verified against official provider docs. A dotted ID and its dashed form resolve to the same model (<code>claude-haiku-4.5</code> == <code>claude-haiku-4-5</code>); extend the catalog for private models with <code>--extra-models</code>.</p>
   <pre>warning[DIP108]: unknown model/provider combination
   --&gt; pipeline.dip:15:5</pre>
 </div>
