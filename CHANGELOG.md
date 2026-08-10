@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.59.0] — 2026-08-10
 
 ### Changed
 - **`dip 2` re-admits the retry channel as a node attribute; `fmt --migrate` is now lossless** ([#204](https://github.com/2389-research/dippin-lang/issues/204), [#186](https://github.com/2389-research/dippin-lang/issues/186)). The retry channel — `retry_target` and the retry-exhaustion route — is addressed to the engine's retry dispatcher, which reads it from the **node**, never from the `edges` block. The #134/#136 redesign had rejected these under `dip 2` and made `fmt --migrate` rewrite them into `on fail`/`loop` edges, but the engine doesn't consult edges for retries, so that conversion was a latent data-loss bug (a non-self `retry_target` silently became a self-retry — the old exit-code `4` "not runtime-equivalent" stopgap). Now: `dip 2` **accepts** `retry_target` unchanged and accepts the retry-exhaustion route under the new spelling **`fallback_retry_target`** (the `dip 2` name disambiguates it from an `on fail` edge); `dip 1` keeps `fallback_target`. `dippin fmt --migrate` is a **lossless** version bump — it keeps the channel on the node and only relabels `fallback_target` → `fallback_retry_target`. A node may carry both a `fallback_retry_target` (retry-exhaustion route) and an `on fail` edge (genuine-failure route); they are distinct channels and both survive migration.
