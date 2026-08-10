@@ -11,7 +11,9 @@
       "input_per_m": 10,
       "output_per_m": 50,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -19,7 +21,9 @@
       "input_per_m": 0.8,
       "output_per_m": 4,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -27,7 +31,9 @@
       "input_per_m": 1,
       "output_per_m": 5,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -35,7 +41,9 @@
       "input_per_m": 10,
       "output_per_m": 50,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -50,7 +58,9 @@
       "input_per_m": 15,
       "output_per_m": 75,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -58,7 +68,9 @@
       "input_per_m": 15,
       "output_per_m": 75,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -66,7 +78,9 @@
       "input_per_m": 5,
       "output_per_m": 25,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -74,7 +88,9 @@
       "input_per_m": 5,
       "output_per_m": 25,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -82,7 +98,9 @@
       "input_per_m": 5,
       "output_per_m": 25,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -90,7 +108,9 @@
       "input_per_m": 5,
       "output_per_m": 25,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -98,7 +118,9 @@
       "input_per_m": 5,
       "output_per_m": 25,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -106,7 +128,9 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -114,7 +138,9 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -122,7 +148,9 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "anthropic",
@@ -130,7 +158,9 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "cohere",
@@ -226,7 +256,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.4,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -234,7 +265,8 @@
       "input_per_m": 0.3,
       "output_per_m": 2.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -242,7 +274,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.4,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -250,7 +283,8 @@
       "input_per_m": 1.25,
       "output_per_m": 10,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -258,7 +292,8 @@
       "input_per_m": 0.5,
       "output_per_m": 3,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -266,7 +301,8 @@
       "input_per_m": 0.25,
       "output_per_m": 1.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -274,7 +310,8 @@
       "input_per_m": 0.25,
       "output_per_m": 1.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -282,7 +319,8 @@
       "input_per_m": 2,
       "output_per_m": 12,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -290,7 +328,8 @@
       "input_per_m": 2,
       "output_per_m": 12,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -298,7 +337,8 @@
       "input_per_m": 1.5,
       "output_per_m": 9,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -306,7 +346,8 @@
       "input_per_m": 0.3,
       "output_per_m": 2.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "gemini",
@@ -314,7 +355,8 @@
       "input_per_m": 1.5,
       "output_per_m": 7.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "grok",
@@ -546,7 +588,8 @@
       "input_per_m": 2,
       "output_per_m": 8,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -554,7 +597,8 @@
       "input_per_m": 0.4,
       "output_per_m": 1.6,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -562,7 +606,8 @@
       "input_per_m": 0.1,
       "output_per_m": 0.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-08"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -570,7 +615,8 @@
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -578,7 +624,8 @@
       "input_per_m": 0.15,
       "output_per_m": 0.6,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -586,7 +633,8 @@
       "input_per_m": 1.25,
       "output_per_m": 10,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -594,7 +642,8 @@
       "input_per_m": 0.25,
       "output_per_m": 2,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -602,7 +651,8 @@
       "input_per_m": 0.05,
       "output_per_m": 0.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -610,7 +660,8 @@
       "input_per_m": 15,
       "output_per_m": 120,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -618,7 +669,8 @@
       "input_per_m": 1.25,
       "output_per_m": 10,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -629,7 +681,8 @@
       "as_of": "2026-08-10",
       "aliases": [
         "gpt-5.2-codex"
-      ]
+      ],
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -637,7 +690,8 @@
       "input_per_m": 21,
       "output_per_m": 168,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -645,7 +699,8 @@
       "input_per_m": 1.75,
       "output_per_m": 14,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -653,7 +708,8 @@
       "input_per_m": 2.5,
       "output_per_m": 15,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -661,7 +717,8 @@
       "input_per_m": 0.75,
       "output_per_m": 4.5,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -669,7 +726,8 @@
       "input_per_m": 0.2,
       "output_per_m": 1.25,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -677,7 +735,8 @@
       "input_per_m": 30,
       "output_per_m": 180,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -685,7 +744,8 @@
       "input_per_m": 5,
       "output_per_m": 30,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -693,7 +753,8 @@
       "input_per_m": 30,
       "output_per_m": 180,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -701,7 +762,8 @@
       "input_per_m": 0.2,
       "output_per_m": 1.2,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -709,7 +771,8 @@
       "input_per_m": 5,
       "output_per_m": 30,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -717,7 +780,8 @@
       "input_per_m": 2,
       "output_per_m": 12,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -725,7 +789,8 @@
       "input_per_m": 2,
       "output_per_m": 8,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -733,7 +798,8 @@
       "input_per_m": 1.1,
       "output_per_m": 4.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -741,7 +807,8 @@
       "input_per_m": 20,
       "output_per_m": 80,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "openai",
@@ -749,7 +816,8 @@
       "input_per_m": 1.1,
       "output_per_m": 4.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "qwen",

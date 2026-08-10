@@ -110,3 +110,26 @@ func TestGPT52CodexAlias(t *testing.T) {
 			codex.InputPerM, codex.OutputPerM, base.InputPerM, base.OutputPerM)
 	}
 }
+
+// TestCacheRatesVerifiedProviders covers #210: Anthropic/OpenAI/Gemini carry
+// verified cache read multipliers (0.1x), Anthropic also a 1.25x write; Cost
+// honors them. Unverified providers stay at 0 (consumer overlay).
+func TestCacheRatesVerifiedProviders(t *testing.T) {
+	opus, _ := Lookup("claude-opus-5")
+	if opus.CacheReadMult != 0.1 || opus.CacheWriteMult != 1.25 {
+		t.Errorf("claude-opus-5 cache mults = %v/%v, want 0.1/1.25", opus.CacheReadMult, opus.CacheWriteMult)
+	}
+	// cache read = 0.1 x input: 1M cache-read tokens at $5 input → $0.50.
+	if got := Cost(Usage{CacheRead: 1_000_000}, opus); got != 0.50 {
+		t.Errorf("opus cache-read cost = %v, want 0.50", got)
+	}
+	gpt, _ := Lookup("gpt-5.2")
+	if gpt.CacheReadMult != 0.1 || gpt.CacheWriteMult != 0 {
+		t.Errorf("gpt-5.2 cache mults = %v/%v, want 0.1/0", gpt.CacheReadMult, gpt.CacheWriteMult)
+	}
+	// A provider we did NOT verify keeps zero cache rates.
+	glm, _ := Lookup("glm-5.2")
+	if glm.CacheReadMult != 0 {
+		t.Errorf("glm-5.2 (unverified) cache read = %v, want 0", glm.CacheReadMult)
+	}
+}
