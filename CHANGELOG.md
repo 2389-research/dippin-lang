@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.58.0] — 2026-08-10
 
 ### Added
 - **DIP160 — cross-file subgraph input arity (inputs Phase 3)** ([#190](https://github.com/2389-research/dippin-lang/issues/190)). A `subgraph` node whose `params:` omits an input the referenced child declares `required: true` now warns: the child would start with that input unset. It's a cross-file check (like DIP146) run by `validate`/`check`/`watch` — it resolves and parses the child to read its `inputs`, skipped for `.dipx` bundles and unreadable children. Catalog now **70 codes (DIP101–DIP160)**.
