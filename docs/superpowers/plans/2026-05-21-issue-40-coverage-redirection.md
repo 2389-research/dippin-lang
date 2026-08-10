@@ -305,7 +305,7 @@ Verify with `git log --oneline -3`.
 
 - [ ] Create `examples/coverage_redirection.dip` with the bug pattern from the issue body, wired to a complete workflow so `validate-examples` and `lint-examples` succeed:
 
-```
+```dippin
 workflow CoverageRedirection
   goal: "Demonstrate that file-redirected echoes no longer trip coverage"
   start: RunTests

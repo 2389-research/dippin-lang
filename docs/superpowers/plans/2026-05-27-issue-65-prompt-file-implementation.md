@@ -472,14 +472,14 @@ mkdir -p parser/testdata/prompt_file
 
 Create `parser/testdata/prompt_file/task.md`:
 
-```
+```text
 Review the diff at .ai/scratch/diff.patch.
 fixture: ResolveFileDirectives prompt test
 ```
 
 Create `parser/testdata/prompt_file/persona.md`:
 
-```
+```text
 You are a senior code reviewer.
 fixture: ResolveFileDirectives system_prompt test
 ```
@@ -1144,7 +1144,7 @@ git commit -m "feat(migrate): include prompt/system_prompt file fields in agent 
 
 Create `examples/external_prompts.dip`:
 
-```
+```dippin
 workflow ExternalPrompts
   goal: "Demonstrate prompt_file:/system_prompt_file: directives (issue #65)"
   start: Reviewer
@@ -1161,7 +1161,7 @@ workflow ExternalPrompts
 
 Create `examples/external_prompts/reviewer-persona.md`:
 
-```
+```text
 You are a senior code reviewer. Be concise, direct, and constructive.
 Focus on correctness, security, and maintainability over style.
 ```
@@ -1170,7 +1170,7 @@ Focus on correctness, security, and maintainability over style.
 
 Create `examples/external_prompts/reviewer-task.md`:
 
-```
+```text
 Review the diff at .ai/scratch/diff.patch.
 Report findings ranked by severity (critical, important, minor).
 End with STATUS: success or STATUS: fail.
@@ -1336,7 +1336,7 @@ The two slots are independent — an agent may use any combination of inline `pr
 **Pack-time loading:** `dippin pack` inlines the prompt content into the bundled `.dip` so the `.dipx` is self-contained. The runtime reads inline prompts; no separate file lookup at runtime.
 
 **Non-goals:** defaults-block file-form support and bundled-files `.dipx` redesign are tracked as follow-up issues.
-```
+```markdown
 
 Also add `prompt_file` and `system_prompt_file` rows to the skill.md agent-fields table (if one exists — match the same shape as `command_file:`).
 
@@ -1379,7 +1379,7 @@ If the existing completion entries use a different shape (e.g., snippet form or 
 
 Open `editors/vscode/syntaxes/dippin.tmLanguage.json`. Around line 148 (the agent-field alternation regex that includes `command_file`), add `prompt_file` and `system_prompt_file` to the alternation. The exact form depends on the regex shape — find the line containing `command_file` and extend the alternation in place:
 
-```
+```text
 \\b(model|provider|prompt|system_prompt|prompt_file|system_prompt_file|command_file|...)\\b
 ```
 

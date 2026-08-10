@@ -34,7 +34,7 @@ All downstream consumers program against the **canonical IR** — a set of Go st
 
 ## Package Map
 
-```
+```text
 dippin-lang/
 ├── ir/                 # Canonical intermediate representation (types only)
 │   ├── ir.go           # Workflow, Node, NodeConfig, RetryConfig, NodeIO

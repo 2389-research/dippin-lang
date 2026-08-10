@@ -276,7 +276,7 @@ An omitted field inherits the target agent's value. An inline-form parallel (`->
 
 The `edges` block defines connections between nodes. Every edge is a line of the form:
 
-```
+```dippin
 <FromID> -> <ToID> [on <token> | when <condition>] [label: <text>] [choice: <key>] [weight: <int>] [loop] [override: true]
 ```
 

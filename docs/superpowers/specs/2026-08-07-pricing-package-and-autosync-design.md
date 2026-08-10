@@ -33,7 +33,7 @@ Two problems, one root cause.
 
 New top-level package `pricing/` that imports **nothing** from dippin (not `ir`, not `cost`). Both `cost` and `validator` import it; tracker can too. Because it is a leaf with no analysis deps, `validator` importing it does **not** violate the "packages import `ir`, not each other" rule (it's a shared leaf like the stdlib).
 
-```
+```text
 pricing/
   prices.json        # the source of truth (embedded)
   pricing.go         # //go:embed, types, Lookup, Cost
@@ -118,7 +118,7 @@ tracker #518's test (catalog constants vs. `PublishedPrice`) moves down into `pr
 
 The honest split: **detection is fully mechanical; authoritative verification is not** (nobody official publishes price as data). So the pipeline automates up to a reviewable diff, and auto-ships only a narrow, high-confidence subset defined by **cross-source agreement**.
 
-```
+```text
 GitHub Action (cron, daily) — no API keys, no HTML scraping
   └─ fetch models.dev + LiteLLM + OpenRouter (JSON)
   └─ normalize IDs (apply the #188 .↔- fold + alias map) and reconcile the 3 sources

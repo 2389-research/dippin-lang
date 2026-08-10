@@ -30,7 +30,7 @@
 
 Edit `parser/testdata/defaults_budget.dip`, adding one line to the `defaults` block (after `max_wall_time: 30m`):
 
-```
+```dippin
   defaults
     model: claude-sonnet-4-6
     max_total_tokens: 500000
@@ -658,7 +658,7 @@ git commit -m "feat: DIP145 lint for negative graph budget defaults (#94)"
 
 Replace the existing `max_turns` table row with:
 
-```
+```text
 | `max_turns` | Integer | 1 | Maximum request-response cycles in the agent's tool-using loop. **Reaching this limit ends the node with outcome `fail`** — it is a hard cap, not a soft budget. The failure routes through the standard failure cascade (fail edge → bounded retry → `fallback_target` → graph `on_failure` → halt). Ensure a failure route exists (see DIP144) or the run halts on exhaustion. |
 ```
 
@@ -691,7 +691,7 @@ priority order below.
 
 In the `defaults` table (around line 113-124), add (the three existing budget fields are currently undocumented here — this fixes that too):
 
-```
+```text
 | `max_total_tokens` | Integer | Hard ceiling on total tokens across the run. `0`/unset = no limit. |
 | `max_cost_cents` | Integer | Hard ceiling on total cost, in **US cents** (e.g. `1000` = $10.00). `0`/unset = no limit. |
 | `max_wall_time` | Duration | Hard ceiling on **wall-clock** run time (e.g. `30m`, `2h`). `0`/unset = no limit. |
@@ -725,7 +725,7 @@ warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be
 
 **Fix:** Use a positive cap, or omit the field / set `0` for no limit. Note `0`
 means *unlimited*, not "zero budget."
-```
+```markdown
 
 - [ ] **Step 6: Cross-link DIP144 → max_turns**
 
@@ -777,7 +777,7 @@ git commit -m "docs: max_turns exhaustion semantics, budget attrs, DIP145, count
 
 Create `examples/budget_guards.dip` — a cost-ceilinged research+build flow with a stall window and a graph `on_failure` escalation, so the budget abort has somewhere to route (and DIP144 stays suppressed). Adjust node/edge syntax to match a known-good existing example (copy the header/shape from `examples/on_failure_route.dip`):
 
-```
+```dippin
 workflow BudgetGuards
   goal: "Research and draft with a cost ceiling and a stall guard"
   start: Research

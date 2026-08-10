@@ -148,7 +148,7 @@ The generated spec is a build artifact and should not be tracked.
 
 Add this line after the `# Temp site files` section in `.gitignore`:
 
-```
+```text
 # Generated spec (build artifact)
 docs/generated-spec.md
 ```
@@ -230,7 +230,7 @@ Expected: builds successfully
 
 Run: `./dippin spec | head -3`
 Expected:
-```
+```text
 # Dippin Language Specification
 
 Complete reference for AI agents generating `.dip` workflow files. This document is the canonical, self-contained spec for the dippin DSL and CLI toolchain.

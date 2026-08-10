@@ -277,7 +277,7 @@ Existing parity tests pass after `PromptFile` and `SystemPromptFile` are added t
 
 ## Example (`examples/external_prompts.dip` + sibling files)
 
-```
+```dippin
 workflow ExternalPrompts
   goal: "Demonstrate prompt_file:/system_prompt_file: directives (issue #65)"
   start: Reviewer

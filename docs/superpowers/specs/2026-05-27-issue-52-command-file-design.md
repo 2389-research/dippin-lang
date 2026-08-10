@@ -252,7 +252,7 @@ Existing parity tests pass after `CommandFile` is added to `compareToolConfigs`'
 
 ## Example (`examples/external_files.dip` + `examples/external_files/setup.sh`)
 
-```
+```dippin
 workflow ExternalFiles
   goal: "Demonstrate command_file: directive (issue #52)"
   start: Setup

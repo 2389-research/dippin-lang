@@ -791,7 +791,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 Extend `TestRoundtripBlockFormParallel` in `migrate/roundtrip_test.go`: add a `writable_paths` line to the `fast` branch in the `src` string, and add `WritablePaths` to the expected branch. Change the `branch: fast` block to:
 
-```
+```dippin
     branch: fast
       model: claude-haiku-4-5
       provider: anthropic
@@ -1275,7 +1275,7 @@ Expected: FAIL — `read example: open ../examples/agent_writable_paths.dip: no 
 
 Create `examples/agent_writable_paths.dip`:
 
-```
+```dippin
 workflow AgentWritablePaths
   goal: "Demonstrate path-bounded write scope on failure-recorder agents (issue #75)"
   start: Review

@@ -23,7 +23,7 @@ graph LR
 
 Diagnostics are displayed in a rustc-inspired format:
 
-```
+```text
 error[DIP003]: unknown node reference "InterpretX" in edge
   --> pipeline.dip:45:5
   = help: did you mean "Interpret"?
@@ -52,7 +52,7 @@ In JSON output mode (`--format json`), diagnostics are emitted as an array of ob
 
 The workflow must declare a `start:` field pointing to an existing node.
 
-```
+```text
 error[DIP001]: start node does not exist
   --> pipeline.dip:1:1
   = help: add "start: <NodeID>" to the workflow header
@@ -77,7 +77,7 @@ workflow MyPipeline
 
 The workflow must declare an `exit:` field pointing to an existing node.
 
-```
+```text
 error[DIP002]: exit node does not exist
   --> pipeline.dip:1:1
   = help: add "exit: <NodeID>" to the workflow header
@@ -97,7 +97,7 @@ error[DIP002]: exit node does not exist
 
 Every edge's `From` and `To` must reference existing node IDs.
 
-```
+```text
 error[DIP003]: unknown node reference "InterpretX" in edge
   --> pipeline.dip:45:5
   = help: did you mean "Interpret"?
@@ -117,7 +117,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 
 Every node must be reachable from the start node via some path of edges.
 
-```
+```text
 error[DIP004]: node unreachable from start
   --> pipeline.dip:20:3
   = help: add an edge leading to this node, or remove it
@@ -135,7 +135,7 @@ error[DIP004]: node unreachable from start
 
 The workflow graph must be a DAG (directed acyclic graph), with the exception of restart edges.
 
-```
+```text
 error[DIP005]: unconditional cycle detected
   --> pipeline.dip:50:5
   = help: remove an edge in this cycle or mark it "restart: true"
@@ -155,7 +155,7 @@ error[DIP005]: unconditional cycle detected
 
 The exit node is the terminal — it must have zero outgoing edges.
 
-```
+```text
 error[DIP006]: exit node has outgoing edges
   --> pipeline.dip:55:5
   = help: remove outgoing edges from the exit node
@@ -173,7 +173,7 @@ error[DIP006]: exit node has outgoing edges
 
 Every `parallel` node must have a matching `fan_in` node with the same set of branch nodes.
 
-```
+```text
 error[DIP007]: parallel fan-out/fan-in mismatch
   --> pipeline.dip:15:3
   = help: add a matching fan_in node
@@ -194,7 +194,7 @@ error[DIP007]: parallel fan-out/fan-in mismatch
 
 Node IDs must be globally unique within a workflow.
 
-```
+```text
 error[DIP008]: duplicate node ID
   --> pipeline.dip:30:3
   = help: rename this node or remove the duplicate
@@ -212,7 +212,7 @@ error[DIP008]: duplicate node ID
 
 No two edges may have the same (from, to, condition) combination.
 
-```
+```text
 error[DIP009]: duplicate edge
   --> pipeline.dip:60:5
   = help: remove the duplicate edge
@@ -256,7 +256,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 A node where **all** incoming edges have conditions may be unreachable at runtime if no condition matches.
 
-```
+```text
 warning[DIP101]: node "NextPhase" is only reachable through conditional edges and may be skipped at runtime
   --> pipeline.dip:25:3
   = help: add an unconditional edge to this node, or verify all conditions are exhaustive
@@ -278,7 +278,7 @@ Known exhaustive sets: `ctx.outcome` / `outcome` with values `{success, fail}` o
 
 A node with conditional outgoing edges but no unconditional fallback.
 
-```
+```text
 warning[DIP102]: node "Gate" has conditional outgoing edges but no unconditional default edge
   --> pipeline.dip:35:3
   = help: add an unconditional edge as a fallback, or ensure conditions are exhaustive
@@ -306,7 +306,7 @@ warning[DIP102]: node "Gate" has conditional outgoing edges but no unconditional
 
 Multiple edges from the same node test the same variable for the same value.
 
-```
+```text
 warning[DIP103]: overlapping or contradictory conditions
   --> pipeline.dip:45:5
 ```
@@ -323,7 +323,7 @@ warning[DIP103]: overlapping or contradictory conditions
 
 A retry path has no bound and no failure route — no `max_retries`, no `on fail` edge, and no `fallback_target`/`fallback_retry_target`.
 
-```
+```text
 warning[DIP104]: unbounded retry loop (no max_retries or fallback)
   --> pipeline.dip:40:3
 ```
@@ -346,7 +346,7 @@ warning[DIP104]: unbounded retry loop (no max_retries or fallback)
 
 There is no guaranteed path from start to exit through unconditional edges alone.
 
-```
+```text
 warning[DIP105]: no success path from start to exit
   --> pipeline.dip:1:1
 ```
@@ -363,7 +363,7 @@ warning[DIP105]: no success path from start to exit
 
 A prompt template has a `${...}` reference that lacks a known namespace prefix or isn't a valid node-scoped ref.
 
-```
+```text
 warning[DIP106]: unrecognized variable reference ${user}
   --> pipeline.dip:22:5
 ```
@@ -380,7 +380,7 @@ warning[DIP106]: unrecognized variable reference ${user}
 
 A node produces a context key that no downstream node reads.
 
-```
+```text
 warning[DIP107]: unused context key (written but never read)
   --> pipeline.dip:18:5
 ```
@@ -397,7 +397,7 @@ warning[DIP107]: unused context key (written but never read)
 
 The model or provider isn't in the engine's recognized list.
 
-```
+```text
 warning[DIP108]: unknown model/provider combination
   --> pipeline.dip:15:5
 ```
@@ -421,7 +421,7 @@ whichever spelling your executing runtime requires.
 
 Two `subgraph` nodes reference the same `ref:` file, which can collide their context keys.
 
-```
+```text
 warning[DIP109]: duplicate subgraph reference
   --> pipeline.dip:28:5
 ```
@@ -438,7 +438,7 @@ warning[DIP109]: duplicate subgraph reference
 
 An agent node has no prompt text.
 
-```
+```text
 warning[DIP110]: empty prompt on agent node
   --> pipeline.dip:12:3
 ```
@@ -457,7 +457,7 @@ warning[DIP110]: empty prompt on agent node
 
 A tool node has no `timeout` field.
 
-```
+```text
 warning[DIP111]: tool command has no timeout
   --> pipeline.dip:35:3
 ```
@@ -482,7 +482,7 @@ warning[DIP111]: tool command has no timeout
 
 A node declares a `reads` key that no upstream node produces.
 
-```
+```text
 warning[DIP112]: reads key not produced by any upstream writes
   --> pipeline.dip:25:3
 ```
@@ -499,7 +499,7 @@ warning[DIP112]: reads key not produced by any upstream writes
 
 A node or workflow default specifies a `retry_policy` value that is not a recognized policy name.
 
-```
+```text
 warning[DIP113]: node "analyze" has retry_policy "agressive" which is not a recognized policy name
   --> pipeline.dip:15:3
   = help: valid policies: standard, aggressive, patient, linear, none
@@ -525,7 +525,7 @@ warning[DIP113]: node "analyze" has retry_policy "agressive" which is not a reco
 
 A node or workflow default specifies a `fidelity` value that is not a recognized level.
 
-```
+```text
 warning[DIP114]: node "analyze" has fidelity "sumary:high" which is not a recognized level
   --> pipeline.dip:12:3
   = help: valid levels: full, summary:high, summary:medium, summary:low, compact, truncate
@@ -554,7 +554,7 @@ warning[DIP114]: node "analyze" has fidelity "sumary:high" which is not a recogn
 
 A node has `goal_gate: true` but no failure route — no `on fail` edge and no `retry_target`/`fallback_target` — meaning the pipeline has no recovery path if the gate fails.
 
-```
+```text
 warning[DIP115]: node "validate_tests" has goal_gate: true but no retry_target or fallback_target
   --> pipeline.dip:18:3
   = help: add an `on fail` edge, set fallback_target:, or add retry_target with max_retries so the pipeline can recover when the gate fails
@@ -572,7 +572,7 @@ warning[DIP115]: node "validate_tests" has goal_gate: true but no retry_target o
 
 Configuration values for `compaction_threshold` or `on_resume` are outside valid ranges.
 
-```
+```text
 warning[DIP116]: node "Analyze" has compaction_threshold 1.50 outside valid range [0.0, 1.0]
   --> pipeline.dip:15:3
 ```
@@ -592,7 +592,7 @@ warning[DIP116]: node "Analyze" has compaction_threshold 1.50 outside valid rang
 
 A stylesheet rule targets a class that no node declares.
 
-```
+```text
 warning[DIP117]: stylesheet references class "critical" which is not declared on any node
   --> pipeline.dip:80:5
   = help: add class: critical to a node declaration
@@ -608,7 +608,7 @@ warning[DIP117]: stylesheet references class "critical" which is not declared on
 
 A stylesheet rule targets a node ID that doesn't exist.
 
-```
+```text
 warning[DIP118]: stylesheet references node ID "Analize" which does not exist
   --> pipeline.dip:82:5
 ```
@@ -623,7 +623,7 @@ warning[DIP118]: stylesheet references node ID "Analize" which does not exist
 
 A node specifies a `reasoning_effort` value that isn't recognized.
 
-```
+```text
 warning[DIP119]: node "Analyze" has reasoning_effort "extreme" which is not a recognized level
   --> pipeline.dip:12:3
   = help: valid levels: none, minimal, low, medium, high, xhigh, max
@@ -641,7 +641,7 @@ warning[DIP119]: node "Analyze" has reasoning_effort "extreme" which is not a re
 
 A condition references a variable without a namespace prefix.
 
-```
+```text
 warning[DIP120]: condition variable "outcome" should use a namespace prefix (e.g., ctx.outcome)
   --> pipeline.dip:45:5
 ```
@@ -658,7 +658,7 @@ warning[DIP120]: condition variable "outcome" should use a namespace prefix (e.g
 
 An edge condition references a variable that the source node doesn't declare in its `writes`.
 
-```
+```text
 warning[DIP121]: edge Gate → Pass: condition references "ctx.score" but node "Gate" does not declare it in writes
   --> pipeline.dip:45:5
   = help: add writes: score to node "Gate", or use a reserved variable
@@ -678,7 +678,7 @@ warning[DIP121]: edge Gate → Pass: condition references "ctx.score" but node "
 
 An edge condition tests a value that the source tool node doesn't declare in its `outputs`.
 
-```
+```text
 warning[DIP122]: edge RunTest → Pass: condition tests value "retry" but tool "RunTest" does not declare it in outputs
   --> pipeline.dip:50:5
   = help: add "retry" to tool "RunTest" outputs, or check for typos
@@ -696,7 +696,7 @@ warning[DIP122]: edge RunTest → Pass: condition tests value "retry" but tool "
 
 The tool command block has a shell syntax error detectable by `bash -n`.
 
-```
+```text
 warning[DIP123]: tool command has shell syntax error: unexpected EOF while looking for matching `"'
   --> pipeline.dip:45:5
 ```
@@ -713,7 +713,7 @@ warning[DIP123]: tool command has shell syntax error: unexpected EOF while looki
 
 A tool command contains `${ctx.*}` interpolation that won't resolve at shell execution time.
 
-```
+```text
 warning[DIP124]: tool command references ${ctx.api_url} which expands to empty at runtime
   --> pipeline.dip:50:5
 ```
@@ -730,7 +730,7 @@ warning[DIP124]: tool command references ${ctx.api_url} which expands to empty a
 
 The first non-preamble command in the tool block references a binary not found on the current PATH.
 
-```
+```text
 hint[DIP125]: tool command binary "npx" not found on PATH
   --> pipeline.dip:55:5
 ```
@@ -749,7 +749,7 @@ hint[DIP125]: tool command binary "npx" not found on PATH
 
 A subgraph node references a file that does not exist at the declared path.
 
-```
+```text
 warning[DIP126]: subgraph node "Review" references "review_pipeline.dip" which does not exist
   --> pipeline.dip:28:5
   = help: resolved path: /home/user/project/review_pipeline.dip
@@ -767,7 +767,7 @@ warning[DIP126]: subgraph node "Review" references "review_pipeline.dip" which d
 
 A human node has a `mode` value that is not one of the recognized modes.
 
-```
+```text
 warning[DIP127]: node "Gate" has mode "interactive" which is not a recognized human mode
   --> pipeline.dip:12:3
   = help: valid modes: choice, freeform, interview, yes_no
@@ -783,7 +783,7 @@ warning[DIP127]: node "Gate" has mode "interactive" which is not a recognized hu
 
 A human node with `mode: interview` also sets a `default` value. Interview mode collects structured answers — it has no predefined choices to default to.
 
-```
+```text
 warning[DIP128]: node "Ask" is mode interview but has default "yes" which is ignored
   --> pipeline.dip:15:3
   = help: default is only meaningful for choice mode; remove it
@@ -799,7 +799,7 @@ warning[DIP128]: node "Ask" is mode interview but has default "yes" which is ign
 
 A human node with `mode: interview` has multiple labeled outgoing edges. Interview mode does not route by label — it collects answers and follows a single unconditional edge.
 
-```
+```text
 warning[DIP129]: node "Ask" is mode interview but has 2 labeled edges (interview does not route by label)
   --> pipeline.dip:15:3
   = help: interview mode collects answers, not choices; use mode choice for label-based routing
@@ -815,7 +815,7 @@ warning[DIP129]: node "Ask" is mode interview but has 2 labeled edges (interview
 
 An agent node (or any node) specifies a `response_format` value that is not one of the recognized values.
 
-```
+```text
 warning[DIP130]: node "Analyze" has response_format "json" which is not a recognized value
   --> pipeline.dip:12:3
   = help: valid values: json_object, json_schema
@@ -835,7 +835,7 @@ warning[DIP130]: node "Analyze" has response_format "json" which is not a recogn
 
 There is a mismatch between `response_schema` and `response_format: json_schema`.
 
-```
+```text
 warning[DIP131]: node "Analyze" has response_schema but response_format is not json_schema
   --> pipeline.dip:12:3
   = help: set response_format: json_schema to enforce the schema
@@ -859,7 +859,7 @@ hint[DIP131]: node "Analyze" has response_format: json_schema but no response_sc
 
 The content of the `response_schema` block is not valid JSON.
 
-```
+```text
 warning[DIP132]: node "Analyze" has response_schema that is not valid JSON
   --> pipeline.dip:12:3
   = help: response_schema must be a valid JSON Schema object
@@ -877,7 +877,7 @@ warning[DIP132]: node "Analyze" has response_schema that is not valid JSON
 
 An agent node's `params` block contains a key that matches a first-class agent field (e.g., `model`, `provider`).
 
-```
+```text
 hint[DIP133]: node "Analyze" params key "model" shadows the first-class field model
   --> pipeline.dip:12:3
   = help: use the top-level model: field instead of params: model to avoid ambiguity
@@ -1116,7 +1116,7 @@ This is a Hint, not a Warning: the referencing node has no defect. The check is 
 
 An agent node has no declared failure route at any level. If the node fails at runtime, the pipeline has nowhere to go and will halt.
 
-```
+```text
 warning[DIP144]: agent node "Build" has no failure route (no fail edge, no fallback_target, no bounded retry, no graph on_failure)
   --> pipeline.dip:12:3
   = help: add `-> <node> when ctx.outcome = fail`, set fallback_target:, add retry_target with max_retries, or declare a workflow-level on_failure:

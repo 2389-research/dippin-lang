@@ -65,7 +65,7 @@ case "params":
 
 New helper `writeAgentResponseFields()` slots between model and behavior fields:
 
-```
+```text
 1. Common fields (label, class)
 2. Model fields (model, provider, reasoning_effort, fidelity)
 3. Response fields (response_format, response_schema)  <- NEW

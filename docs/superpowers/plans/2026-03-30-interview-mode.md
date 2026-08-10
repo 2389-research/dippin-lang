@@ -847,7 +847,7 @@ If the upstream output contains no parseable questions (e.g., the agent said "No
 - **DIP127**: Fires if `mode` is not one of `choice`, `freeform`, `interview`.
 - **DIP128**: Fires if `mode: interview` has a `default` value (meaningless — interview doesn't route by selection).
 - **DIP129**: Fires if `mode: interview` has multiple labeled outgoing edges (interview collects answers, not choices).
-```
+```markdown
 
 - [ ] **Step 2: Update the human-specific fields table**
 
@@ -926,7 +926,7 @@ When `cfg.Mode == "interview"`, the runtime is expected to:
   "canceled": false
 }
 ```
-```
+```markdown
 
 - [ ] **Step 3: Commit**
 

@@ -384,7 +384,7 @@ Parallel nodes fan execution out to multiple branches that run concurrently.
 
 ### Syntax
 
-```
+```dippin
 parallel <ID> -> <target1>, <target2>[, <target3>, ...]
 ```
 
@@ -443,7 +443,7 @@ Fan-in nodes join concurrent branches back together.
 
 ### Syntax
 
-```
+```dippin
 fan_in <ID> <- <source1>, <source2>[, <source3>, ...]
 ```
 

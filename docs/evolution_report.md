@@ -108,7 +108,7 @@ type RetryConfig struct {
 ```
 
 **Dippin Syntax**:
-```
+```dippin
 agent analyze_code:
   prompt: "Analyze this code"
   retry_policy: aggressive
@@ -163,7 +163,7 @@ type AgentConfig struct {
 **Proposed Solution**:
 
 **1. Document valid fidelity levels in the spec**:
-```
+```dippin
 fidelity: full | summary:high | summary:medium | summary:low | compact | truncate
 ```
 
@@ -195,7 +195,7 @@ type FidelityConfig struct {
 
 **Runtime Has** (`stylesheet.go`):
 - CSS-like syntax for per-node LLM config via selectors:
-  ```
+  ```text
   * { model: gpt-4; provider: openai; }
   .coder { model: o1; reasoning_effort: high; }
   #critical_gate { max_retries: 5; }
@@ -212,7 +212,7 @@ type FidelityConfig struct {
 
 Add a top-level `stylesheet` block to Dippin syntax:
 
-```
+```dippin
 workflow analyze_codebase:
   start: scan
   exit: report
@@ -288,7 +288,7 @@ type ParallelBranch struct {
 ```
 
 **Dippin Syntax**:
-```
+```dippin
 parallel analyze:
   branch:
     target: lint
@@ -323,7 +323,7 @@ type SubgraphConfig struct {
 **Proposed Solution** (v1.5):
 
 Add top-level `params` block to Dippin:
-```
+```dippin
 workflow security_scan:
   params:
     repo_path: string  # Required
@@ -448,7 +448,7 @@ type WorkflowDefaults struct {
 - No namespacing enforcement (any key can be accessed)
 
 **Examples**:
-```
+```text
 outcome=success
 outcome!=fail && tool_stdout contains PASSED
 not outcome=retry || human_response startswith yes
@@ -467,7 +467,7 @@ status in completed,partial_success,success
   - `Value`: string literal
 
 **Examples** (after parsing):
-```
+```go
 CondCompare{Variable: "ctx.outcome", Op: "=", Value: "success"}
 CondAnd{
   Left: CondCompare{Variable: "ctx.outcome", Op: "!=", Value: "fail"},
@@ -534,7 +534,7 @@ CondAnd{
 ### The Runtime's Implementation (`stylesheet.go`)
 
 **Syntax**: CSS-like rules in `model_stylesheet` graph attribute (string):
-```
+```text
 * { model: gpt-4o; provider: openai; }
 .coder { model: o1; reasoning_effort: high; }
 #critical_gate { max_retries: 5; retry_policy: aggressive; }
@@ -639,7 +639,7 @@ type Workflow struct {
 - Apply explicit node config last (overrides everything)
 
 **Example resolution**:
-```
+```text
 Node: agent scan, class: [coder]
 
 Matches:
@@ -756,7 +756,7 @@ type WorkflowDefaults struct {
 ```
 
 **Dippin Syntax**:
-```
+```dippin
 workflow analyze:
   defaults:
     fidelity: summary:high
@@ -766,7 +766,7 @@ workflow analyze:
 #### 5.3 Add Validation for Fidelity Values
 
 **DIP-new: Invalid Fidelity Level**
-```
+```text
 Code: DIP113
 Severity: Error
 Message: node "analyze" has invalid fidelity "sumary:high" (typo)
@@ -778,7 +778,7 @@ Help: valid values are: full, summary:high, summary:medium, summary:low, compact
 The `compaction_threshold` field (intended for token-budget-based compaction) is not yet implemented in the runtime. Mark it as **experimental** in Dippin spec and ignore it in v1 validation.
 
 **Future semantics** (v2+):
-```
+```dippin
 agent analyze:
   compaction_threshold: 0.75
   # When context size exceeds 75% of model's context window,
@@ -837,7 +837,7 @@ Events are a **runtime observability layer**, not a workflow modeling primitive.
 
 **Post-v1 Extension** (if needed):
 Add an optional `on_event:` hook for external integrations:
-```
+```dippin
 workflow deploy:
   on_event:
     stage_failed:
@@ -912,7 +912,7 @@ This would be syntactic sugar for configuring the engine's event handler, not a 
 **Missing checks to add**:
 
 **DIP110: Handler Registration** (semantic)
-```
+```text
 Code: DIP110
 Severity: Error
 Message: node "analyze" references unregistered handler "codergen"
@@ -921,7 +921,7 @@ Help: ensure the handler is registered in the engine's HandlerRegistry before ex
 **Implementation**: `ValidateSemantic(w *Workflow, registry *HandlerRegistry)` function (mirrors the runtime's)
 
 **DIP111: Invalid Attribute Types** (semantic)
-```
+```text
 Code: DIP111
 Severity: Error
 Message: node "retry_node" has invalid max_retries "abc": must be a non-negative integer
@@ -929,7 +929,7 @@ Help: change max_retries to a valid integer (e.g., 3)
 ```
 
 **DIP112: Missing Fail Edge on Conditional Node** (warning)
-```
+```text
 Code: DIP112
 Severity: Warning
 Message: node "validate" is a conditional but has no fail edge
@@ -937,7 +937,7 @@ Help: add an edge with condition "ctx.outcome != success" or "ctx.outcome = fail
 ```
 
 **DIP113: Inconsistent Edge Label Usage** (warning)
-```
+```text
 Code: DIP113
 Severity: Warning
 Message: node "validate" has 3 outgoing edges but only 2 are labeled
@@ -945,7 +945,7 @@ Help: either label all edges or remove all labels for consistency
 ```
 
 **DIP114: Invalid Fidelity Level** (error)
-```
+```text
 Code: DIP114
 Severity: Error
 Message: node "analyze" has invalid fidelity "sumary:high"
@@ -993,7 +993,7 @@ $ dippin validate --fix workflow.dip
 3. DIP113: Normalize edge labels (all or none)
 
 **Output**:
-```
+```text
 Applied 3 fixes:
   - Added fail edge validate -> validate (condition: ctx.outcome = fail)
   - Renamed edge target "anlyze" to "analyze"
@@ -1046,7 +1046,7 @@ type SubgraphConfig struct {
 #### 8.1 **Add Parameter Declarations**
 
 Child workflows declare parameters:
-```
+```dippin
 workflow security_scan:
   params:
     repo_path: string          # Required
@@ -1060,7 +1060,7 @@ workflow security_scan:
 ```
 
 Parent workflows pass parameters:
-```
+```dippin
 subgraph run_security_scan:
   ref: ./security_scan.dip
   params:
@@ -1087,7 +1087,7 @@ type Workflow struct {
 #### 8.2 **File-Based Import Resolution**
 
 **Dippin Syntax**:
-```
+```dippin
 subgraph run_scan:
   ref: ./security_scan.dip
   params:
@@ -1114,7 +1114,7 @@ subgraph run_scan:
 - After child completes, parent's `ctx.outcome` is overwritten
 
 **Solution**: Prefix child context keys with subgraph node ID:
-```
+```text
 Parent context before:
   ctx.outcome = "parent_success"
 
@@ -1129,7 +1129,7 @@ Parent context after merge:
 ```
 
 **Dippin Syntax** for accessing child context:
-```
+```dippin
 agent analyze_results:
   prompt: |
     Review the scan results:
@@ -1159,7 +1159,7 @@ agent analyze_results:
 - Default to **inline expansion** for static refs (`.dip` files)
 - Support **runtime dispatch** for dynamic refs (e.g., `${workflow_name}.dip`)
 - Add a `mode:` option:
-  ```
+  ```dippin
   subgraph run_scan:
     ref: ./security_scan.dip
     mode: inline  # or "runtime"
@@ -1172,7 +1172,7 @@ agent analyze_results:
 **DIP-new codes**:
 
 **DIP201: Subgraph Not Found**
-```
+```text
 Code: DIP201
 Severity: Error
 Message: subgraph reference "./security_scan.dip" not found
@@ -1180,7 +1180,7 @@ Help: ensure the file exists relative to the current workflow directory
 ```
 
 **DIP202: Missing Required Parameter**
-```
+```text
 Code: DIP202
 Severity: Error
 Message: subgraph "security_scan" requires parameter "repo_path" but it was not provided
@@ -1188,7 +1188,7 @@ Help: add repo_path: <value> to the params block
 ```
 
 **DIP203: Unknown Parameter**
-```
+```text
 Code: DIP203
 Severity: Warning
 Message: subgraph "security_scan" does not accept parameter "unknown_param"
@@ -1196,7 +1196,7 @@ Help: remove the parameter or check the subgraph's params declaration
 ```
 
 **DIP204: Parameter Type Mismatch**
-```
+```text
 Code: DIP204
 Severity: Error
 Message: parameter "severity" expects type int but got "critical" (string)

@@ -64,7 +64,7 @@ During site build, `docs/generated-spec.md` is copied to `site/static/llms-full.
 
 **New justfile recipes:**
 
-```
+```shell
 # Generate the spec from source docs
 gen-spec:
     ./scripts/gen-spec.sh

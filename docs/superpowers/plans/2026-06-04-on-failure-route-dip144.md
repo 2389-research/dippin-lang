@@ -31,7 +31,7 @@
 
 In `parser/testdata/defaults_complex.dip`, add one line inside the `defaults` block (after `restart_target: A`):
 
-```
+```dippin
     on_failure: A
 ```
 
@@ -835,7 +835,7 @@ Record the counts. Decision rule: leave `stress_*`/adversarial fixtures warning;
 
 Create `examples/on_failure_route.dip`:
 
-```
+```dippin
 workflow OnFailureDemo
   goal: "Demonstrate a graph-level on_failure recovery route"
   start: Plan
@@ -932,4 +932,4 @@ git push -u origin feat/92-on-failure-route
 - [ ] **Step 2: Create the PR** with body covering: the `on_failure` attribute + precedence semantics; the DIP144 lint + its suppression set; the DIP003 node-existence validation + DIP004 reachability seeding; the DOT round-trip decision (tool-safety precedent); the DIP102-suppression descope rationale; the examples blast-radius decision; and the cross-repo split (dippin carries/validates, tracker enforces — note the tracker `upstream` follow-up to be filed, blocking-linked to #295, and the `tracker validate` warning-fatality question). Title: `feat: graph-level on_failure route + DIP144 failure-route lint (Closes #92, Closes #93)`.
 
 - [ ] **Step 3: Do NOT tag a release.** Per the maintainer, tagging (~v0.37.0) requires explicit go-ahead.
-```
+```text

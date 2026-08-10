@@ -338,7 +338,7 @@ New file `validator/lint_writable_paths.go` (keeps DIP139's already-tight functi
 `lint_tool_access.go` undisturbed). Helper ladder (each ≤ cyclo 5 / cognit 7), modeled on
 `lint_style.go`'s `checkNodeFidelityByKind → checkBranchFidelities → checkFidelityValue`:
 
-```
+```text
 lintWritablePaths(w)                      // range nodes -> checkNodeWritablePathsByKind
 checkNodeWritablePathsByKind(n)           // switch AgentConfig / ParallelConfig
 checkBranchWritablePaths(n, branches)     // range branches -> checkWritablePathsObject

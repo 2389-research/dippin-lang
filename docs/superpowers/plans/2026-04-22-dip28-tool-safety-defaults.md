@@ -88,7 +88,7 @@ graph.Attrs. Refs #28."
 
 Create `parser/testdata/defaults_tool_safety.dip` exactly:
 
-```
+```dippin
 workflow DefaultsToolSafety
   goal: "Test tool-safety defaults parsing"
   start: A
@@ -659,7 +659,7 @@ git commit -m "test(migrate): .dip → DOT → .dip round-trip for tool-safety d
 
 Create `examples/tool_safety.dip`:
 
-```
+```dippin
 workflow ToolSafety
   goal: "Demonstrate tool_commands_allow and tool_denylist_add defaults for constrained shell execution"
   start: Start
@@ -770,7 +770,7 @@ workflow Safe
 ```
 
 Values pass through to the runtime verbatim; dippin-lang does not validate glob syntax.
-```
+```markdown
 
 - [ ] **Step 4: Update `site/static/skill.md`**
 

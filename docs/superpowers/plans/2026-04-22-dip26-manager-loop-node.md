@@ -126,7 +126,7 @@ func TestNodeManagerLoop_IsNodeKind(t *testing.T) {
 
 - [ ] **Step 1.2: Run the test — expect it to fail**
 
-```
+```shell
 just test-pkg ir
 ```
 
@@ -172,7 +172,7 @@ func (ManagerLoopConfig) nodeConfig() {}
 
 - [ ] **Step 1.5: Run the tests to confirm they pass**
 
-```
+```shell
 just test-pkg ir
 ```
 
@@ -251,7 +251,7 @@ func TestParseManagerLoopNode(t *testing.T) {
 
 - [ ] **Step 2.2: Run it to confirm failure**
 
-```
+```shell
 just test-pkg parser
 ```
 
@@ -393,7 +393,7 @@ Complexity note: each helper stays under the 5/7 cyclomatic/cognitive limit. If 
 
 - [ ] **Step 2.7: Run the parser tests**
 
-```
+```shell
 just test-pkg parser
 ```
 
@@ -474,7 +474,7 @@ func TestParseManagerLoop_UnknownFieldHint(t *testing.T) {
 
 - [ ] **Step 2.9: Run tests**
 
-```
+```shell
 just test-pkg parser
 ```
 
@@ -535,7 +535,7 @@ func TestEnsureConditionsParsed_ManagerLoop(t *testing.T) {
 
 - [ ] **Step 3.2: Run it — expect nil Parsed**
 
-```
+```shell
 just test-pkg simulate
 ```
 
@@ -592,7 +592,7 @@ func ensureConditionParsed(c *ir.Condition, nodeID, field string) error {
 
 - [ ] **Step 3.4: Run tests**
 
-```
+```shell
 just test-pkg simulate
 ```
 
@@ -665,7 +665,7 @@ func TestFormatManagerLoop_RoundTrip(t *testing.T) {
 
 - [ ] **Step 4.2: Run — expect failure**
 
-```
+```shell
 just test-pkg formatter
 ```
 
@@ -738,7 +738,7 @@ If `sortedKeys` doesn't already exist in `formatter/`, check for an equivalent h
 
 - [ ] **Step 4.4: Run tests**
 
-```
+```shell
 just test-pkg formatter
 ```
 
@@ -801,7 +801,7 @@ func TestExportDOT_ManagerLoop(t *testing.T) {
 
 - [ ] **Step 5.2: Run — expect failure**
 
-```
+```shell
 just test-pkg export
 ```
 
@@ -885,7 +885,7 @@ Add `"sort"` to the import block if not already present.
 
 - [ ] **Step 5.5: Run tests**
 
-```
+```shell
 just test-pkg export
 ```
 
@@ -950,7 +950,7 @@ func TestMigrate_ManagerLoop(t *testing.T) {
 
 - [ ] **Step 6.2: Run — expect failure**
 
-```
+```shell
 just test-pkg migrate
 ```
 
@@ -1043,7 +1043,7 @@ Check cyclomatic: `buildManagerLoopConfig` has 6 branches. If gocyclo complains,
 
 - [ ] **Step 6.5: Run tests**
 
-```
+```shell
 just test-pkg migrate
 ```
 
@@ -1089,7 +1089,7 @@ func TestManagerLoopCodesRegistered(t *testing.T) {
 
 - [ ] **Step 7.2: Run — expect failure**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1145,7 +1145,7 @@ Explanations[DIP137] = Explanation{
 
 - [ ] **Step 7.5: Run tests**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1282,7 +1282,7 @@ Check whether `hasCode` already exists — `grep "func hasCode" validator/*_test
 
 - [ ] **Step 8.2: Run — expect failure**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1416,7 +1416,7 @@ diags = append(diags, lintManagerLoop(w)...)
 
 - [ ] **Step 8.5: Run tests**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1474,7 +1474,7 @@ func TestLintConditions_StackChildNamespace(t *testing.T) {
 
 - [ ] **Step 9.2: Run — expect failure**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1499,7 +1499,7 @@ var knownNamespaces = map[string]bool{
 
 - [ ] **Step 9.4: Run the test**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1564,7 +1564,7 @@ func TestTemplateNames_IncludesManagerLoop(t *testing.T) {
 
 - [ ] **Step 10.2: Run — expect failure**
 
-```
+```shell
 just test-pkg scaffold
 ```
 
@@ -1619,7 +1619,7 @@ Add `"time"` to imports if not already present.
 
 - [ ] **Step 10.4: Run tests**
 
-```
+```shell
 just test-pkg scaffold
 ```
 
@@ -1688,7 +1688,7 @@ Use whichever values the existing map already uses; don't change existing entrie
 
 - [ ] **Step 11.4: Run**
 
-```
+```shell
 just test-pkg lsp
 ```
 
@@ -1760,7 +1760,7 @@ workflow ManagerLoopDemo
 
 - [ ] **Step 12.3: Run the full check**
 
-```
+```shell
 just build && ./dippin validate examples/manager_loop_demo.dip && ./dippin lint examples/manager_loop_demo.dip && ./dippin fmt examples/manager_loop_demo.dip
 ```
 
@@ -1768,7 +1768,7 @@ Expected: all succeed, lint clean.
 
 - [ ] **Step 12.4: Run the integration suite**
 
-```
+```shell
 just test-pkg validator
 ```
 
@@ -1776,7 +1776,7 @@ just test-pkg validator
 
 - [ ] **Step 12.5: Run validate-examples**
 
-```
+```shell
 just validate-examples
 ```
 
@@ -1836,7 +1836,7 @@ steer_context_value = field_value                      (* inline "k=v, k=v" *)
 
 Extend the block at the bottom (around line 305):
 
-```
+```ebnf
 (* Manager loop: label, subgraph_ref, poll_interval, max_cycles,      *)
 (*   stop_condition, steer_condition, steer_context                   *)
 ```
@@ -1845,7 +1845,7 @@ Extend the block at the bottom (around line 305):
 
 Line 321 lists contextual keywords. Add `manager_loop`:
 
-```
+```ebnf
 (* workflow, agent, human, tool, subgraph, parallel, fan_in,           *)
 (* manager_loop, edges, defaults, vars, when, and, or, not, contains,   *)
 (* startswith, endswith, in, true, false, restart, label, weight        *)
@@ -1925,7 +1925,7 @@ And extend the identifier-in-declaration list (around line 73):
 
 Append to `editors/tree-sitter-dippin/test/corpus/basic.txt`:
 
-```
+```text
 ================================================================================
 Manager loop node
 ================================================================================
@@ -1976,7 +1976,7 @@ tree-sitter-test: tree-sitter-generate
 
 - [ ] **Step 14.5: Generate + run tests**
 
-```
+```shell
 cd editors/tree-sitter-dippin && npm install  # only if node_modules is missing
 just tree-sitter-generate
 just tree-sitter-test
@@ -1988,7 +1988,7 @@ Expected: all corpus cases pass. If the generator isn't installed globally, `npx
 
 Ensure `editors/tree-sitter-dippin/node_modules/` is ignored. Append to `.gitignore` if not:
 
-```
+```text
 # Tree-sitter build deps
 editors/tree-sitter-dippin/node_modules/
 ```
@@ -2024,7 +2024,7 @@ In `.github/workflows/ci.yml`, add a new job (copy the pattern from the `Verify 
 
 - [ ] **Step 14.8: Stage the generated files**
 
-```
+```shell
 git add editors/tree-sitter-dippin/src/parser.c editors/tree-sitter-dippin/src/grammar.json editors/tree-sitter-dippin/src/node-types.json editors/tree-sitter-dippin/src/tree_sitter/
 git add editors/tree-sitter-dippin/tree-sitter.json  # if untracked
 git add editors/tree-sitter-dippin/grammar.js editors/tree-sitter-dippin/queries/highlights.scm editors/tree-sitter-dippin/test/corpus/basic.txt
@@ -2033,7 +2033,7 @@ git add Justfile .gitignore .github/workflows/ci.yml
 
 Verify before committing: `git status` shows no stray file in `node_modules/`. If `package-lock.json` is new (not previously tracked), decide: commit it (reproducible installs) or extend `.gitignore` for consistency with the existing setup. The git status at plan time shows `package-lock.json` as untracked — **commit it**.
 
-```
+```shell
 git add editors/tree-sitter-dippin/package-lock.json
 ```
 
@@ -2055,7 +2055,7 @@ git commit -m "feat(tree-sitter): add manager_loop rule and commit generated par
 
 After merging this PR, the Zed extension needs to point at the new SHA. Don't do this in the PR — do it in a follow-up:
 
-```
+```shell
 # Post-merge, on main:
 git rev-parse HEAD   # copy the merge SHA
 # Edit editors/zed-dippin/extension.toml, update the commit = "..." line
@@ -2147,7 +2147,7 @@ If conditional is missing, also add it. If this doc already has conditional and 
 
 Around lines 11-25, add manager_loop to Composition Nodes:
 
-```
+```text
     subgraph Composition Nodes
         subgraph_node["subgraph<br>Sub-pipeline"]
         manager_loop["manager_loop<br>Supervisor"]
@@ -2158,7 +2158,7 @@ Around lines 11-25, add manager_loop to Composition Nodes:
 
 Around lines 27-34, add a row:
 
-```
+```text
 | `manager_loop` | Supervise a child subgraph with polling and steering | Block with subgraph_ref |
 ```
 
@@ -2250,7 +2250,7 @@ Find the Node Types section (the exploration located it around line 197; verify)
 ```
 
 DOT shape: `house`. See [docs/nodes.md#manager-loop-nodes](docs/nodes.md#manager-loop-nodes).
-```
+```markdown
 
 - [ ] **Step 17.2: site/content/language.md**
 
@@ -2271,7 +2271,7 @@ Find the subgraph section (Step 1's exploration showed it around line 120-145) a
     stop_condition: stack.child.outcome = success
     steer_condition: stack.child.cycles = 5
     steer_context: hint=halfway_through
-```
+```markdown
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -2321,7 +2321,7 @@ Set the release date when tagging (don't date-stamp prematurely).
 
 - [ ] **Step 18.2: Regenerate site changelog**
 
-```
+```shell
 just changelog-md
 ```
 
@@ -2349,7 +2349,7 @@ Review past CHANGELOG entries for cross-repo coordination style.
 Title: `feat: add ir.NodeManagerLoop support to the runtime's pipeline adapter layer`
 
 Body:
-```
+```text
 dippin-lang v0.22.0 (see 2389-research/dippin-lang#26) adds a new IR node
 kind `NodeManagerLoop` that expresses `stack.manager_loop` supervisors.
 The runtime's DOT parser already handles the node via `shape=house`, but the
@@ -2386,7 +2386,7 @@ File the issue in the runtime repository. Copy the issue number and update the d
 
 - [ ] **Step 20.1: Run the full check**
 
-```
+```shell
 just check
 ```
 
@@ -2398,7 +2398,7 @@ Expected: "All checks passed." If any step fails:
 
 - [ ] **Step 20.2: Run tree-sitter check**
 
-```
+```shell
 just tree-sitter-test
 ```
 
@@ -2406,7 +2406,7 @@ Expected: all corpus cases pass.
 
 - [ ] **Step 20.3: Manual round-trip smoke test**
 
-```
+```shell
 ./dippin fmt examples/manager_loop_demo.dip > /tmp/m1.dip
 ./dippin fmt /tmp/m1.dip > /tmp/m2.dip
 diff /tmp/m1.dip /tmp/m2.dip
@@ -2414,7 +2414,7 @@ diff /tmp/m1.dip /tmp/m2.dip
 
 Expected: no diff (idempotent).
 
-```
+```shell
 ./dippin export-dot examples/manager_loop_demo.dip > /tmp/m.dot
 grep 'shape=house' /tmp/m.dot
 grep 'subgraph_ref' /tmp/m.dot
@@ -2423,7 +2423,7 @@ grep 'steer_context' /tmp/m.dot
 
 Expected: all three greps succeed.
 
-```
+```shell
 ./dippin migrate /tmp/m.dot > /tmp/back.dip
 ./dippin validate /tmp/back.dip
 ```
@@ -2432,7 +2432,7 @@ Expected: `/tmp/back.dip` is a valid `.dip` with the manager_loop node preserved
 
 - [ ] **Step 20.4: Self-review the diff**
 
-```
+```shell
 git log --oneline main..HEAD
 git diff main..HEAD --stat
 ```
@@ -2445,7 +2445,7 @@ Check:
 
 - [ ] **Step 20.5: Push and open PR**
 
-```
+```shell
 git push -u origin feat/manager-loop-node
 gh pr create --title "feat: add manager_loop node kind (issue #26)" --body "$(cat <<'EOF'
 ## Summary
