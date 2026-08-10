@@ -626,7 +626,10 @@
       "input_per_m": 1.75,
       "output_per_m": 14,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-10",
+      "aliases": [
+        "gpt-5.2-codex"
+      ]
     },
     {
       "provider": "openai",
