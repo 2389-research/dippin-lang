@@ -1,4 +1,4 @@
-<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Playground — Dippin</title><meta name=description content="Try Dippin in your browser. Write, lint, parse, and format workflows live."><meta property="og:title" content="Playground — Dippin"><meta property="og:description" content="Try Dippin in your browser. Write, lint, parse, and format workflows live."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/playground.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/playground.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/playground.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Playground"><meta name=twitter:description content="Try Dippin in your browser. Write, lint, parse, and format workflows live."><link rel=canonical href=https://dippin.org/playground.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"WebPage","name":"Playground","description":"Try Dippin in your browser. Write, lint, parse, and format workflows live.","url":"https:\/\/dippin.org\/playground.html","dateModified":"2026-08-11","publisher":{"@id":"https:\/\/dippin.org\/#organization"}}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Playground"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Playground — Dippin</title><meta name=description content="Try Dippin in your browser. Lint, format, visualize, and health-check workflows live — nothing leaves your machine."><meta property="og:title" content="Playground — Dippin"><meta property="og:description" content="Try Dippin in your browser. Lint, format, visualize, and health-check workflows live — nothing leaves your machine."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/playground.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/playground.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/playground.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Playground"><meta name=twitter:description content="Try Dippin in your browser. Lint, format, visualize, and health-check workflows live — nothing leaves your machine."><link rel=canonical href=https://dippin.org/playground.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"WebPage","name":"Playground","description":"Try Dippin in your browser. Lint, format, visualize, and health-check workflows live — nothing leaves your machine.","url":"https:\/\/dippin.org\/playground.html","dateModified":"2026-08-11","publisher":{"@id":"https:\/\/dippin.org\/#organization"}}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Playground"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
 <button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
 <span></span><span></span><span></span></button><div class=nav-primary><a href=/language.html>Docs</a>
 <a href=/playground.html class=active>Playground</a>
@@ -19,9 +19,16 @@
 <a href=/analysis.html>Analysis</a>
 <a href=/architecture.html>Architecture</a>
 <a href=/editors.html>Editors</a>
-<a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><style>.playground{padding-top:8.5rem;min-height:100vh}.playground h1.section-title,.playground h2.pane-label{margin-top:0}.playground-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}.pane{display:flex;flex-direction:column}.pane-label{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;color:var(--text-soft)}.editor-wrap{position:relative;min-height:400px;border-radius:10px;overflow:hidden;border:2px solid rgba(0,0,0,8%)}#editor,#editor-highlight{font-family:var(--mono);font-size:.85rem;line-height:1.6;padding:1rem;margin:0;tab-size:2;white-space:pre-wrap;word-wrap:break-word;width:100%;min-height:400px}#editor-highlight{position:absolute;top:0;left:0;right:0;bottom:0;background:#2a2a30;color:#bbb;pointer-events:none;overflow:hidden;border:none;border-radius:0}#editor{position:relative;z-index:1;background:0 0;color:transparent;caret-color:#ddd;border:none;resize:vertical;outline:none;-webkit-text-fill-color:transparent}#editor::selection{background:rgba(180,160,230,.3);-webkit-text-fill-color:#ddd}#output{width:100%;min-height:400px;font-family:var(--mono);font-size:.8rem;line-height:1.6;background:#2a2a30;color:#bbb;border:2px solid rgba(0,0,0,8%);border-radius:10px;padding:1rem;overflow:auto;white-space:pre-wrap}.toolbar{display:flex;gap:.5rem;margin-bottom:.5rem}.toolbar button{font-family:var(--sans);font-size:.85rem;font-weight:600;padding:.4rem 1rem;border-radius:8px;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:all .2s}.toolbar button:hover{border-color:var(--green);background:var(--green-light)}.toolbar button.active{background:var(--green-deep);color:#fff;border-color:var(--green-deep)}.status{font-family:var(--mono);font-size:.75rem;color:var(--text-soft);margin-top:.5rem}.diag-error{color:#e85a5a}.diag-warning{color:#b8960a}.diag-hint{color:var(--text-soft)}@media(max-width:768px){.playground-grid{grid-template-columns:1fr}}</style><section class=playground><div class=container><div class=section-label>Interactive</div><h1 class=section-title>Playground</h1><p class=section-desc>Write Dippin workflows in the browser. Parse, lint, and format — all running locally via WebAssembly.</p><h2 class=pane-label style=margin-top:1.5rem>Tools</h2><div class=toolbar><button id=btn-lint class=active onclick=runLint()>Lint</button>
-<button id=btn-parse onclick=runParse()>Parse</button>
-<button id=btn-format onclick=runFormat()>Format</button></div><div class=playground-grid><div class=pane><h2 class=pane-label>Source (.dip)</h2><div class=editor-wrap><pre id=editor-highlight aria-hidden=true></pre><textarea id=editor spellcheck=false oninput=syncHighlight() onscroll=syncScroll()>workflow Hello
+<a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><style>.playground{padding-top:8.5rem;min-height:100vh}.playground h1.section-title,.playground h2.pane-label{margin-top:0}.playground-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}.pane{display:flex;flex-direction:column}.pane-label{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;color:var(--text-soft)}.editor-wrap{position:relative;min-height:440px;border-radius:10px;overflow:hidden;border:2px solid rgba(0,0,0,8%)}#editor,#editor-highlight{font-family:var(--mono);font-size:.85rem;line-height:1.6;padding:1rem;margin:0;tab-size:2;white-space:pre-wrap;word-wrap:break-word;width:100%;min-height:440px}#editor-highlight{position:absolute;top:0;left:0;right:0;bottom:0;background:#2a2a30;color:#bbb;pointer-events:none;overflow:hidden;border:none;border-radius:0}#editor{position:relative;z-index:1;background:0 0;color:transparent;caret-color:#ddd;border:none;resize:vertical;outline:none;-webkit-text-fill-color:transparent}#editor::selection{background:rgba(180,160,230,.3);-webkit-text-fill-color:#ddd}#output{width:100%;min-height:440px;font-family:var(--mono);font-size:.8rem;line-height:1.6;background:#2a2a30;color:#bbb;border:2px solid rgba(0,0,0,8%);border-radius:10px;padding:1rem;overflow:auto;white-space:pre-wrap}#output.graph{background:#fbfbfd;white-space:normal;display:flex;align-items:flex-start;justify-content:center}#output.graph svg{max-width:100%;height:auto}.controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.6rem}.controls .spacer{flex:auto}.toolbar{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}.toolbar button,.controls button,.controls select{font-family:var(--sans);font-size:.82rem;font-weight:600;padding:.38rem .9rem;border-radius:8px;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:all .15s;color:var(--text)}.controls select{font-family:var(--mono)}.toolbar button:hover,.controls button:hover{border-color:var(--green);background:var(--green-light)}.toolbar button.active{background:var(--green-deep);color:#fff;border-color:var(--green-deep)}.summary{font-family:var(--mono);font-size:.8rem;margin-top:.55rem;padding:.5rem .75rem;border-radius:8px;background:rgba(0,0,0,3%);border:1px solid var(--border);cursor:pointer}.summary.clean{color:#2e7d32}.summary.warn{color:#b8860a}.summary.err{color:#d84343}.status{font-family:var(--mono);font-size:.72rem;color:var(--text-soft);margin-top:.4rem}.diag{display:block;cursor:pointer;padding:1px 0}.diag:hover{background:rgba(255,255,255,6%)}.card-row{display:flex;justify-content:space-between;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,8%)}.grade{font-size:2.2rem;font-weight:800}.g-A{color:#43a047}.g-B{color:#7cb342}.g-C{color:#fbc02d}.g-D{color:#fb8c00}.g-F{color:#e53935}@media(max-width:820px){.playground-grid{grid-template-columns:1fr}}</style><section class=playground><div class=container><div class=section-label>Interactive</div><h1 class=section-title>Playground</h1><p class=section-desc>Write Dippin workflows in the browser. Lint, format, visualize, and health-check — all running locally via WebAssembly.</p><div class=controls><select id=example-select onchange=loadExample(this.value) aria-label="Load an example"><option value=hello>Example: Hello</option><option value=minimal>Example: Minimal</option><option value=review-loop>Example: Review loop</option><option value=parallel>Example: Parallel + fan-in</option><option value=conditional>Example: Conditional routing</option><option value=human-gate>Example: Human gate</option></select>
+<span class=spacer></span>
+<button onclick=copySource() title="Copy the source">Copy</button>
+<button onclick=downloadSource() title="Download as .dip">Download</button>
+<button onclick=shareSource() title="Copy a shareable link">Share</button>
+<button onclick=resetSource() title="Reset to the default example">Reset</button></div><div class=toolbar role=tablist><button id=tab-lint class=active onclick='setTool("lint")'>Lint</button>
+<button id=tab-format onclick='setTool("format")'>Format</button>
+<button id=tab-graph onclick='setTool("graph")'>Graph</button>
+<button id=tab-doctor onclick='setTool("doctor")'>Doctor</button>
+<button id=tab-parse onclick='setTool("parse")'>Parse (IR)</button></div><div class=playground-grid><div class=pane><h2 class=pane-label>Source (.dip)</h2><div class=editor-wrap><pre id=editor-highlight aria-hidden=true></pre><textarea id=editor spellcheck=false oninput=onInput() onscroll=syncScroll()></textarea></div><div class=summary id=summary onclick='setTool("lint")'>Loading WASM…</div></div><div class=pane><h2 class=pane-label>Output</h2><div id=output>Loading WASM…</div></div></div><div class=status id=status></div></div></section><script src=/wasm_exec.js></script><script>const EXAMPLES={hello:`workflow Hello
   goal: "Greet the user"
   start: Greeter
   exit: Done
@@ -40,9 +47,149 @@
 
   edges
     Greeter -> Done
-</textarea></div></div><div class=pane><h2 class=pane-label>Output</h2><div id=output>Loading WASM...</div></div></div><div class=status id=status></div></div></section><script src=/wasm_exec.js></script><script>const go=new Go;let wasmReady=!1;const editorEl=document.getElementById("editor"),highlightEl=document.getElementById("editor-highlight"),outputEl=document.getElementById("output");function syncHighlight(){window.dippinHighlight&&(highlightEl.innerHTML=dippinHighlight.dippin(editorEl.value)+`
-`)}function syncScroll(){highlightEl.scrollTop=editorEl.scrollTop,highlightEl.scrollLeft=editorEl.scrollLeft}window.dippinHighlight?syncHighlight():document.addEventListener("DOMContentLoaded",syncHighlight),editorEl.addEventListener("keydown",function(e){if(e.key==="Tab"){e.preventDefault();var t=this.selectionStart,n=this.selectionEnd;this.value=this.value.substring(0,t)+"  "+this.value.substring(n),this.selectionStart=this.selectionEnd=t+2,syncHighlight()}}),WebAssembly.instantiateStreaming(fetch("/dippin.wasm"),go.importObject).then(e=>{go.run(e.instance);function t(){typeof dippinLint=="function"?(wasmReady=!0,document.getElementById("status").textContent="WASM loaded",runLint()):setTimeout(t,10)}t()}).catch(e=>{outputEl.textContent="Failed to load WASM: "+e});function getSource(){return editorEl.value}function runLint(){if(!wasmReady)return;setActive("btn-lint");var t=dippinLint(getSource()),e=JSON.parse(t);if(e&&e.error){outputEl.innerHTML='<span class="hl-fail">parse error: '+escapeHtml(e.error)+"</span>";return}if(!e||e.length===0){outputEl.innerHTML='<span class="hl-pass">No issues found.</span>';return}outputEl.innerHTML=e.map(function(e){var t=e.severity==="error"?"hl-fail":e.severity==="warning"?"hl-warn":"hl-dim";return'<span class="'+t+'">'+e.severity+"["+e.code+"]</span>: "+escapeHtml(e.message)}).join(`
-`)}function runParse(){if(!wasmReady)return;setActive("btn-parse");var t,e=dippinParse(getSource());try{t=JSON.stringify(JSON.parse(e),null,2),outputEl.innerHTML=dippinHighlight.json(t)}catch{outputEl.textContent=e}}function runFormat(){if(!wasmReady)return;setActive("btn-format");var e=dippinFormat(getSource());outputEl.innerHTML=dippinHighlight.dippin(e)}function setActive(e){document.querySelectorAll(".toolbar button").forEach(function(e){e.classList.remove("active")}),document.getElementById(e).classList.add("active")}function escapeHtml(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</script><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang data-tinylytics-event=footer.github>GitHub</a>
+`,minimal:`workflow minimal
+  goal: "A minimal two-node workflow"
+  start: Start
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Start
+    prompt:
+      Begin the task.
+
+  agent Done
+    prompt:
+      Summarize the result.
+
+  edges
+    Start -> Done
+`,"review-loop":`workflow review-loop
+  goal: "Implement, review, and loop until approved"
+  start: Implement
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Implement
+    prompt:
+      Write the implementation.
+
+  agent Review
+    auto_status: true
+    prompt:
+      Review the implementation. Set STATUS: success if approved, STATUS: fail if changes needed.
+
+  agent Done
+    prompt:
+      Finalize the approved result.
+
+  edges
+    Implement -> Review
+    Review -> Done  on success
+    Review -> Implement  on fail  loop
+`,parallel:`workflow parallel
+  goal: "Fan-out to parallel workers then join"
+  start: Init
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Init
+    prompt:
+      Prepare work for parallel execution.
+
+  parallel Fan -> WorkerA, WorkerB
+
+  agent WorkerA
+    prompt:
+      Handle the first work stream.
+
+  agent WorkerB
+    prompt:
+      Handle the second work stream.
+
+  fan_in Join <- WorkerA, WorkerB
+
+  agent Done
+    prompt:
+      Combine results and finish.
+
+  edges
+    Init -> Fan
+    Join -> Done
+`,conditional:`workflow conditional
+  goal: "Route based on status check"
+  start: Check
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  conditional Check
+    label: "Evaluate outcome"
+
+  agent Pass
+    prompt:
+      Handle the success path.
+
+  agent Fail
+    prompt:
+      Handle the failure path.
+
+  agent Done
+    prompt:
+      Wrap up.
+
+  edges
+    Check -> Pass  when ctx.outcome = success
+    Check -> Fail  when ctx.outcome = fail
+    Check -> Done
+    Pass -> Done
+    Fail -> Done
+`,"human-gate":`workflow human-gate
+  goal: "Gate progress on human approval"
+  start: Prepare
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Prepare
+    prompt:
+      Prepare the proposal for review.
+
+  human Gate
+    mode: choice
+    default: approve
+
+  agent Approved
+    prompt:
+      Proceed with the approved plan.
+
+  agent Rejected
+    prompt:
+      Handle the rejection.
+
+  agent Done
+    prompt:
+      Wrap up.
+
+  edges
+    Prepare -> Gate
+    Gate -> Approved  label: approve  choice: approve
+    Gate -> Rejected  label: reject  choice: reject
+    Approved -> Done
+    Rejected -> Done
+`},go=new Go;let wasmReady=!1,activeTool="lint",mermaidLoading=null,debounceTimer=null;const editorEl=document.getElementById("editor"),highlightEl=document.getElementById("editor-highlight"),outputEl=document.getElementById("output"),summaryEl=document.getElementById("summary");function getSource(){return editorEl.value}function setSource(e){editorEl.value=e,syncHighlight()}function syncHighlight(){window.dippinHighlight&&(highlightEl.innerHTML=dippinHighlight.dippin(editorEl.value)+`
+`)}function syncScroll(){highlightEl.scrollTop=editorEl.scrollTop,highlightEl.scrollLeft=editorEl.scrollLeft}function escapeHtml(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function initialSource(){if(location.hash.length>1)try{return decodeURIComponent(escape(atob(location.hash.slice(1))))}catch{}return EXAMPLES.hello}setSource(initialSource()),window.dippinHighlight||document.addEventListener("DOMContentLoaded",syncHighlight),editorEl.addEventListener("keydown",function(e){if(e.key==="Tab"){e.preventDefault();const t=this.selectionStart,n=this.selectionEnd;this.value=this.value.substring(0,t)+"  "+this.value.substring(n),this.selectionStart=this.selectionEnd=t+2,onInput()}}),WebAssembly.instantiateStreaming(fetch("/dippin.wasm"),go.importObject).then(e=>{go.run(e.instance),function e(){typeof dippinLint=="function"?(wasmReady=!0,document.getElementById("status").textContent="WASM loaded · everything runs locally in your browser",runActive()):setTimeout(e,10)}()}).catch(e=>{outputEl.textContent="Failed to load WASM: "+e});function onInput(){syncHighlight(),clearTimeout(debounceTimer),debounceTimer=setTimeout(()=>{updateSummary(),runActive()},220)}function updateSummary(){if(!wasmReady)return;const t=JSON.parse(dippinLint(getSource()));if(t&&t.error){summaryEl.className="summary err",summaryEl.textContent="✗ parse error";return}const e={error:0,warning:0,hint:0};if((t||[]).forEach(t=>{e[t.severity]=(e[t.severity]||0)+1}),!t||t.length===0){summaryEl.className="summary clean",summaryEl.textContent="✓ No issues — clean workflow";return}summaryEl.className="summary "+(e.error?"err":e.warning?"warn":""),summaryEl.textContent=`${e.error} error${e.error!==1?"s":""} · ${e.warning} warning${e.warning!==1?"s":""} · ${e.hint} hint${e.hint!==1?"s":""}`}function setTool(e){activeTool=e,document.querySelectorAll(".toolbar button").forEach(e=>e.classList.remove("active"));const t=document.getElementById("tab-"+e);t&&t.classList.add("active"),outputEl.classList.toggle("graph",e==="graph"),runActive()}function runActive(){if(!wasmReady)return;updateSummary(),({lint:runLint,format:runFormat,graph:runGraph,doctor:runDoctor,parse:runParse}[activeTool]||runLint)()}function runLint(){const e=JSON.parse(dippinLint(getSource()));if(e&&e.error){outputEl.innerHTML='<span class="hl-fail">parse error: '+escapeHtml(e.error)+"</span>";return}if(!e||e.length===0){outputEl.innerHTML='<span class="hl-pass">No issues found. ✓</span>';return}outputEl.innerHTML=e.map(e=>{const t=e.severity==="error"?"hl-fail":e.severity==="warning"?"hl-warn":"hl-dim",n=e.line?' <span class="hl-dim">(line '+e.line+")</span>":"";return'<span class="diag" onclick="jumpToLine('+(e.line||0)+')"><span class="'+t+'">'+e.severity+"["+e.code+"]</span>: "+escapeHtml(e.message)+n+"</span>"}).join(`
+`)}function runFormat(){const e=dippinFormat(getSource());try{const t=JSON.parse(e);if(t.error){outputEl.innerHTML='<span class="hl-fail">parse error: '+escapeHtml(t.error)+"</span>";return}}catch{}outputEl.innerHTML=dippinHighlight?dippinHighlight.dippin(e):escapeHtml(e)}function runParse(){const e=dippinParse(getSource());try{outputEl.innerHTML=dippinHighlight.json(JSON.stringify(JSON.parse(e),null,2))}catch{outputEl.textContent=e}}let graphGen=0;function graphIsCurrent(e){return e===graphGen&&activeTool==="graph"}function runGraph(){const t=dippinMermaid(getSource());try{const e=JSON.parse(t);if(e.error){outputEl.classList.remove("graph"),outputEl.innerHTML='<span class="hl-fail">parse error: '+escapeHtml(e.error)+"</span>";return}}catch{}const e=++graphGen;loadMermaid().then(()=>graphIsCurrent(e)?mermaid.render("mmd-"+e,t):null).then(t=>{t&&graphIsCurrent(e)&&(outputEl.innerHTML=t.svg)}).catch(n=>{if(!graphIsCurrent(e))return;outputEl.classList.remove("graph"),outputEl.innerHTML='<span class="hl-dim">Could not render graph ('+escapeHtml(String(n))+`):
+
+`+escapeHtml(t)+"</span>"})}function loadMermaid(){return window.mermaid?Promise.resolve():mermaidLoading||(mermaidLoading=new Promise((e,t)=>{const n=document.createElement("script");n.src="/mermaid.min.js",n.onload=()=>{mermaid.initialize({startOnLoad:!1,theme:"neutral",securityLevel:"strict"}),e()},n.onerror=t,document.head.appendChild(n)}),mermaidLoading)}function runDoctor(){const o=dippinDoctor(getSource());let e;try{e=JSON.parse(o)}catch{outputEl.textContent=o;return}if(e.error){outputEl.innerHTML='<span class="hl-fail">parse error: '+escapeHtml(e.error)+"</span>";return}const n=e.cost&&e.cost.total?e.cost.total:{},s=e=>typeof e=="number"?"$"+e.toFixed(4):"—";let t='<div class="grade g-'+escapeHtml(e.grade||"?")+'">'+escapeHtml(e.grade||"?")+"</div>";t+='<div class="hl-dim" style="margin-bottom:.6rem">Health score: '+(e.score|0)+"/100</div>",t+=card("Lint",(e.lint.errors|0)+" err · "+(e.lint.warnings|0)+" warn · "+(e.lint.hints|0)+" hint"),t+=card("Coverage",(e.coverage.reachable_nodes|0)+"/"+(e.coverage.total_nodes|0)+" nodes reachable"+(e.coverage.all_terminate?" · all paths terminate ✓":" · dead ends ✗")),t+=card("Cost (expected)",s(n.expected)+"  ("+s(n.min)+" – "+s(n.max)+")"),e.suggestions&&e.suggestions.length&&(t+='<div style="margin-top:.6rem">'+e.suggestions.map(e=>'<div class="hl-warn">• ['+escapeHtml(e.category)+"] "+escapeHtml(e.message)+"</div>").join("")+"</div>"),outputEl.innerHTML=t}function card(e,t){return'<div class="card-row"><span class="hl-dim">'+escapeHtml(e)+"</span><span>"+escapeHtml(t)+"</span></div>"}function jumpToLine(e){if(!e)return;const t=editorEl.value.split(`
+`);let n=0;for(let s=0;s<e-1&&s<t.length;s++)n+=t[s].length+1;editorEl.focus(),editorEl.setSelectionRange(n,n+(t[e-1]||"").length)}function loadExample(e){EXAMPLES[e]&&(setSource(EXAMPLES[e]),location.hash="",runActive())}function resetSource(){document.getElementById("example-select").value="hello",loadExample("hello")}function copySource(){navigator.clipboard.writeText(getSource()).then(()=>flash("Copied source"))}function downloadSource(){const t=new Blob([getSource()],{type:"text/plain"}),e=document.createElement("a");e.href=URL.createObjectURL(t),e.download="workflow.dip",e.click(),URL.revokeObjectURL(e.href)}function shareSource(){location.hash=btoa(unescape(encodeURIComponent(getSource()))),navigator.clipboard.writeText(location.href).then(()=>flash("Shareable link copied"))}function flash(e){const t=document.getElementById("status"),n=t.textContent;t.textContent=e,setTimeout(()=>{t.textContent=n},1600)}</script><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang data-tinylytics-event=footer.github>GitHub</a>
 <a href=https://github.com/2389-research/dippin-lang/tree/main/docs data-tinylytics-event=footer.docs>Docs</a>
 <a href=/glossary.html data-tinylytics-event=footer.glossary>Glossary</a>
 <a href=/changelog.html data-tinylytics-event=footer.changelog>Changelog</a>

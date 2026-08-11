@@ -11,7 +11,7 @@ A flat index of every page on this site, grouped for agent consumption. The cano
 - [Editor Setup](https://dippin.org/editors.html) — Set up syntax highlighting, LSP diagnostics, hover docs, and go-to-definition for .dip files in VS Code, Neovim, and more.
 - [Glossary](https://dippin.org/glossary.html) — Definitions for Dippin terms: workflow, node, edge, condition, defaults, subgraph, fan_in, parallel, .dipx, DIP codes, and more.
 - [Language Reference](https://dippin.org/language.html) — Full syntax reference for .dip workflow files: nodes, edges, conditions, multiline prompts, parallel execution, and stylesheets.
-- [Playground](https://dippin.org/playground.html) — Try Dippin in your browser. Write, lint, parse, and format workflows live.
+- [Playground](https://dippin.org/playground.html) — Try Dippin in your browser. Lint, format, visualize, and health-check workflows live — nothing leaves your machine.
 - [Scenario Testing](https://dippin.org/testing.html) — Write deterministic tests for AI pipelines with .test.json files. Inject context, assert on paths, check edge coverage.
 - [Validation & Linting](https://dippin.org/validation.html) — 70 diagnostic codes for AI pipeline workflows. 10 structural errors and 60 semantic checks catch bugs before runtime.
 
