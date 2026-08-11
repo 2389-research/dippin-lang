@@ -123,9 +123,6 @@ func TestTemplateNames_IncludesManagerLoop(t *testing.T) {
 // informative prompt to create the child, not noise.
 func TestTemplatesLintClean(t *testing.T) {
 	for _, name := range TemplateNames() {
-		if name == "manager_loop" {
-			continue
-		}
 		t.Run(name, func(t *testing.T) {
 			built, err := Build(name, "")
 			if err != nil {
@@ -144,6 +141,11 @@ func TestTemplatesLintClean(t *testing.T) {
 			diags = append(diags, validator.Validate(w).Diagnostics...)
 			diags = append(diags, validator.Lint(w).Diagnostics...)
 			for _, d := range diags {
+				// manager_loop legitimately emits DIP135: it references an external
+				// child_pipeline.dip the author must create — informative, not noise.
+				if name == "manager_loop" && d.Code == validator.DIP135 {
+					continue
+				}
 				t.Errorf("template %q is not clean: %s[%s] %s", name, d.Severity, d.Code, d.Message)
 			}
 		})

@@ -211,8 +211,10 @@ func buildManagerLoop(name string) *ir.Workflow {
 		Goal:  "Supervise a child pipeline with periodic steering",
 		Start: "Supervise",
 		Exit:  "Done",
-		// A graph-level failure route so every generated template lints clean
-		// (DIP144) and demonstrates the on_failure catch-all.
+		// A graph-level failure route (clears DIP144, demonstrates on_failure).
+		// This template still surfaces DIP135 by design — it references an external
+		// child_pipeline.dip the author must create — so it is the one template not
+		// fully lint-clean out of the box (see TestTemplatesLintClean).
 		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Supervise", Kind: ir.NodeManagerLoop, Label: "Quality Gate Supervisor", Config: ir.ManagerLoopConfig{

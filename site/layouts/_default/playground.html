@@ -376,13 +376,20 @@ function runParse() {
   catch (e) { outputEl.textContent = res; }
 }
 
+let graphGen = 0;
 function runGraph() {
   const res = dippinMermaid(getSource());
   try { const p = JSON.parse(res); if (p.error) { outputEl.classList.remove("graph"); outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(p.error) + '</span>'; return; } } catch (e) {}
+  const gen = ++graphGen; // invalidate any in-flight render from an earlier edit
   loadMermaid().then(() => {
-    const id = "mmd-" + Date.now();
-    mermaid.render(id, res).then(({ svg }) => { outputEl.innerHTML = svg; })
-      .catch(err => { outputEl.classList.remove("graph"); outputEl.innerHTML = '<span class="hl-dim">Could not render graph:\n' + escapeHtml(String(err)) + '\n\n' + escapeHtml(res) + '</span>'; });
+    if (gen !== graphGen || activeTool !== "graph") return; // superseded
+    mermaid.render("mmd-" + gen, res).then(({ svg }) => {
+      if (gen === graphGen && activeTool === "graph") outputEl.innerHTML = svg;
+    }).catch(err => {
+      if (gen !== graphGen || activeTool !== "graph") return;
+      outputEl.classList.remove("graph");
+      outputEl.innerHTML = '<span class="hl-dim">Could not render graph:\n' + escapeHtml(String(err)) + '\n\n' + escapeHtml(res) + '</span>';
+    });
   });
 }
 

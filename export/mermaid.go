@@ -7,6 +7,7 @@ package export
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -14,17 +15,91 @@ import (
 
 // ExportMermaid renders w as a top-down Mermaid flowchart.
 func ExportMermaid(w *ir.Workflow) string {
+	ids := buildMermaidIDs(w)
 	var b strings.Builder
 	b.WriteString("flowchart TD\n")
 	writeMermaidClassDefs(&b)
 	for _, n := range w.Nodes {
-		writeMermaidNode(&b, n)
+		writeMermaidNode(&b, n, ids[n.ID])
 	}
+	seen := make(map[[2]string]bool, len(w.Edges))
 	for _, e := range w.Edges {
-		writeMermaidEdge(&b, e)
+		seen[[2]string{e.From, e.To}] = true
+		writeMermaidEdge(&b, e, ids)
 	}
-	writeMermaidRoleClasses(&b, w)
+	writeMermaidFanEdges(&b, w, ids, seen)
+	writeMermaidRoleClasses(&b, w, ids)
 	return b.String()
+}
+
+// writeMermaidFanEdges emits the implicit fan-out/fan-in edges that a `parallel`
+// node (→ each target) and a `fan_in` node (← each source) declare inline —
+// these are not in w.Edges, so without this a parallel/fan_in graph would render
+// its worker nodes disconnected. Deduped against the explicit edges (seen).
+func writeMermaidFanEdges(b *strings.Builder, w *ir.Workflow, ids map[string]string, seen map[[2]string]bool) {
+	for _, n := range w.Nodes {
+		emitNodeFanEdges(b, n, ids, seen)
+	}
+}
+
+// emitNodeFanEdges emits the inline fan edges a single parallel/fan_in node declares.
+func emitNodeFanEdges(b *strings.Builder, n *ir.Node, ids map[string]string, seen map[[2]string]bool) {
+	switch cfg := n.Config.(type) {
+	case ir.ParallelConfig:
+		for _, t := range cfg.Targets {
+			emitMermaidFanEdge(b, ids, seen, n.ID, t)
+		}
+	case ir.FanInConfig:
+		for _, s := range cfg.Sources {
+			emitMermaidFanEdge(b, ids, seen, s, n.ID)
+		}
+	}
+}
+
+func emitMermaidFanEdge(b *strings.Builder, ids map[string]string, seen map[[2]string]bool, from, to string) {
+	key := [2]string{from, to}
+	if seen[key] {
+		return
+	}
+	seen[key] = true
+	fmt.Fprintf(b, "  %s --> %s\n", mermaidRef(ids, from), mermaidRef(ids, to))
+}
+
+// buildMermaidIDs assigns each node a unique Mermaid-safe identifier, so two
+// distinct node IDs that sanitize to the same string (e.g. `a.b` and `a-b` both
+// → `a_b`) do not collapse into one graph node. Collisions get a numeric suffix.
+func buildMermaidIDs(w *ir.Workflow) map[string]string {
+	ids := make(map[string]string, len(w.Nodes))
+	used := make(map[string]bool, len(w.Nodes))
+	for _, n := range w.Nodes {
+		base := sanitizeMermaidID(n.ID)
+		id := base
+		for i := 2; used[id]; i++ {
+			id = base + "_" + strconv.Itoa(i)
+		}
+		used[id] = true
+		ids[n.ID] = id
+	}
+	return ids
+}
+
+// mermaidRef returns the assigned Mermaid ID for an original node ID, sanitizing
+// on the fly for an endpoint not in the node table (a dangling edge — validation
+// flags that separately).
+func mermaidRef(ids map[string]string, orig string) string {
+	if id, ok := ids[orig]; ok {
+		return id
+	}
+	return sanitizeMermaidID(orig)
+}
+
+// nodeLabel prefers a node's human-readable Label, falling back to its ID
+// (mirrors the DOT exporter's resolveNodeLabel).
+func nodeLabel(n *ir.Node) string {
+	if n.Label != "" {
+		return n.Label
+	}
+	return n.ID
 }
 
 // writeMermaidClassDefs emits the per-kind fill colors plus the start/exit
@@ -71,8 +146,9 @@ var mermaidClasses = map[ir.NodeKind]string{
 	ir.NodeFanIn:       "fork",
 }
 
-// writeMermaidNode emits one node with a kind-appropriate shape and class.
-func writeMermaidNode(b *strings.Builder, n *ir.Node) {
+// writeMermaidNode emits one node with a kind-appropriate shape and class, using
+// its assigned unique Mermaid id and its human-readable label as display text.
+func writeMermaidNode(b *strings.Builder, n *ir.Node, id string) {
 	br, ok := mermaidShapes[n.Kind]
 	if !ok {
 		br = [2]string{`["`, `"]`} // tool / default → rectangle
@@ -81,12 +157,12 @@ func writeMermaidNode(b *strings.Builder, n *ir.Node) {
 	if !ok {
 		cls = "tool"
 	}
-	fmt.Fprintf(b, "  %s%s%s%s:::%s\n", mermaidID(n.ID), br[0], mermaidText(n.ID), br[1], cls)
+	fmt.Fprintf(b, "  %s%s%s%s:::%s\n", id, br[0], mermaidText(nodeLabel(n)), br[1], cls)
 }
 
 // writeMermaidEdge emits one edge, labeled by its routing condition when present.
-func writeMermaidEdge(b *strings.Builder, e *ir.Edge) {
-	from, to := mermaidID(e.From), mermaidID(e.To)
+func writeMermaidEdge(b *strings.Builder, e *ir.Edge, ids map[string]string) {
+	from, to := mermaidRef(ids, e.From), mermaidRef(ids, e.To)
 	label := mermaidEdgeLabel(e)
 	if label == "" {
 		fmt.Fprintf(b, "  %s --> %s\n", from, to)
@@ -128,9 +204,10 @@ func isOutcomeChannel(lhs string) bool {
 	return lhs == "ctx.outcome" || lhs == "outcome" || lhs == "ctx.tool_marker"
 }
 
-// mermaidID sanitizes a node ID into a Mermaid-safe identifier (Mermaid node IDs
-// cannot contain spaces or most punctuation).
-func mermaidID(id string) string {
+// sanitizeMermaidID reduces a node ID to Mermaid-safe characters (Mermaid node
+// IDs cannot contain spaces or most punctuation). buildMermaidIDs disambiguates
+// any collisions this introduces.
+func sanitizeMermaidID(id string) string {
 	var b strings.Builder
 	for _, r := range id {
 		if isMermaidIDChar(r) {
@@ -167,11 +244,11 @@ func mermaidText(s string) string {
 
 // writeMermaidRoleClasses tags the start and exit nodes with their emphasis class
 // (in addition to the kind class already applied inline).
-func writeMermaidRoleClasses(b *strings.Builder, w *ir.Workflow) {
+func writeMermaidRoleClasses(b *strings.Builder, w *ir.Workflow, ids map[string]string) {
 	if w.Start != "" {
-		fmt.Fprintf(b, "  class %s startNode\n", mermaidID(w.Start))
+		fmt.Fprintf(b, "  class %s startNode\n", mermaidRef(ids, w.Start))
 	}
 	if w.Exit != "" {
-		fmt.Fprintf(b, "  class %s exitNode\n", mermaidID(w.Exit))
+		fmt.Fprintf(b, "  class %s exitNode\n", mermaidRef(ids, w.Exit))
 	}
 }

@@ -69,6 +69,32 @@ func TestExportMermaid_EdgeLabels(t *testing.T) {
 	}
 }
 
+func TestExportMermaid_IncludesFanEdges(t *testing.T) {
+	// A parallel node's inline targets and a fan_in node's inline sources are not
+	// in w.Edges, but the graph must still connect them (#254 review).
+	out := mermaidOf(t, `workflow W
+  start: Init
+  exit: Done
+  agent Init
+    prompt: i
+  parallel Fan -> WorkerA, WorkerB
+  agent WorkerA
+    prompt: a
+  agent WorkerB
+    prompt: b
+  fan_in Join <- WorkerA, WorkerB
+  agent Done
+    prompt: d
+  edges
+    Init -> Fan
+    Join -> Done`)
+	for _, want := range []string{"Fan --> WorkerA", "Fan --> WorkerB", "WorkerA --> Join", "WorkerB --> Join"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("mermaid missing fan edge %q:\n%s", want, out)
+		}
+	}
+}
+
 func TestExportMermaid_UnconditionalEdgeHasNoLabel(t *testing.T) {
 	out := mermaidOf(t, `workflow W
   start: A
@@ -81,6 +107,45 @@ func TestExportMermaid_UnconditionalEdgeHasNoLabel(t *testing.T) {
     A -> B`)
 	if !strings.Contains(out, "A --> B\n") {
 		t.Errorf("unconditional edge should be unlabeled:\n%s", out)
+	}
+}
+
+func TestExportMermaid_DistinctIDsDoNotCollide(t *testing.T) {
+	// `a.b` and `a-b` both sanitize to `a_b`; they must NOT collapse to one node.
+	out := mermaidOf(t, `workflow W
+  start: "a.b"
+  exit: Done
+  agent "a.b"
+    prompt: x
+  agent "a-b"
+    prompt: y
+  agent Done
+    prompt: d
+  edges
+    "a.b" -> "a-b"
+    "a-b" -> Done`)
+	if !strings.Contains(out, `a_b(["a.b"])`) || !strings.Contains(out, `a_b_2(["a-b"])`) {
+		t.Errorf("colliding IDs must be disambiguated:\n%s", out)
+	}
+	// The edge between them must reference the two distinct ids.
+	if !strings.Contains(out, "a_b --> a_b_2") {
+		t.Errorf("edge should connect the two disambiguated nodes:\n%s", out)
+	}
+}
+
+func TestExportMermaid_UsesNodeLabel(t *testing.T) {
+	// A node with a Label shows the label as display text, not the bare ID.
+	out := mermaidOf(t, `workflow W
+  start: Check
+  exit: Done
+  conditional Check
+    label: "Evaluate outcome"
+  agent Done
+    prompt: d
+  edges
+    Check -> Done`)
+	if !strings.Contains(out, `Check{"Evaluate outcome"}`) {
+		t.Errorf("labelled node should display its label:\n%s", out)
 	}
 }
 
