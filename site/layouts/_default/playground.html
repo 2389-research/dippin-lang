@@ -377,20 +377,20 @@ function runParse() {
 }
 
 let graphGen = 0;
+function graphIsCurrent(gen) { return gen === graphGen && activeTool === "graph"; }
 function runGraph() {
   const res = dippinMermaid(getSource());
   try { const p = JSON.parse(res); if (p.error) { outputEl.classList.remove("graph"); outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(p.error) + '</span>'; return; } } catch (e) {}
-  const gen = ++graphGen; // invalidate any in-flight render from an earlier edit
-  loadMermaid().then(() => {
-    if (gen !== graphGen || activeTool !== "graph") return; // superseded
-    mermaid.render("mmd-" + gen, res).then(({ svg }) => {
-      if (gen === graphGen && activeTool === "graph") outputEl.innerHTML = svg;
-    }).catch(err => {
-      if (gen !== graphGen || activeTool !== "graph") return;
+  const gen = ++graphGen; // invalidate any in-flight load/render from an earlier edit
+  loadMermaid()
+    .then(() => graphIsCurrent(gen) ? mermaid.render("mmd-" + gen, res) : null)
+    .then(out => { if (out && graphIsCurrent(gen)) outputEl.innerHTML = out.svg; })
+    .catch(err => {
+      // handles both a mermaid.js load failure and a render error
+      if (!graphIsCurrent(gen)) return;
       outputEl.classList.remove("graph");
-      outputEl.innerHTML = '<span class="hl-dim">Could not render graph:\n' + escapeHtml(String(err)) + '\n\n' + escapeHtml(res) + '</span>';
+      outputEl.innerHTML = '<span class="hl-dim">Could not render graph (' + escapeHtml(String(err)) + '):\n\n' + escapeHtml(res) + '</span>';
     });
-  });
 }
 
 function loadMermaid() {
