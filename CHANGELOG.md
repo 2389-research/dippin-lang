@@ -2,6 +2,11 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Playground Graph view robustness + WASM cache skew.** The `/dippin.wasm` asset was cached for an hour while the playground JS deploys fresh, so a returning visitor ran new JS against a stale WASM missing the just-added `dippinMermaid` export — `runGraph` threw before replacing the pane, and the Graph view's flex/`white-space:normal` styling collapsed the leftover text into garbage. Fixed three ways: (1) `runGraph` now guards a missing `dippinMermaid` with a clear "hard-reload to refresh the engine" message, clears stale content with a "Rendering graph…" placeholder before rendering, and only applies the graph styling once a real SVG is in hand; (2) `/dippin.wasm` is now served `max-age=0, must-revalidate` so the WASM stays in lockstep with the JS (ETag makes the revalidation a cheap 304 when unchanged); (3) the Mermaid `subgraph` node class was renamed to avoid any collision with Mermaid's reserved `subgraph` keyword.
+
 ## [v0.65.0] — 2026-08-11
 
 ### Added

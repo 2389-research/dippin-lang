@@ -343,7 +343,10 @@ function setTool(tool) {
   document.querySelectorAll(".toolbar button").forEach(b => b.classList.remove("active"));
   const btn = document.getElementById("tab-" + tool);
   if (btn) btn.classList.add("active");
-  outputEl.classList.toggle("graph", tool === "graph");
+  // Only the Graph view renders an SVG; runGraph re-adds .graph on success. Every
+  // other tool (and any graph failure) shows text, which must NOT be whitespace-
+  // collapsed by the .graph flex/normal styling.
+  outputEl.classList.remove("graph");
   runActive();
 }
 
@@ -378,13 +381,19 @@ function runParse() {
 
 let graphGen = 0;
 function graphIsCurrent(gen) { return gen === graphGen && activeTool === "graph"; }
+function graphText(msg) { outputEl.classList.remove("graph"); outputEl.textContent = msg; }
 function runGraph() {
+  // A stale WASM (e.g. a returning visitor whose cached dippin.wasm predates this
+  // export) won't have dippinMermaid — show a clear message, never leave the
+  // previous tool's output on screen (which the .graph styling would garble).
+  if (typeof dippinMermaid !== "function") { graphText("Graph needs a newer engine — hard-reload the page (Cmd/Ctrl+Shift+R) to refresh the WebAssembly module."); return; }
   const res = dippinMermaid(getSource());
   try { const p = JSON.parse(res); if (p.error) { outputEl.classList.remove("graph"); outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(p.error) + '</span>'; return; } } catch (e) {}
+  graphText("Rendering graph…"); // clear stale content while mermaid loads/renders
   const gen = ++graphGen; // invalidate any in-flight load/render from an earlier edit
   loadMermaid()
     .then(() => graphIsCurrent(gen) ? mermaid.render("mmd-" + gen, res) : null)
-    .then(out => { if (out && graphIsCurrent(gen)) outputEl.innerHTML = out.svg; })
+    .then(out => { if (out && graphIsCurrent(gen)) { outputEl.classList.add("graph"); outputEl.innerHTML = out.svg; } })
     .catch(err => {
       // handles both a mermaid.js load failure and a render error
       if (!graphIsCurrent(gen)) return;
