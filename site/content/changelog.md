@@ -4,6 +4,17 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.64.0] — 2026-08-11
+
+### Added
+- **`dipx.OpenReader(ctx, r io.ReaderAt, size int64)` for in-memory bundles** ([#247](https://github.com/2389-research/dippin-lang/issues/247)). An embedded consumer that bakes a `.dipx` into its binary via `go:embed` can now load it straight from bytes — same strict admission, hash verification, and ref-walking as `Open`, but with no temp-file bridge (and no `0600` window). Errors carry no bundle path (there is none on an in-memory source).
+
+### Fixed
+- **The defaults prompt cascade no longer synthesizes a prompt on body-less passthrough nodes** ([#248](https://github.com/2389-research/dippin-lang/issues/248)). A `defaults` `prompt_prefix`/`prompt_suffix` cascade (#175) applied to *every* agent, including the body-less `agent` nodes a workflow declares as `start:`/`exit:` passthroughs — synthesizing a prompt for them out of the prefix/suffix alone. A runtime that keys passthrough on "no prompt attribute" would then execute a real LLM call at the top and tail of every run. The cascade now **skips any agent with no prompt of its own and no `prompt_include`** (nothing to wrap), so passthrough nodes stay body-less. Nodes with a body (or an include) are unaffected.
+
+### Documentation
+- **Prompt-cascade join separator documented** ([#249](https://github.com/2389-research/dippin-lang/issues/249)). The resolve-time `prefix → body → include → suffix` composition joins non-empty parts with a fixed **blank line (`\n\n`)**. This is now stated in the defaults-cascade docs, with a note that hoisting an identical leading line into a `prompt_prefix_file:` fragment is byte-lossless only when the original body had a blank line after that line.
+
 ## [v0.63.0] — 2026-08-10
 
 ### Added
