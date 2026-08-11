@@ -3,7 +3,6 @@ package validator_test
 import (
 	"bytes"
 	"context"
-	"html"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,52 +58,67 @@ func TestLintExamples(t *testing.T) {
 	}
 }
 
-// TestPlaygroundDefaultLintsClean guards the website playground's default
-// example (embedded in site/layouts/_default/playground.html): the flagship demo
-// a visitor sees first MUST lint completely clean — zero diagnostics of any
+// TestPlaygroundExamplesLintClean guards every example embedded in the website
+// playground (the EXAMPLES object in site/layouts/_default/playground.html): each
+// one a visitor can load MUST lint completely clean — zero diagnostics of any
 // severity — through the same passes the WASM playground runs (Validate + Lint).
 // Without this, a lint that newly fires (or an example edit) silently ships a
 // warning-producing demo, which is how the DIP144 "Greeter has no failure route"
 // regression reached the live playground.
-func TestPlaygroundDefaultLintsClean(t *testing.T) {
+func TestPlaygroundExamplesLintClean(t *testing.T) {
 	const playgroundHTML = "../site/layouts/_default/playground.html"
 	raw, err := os.ReadFile(playgroundHTML)
 	if err != nil {
 		t.Fatalf("read %s: %v", playgroundHTML, err)
 	}
-	src := extractPlaygroundSource(t, string(raw))
-
-	w, err := parser.NewParser(src, "playground.dip").Parse()
-	if err != nil {
-		t.Fatalf("playground default does not parse: %v\n---\n%s", err, src)
+	examples := extractPlaygroundExamples(t, string(raw))
+	if len(examples) < 6 {
+		t.Fatalf("expected >= 6 embedded playground examples, found %d", len(examples))
 	}
-	var diags []validator.Diagnostic
-	diags = append(diags, validator.Validate(w).Diagnostics...)
-	diags = append(diags, validator.Lint(w).Diagnostics...)
-	for _, d := range diags {
-		t.Errorf("playground default is not clean: %s[%s] %s (add a fix to the example in %s, or the demo teaches the warning)",
-			d.Severity, d.Code, d.Message, playgroundHTML)
+	for _, src := range examples {
+		name := strings.TrimSpace(strings.SplitN(src, "\n", 2)[0])
+		t.Run(name, func(t *testing.T) {
+			w, err := parser.NewParser(src, "playground.dip").Parse()
+			if err != nil {
+				t.Fatalf("playground example does not parse: %v\n---\n%s", err, src)
+			}
+			var diags []validator.Diagnostic
+			diags = append(diags, validator.Validate(w).Diagnostics...)
+			diags = append(diags, validator.Lint(w).Diagnostics...)
+			for _, d := range diags {
+				t.Errorf("playground example not clean: %s[%s] %s (fix the EXAMPLES entry in %s)",
+					d.Severity, d.Code, d.Message, playgroundHTML)
+			}
+		})
 	}
 }
 
-// extractPlaygroundSource pulls the .dip source out of the playground editor
-// textarea (`<textarea id="editor" ...>SOURCE</textarea>`) and HTML-unescapes it.
-func extractPlaygroundSource(t *testing.T, htmlDoc string) string {
+// extractPlaygroundExamples pulls every backtick-delimited source that begins
+// with "workflow" out of the playground's `const EXAMPLES = { ... }` object.
+func extractPlaygroundExamples(t *testing.T, doc string) []string {
 	t.Helper()
-	i := strings.Index(htmlDoc, `id="editor"`)
+	i := strings.Index(doc, "const EXAMPLES")
 	if i < 0 {
-		t.Fatal(`playground.html: no <textarea id="editor">`)
+		t.Fatal("playground.html: no `const EXAMPLES` object")
 	}
-	open := strings.IndexByte(htmlDoc[i:], '>')
-	if open < 0 {
-		t.Fatal("playground.html: unterminated textarea open tag")
+	body := doc[i:]
+	var out []string
+	for {
+		a := strings.IndexByte(body, '`')
+		if a < 0 {
+			break
+		}
+		rel := strings.IndexByte(body[a+1:], '`')
+		if rel < 0 {
+			break
+		}
+		content := body[a+1 : a+1+rel]
+		if strings.HasPrefix(strings.TrimSpace(content), "workflow ") {
+			out = append(out, content)
+		}
+		body = body[a+1+rel+1:]
 	}
-	start := i + open + 1
-	end := strings.Index(htmlDoc[start:], "</textarea>")
-	if end < 0 {
-		t.Fatal("playground.html: no closing </textarea>")
-	}
-	return html.UnescapeString(htmlDoc[start : start+end])
+	return out
 }
 
 // TestPackExamples round-trips every example .dip through dipx.Pack →

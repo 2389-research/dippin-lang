@@ -43,6 +43,9 @@ func buildMinimal(name string) *ir.Workflow {
 		Goal:  "A minimal two-node workflow",
 		Start: "Start",
 		Exit:  "Done",
+		// A graph-level failure route so every generated template lints clean
+		// (DIP144) and demonstrates the on_failure catch-all.
+		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Start", Kind: ir.NodeAgent, Config: ir.AgentConfig{
 				Prompt: "Begin the task.",
@@ -63,6 +66,9 @@ func buildParallel(name string) *ir.Workflow {
 		Goal:  "Fan-out to parallel workers then join",
 		Start: "Init",
 		Exit:  "Done",
+		// A graph-level failure route so every generated template lints clean
+		// (DIP144) and demonstrates the on_failure catch-all.
+		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Init", Kind: ir.NodeAgent, Config: ir.AgentConfig{
 				Prompt: "Prepare work for parallel execution.",
@@ -100,6 +106,9 @@ func buildConditional(name string) *ir.Workflow {
 		Goal:  "Route based on status check",
 		Start: "Check",
 		Exit:  "Done",
+		// A graph-level failure route so every generated template lints clean
+		// (DIP144) and demonstrates the on_failure catch-all.
+		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Check", Kind: ir.NodeConditional, Label: "Evaluate outcome", Config: ir.ConditionalConfig{}},
 			{ID: "Pass", Kind: ir.NodeAgent, Config: ir.AgentConfig{
@@ -132,6 +141,9 @@ func buildReviewLoop(name string) *ir.Workflow {
 		Goal:  "Implement, review, and loop until approved",
 		Start: "Implement",
 		Exit:  "Done",
+		// A graph-level failure route so every generated template lints clean
+		// (DIP144) and demonstrates the on_failure catch-all.
+		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Implement", Kind: ir.NodeAgent, Config: ir.AgentConfig{
 				Prompt: "Write the implementation.",
@@ -162,6 +174,9 @@ func buildHumanGate(name string) *ir.Workflow {
 		Goal:  "Gate progress on human approval",
 		Start: "Prepare",
 		Exit:  "Done",
+		// A graph-level failure route so every generated template lints clean
+		// (DIP144) and demonstrates the on_failure catch-all.
+		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Prepare", Kind: ir.NodeAgent, Config: ir.AgentConfig{
 				Prompt: "Prepare the proposal for review.",
@@ -182,8 +197,8 @@ func buildHumanGate(name string) *ir.Workflow {
 		},
 		Edges: []*ir.Edge{
 			{From: "Prepare", To: "Gate"},
-			{From: "Gate", To: "Approved", Label: "approve"},
-			{From: "Gate", To: "Rejected", Label: "reject"},
+			{From: "Gate", To: "Approved", Label: "approve", Choice: "approve"},
+			{From: "Gate", To: "Rejected", Label: "reject", Choice: "reject"},
 			{From: "Approved", To: "Done"},
 			{From: "Rejected", To: "Done"},
 		},
@@ -196,6 +211,11 @@ func buildManagerLoop(name string) *ir.Workflow {
 		Goal:  "Supervise a child pipeline with periodic steering",
 		Start: "Supervise",
 		Exit:  "Done",
+		// A graph-level failure route (clears DIP144, demonstrates on_failure).
+		// This template still surfaces DIP135 by design — it references an external
+		// child_pipeline.dip the author must create — so it is the one template not
+		// fully lint-clean out of the box (see TestTemplatesLintClean).
+		Defaults: ir.WorkflowDefaults{OnFailure: "Done"},
 		Nodes: []*ir.Node{
 			{ID: "Supervise", Kind: ir.NodeManagerLoop, Label: "Quality Gate Supervisor", Config: ir.ManagerLoopConfig{
 				SubgraphRef:    "child_pipeline.dip",

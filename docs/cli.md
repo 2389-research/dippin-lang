@@ -323,6 +323,35 @@ dippin export-dot pipeline.dip | dot -Tpng -o pipeline.png
 dippin export-dot --rankdir=LR --prompts pipeline.dip > pipeline.dot
 ```
 
+### export-mermaid
+
+Export a workflow to a [Mermaid](https://mermaid.js.org/) flowchart. Mermaid renders natively on GitHub, in most docs tooling, and in the [playground](https://dippin.org/playground/), so this is the quickest way to drop a live diagram of a workflow into a README or design doc. Subgraph refs are flattened first, so the graph is complete.
+
+```bash
+dippin export-mermaid <file>
+```
+
+**Node shape / color mapping**:
+
+| Node kind | Mermaid shape | Color |
+|-----------|---------------|-------|
+| `agent` | stadium `([…])` | green |
+| `human` | parallelogram `[/…/]` | blue |
+| `tool` | rectangle `[…]` | orange |
+| `subgraph` / `manager_loop` | subroutine `[[…]]` | purple |
+| `conditional` | rhombus `{…}` | yellow |
+| `parallel` / `fan_in` | hexagon `{{…}}` | gray |
+
+The start node gets a solid bold border, the exit node a dashed bold border. Edges are labeled by their routing condition (`ctx.outcome = success` renders as just `success`); a restart/loop edge is marked with `⟳`.
+
+**Example** — embed a live diagram in a Markdown file (GitHub renders it):
+
+````markdown
+```mermaid
+<paste the output of `dippin export-mermaid pipeline.dip` here>
+```
+````
+
 ---
 
 ### export-dip

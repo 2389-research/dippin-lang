@@ -2,39 +2,67 @@
 <style>
 .playground { padding-top: 8.5rem; min-height: 100vh; }
 .playground h1.section-title, .playground h2.pane-label { margin-top: 0; }
-.playground-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+.playground-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
 .pane { display: flex; flex-direction: column; }
 .pane-label { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--text-soft); }
 /* Editor: textarea over a highlighted pre */
-.editor-wrap { position: relative; min-height: 400px; border-radius: 10px; overflow: hidden; border: 2px solid rgba(0,0,0,0.08); }
-#editor, #editor-highlight { font-family: var(--mono); font-size: 0.85rem; line-height: 1.6; padding: 1rem; margin: 0; tab-size: 2; white-space: pre-wrap; word-wrap: break-word; width: 100%; min-height: 400px; }
+.editor-wrap { position: relative; min-height: 440px; border-radius: 10px; overflow: hidden; border: 2px solid rgba(0,0,0,0.08); }
+#editor, #editor-highlight { font-family: var(--mono); font-size: 0.85rem; line-height: 1.6; padding: 1rem; margin: 0; tab-size: 2; white-space: pre-wrap; word-wrap: break-word; width: 100%; min-height: 440px; }
 #editor-highlight { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #2A2A30; color: #bbb; pointer-events: none; overflow: hidden; border: none; border-radius: 0; }
 #editor { position: relative; z-index: 1; background: transparent; color: transparent; caret-color: #ddd; border: none; resize: vertical; outline: none; -webkit-text-fill-color: transparent; }
 #editor::selection { background: rgba(180,160,230,0.3); -webkit-text-fill-color: #ddd; }
 /* Output pane */
-#output { width: 100%; min-height: 400px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; background: #2A2A30; color: #bbb; border: 2px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 1rem; overflow: auto; white-space: pre-wrap; }
-.toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-.toolbar button { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; cursor: pointer; transition: all 0.2s; }
-.toolbar button:hover { border-color: var(--green); background: var(--green-light); }
+#output { width: 100%; min-height: 440px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; background: #2A2A30; color: #bbb; border: 2px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 1rem; overflow: auto; white-space: pre-wrap; }
+#output.graph { background: #fbfbfd; white-space: normal; display: flex; align-items: flex-start; justify-content: center; }
+#output.graph svg { max-width: 100%; height: auto; }
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
+.controls .spacer { flex: 1 1 auto; }
+.toolbar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.toolbar button, .controls button, .controls select { font-family: var(--sans); font-size: 0.82rem; font-weight: 600; padding: 0.38rem 0.9rem; border-radius: 8px; border: 1.5px solid var(--border); background: white; cursor: pointer; transition: all 0.15s; color: var(--text); }
+.controls select { font-family: var(--mono); }
+.toolbar button:hover, .controls button:hover { border-color: var(--green); background: var(--green-light); }
 .toolbar button.active { background: var(--green-deep); color: white; border-color: var(--green-deep); }
-.status { font-family: var(--mono); font-size: 0.75rem; color: var(--text-soft); margin-top: 0.5rem; }
-.diag-error { color: #E85A5A; }
-.diag-warning { color: #b8960a; }
-.diag-hint { color: var(--text-soft); }
-@media (max-width: 768px) { .playground-grid { grid-template-columns: 1fr; } }
+.summary { font-family: var(--mono); font-size: 0.8rem; margin-top: 0.55rem; padding: 0.5rem 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px solid var(--border); cursor: pointer; }
+.summary.clean { color: #2e7d32; }
+.summary.warn { color: #b8860a; }
+.summary.err { color: #d84343; }
+.status { font-family: var(--mono); font-size: 0.72rem; color: var(--text-soft); margin-top: 0.4rem; }
+.diag { display: block; cursor: pointer; padding: 1px 0; }
+.diag:hover { background: rgba(255,255,255,0.06); }
+.card-row { display: flex; justify-content: space-between; padding: 0.2rem 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.grade { font-size: 2.2rem; font-weight: 800; }
+.g-A { color: #43a047; } .g-B { color: #7cb342; } .g-C { color: #fbc02d; } .g-D { color: #fb8c00; } .g-F { color: #e53935; }
+@media (max-width: 820px) { .playground-grid { grid-template-columns: 1fr; } }
 </style>
 
 <section class="playground">
 <div class="container">
   <div class="section-label">Interactive</div>
   <h1 class="section-title">Playground</h1>
-  <p class="section-desc">Write Dippin workflows in the browser. Parse, lint, and format — all running locally via WebAssembly.</p>
+  <p class="section-desc">Write Dippin workflows in the browser. Lint, format, visualize, and health-check — all running locally via WebAssembly.</p>
 
-  <h2 class="pane-label" style="margin-top:1.5rem;">Tools</h2>
-  <div class="toolbar">
-    <button id="btn-lint" class="active" onclick="runLint()">Lint</button>
-    <button id="btn-parse" onclick="runParse()">Parse</button>
-    <button id="btn-format" onclick="runFormat()">Format</button>
+  <div class="controls">
+    <select id="example-select" onchange="loadExample(this.value)" aria-label="Load an example">
+      <option value="hello">Example: Hello</option>
+      <option value="minimal">Example: Minimal</option>
+      <option value="review-loop">Example: Review loop</option>
+      <option value="parallel">Example: Parallel + fan-in</option>
+      <option value="conditional">Example: Conditional routing</option>
+      <option value="human-gate">Example: Human gate</option>
+    </select>
+    <span class="spacer"></span>
+    <button onclick="copySource()" title="Copy the source">Copy</button>
+    <button onclick="downloadSource()" title="Download as .dip">Download</button>
+    <button onclick="shareSource()" title="Copy a shareable link">Share</button>
+    <button onclick="resetSource()" title="Reset to the default example">Reset</button>
+  </div>
+
+  <div class="toolbar" role="tablist">
+    <button id="tab-lint" class="active" onclick="setTool('lint')">Lint</button>
+    <button id="tab-format" onclick="setTool('format')">Format</button>
+    <button id="tab-graph" onclick="setTool('graph')">Graph</button>
+    <button id="tab-doctor" onclick="setTool('doctor')">Doctor</button>
+    <button id="tab-parse" onclick="setTool('parse')">Parse (IR)</button>
   </div>
 
   <div class="playground-grid">
@@ -42,7 +70,24 @@
       <h2 class="pane-label">Source (.dip)</h2>
       <div class="editor-wrap">
         <pre id="editor-highlight" aria-hidden="true"></pre>
-        <textarea id="editor" spellcheck="false" oninput="syncHighlight()" onscroll="syncScroll()">workflow Hello
+        <textarea id="editor" spellcheck="false" oninput="onInput()" onscroll="syncScroll()"></textarea>
+      </div>
+      <div class="summary" id="summary" onclick="setTool('lint')">Loading WASM…</div>
+    </div>
+    <div class="pane">
+      <h2 class="pane-label">Output</h2>
+      <div id="output">Loading WASM…</div>
+    </div>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+</section>
+
+<script src="{{ "wasm_exec.js" | relURL }}"></script>
+<script>
+// --- Example sources (each lints completely clean; guarded by TestPlaygroundExamplesLintClean) ---
+const EXAMPLES = {
+  hello: `workflow Hello
   goal: "Greet the user"
   start: Greeter
   exit: Done
@@ -61,27 +106,164 @@
 
   edges
     Greeter -> Done
-</textarea>
-      </div>
-    </div>
-    <div class="pane">
-      <h2 class="pane-label">Output</h2>
-      <div id="output">Loading WASM...</div>
-    </div>
-  </div>
-  <div class="status" id="status"></div>
-</div>
-</section>
+`,
+  minimal: `workflow minimal
+  goal: "A minimal two-node workflow"
+  start: Start
+  exit: Done
 
-<script src="{{ "wasm_exec.js" | relURL }}"></script>
-<script>
+  defaults
+    on_failure: Done
+
+  agent Start
+    prompt:
+      Begin the task.
+
+  agent Done
+    prompt:
+      Summarize the result.
+
+  edges
+    Start -> Done
+`,
+  "review-loop": `workflow review-loop
+  goal: "Implement, review, and loop until approved"
+  start: Implement
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Implement
+    prompt:
+      Write the implementation.
+
+  agent Review
+    auto_status: true
+    prompt:
+      Review the implementation. Set STATUS: success if approved, STATUS: fail if changes needed.
+
+  agent Done
+    prompt:
+      Finalize the approved result.
+
+  edges
+    Implement -> Review
+    Review -> Done  on success
+    Review -> Implement  on fail  loop
+`,
+  parallel: `workflow parallel
+  goal: "Fan-out to parallel workers then join"
+  start: Init
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Init
+    prompt:
+      Prepare work for parallel execution.
+
+  parallel Fan -> WorkerA, WorkerB
+
+  agent WorkerA
+    prompt:
+      Handle the first work stream.
+
+  agent WorkerB
+    prompt:
+      Handle the second work stream.
+
+  fan_in Join <- WorkerA, WorkerB
+
+  agent Done
+    prompt:
+      Combine results and finish.
+
+  edges
+    Init -> Fan
+    Join -> Done
+`,
+  conditional: `workflow conditional
+  goal: "Route based on status check"
+  start: Check
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  conditional Check
+    label: "Evaluate outcome"
+
+  agent Pass
+    prompt:
+      Handle the success path.
+
+  agent Fail
+    prompt:
+      Handle the failure path.
+
+  agent Done
+    prompt:
+      Wrap up.
+
+  edges
+    Check -> Pass  when ctx.outcome = success
+    Check -> Fail  when ctx.outcome = fail
+    Check -> Done
+    Pass -> Done
+    Fail -> Done
+`,
+  "human-gate": `workflow human-gate
+  goal: "Gate progress on human approval"
+  start: Prepare
+  exit: Done
+
+  defaults
+    on_failure: Done
+
+  agent Prepare
+    prompt:
+      Prepare the proposal for review.
+
+  human Gate
+    mode: choice
+    default: approve
+
+  agent Approved
+    prompt:
+      Proceed with the approved plan.
+
+  agent Rejected
+    prompt:
+      Handle the rejection.
+
+  agent Done
+    prompt:
+      Wrap up.
+
+  edges
+    Prepare -> Gate
+    Gate -> Approved  label: approve  choice: approve
+    Gate -> Rejected  label: reject  choice: reject
+    Approved -> Done
+    Rejected -> Done
+`,
+};
+
 const go = new Go();
 let wasmReady = false;
+let activeTool = "lint";
+let mermaidLoading = null;
+let debounceTimer = null;
 const editorEl = document.getElementById("editor");
 const highlightEl = document.getElementById("editor-highlight");
 const outputEl = document.getElementById("output");
+const summaryEl = document.getElementById("summary");
 
-// Sync editor textarea content to the highlighted pre overlay.
+function getSource() { return editorEl.value; }
+function setSource(s) { editorEl.value = s; syncHighlight(); }
+
 function syncHighlight() {
   if (window.dippinHighlight) {
     highlightEl.innerHTML = dippinHighlight.dippin(editorEl.value) + "\n";
@@ -91,92 +273,185 @@ function syncScroll() {
   highlightEl.scrollTop = editorEl.scrollTop;
   highlightEl.scrollLeft = editorEl.scrollLeft;
 }
-// Initial highlight. highlight.js is loaded at the end of <body>, after this
-// inline script runs, so dippinHighlight isn't defined yet — defer the first
-// highlight to DOMContentLoaded or the default source renders invisible
-// (transparent textarea over an empty overlay) until the first keystroke.
-if (window.dippinHighlight) {
-  syncHighlight();
-} else {
-  document.addEventListener("DOMContentLoaded", syncHighlight);
+function escapeHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-// Tab key inserts 2 spaces instead of changing focus.
+// --- init: load from URL hash if present, else the default example ---
+function initialSource() {
+  if (location.hash.length > 1) {
+    try { return decodeURIComponent(escape(atob(location.hash.slice(1)))); } catch (e) {}
+  }
+  return EXAMPLES.hello;
+}
+setSource(initialSource());
+if (!window.dippinHighlight) document.addEventListener("DOMContentLoaded", syncHighlight);
+
+// Tab key inserts 2 spaces.
 editorEl.addEventListener("keydown", function(e) {
   if (e.key === "Tab") {
     e.preventDefault();
-    var s = this.selectionStart, end = this.selectionEnd;
+    const s = this.selectionStart, end = this.selectionEnd;
     this.value = this.value.substring(0, s) + "  " + this.value.substring(end);
     this.selectionStart = this.selectionEnd = s + 2;
-    syncHighlight();
+    onInput();
   }
 });
 
 WebAssembly.instantiateStreaming(fetch("{{ "dippin.wasm" | relURL }}"), go.importObject)
   .then(result => {
     go.run(result.instance);
-    function waitForWasm() {
+    (function wait() {
       if (typeof dippinLint === "function") {
         wasmReady = true;
-        document.getElementById("status").textContent = "WASM loaded";
-        runLint();
-      } else {
-        setTimeout(waitForWasm, 10);
-      }
-    }
-    waitForWasm();
+        document.getElementById("status").textContent = "WASM loaded · everything runs locally in your browser";
+        runActive();
+      } else { setTimeout(wait, 10); }
+    })();
   })
-  .catch(err => {
-    outputEl.textContent = "Failed to load WASM: " + err;
-  });
+  .catch(err => { outputEl.textContent = "Failed to load WASM: " + err; });
 
-function getSource() { return editorEl.value; }
+// --- input handling: debounce, always refresh the live summary + active tool ---
+function onInput() {
+  syncHighlight();
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => { updateSummary(); runActive(); }, 220);
+}
+
+function updateSummary() {
+  if (!wasmReady) return;
+  const res = JSON.parse(dippinLint(getSource()));
+  if (res && res.error) {
+    summaryEl.className = "summary err";
+    summaryEl.textContent = "✗ parse error";
+    return;
+  }
+  const c = { error: 0, warning: 0, hint: 0 };
+  (res || []).forEach(d => { c[d.severity] = (c[d.severity] || 0) + 1; });
+  if (!res || res.length === 0) {
+    summaryEl.className = "summary clean";
+    summaryEl.textContent = "✓ No issues — clean workflow";
+    return;
+  }
+  summaryEl.className = "summary " + (c.error ? "err" : c.warning ? "warn" : "");
+  summaryEl.textContent = `${c.error} error${c.error!==1?"s":""} · ${c.warning} warning${c.warning!==1?"s":""} · ${c.hint} hint${c.hint!==1?"s":""}`;
+}
+
+// --- tools ---
+function setTool(tool) {
+  activeTool = tool;
+  document.querySelectorAll(".toolbar button").forEach(b => b.classList.remove("active"));
+  const btn = document.getElementById("tab-" + tool);
+  if (btn) btn.classList.add("active");
+  outputEl.classList.toggle("graph", tool === "graph");
+  runActive();
+}
+
+function runActive() {
+  if (!wasmReady) return;
+  updateSummary();
+  ({ lint: runLint, format: runFormat, graph: runGraph, doctor: runDoctor, parse: runParse }[activeTool] || runLint)();
+}
 
 function runLint() {
-  if (!wasmReady) return;
-  setActive("btn-lint");
-  var result = dippinLint(getSource());
-  var diags = JSON.parse(result);
-  if (diags && diags.error) {
-    outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(diags.error) + '</span>';
-    return;
-  }
-  if (!diags || diags.length === 0) {
-    outputEl.innerHTML = '<span class="hl-pass">No issues found.</span>';
-    return;
-  }
-  outputEl.innerHTML = diags.map(function(d) {
-    var cls = d.severity === "error" ? "hl-fail" : d.severity === "warning" ? "hl-warn" : "hl-dim";
-    return '<span class="' + cls + '">' + d.severity + '[' + d.code + ']</span>: ' + escapeHtml(d.message);
+  const res = JSON.parse(dippinLint(getSource()));
+  if (res && res.error) { outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(res.error) + '</span>'; return; }
+  if (!res || res.length === 0) { outputEl.innerHTML = '<span class="hl-pass">No issues found. ✓</span>'; return; }
+  outputEl.innerHTML = res.map(d => {
+    const cls = d.severity === "error" ? "hl-fail" : d.severity === "warning" ? "hl-warn" : "hl-dim";
+    const loc = d.line ? ' <span class="hl-dim">(line ' + d.line + ')</span>' : "";
+    return '<span class="diag" onclick="jumpToLine(' + (d.line||0) + ')"><span class="' + cls + '">' + d.severity + '[' + d.code + ']</span>: ' + escapeHtml(d.message) + loc + '</span>';
   }).join("\n");
 }
 
-function runParse() {
-  if (!wasmReady) return;
-  setActive("btn-parse");
-  var result = dippinParse(getSource());
-  try {
-    var pretty = JSON.stringify(JSON.parse(result), null, 2);
-    outputEl.innerHTML = dippinHighlight.json(pretty);
-  } catch(e) {
-    outputEl.textContent = result;
-  }
-}
-
 function runFormat() {
-  if (!wasmReady) return;
-  setActive("btn-format");
-  var result = dippinFormat(getSource());
-  outputEl.innerHTML = dippinHighlight.dippin(result);
+  const res = dippinFormat(getSource());
+  try { const p = JSON.parse(res); if (p.error) { outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(p.error) + '</span>'; return; } } catch (e) {}
+  outputEl.innerHTML = dippinHighlight ? dippinHighlight.dippin(res) : escapeHtml(res);
 }
 
-function setActive(id) {
-  document.querySelectorAll(".toolbar button").forEach(function(b) { b.classList.remove("active"); });
-  document.getElementById(id).classList.add("active");
+function runParse() {
+  const res = dippinParse(getSource());
+  try { outputEl.innerHTML = dippinHighlight.json(JSON.stringify(JSON.parse(res), null, 2)); }
+  catch (e) { outputEl.textContent = res; }
 }
 
-function escapeHtml(s) {
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+let graphGen = 0;
+function graphIsCurrent(gen) { return gen === graphGen && activeTool === "graph"; }
+function runGraph() {
+  const res = dippinMermaid(getSource());
+  try { const p = JSON.parse(res); if (p.error) { outputEl.classList.remove("graph"); outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(p.error) + '</span>'; return; } } catch (e) {}
+  const gen = ++graphGen; // invalidate any in-flight load/render from an earlier edit
+  loadMermaid()
+    .then(() => graphIsCurrent(gen) ? mermaid.render("mmd-" + gen, res) : null)
+    .then(out => { if (out && graphIsCurrent(gen)) outputEl.innerHTML = out.svg; })
+    .catch(err => {
+      // handles both a mermaid.js load failure and a render error
+      if (!graphIsCurrent(gen)) return;
+      outputEl.classList.remove("graph");
+      outputEl.innerHTML = '<span class="hl-dim">Could not render graph (' + escapeHtml(String(err)) + '):\n\n' + escapeHtml(res) + '</span>';
+    });
+}
+
+function loadMermaid() {
+  if (window.mermaid) return Promise.resolve();
+  if (mermaidLoading) return mermaidLoading;
+  mermaidLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "{{ "mermaid.min.js" | relURL }}";
+    s.onload = () => { mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "strict" }); resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return mermaidLoading;
+}
+
+function runDoctor() {
+  const res = dippinDoctor(getSource());
+  let r; try { r = JSON.parse(res); } catch (e) { outputEl.textContent = res; return; }
+  if (r.error) { outputEl.innerHTML = '<span class="hl-fail">parse error: ' + escapeHtml(r.error) + '</span>'; return; }
+  const cost = r.cost && r.cost.total ? r.cost.total : {};
+  const usd = n => (typeof n === "number" ? "$" + n.toFixed(4) : "—");
+  let html = '<div class="grade g-' + escapeHtml(r.grade || "?") + '">' + escapeHtml(r.grade || "?") + '</div>';
+  html += '<div class="hl-dim" style="margin-bottom:.6rem">Health score: ' + (r.score|0) + '/100</div>';
+  html += card("Lint", (r.lint.errors|0) + " err · " + (r.lint.warnings|0) + " warn · " + (r.lint.hints|0) + " hint");
+  html += card("Coverage", (r.coverage.reachable_nodes|0) + "/" + (r.coverage.total_nodes|0) + " nodes reachable" + (r.coverage.all_terminate ? " · all paths terminate ✓" : " · dead ends ✗"));
+  html += card("Cost (expected)", usd(cost.expected) + "  (" + usd(cost.min) + " – " + usd(cost.max) + ")");
+  if (r.suggestions && r.suggestions.length) {
+    html += '<div style="margin-top:.6rem">' + r.suggestions.map(s => '<div class="hl-warn">• [' + escapeHtml(s.category) + '] ' + escapeHtml(s.message) + '</div>').join("") + '</div>';
+  }
+  outputEl.innerHTML = html;
+}
+function card(label, val) {
+  return '<div class="card-row"><span class="hl-dim">' + escapeHtml(label) + '</span><span>' + escapeHtml(val) + '</span></div>';
+}
+
+// --- actions ---
+function jumpToLine(line) {
+  if (!line) return;
+  const lines = editorEl.value.split("\n");
+  let pos = 0;
+  for (let i = 0; i < line - 1 && i < lines.length; i++) pos += lines[i].length + 1;
+  editorEl.focus();
+  editorEl.setSelectionRange(pos, pos + (lines[line-1] || "").length);
+}
+function loadExample(name) { if (EXAMPLES[name]) { setSource(EXAMPLES[name]); location.hash = ""; runActive(); } }
+function resetSource() { document.getElementById("example-select").value = "hello"; loadExample("hello"); }
+function copySource() { navigator.clipboard.writeText(getSource()).then(() => flash("Copied source")); }
+function downloadSource() {
+  const blob = new Blob([getSource()], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "workflow.dip"; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function shareSource() {
+  location.hash = btoa(unescape(encodeURIComponent(getSource())));
+  navigator.clipboard.writeText(location.href).then(() => flash("Shareable link copied"));
+}
+function flash(msg) {
+  const s = document.getElementById("status");
+  const prev = s.textContent; s.textContent = msg;
+  setTimeout(() => { s.textContent = prev; }, 1600);
 }
 </script>
 {{ end }}
