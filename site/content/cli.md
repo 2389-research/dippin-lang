@@ -92,6 +92,12 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 </div>
 
 <div class="cmd-card">
+  <h3>export-mermaid</h3>
+  <div class="cmd-usage">dippin export-mermaid &lt;file&gt;</div>
+  <p>Export a workflow to a <a href="https://mermaid.js.org/">Mermaid</a> flowchart — shapes and colors by node kind, edges labeled by routing condition, start/exit emphasized. Renders natively on GitHub and in the <a href="/playground/">playground</a>; the quickest way to drop a live workflow diagram into a README. Subgraph refs are flattened first.</p>
+</div>
+
+<div class="cmd-card">
   <h3>migrate</h3>
   <div class="cmd-usage">dippin migrate [--output &lt;file&gt;] &lt;file.dot&gt;</div>
   <p>Convert a DOT file to <code>.dip</code> source format. Maps DOT shapes to Dippin node kinds, extracts graph attributes, unescapes prompts, and prefixes bare condition variables with <code>ctx.</code>.</p>

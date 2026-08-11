@@ -58,6 +58,7 @@ func (c *CLI) commandDispatch() map[string]func([]string) ExitCode {
 		"new":                c.CmdNew,
 		"export-dip":         c.CmdExportDIP,
 		"export-dot":         c.CmdExportDOT,
+		"export-mermaid":     c.CmdExportMermaid,
 		"migrate":            c.CmdMigrate,
 		"validate-migration": c.CmdValidateMigration,
 		"simulate":           c.CmdSimulate,
@@ -186,6 +187,7 @@ func printGlobalUsage(w io.Writer) {
 	fmt.Fprintln(w, "                                               review-loop, human-gate")
 	fmt.Fprintln(w, "  export-dip <file>                 Export flattened workflow as .dip")
 	fmt.Fprintln(w, "  export-dot [--rankdir] [--prompts] <file>")
+	fmt.Fprintln(w, "  export-mermaid <file>")
 	fmt.Fprintln(w, "                                    Export workflow to DOT format")
 	fmt.Fprintln(w, "  migrate [--output <file>] <file.dot>")
 	fmt.Fprintln(w, "                                    Convert DOT to .dip")

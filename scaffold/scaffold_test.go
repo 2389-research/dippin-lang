@@ -115,3 +115,37 @@ func TestTemplateNames_IncludesManagerLoop(t *testing.T) {
 	}
 	t.Errorf("manager_loop missing from TemplateNames: %v", names)
 }
+
+// TestTemplatesLintClean guards that `dippin new <template>` produces a workflow
+// that lints completely clean — no author sees a warning on freshly-generated
+// output. manager_loop is excluded: it references an external child_pipeline.dip
+// that cannot exist yet, so its DIP135 ("referenced file does not exist") is an
+// informative prompt to create the child, not noise.
+func TestTemplatesLintClean(t *testing.T) {
+	for _, name := range TemplateNames() {
+		if name == "manager_loop" {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			built, err := Build(name, "")
+			if err != nil {
+				t.Fatalf("build %s: %v", name, err)
+			}
+			// Mirror `dippin new` → `dippin lint`: the generated text is the
+			// formatter's canonical output (which strips redundant fan edges,
+			// etc.), so lint the parsed-back-from-formatted workflow, not the raw
+			// builder IR.
+			src := formatter.Format(built)
+			w, err := parser.NewParser(src, name+".dip").Parse()
+			if err != nil {
+				t.Fatalf("reparse %s: %v\n%s", name, err, src)
+			}
+			var diags []validator.Diagnostic
+			diags = append(diags, validator.Validate(w).Diagnostics...)
+			diags = append(diags, validator.Lint(w).Diagnostics...)
+			for _, d := range diags {
+				t.Errorf("template %q is not clean: %s[%s] %s", name, d.Severity, d.Code, d.Message)
+			}
+		})
+	}
+}

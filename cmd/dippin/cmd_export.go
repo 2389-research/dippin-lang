@@ -48,3 +48,34 @@ func (c *CLI) CmdExportDOT(args []string) ExitCode {
 	fmt.Fprint(c.Stdout, dot)
 	return ExitOK
 }
+
+// CmdExportMermaid exports a workflow to a Mermaid flowchart (renders on GitHub,
+// in docs, and in the playground). Subgraph refs are flattened first so the graph
+// is complete.
+func (c *CLI) CmdExportMermaid(args []string) ExitCode {
+	fs := flag.NewFlagSet("export-mermaid", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+	if err := fs.Parse(args); err != nil {
+		return ExitUsageError
+	}
+	if fs.NArg() < 1 {
+		fmt.Fprintln(c.Stderr, "usage: dippin export-mermaid <file>")
+		return ExitUsageError
+	}
+
+	path := fs.Arg(0)
+	w, err := loadWorkflow(path)
+	if err != nil {
+		c.renderError(err, path)
+		return ExitError
+	}
+
+	w, err = flatten.Flatten(w, &flatten.DiskResolver{}, flatten.Options{})
+	if err != nil {
+		c.renderError(err, path)
+		return ExitError
+	}
+
+	fmt.Fprint(c.Stdout, export.ExportMermaid(w))
+	return ExitOK
+}
