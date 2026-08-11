@@ -1,6 +1,7 @@
 package simulate
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -16,9 +17,10 @@ func (s *simulator) applyNodeDefaults(node *ir.Node) {
 	if ac, ok := node.Config.(ir.AgentConfig); ok && ac.AutoStatus {
 		s.setContextDefaultForNode("outcome", "success", node.ID)
 	}
-	if _, ok := node.Config.(ir.ToolConfig); ok {
+	if tc, ok := node.Config.(ir.ToolConfig); ok {
 		s.setContextDefaultForNode("tool_stdout", "success", node.ID)
 		s.setContextDefaultForNode("outcome", "success", node.ID)
+		s.deriveToolMarker(tc, node.ID)
 	}
 }
 
@@ -39,6 +41,37 @@ func (s *simulator) applyNodeScenario(nodeID string) {
 			}
 		}
 	}
+}
+
+// deriveToolMarker mirrors the runtime: a tool that declares marker_grep has its
+// ctx.tool_marker populated from the first stdout line the regex matches. Simulate
+// otherwise only sets ctx.tool_stdout, so `on <marker>` edges (which route on
+// ctx.tool_marker) never match and silently fall through to the first edge — the
+// cause of spurious "infinite loop" test failures on marker-routed workflows. An
+// explicit scenario `NodeID.tool_marker=...` wins; otherwise it's derived from
+// tool_stdout so a scenario can drive marker routing by supplying realistic output.
+func (s *simulator) deriveToolMarker(tc ir.ToolConfig, nodeID string) {
+	if tc.MarkerGrep == "" || s.scenarioHasKey("tool_marker", nodeID) {
+		return
+	}
+	if m := firstMarkerMatch(tc.MarkerGrep, s.ctx["tool_stdout"]); m != "" {
+		s.updateContext("tool_marker", m)
+	}
+}
+
+// firstMarkerMatch returns the regex's match against the first matching line of
+// stdout, or "" if the pattern is invalid, stdout is empty, or nothing matches.
+func firstMarkerMatch(pattern, stdout string) string {
+	re, err := regexp.Compile(pattern)
+	if err != nil || stdout == "" {
+		return ""
+	}
+	for _, line := range strings.Split(stdout, "\n") {
+		if m := re.FindString(line); m != "" {
+			return m
+		}
+	}
+	return ""
 }
 
 // setContextDefaultForNode sets a context key only if it wasn't injected
