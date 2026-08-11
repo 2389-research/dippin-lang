@@ -65,7 +65,11 @@
   for = "/dippin.wasm"
   [headers.values]
     Content-Type = "application/wasm"
-    Cache-Control = "public, max-age=3600"
+    # Revalidate every load (ETag → cheap 304 when unchanged). The WASM is rebuilt
+    # on every deploy and the playground JS deploys alongside it; a long max-age let
+    # a returning visitor run new JS against an hour-stale WASM (missing newly
+    # exported functions), which broke the Graph view. Keep JS and WASM in lockstep.
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/llms.txt"

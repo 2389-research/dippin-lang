@@ -109,7 +109,7 @@ func writeMermaidClassDefs(b *strings.Builder) {
 		"classDef agent fill:#e8f5e9,stroke:#43a047,color:#1b5e20;",
 		"classDef human fill:#e3f2fd,stroke:#1e88e5,color:#0d47a1;",
 		"classDef tool fill:#fff3e0,stroke:#fb8c00,color:#e65100;",
-		"classDef subgraph_ fill:#f3e5f5,stroke:#8e24aa,color:#4a148c;",
+		"classDef subgnode fill:#f3e5f5,stroke:#8e24aa,color:#4a148c;",
 		"classDef manager_loop fill:#ede7f6,stroke:#5e35b1,color:#311b92;",
 		"classDef conditional fill:#fffde7,stroke:#fdd835,color:#f57f17;",
 		"classDef fork fill:#eceff1,stroke:#607d8b,color:#263238;",
@@ -139,7 +139,7 @@ var mermaidShapes = map[ir.NodeKind][2]string{
 var mermaidClasses = map[ir.NodeKind]string{
 	ir.NodeAgent:       "agent",
 	ir.NodeHuman:       "human",
-	ir.NodeSubgraph:    "subgraph_",
+	ir.NodeSubgraph:    "subgnode",
 	ir.NodeManagerLoop: "manager_loop",
 	ir.NodeConditional: "conditional",
 	ir.NodeParallel:    "fork",
