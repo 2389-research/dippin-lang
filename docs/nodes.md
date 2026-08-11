@@ -191,6 +191,10 @@ To single-source boilerplate shared across many agents (e.g. a STATUS/FINAL-LINE
 
 The effective prompt of each agent is assembled at resolve time as **`prefix → body → prompt_include → suffix`** (empty parts are skipped), so the cascade **suffix is always the final content** — satisfying "the very last line must be exactly …" contracts. Fragment files use the same security envelope as `prompt_file` (relative-path containment, symlink rejection, size cap).
 
+**Join separator.** Non-empty parts are joined with a fixed **blank line (`\n\n`)** between them (#249). This is deterministic and not configurable. It matters for one refactor in particular: *hoisting the identical leading line of every agent body into a `prompt_prefix_file:` fragment.* That is byte-lossless **only when the original body had a blank line after the leading line** — set the fragment to the leading line *without* a trailing newline, drop it from each body, and the fixed `\n\n` reproduces the original. If the original used a single newline (no blank line) the composed prompt gains one, so the hoist is not lossless there.
+
+**Body-less passthrough nodes are skipped.** The cascade wraps a *prompt*; an agent with no prompt of its own and no `prompt_include` — e.g. a body-less `agent` declared as the workflow's `start:`/`exit:` passthrough — has nothing to wrap, so the cascade **does not apply** and the node stays body-less (#248). A defaults prefix/suffix will never synthesize a prompt on a passthrough node (which a runtime that keys passthrough on "no prompt attribute" would otherwise execute as a real LLM turn).
+
 An agent opts out of a cascade side with `prompt_suffix: none` / `prompt_prefix: none` (see the field table above); `DIP154` hints when an opt-out matches no declared cascade. A packed bundle inlines the fully-composed prompt by default, or ships the fragment files under `pack --no-inline`.
 
 ### Shared system prompt (`system_prompt_file`)

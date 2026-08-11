@@ -15,6 +15,17 @@ func Open(ctx context.Context, path string) (*Bundle, error) {
 	return openFile(ctx, path)
 }
 
+// OpenReader reads a .dipx from an in-memory source in strict mode — for
+// embedded consumers (e.g. a `go:embed` bundle) that hold the bytes but have no
+// file on disk, avoiding a temp-file bridge. size is the bundle's total byte
+// length (e.g. len(embeddedBytes)); r is typically a *bytes.Reader over those
+// bytes. Errors carry no bundle path (there is none on an in-memory source); a
+// caller that needs one can wrap the returned error. Same strict admission,
+// hash verification, and ref-walking as Open. (#247)
+func OpenReader(ctx context.Context, r io.ReaderAt, size int64) (*Bundle, error) {
+	return openFromReader(ctx, r, size)
+}
+
 // OpenManifest performs only Open's structural-admission steps (zip open,
 // manifest read, manifest decode, manifest shape verification) and returns
 // the parsed manifest plus the bundle identity hash. Hash verification,

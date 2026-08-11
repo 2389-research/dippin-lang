@@ -65,7 +65,7 @@ The optional `defaults` block sets graph-level configuration that applies to all
     prompt_suffix_file: protocols/status-contract.md
 ```
 
-The `prompt_prefix`/`prompt_suffix` (inline) and `prompt_prefix_file`/`prompt_suffix_file` (fragment file) defaults **cascade a shared prompt fragment to every agent** (#175) — the effective prompt is composed as `prefix → body → prompt_include → suffix` at resolve time, with the suffix always last. An agent opts out with `prompt_suffix: none` / `prompt_prefix: none`. The `system_prompt_file` default (#72) is different in kind: it is a **fallback** shared system prompt (persona) — used only by agents that declare no `system_prompt`/`system_prompt_file` of their own, which fully override it.
+The `prompt_prefix`/`prompt_suffix` (inline) and `prompt_prefix_file`/`prompt_suffix_file` (fragment file) defaults **cascade a shared prompt fragment to every agent** (#175) — the effective prompt is composed as `prefix → body → prompt_include → suffix` at resolve time, with the suffix always last. An agent opts out with `prompt_suffix: none` / `prompt_prefix: none`. Parts are joined with a fixed blank line (`\n\n`), and a body-less passthrough agent (no own prompt or include — e.g. a declared `start:`/`exit:` node) is skipped so the cascade never synthesizes a prompt on it (#248, #249). The `system_prompt_file` default (#72) is different in kind: it is a **fallback** shared system prompt (persona) — used only by agents that declare no `system_prompt`/`system_prompt_file` of their own, which fully override it.
 
 | Field | Type | Description |
 |-------|------|-------------|

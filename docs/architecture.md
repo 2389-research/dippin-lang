@@ -151,7 +151,7 @@ dippin-lang/
 │   └── symbols.go      # Document symbol outline
 │
 ├── dipx/               # .dipx bundle format (loader tier)
-│   ├── dipx.go         # Open, OpenManifest, Pack, Extract
+│   ├── dipx.go         # Open, OpenReader, OpenManifest, Pack, Extract
 │   ├── source.go       # Source interface, dirSource, Load (.dip vs .dipx)
 │   ├── manifest.go     # Manifest decode/encode + shape verification
 │   ├── bundle.go       # Bundle (Workflow, Identity, Manifest, Resolve, Entry)
