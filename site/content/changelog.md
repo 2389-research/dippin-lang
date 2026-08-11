@@ -4,6 +4,16 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.65.0] — 2026-08-11
+
+### Added
+- **`dippin export-mermaid` — Mermaid flowchart export.** A new exporter (`export.ExportMermaid`) renders a workflow as a [Mermaid](https://mermaid.js.org/) flowchart: node shapes and colors by kind (agent stadium/green, human parallelogram/blue, tool rectangle/orange, subgraph subroutine/purple, conditional rhombus/yellow, parallel·fan_in hexagon/gray), edges labeled by routing condition (`ctx.outcome = success` → `success`), start/exit emphasized, restart edges marked `⟳`. Mermaid renders natively on GitHub and in docs, so this drops a live diagram into a README with one command. Subgraph refs are flattened first.
+- **Playground v2.** The browser playground gains a **Graph** tab (Mermaid render of the workflow), a **Doctor** tab (health card: grade, score, coverage, cost), **live linting** with a diagnostic summary bar, **click-a-diagnostic-to-jump-to-its-line**, an **example gallery** (minimal, review-loop, parallel, conditional, human-gate — each lints clean), and **Copy / Download / Share** (source encoded in the URL for shareable links). The WASM exposes `dippinMermaid` and `dippinDoctor` alongside the existing lint/parse/format.
+
+### Fixed
+- **`dippin new` templates now lint completely clean.** Every scaffold template (`minimal`, `review-loop`, `parallel`, `conditional`, `human-gate`) previously emitted a DIP144 "no failure route" warning (and human-gate two DIP150 hints) on freshly-generated output — an author's first `dippin lint` showed warnings. Each template now declares a graph-level `on_failure` route (and human-gate sets `choice:` on its gate edges), so the generated workflow is clean and demonstrates the failure-route + choice-key features. `manager_loop` still surfaces DIP135 by design (it references an external `child_pipeline.dip` the author must create). Guarded by `TestTemplatesLintClean`.
+- **Playground default example lints clean** (see v0.64.0-era fix, hardened here): the embedded example gallery is guarded by `TestPlaygroundExamplesLintClean`, which lints every example a visitor can load and fails CI on any diagnostic — so a warning-producing demo can no longer ship.
+
 ## [v0.64.0] — 2026-08-11
 
 ### Added
