@@ -26,6 +26,9 @@
   start: Greeter
   exit: Done
 
+  defaults
+    on_failure: Done
+
   agent Greeter
     model: claude-sonnet-4-6
     provider: anthropic
