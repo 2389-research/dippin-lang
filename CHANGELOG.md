@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.65.0] — 2026-08-11
 
 ### Added
 - **`dippin export-mermaid` — Mermaid flowchart export.** A new exporter (`export.ExportMermaid`) renders a workflow as a [Mermaid](https://mermaid.js.org/) flowchart: node shapes and colors by kind (agent stadium/green, human parallelogram/blue, tool rectangle/orange, subgraph subroutine/purple, conditional rhombus/yellow, parallel·fan_in hexagon/gray), edges labeled by routing condition (`ctx.outcome = success` → `success`), start/exit emphasized, restart edges marked `⟳`. Mermaid renders natively on GitHub and in docs, so this drops a live diagram into a README with one command. Subgraph refs are flattened first.
