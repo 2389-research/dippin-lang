@@ -92,22 +92,42 @@ func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string, casca
 	if err := loadDirectiveInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
 		return err
 	}
-	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, n.ID, "system_prompt_file"); err != nil {
+	if err := resolveAgentSystemPrompt(&cfg, baseDir, n.ID, cascade); err != nil {
 		return err
-	}
-	// Fallback default (#72): an agent that set no system prompt of its own
-	// inherits the shared defaults system_prompt_file. A node's own value (inline
-	// or file) is already non-empty here, so it always wins.
-	if cfg.SystemPrompt == "" {
-		cfg.SystemPrompt = cascade.systemPrompt
 	}
 	include := ""
 	if err := loadDirectiveInto(&include, cfg.PromptInclude, baseDir, n.ID, "prompt_include"); err != nil {
 		return err
 	}
-	cfg.Prompt = ir.ComposePrompt(effectivePrefix(cfg, cascade), cfg.Prompt, include, effectiveSuffix(cfg, cascade))
+	applyPromptCascade(&cfg, include, cascade)
 	n.Config = cfg
 	return nil
+}
+
+// resolveAgentSystemPrompt loads system_prompt_file into SystemPrompt, then
+// applies the #72 defaults fallback: an agent that set no system prompt of its
+// own inherits the shared defaults system_prompt_file (its own value, inline or
+// file, is already non-empty here, so it always wins).
+func resolveAgentSystemPrompt(cfg *ir.AgentConfig, baseDir, nodeID string, cascade promptCascade) error {
+	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, nodeID, "system_prompt_file"); err != nil {
+		return err
+	}
+	if cfg.SystemPrompt == "" {
+		cfg.SystemPrompt = cascade.systemPrompt
+	}
+	return nil
+}
+
+// applyPromptCascade wraps the body with the defaults prefix/suffix cascade
+// (#175). It is skipped for a body-less passthrough agent — no own prompt and no
+// include, e.g. a declared start:/exit: node — because the cascade wraps a
+// prompt, and synthesizing one out of prefix/suffix alone would turn a
+// passthrough node into a real LLM call (#248); the node stays body-less.
+func applyPromptCascade(cfg *ir.AgentConfig, include string, cascade promptCascade) {
+	if cfg.Prompt == "" && include == "" {
+		return
+	}
+	cfg.Prompt = ir.ComposePrompt(effectivePrefix(*cfg, cascade), cfg.Prompt, include, effectiveSuffix(*cfg, cascade))
 }
 
 // effectivePrefix returns the cascade prefix unless the node opted out with
