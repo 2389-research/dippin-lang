@@ -4,6 +4,12 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.65.1] — 2026-08-11
+
+### Fixed
+- **`simulate`/`dippin test` now derive `ctx.tool_marker` from tool stdout via `marker_grep`.** `marker_grep` is documented as "populates `ctx.tool_marker`", and the runtime derives the marker from a tool's stdout — but simulate only ever set `ctx.tool_stdout`, so `on <marker>` edges (which route on `ctx.tool_marker`) never matched and silently fell through to the first edge. On a marker-routed workflow this manifested as a spurious `simulation exceeded 500 steps (possible infinite loop)` test failure — e.g. a tool whose `all_done` exit could never be taken, so a milestone loop never terminated. Simulate now mirrors the runtime: for a tool declaring `marker_grep`, `ctx.tool_marker` is derived from the first stdout line the pattern matches, so a scenario drives marker routing with realistic `tool_stdout`. An explicit `NodeID.tool_marker=…` scenario value still wins.
+- **Playground Graph view robustness + WASM cache skew.** The `/dippin.wasm` asset was cached for an hour while the playground JS deploys fresh, so a returning visitor ran new JS against a stale WASM missing the just-added `dippinMermaid` export — `runGraph` threw before replacing the pane, and the Graph view's flex/`white-space:normal` styling collapsed the leftover text into garbage. Fixed three ways: (1) `runGraph` now guards a missing `dippinMermaid` with a clear "hard-reload to refresh the engine" message, clears stale content with a "Rendering graph…" placeholder before rendering, and only applies the graph styling once a real SVG is in hand; (2) `/dippin.wasm` is now served `max-age=0, must-revalidate` so the WASM stays in lockstep with the JS (ETag makes the revalidation a cheap 304 when unchanged); (3) the Mermaid `subgraph` node class was renamed to avoid any collision with Mermaid's reserved `subgraph` keyword.
+
 ## [v0.65.0] — 2026-08-11
 
 ### Added
