@@ -11,15 +11,16 @@ table, tracker #518) but applies to any consumer.
 ## Version to pin
 
 - **Floor:** `v0.53.0` — the release that introduced the `pricing` package.
-- **Recommended:** the latest tag (currently **`v0.62.1`**). Everything since the
+- **Recommended:** the latest tag (currently **`v0.64.0`**). Everything since the
   floor is additive to the catalog data and the `ModelPrice` shape; the
   `Lookup`/`Cost` API a consumer calls is unchanged. Notable additions: cache
   read/write rates (`v0.57.0`+, see below), `ModelPrice.Deprecated` (`v0.59.0`),
-  per-family OpenAI cache multipliers (`v0.59.1`), and the drift suppress-list
-  tooling.
+  per-family OpenAI cache multipliers (`v0.59.1`), tail-provider cache rates
+  (`v0.61.0`) and Mistral/Cohere verified-no-discount (`v0.62.1`), and the drift
+  suppress-list tooling.
 
 ```sh
-go get github.com/2389-research/dippin-lang@v0.62.1
+go get github.com/2389-research/dippin-lang@v0.64.0
 ```
 
 Consumers **pin a specific tag** — never `@latest` — per dippin's release model.
