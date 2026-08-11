@@ -2,7 +2,7 @@
 
 All notable changes to dippin-lang are documented here. Versions follow [semver](https://semver.org/).
 
-## [Unreleased]
+## [v0.64.0] — 2026-08-11
 
 ### Added
 - **`dipx.OpenReader(ctx, r io.ReaderAt, size int64)` for in-memory bundles** ([#247](https://github.com/2389-research/dippin-lang/issues/247)). An embedded consumer that bakes a `.dipx` into its binary via `go:embed` can now load it straight from bytes — same strict admission, hash verification, and ref-walking as `Open`, but with no temp-file bridge (and no `0600` window). Errors carry no bundle path (there is none on an in-memory source).
