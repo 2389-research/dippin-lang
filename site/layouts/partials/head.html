@@ -22,7 +22,7 @@
 {{- end }}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ "style.css" | relURL }}">
+<link rel="stylesheet" href="{{ "style.css" | relURL }}?v={{ now.Unix }}">
 {{- if .IsHome }}
 {{- $siteLastmod := .Site.Lastmod.Format "2006-01-02" -}}
 <script type="application/ld+json">

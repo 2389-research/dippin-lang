@@ -1,13 +1,18 @@
 {{ define "main" }}
 <section class="doc">
 <div class="container">
-  <div class="doc-header">
-    <div class="section-label">{{ .Params.section_label }}</div>
-    <h1>{{ .Title }}</h1>
-    <p>{{ .Params.subtitle }}</p>
-  </div>
-  <div class="doc-body">
-    {{ .Content }}
+  <div class="doc-layout">
+    {{ partial "docs-sidebar.html" . }}
+    <main class="doc-main">
+      <div class="doc-header">
+        <div class="section-label">{{ .Params.section_label }}</div>
+        <h1>{{ .Title }}</h1>
+        <p>{{ .Params.subtitle }}</p>
+      </div>
+      <div class="doc-body{{ if eq .Title "Glossary" }} glossary{{ end }}">
+        {{ .Content }}
+      </div>
+    </main>
   </div>
 </div>
 </section>

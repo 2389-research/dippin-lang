@@ -39,16 +39,16 @@ $ dippin cost pipeline.dip
                             Min Expected      Max
   <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span> <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;</span> <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;</span> <span class="dim">&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   TOTAL                       $3.21    $3.59   $14.10
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; By Provider &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   openai                      $0.38    $0.57    $2.96
   anthropic                   $2.83    $3.02   $11.13
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Top Cost Drivers &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   CommitWork                  $2.12 <span class="dim">(max)</span>  openai/gpt-5.2
   ImplementClaude             $2.12 <span class="dim">(max)</span>  anthropic/claude-sonnet-4-6
   InterpretRequest            $1.44 <span class="dim">(max)</span>  anthropic/claude-opus-4-6
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Assumptions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="warn">&#8226;</span> <span class="dim">unknown model "gemini-3-flash" (provider "gemini"): cost set to $0</span></pre>
 </div>
@@ -71,10 +71,10 @@ Analyze edge coverage and reachability. For tool nodes, extracts possible output
   <span class="fail">&#10007;</span> ValidateBuild                partial
       <span class="dim">missing: validation-pass-go</span>
       <span class="dim">missing: validation-pass-swift</span>
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Reachability &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="pass">&#10003;</span> 30/30 nodes reachable
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Termination &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="pass">&#10003;</span> all paths reach exit: true</pre>
 </div>
@@ -93,17 +93,17 @@ Health report card — a single grade (A-F) aggregating lint, coverage, and cost
   <pre><span class="prompt">$</span> dippin doctor pipeline.dip
 <span class="dim">&#9552;&#9552;&#9552; Health Report Card &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
   Grade: <span class="pass">A</span>  Score: 95/100
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Lint &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   Errors: <span class="pass">0</span>  Warnings: <span class="warn">1</span>  Hints: 0
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Coverage &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   Reachable: <span class="pass">21/21 nodes</span>
   <span class="pass">&#10003;</span> All paths terminate
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Cost &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   Expected: $2.10  <span class="dim">(range: $1.50 - $8.40)</span>
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Suggestions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="warn">&#8226;</span> <span class="dim">[lint] review lint warnings - run `dippin lint` for details</span></pre>
 </div>
@@ -145,7 +145,7 @@ Suggest cheaper model substitutions without sacrificing quality. Rules include: 
   Current:   $3.59 <span class="dim">(expected)</span>
   Optimized: $0.00 <span class="dim">(expected)</span>
   Savings:   <span class="pass">$3.59</span> <span class="dim">(expected)</span>
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Suggestions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="warn">&#8226;</span> [InterpretRequest] simple prompt does not need an expensive model
     claude-opus-4-6 <span class="dim">&#8594;</span> claude-haiku-4-5  <span class="pass">(saves ~$0.41)</span>
@@ -178,12 +178,12 @@ Semantic comparison between two workflow versions. Unlike text-based `diff`, thi
 <span class="dim">&#9552;&#9552;&#9552; Semantic Diff &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
 <span class="dim">&#9472;&#9472;&#9472; Nodes &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="pass">+</span> FinalQualityGate
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Edges &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="pass">+</span> FinalQualityGate -&gt; Exit <span class="dim">[ctx.outcome = fail]</span>
   <span class="pass">+</span> FinalQualityGate -&gt; PersistSprint <span class="dim">[ctx.outcome = success]</span>
   <span class="fail">-</span> WriteFinalSprint -&gt; PersistSprint
-
+&nbsp;
 <span class="dim">&#9472;&#9472;&#9472; Cost Delta &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   Old: $5.35 <span class="dim">(expected)</span>  New: $5.78 <span class="dim">(expected)</span>
   Delta: <span class="warn">+$0.43</span> <span class="dim">(expected)</span></pre>
