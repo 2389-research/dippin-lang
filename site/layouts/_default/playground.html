@@ -49,6 +49,9 @@
       <option value="parallel">Example: Parallel + fan-in</option>
       <option value="conditional">Example: Conditional routing</option>
       <option value="human-gate">Example: Human gate</option>
+      <option value="marker-pipeline">Example: Marker-routed tool pipeline</option>
+      <option value="specialist-review">Example: Fan-out specialist review</option>
+      <option value="milestone-loop">Example: Milestone loop + human gate</option>
     </select>
     <span class="spacer"></span>
     <button onclick="copySource()" title="Copy the source">Copy</button>
@@ -248,6 +251,151 @@ const EXAMPLES = {
     Gate -> Rejected  label: reject  choice: reject
     Approved -> Done
     Rejected -> Done
+`,
+  "marker-pipeline": `workflow marker-pipeline
+  goal: "Route a tool node by typed build and test markers"
+  start: Build
+  exit: Done
+
+  defaults
+    model: claude-sonnet-4-6
+    provider: anthropic
+    on_failure: Report
+
+  tool Build
+    label: "Compile and emit a routing marker"
+    outputs: build_ok, build_broken
+    marker_grep: "^(build_ok|build_broken)$"
+    output_limit: 65536
+    timeout: 2m
+    command:
+      #!/bin/sh
+      set -eu
+      if make build > /tmp/build.log 2>&1; then
+        printf 'build_ok\\n'
+      else
+        printf 'build_broken\\n'
+      fi
+
+  tool Test
+    label: "Run the suite and emit a routing marker"
+    outputs: tests_pass, tests_fail
+    marker_grep: "^(tests_pass|tests_fail)$"
+    output_limit: 65536
+    timeout: 5m
+    command:
+      #!/bin/sh
+      set -eu
+      if make test > /tmp/test.log 2>&1; then
+        printf 'tests_pass\\n'
+      else
+        printf 'tests_fail\\n'
+      fi
+
+  agent Report
+    prompt:
+      Summarize the failing markers and suggest concrete fixes.
+
+  agent Done
+    prompt:
+      Announce the green build and close out.
+
+  edges
+    Build -> Test  on build_ok
+    Test -> Done   on tests_pass
+    else -> Report
+    Report -> Done
+`,
+  "specialist-review": `workflow specialist-review
+  goal: "Fan out a change to specialist reviewers, then join their verdicts"
+  start: Draft
+  exit: Done
+
+  defaults
+    model: claude-sonnet-4-6
+    provider: anthropic
+    on_failure: Done
+
+  agent Draft
+    prompt:
+      Prepare the change set and context for review.
+
+  parallel Dispatch -> SecurityReview, PerfReview, StyleReview
+
+  agent SecurityReview
+    prompt:
+      Review the change for security and injection risks.
+
+  agent PerfReview
+    prompt:
+      Review the change for performance regressions.
+
+  agent StyleReview
+    prompt:
+      Review the change for style and readability.
+
+  fan_in Consolidate <- SecurityReview, PerfReview, StyleReview
+
+  agent Verdict
+    auto_status: true
+    prompt:
+      Weigh the three reviews. Set STATUS: success if the change is
+      approvable, STATUS: fail if it must go back to the author.
+
+  agent Revise
+    prompt:
+      Address the blocking review comments and prepare a new draft.
+
+  agent Done
+    prompt:
+      Record the final review outcome and close out.
+
+  edges
+    Draft -> Dispatch
+    Consolidate -> Verdict
+    Verdict -> Done    on success
+    Verdict -> Revise  on fail
+    Revise -> Dispatch  loop
+`,
+  "milestone-loop": `workflow milestone-loop
+  goal: "Drive milestones in a loop, gated by a human decision each cycle"
+  start: Plan
+  exit: Done
+
+  defaults
+    model: claude-sonnet-4-6
+    provider: anthropic
+    on_failure: Done
+
+  agent Plan
+    prompt:
+      Break the goal into the next milestone and its acceptance criteria.
+
+  agent Execute
+    prompt:
+      Implement the current milestone toward its acceptance criteria.
+
+  agent Assess
+    auto_status: true
+    prompt:
+      Check the milestone against its criteria. Set STATUS: success if
+      the criteria are met, STATUS: fail if more work is needed.
+
+  human Gate
+    mode: choice
+    default: continue
+
+  agent Done
+    prompt:
+      Summarize the completed milestones and wrap up.
+
+  edges
+    Plan -> Execute
+    Execute -> Assess
+    Assess -> Gate      on success
+    Assess -> Execute   on fail  loop
+    Gate -> Plan        label: continue  choice: continue  loop
+    Gate -> Done        label: finish    choice: finish
 `,
 };
 
