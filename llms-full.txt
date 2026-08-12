@@ -203,10 +203,10 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-70 diagnostic codes across two categories:
+71 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
-- **DIP101–DIP160** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade), unknown input type (DIP155), reference to an undeclared input in a prompt or edge condition (DIP156), `${inputs.x}` inside a tool `command:` which never interpolates (DIP157), invalid or inapplicable input constraint — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (DIP158), declared-but-unreferenced input / dead input (DIP159), subgraph params omitting a required input of the referenced child (cross-file, DIP160). DIP155–DIP158 are error-severity — they cause `dippin lint` and `dippin check` to exit non-zero (DIP159 is a warning).
+- **DIP101–DIP161** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade), unknown input type (DIP155), reference to an undeclared input in a prompt or edge condition (DIP156), `${inputs.x}` inside a tool `command:` which never interpolates (DIP157), invalid or inapplicable input constraint — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (DIP158), declared-but-unreferenced input / dead input (DIP159), subgraph params omitting a required input of the referenced child (cross-file, DIP160), agent pinned to a deprecated catalog model — retired first-party, still billed on passthrough (DIP161). DIP155–DIP158 are error-severity — they cause `dippin lint` and `dippin check` to exit non-zero (DIP159 is a warning).
 
 ---
 
@@ -588,7 +588,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP160) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP161) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -732,6 +732,7 @@ The primary loop for authoring .dip files:
 | DIP158 | An input constraint is invalid or inapplicable — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (Error) | Fix the constraint or move it to an applicable type |
 | DIP159 | A declared input is never referenced — a dead input (Warning). `file`/`secret` inputs are exempt (consumed out-of-band by staged path) | Reference the input, or remove it |
 | DIP160 | A `subgraph` node's call-site binding omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's binding (`inputs:` dip 2 / `params:` dip 1) |
+| DIP161 | An agent pins a `provider`/`model` in the catalog but flagged `deprecated` — retired on the first-party API, still billed on passthrough (Bedrock/Vertex). Complements DIP108, which flags models not in the catalog (Warning) | Pin a current, non-deprecated model for the provider |
 
 ## Best Practices
 

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dippin.org/models.schema.json",
+  "title": "Dippin model catalog",
+  "description": "The dippin-lang model/pricing/capability catalog. Published verbatim from the embedded pricing/prices.json at https://dippin.org/prices.json and https://dippin.org/models.json. Prices are per 1M tokens in USD, verified against official provider pages; capability/context fields are optional and absent means unknown (never a claim of zero).",
+  "type": "object",
+  "required": ["models"],
+  "properties": {
+    "provider_aliases": {
+      "type": "object",
+      "description": "Alternate provider spellings mapped to their canonical provider name (e.g. xai -> grok).",
+      "additionalProperties": { "type": "string" }
+    },
+    "models": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["provider", "model", "source", "as_of"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "description": "Canonical provider name." },
+        "model": { "type": "string", "description": "Model identifier. Dotted and dashed forms are equivalent." },
+        "aliases": { "type": "array", "items": { "type": "string" }, "description": "Alternate model spellings that resolve to this entry." },
+        "input_per_m": { "type": "number", "description": "Input price, USD per 1M tokens." },
+        "output_per_m": { "type": "number", "description": "Output price, USD per 1M tokens." },
+        "cached_input_per_m": { "type": "number", "description": "Absolute cached-input price, USD per 1M tokens." },
+        "cache_read_mult": { "type": "number", "description": "Cache-read rate as a fraction of the input rate. 1 = verified no discount; absent/0 = unverified (consumer may overlay)." },
+        "cache_write_mult": { "type": "number", "description": "Cache-write rate as a fraction of the input rate." },
+        "priced": { "type": "boolean", "description": "false = known but unpriced (priced at $0)." },
+        "deprecated": { "type": "boolean", "description": "true = retired on the first-party API but still billed on passthrough platforms." },
+        "family": { "type": "string", "description": "Family within the provider, e.g. 'opus'. Enables family-reference resolution." },
+        "rank": { "type": "integer", "description": "Ordering within the family; higher = newer." },
+        "maturity": { "type": "string", "enum": ["stable", "preview"], "description": "Release maturity; preview models are excluded from family-reference resolution." },
+        "context_window": { "type": "integer", "description": "Maximum input context window, in tokens." },
+        "max_output": { "type": "integer", "description": "Maximum output tokens per response." },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["tools", "vision", "reasoning"] },
+          "description": "Supported capabilities: tool/function use, image input, and a reasoning/extended-thinking mode."
+        },
+        "source": { "type": "string", "format": "uri", "description": "Official provider page the values were read from." },
+        "as_of": { "type": "string", "description": "YYYY-MM-DD the values were last verified against source." }
+      }
+    }
+  }
+}
