@@ -33,6 +33,20 @@ type ModelPrice struct {
 	Deprecated      bool   // true = retired on the first-party provider API (still priced for passthrough platforms like Bedrock/Vertex, so kept in the catalog); a consumer treating the catalog as a first-party allowlist should filter these out
 	Source          string // published-price URL
 	AsOf            string // YYYY-MM-DD the price was verified against Source
+
+	// Drift-resistance metadata (optional; #264). Lets a consumer resolve a
+	// family reference like "opus@latest" to a concrete model without
+	// string-parsing irregular IDs. Absent Family ⇒ not alias-addressable.
+	Family   string // family within the provider, e.g. "opus", "sonnet", "gpt-5"
+	Rank     int    // ordering within Family; higher = newer. 0 = unranked
+	Maturity string // "stable" | "preview"; empty = treated as stable
+
+	// Capability metadata (optional; #267). Lets a consumer derive its whole
+	// model catalog from dippin rather than hand-maintaining a parallel one.
+	// Zero/empty = unknown (not a claim of 0).
+	ContextWindow int      // max input context window in tokens
+	MaxOutput     int      // max output tokens per response
+	Capabilities  []string // e.g. "tools", "vision", "reasoning"
 }
 
 // Usage is a neutral token-count struct so the one Cost implementation serves

@@ -1,8 +1,8 @@
 ---
 title: "Lint Rules"
-description: "60 semantic lint checks (DIP101–DIP160) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
+description: "61 semantic lint checks (DIP101–DIP161) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
 section_label: "Diagnostics"
-subtitle: "Semantic lint: 60 checks (DIP101–DIP160) grouped by concern."
+subtitle: "Semantic lint: 61 checks (DIP101–DIP161) grouped by concern."
 ---
 
 ## Semantic Warnings vs Errors
@@ -294,4 +294,4 @@ warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be
 
 ## Full Catalog
 
-This page groups the semantic diagnostics by concern and highlights the most common ones. For every code (DIP001–DIP010, DIP101–DIP160) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 (and the error-severity DIP155–DIP158) are documented there.
+This page groups the semantic diagnostics by concern and highlights the most common ones. For every code (DIP001–DIP010, DIP101–DIP161) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 (and the error-severity DIP155–DIP158) are documented there.

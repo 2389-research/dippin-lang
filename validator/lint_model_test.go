@@ -106,3 +106,39 @@ func TestDIP108FrontierCatalog(t *testing.T) {
 		}
 	}
 }
+
+// TestLintDIP161DeprecatedModel covers #264 Phase 0: an agent pinned to a
+// catalog model flagged deprecated must trip DIP161 (a warning), while a
+// current model must not. Deprecated IDs live in pricing/prices.json
+// ("deprecated": true) — e.g. claude-opus-4-1, claude-sonnet-4-0.
+func TestLintDIP161DeprecatedModel(t *testing.T) {
+	dip161Src := func(model string) string {
+		return fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: anthropic
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, model)
+	}
+
+	for _, model := range []string{"claude-opus-4-1", "claude-sonnet-4-0"} {
+		diags := lintSrc(t, dip161Src(model))
+		if !hasCode(diags, DIP161) {
+			t.Errorf("deprecated model %q did not trip DIP161: %v", model, codes(diags))
+		}
+		if hasCode(diags, DIP108) {
+			t.Errorf("deprecated model %q wrongly tripped DIP108 (it is in the catalog): %v", model, codes(diags))
+		}
+	}
+
+	// A current, non-deprecated model must not trip DIP161.
+	if diags := lintSrc(t, dip161Src("claude-opus-4-8")); hasCode(diags, DIP161) {
+		t.Errorf("current model claude-opus-4-8 wrongly tripped DIP161: %v", codes(diags))
+	}
+}
