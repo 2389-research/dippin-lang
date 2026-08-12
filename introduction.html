@@ -1,0 +1,91 @@
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Introduction — Dippin</title><meta name=description content="What Dippin is and why it exists — a DSL and toolchain for authoring AI pipeline workflows that replaces Graphviz DOT as the authoring format."><meta property="og:title" content="Introduction — Dippin"><meta property="og:description" content="What Dippin is and why it exists — a DSL and toolchain for authoring AI pipeline workflows that replaces Graphviz DOT as the authoring format."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/introduction.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/introduction.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/introduction.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Introduction"><meta name=twitter:description content="What Dippin is and why it exists — a DSL and toolchain for authoring AI pipeline workflows that replaces Graphviz DOT as the authoring format."><link rel=canonical href=https://dippin.org/introduction.html><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"WebPage","name":"Introduction","description":"What Dippin is and why it exists — a DSL and toolchain for authoring AI pipeline workflows that replaces Graphviz DOT as the authoring format.","url":"https:\/\/dippin.org\/introduction.html","dateModified":"2026-08-12","publisher":{"@id":"https:\/\/dippin.org\/#organization"}}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Introduction"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
+<button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
+<span></span><span></span><span></span></button><div class=nav-primary><a href=/language.html class=active>Docs</a>
+<a href=/playground.html>Playground</a>
+<a href=/blog.html>Blog</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh data-tinylytics-event=nav.github>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><span class=nav-group>Get Started</span>
+<a href=/introduction.html class=active>Introduction</a>
+<span class=nav-group>Language</span>
+<a href=/language.html>Overview</a>
+<a href=/nodes.html>Nodes</a>
+<a href=/edges.html>Edges & Routing</a>
+<a href=/prompts.html>Prompts & Context</a>
+<a href=/inputs.html>Inputs</a>
+<span class=nav-group>Configuration</span>
+<a href=/configuration.html>Configuration</a>
+<a href=/models.html>Models & Pricing</a>
+<span class=nav-group>Tooling</span>
+<a href=/cli.html>CLI</a>
+<a href=/analysis.html>Analysis</a>
+<a href=/testing.html>Testing</a>
+<a href=/export.html>Export & Visualization</a>
+<span class=nav-group>Diagnostics</span>
+<a href=/validation.html>Structural Validation</a>
+<a href=/lint.html>Lint Rules</a>
+<span class=nav-group>Integrations</span>
+<a href=/editors.html>Editors</a>
+<span class=nav-group>Reference</span>
+<a href=/glossary.html>Glossary</a>
+<a href=/architecture.html>Architecture</a>
+<a href=/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/language.html class=active>Docs</a>
+<a href=/playground.html>Playground</a>
+<a href=/blog.html>Blog</a><div class=nav-divider></div><span class=nav-group-m>Get Started</span>
+<a href=/introduction.html class=active>Introduction</a>
+<span class=nav-group-m>Language</span>
+<a href=/language.html>Overview</a>
+<a href=/nodes.html>Nodes</a>
+<a href=/edges.html>Edges & Routing</a>
+<a href=/prompts.html>Prompts & Context</a>
+<a href=/inputs.html>Inputs</a>
+<span class=nav-group-m>Configuration</span>
+<a href=/configuration.html>Configuration</a>
+<a href=/models.html>Models & Pricing</a>
+<span class=nav-group-m>Tooling</span>
+<a href=/cli.html>CLI</a>
+<a href=/analysis.html>Analysis</a>
+<a href=/testing.html>Testing</a>
+<a href=/export.html>Export & Visualization</a>
+<span class=nav-group-m>Diagnostics</span>
+<a href=/validation.html>Structural Validation</a>
+<a href=/lint.html>Lint Rules</a>
+<span class=nav-group-m>Integrations</span>
+<a href=/editors.html>Editors</a>
+<span class=nav-group-m>Reference</span>
+<a href=/glossary.html>Glossary</a>
+<a href=/architecture.html>Architecture</a>
+<a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=doc-header><div class=section-label>Get Started</div><h1>Introduction</h1><p>What Dippin is and why it exists.</p></div><div class=doc-body><h2 id=what-is-dippin>What is Dippin</h2><p>Dippin is a DSL and toolchain for authoring AI pipeline workflows. It replaces Graphviz DOT as the authoring format consumed by a downstream pipeline runtime.</p><p>You write workflows as <code>.dip</code> files — multi-model agent workflows with first-class syntax for prompts, tools, conditions, and parallel execution. Instead of packing everything into escaped DOT strings, you get real code:</p><pre><code class=language-dippin>workflow CodeReview
+  goal: &#34;Plan, implement, and review&#34;
+  start: Planner
+  exit: Done
+
+  agent Planner
+    model: claude-opus-4-6
+    prompt:
+      You are a senior architect.
+      Analyze the request and
+      produce an implementation plan.
+
+  agent Coder
+    model: claude-sonnet-4-6
+    prompt:
+      Implement the plan.
+      Use best practices.
+
+  agent Review
+    auto_status: true
+    prompt:
+      Review the code.
+      Set STATUS: success or fail.
+
+  agent Done
+    prompt: Ship it.
+
+  edges
+    Planner -&gt; Coder
+    Coder -&gt; Review
+    Review -&gt; Done  when ctx.outcome = success
+    Review -&gt; Coder  when ctx.outcome = fail  restart: true</code></pre><h2 id=why-not-just-dot>Why not just DOT</h2><p>Graphviz DOT is great for graph visualization. But authoring AI pipelines with multi-line prompts, typed nodes, and conditional edges? It falls apart.</p><p>Dippin is built around the things that matter when authoring pipelines — not string attributes on a graph node:</p><ul><li><strong>Multi-line prompts</strong> — indented blocks with zero escaping. Write real prompts, preserve blank lines, embed variables like <code>${ctx.input}</code>.</li><li><strong>Typed node kinds</strong> — <code>agent</code>, <code>tool</code>, <code>human</code>, <code>conditional</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code>. Each with typed, validated config fields.</li><li><strong>Diagnostics</strong> — structural validation and semantic lint. Dead edges, unreachable nodes, missing prompts, invalid models. Things DOT silently ignores.</li><li><strong>Parallel execution</strong> — native <code>parallel</code> fan-out and <code>fan_in</code> join with per-branch model overrides. Multi-provider consensus in a few lines.</li><li><strong>Conditional edges</strong> — route pipelines based on LLM output with the <code>when</code> keyword.</li></ul><p>DOT wasn&rsquo;t built for any of this. Dippin was.</p><h2 id=the-toolchain-at-a-glance>The Toolchain at a Glance</h2><p>Dippin is more than a syntax — it&rsquo;s a full toolchain that lets you catch problems before runtime. Every command works offline against the workflow source, without deploying or calling any LLMs.</p><div class=flow-diagram><div class=flow-step>Author<br>.dip files</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Validate<br>structural checks</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Lint<br>semantic diagnostics</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Test<br>scenario runs</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Analyze<br>cost, coverage, doctor</div><div class=flow-arrow>&rarr;</div><div class=flow-step>Export<br>Mermaid, DOT</div></div><ul><li><strong>Author</strong> — write <code>.dip</code> files, or scaffold one with <code>dippin new</code>.</li><li><strong>Validate & Lint</strong> — 70 diagnostic rules (DIP001-DIP010 structural, DIP101-DIP160 semantic) catch dead edges, unreachable nodes, missing prompts, and invalid models. See the <a href=/cli/>CLI Reference</a>.</li><li><strong>Test</strong> — <code>dippin test</code> injects context, simulates every conditional branch, and checks assertions, with CI-ready output. See <a href=/testing/>Testing</a>.</li><li><strong>Analyze</strong> — <code>dippin cost</code>, <code>dippin coverage</code>, and <code>dippin doctor</code> estimate spend, check reachability, and grade a workflow A–F. See <a href=/analysis/>Analysis</a>.</li><li><strong>Export</strong> — turn a workflow into a live diagram with <code>export-mermaid</code> or <code>export-dot</code>. See <a href=/export/>Export & Visualization</a>.</li></ul><h2 id=next-steps>Next Steps</h2><div class=cmd-card><h3><a href=/language/>Language Reference</a></h3><p>The full syntax for <code>.dip</code> files — file structure, nodes, edges, conditions, multiline prompts, and stylesheets.</p></div><div class=cmd-card><h3><a href=/nodes/>Nodes</a></h3><p>The typed node kinds — <code>agent</code>, <code>tool</code>, <code>human</code>, <code>conditional</code>, <code>parallel</code>, <code>fan_in</code>, <code>subgraph</code> — and their fields.</p></div><div class=cmd-card><h3><a href=/playground/>Playground</a></h3><p>Write and validate <code>.dip</code> workflows in the browser, with live Mermaid diagrams rendered as you type.</p></div></div></div></section><footer><div class=container><div class=footer-inner><div class=footer-brand>Dippin</div><div class=footer-links><a href=https://github.com/2389-research/dippin-lang data-tinylytics-event=footer.github>GitHub</a>
+<a href=https://github.com/2389-research/dippin-lang/tree/main/docs data-tinylytics-event=footer.docs>Docs</a>
+<a href=/glossary.html data-tinylytics-event=footer.glossary>Glossary</a>
+<a href=/changelog.html data-tinylytics-event=footer.changelog>Changelog</a>
+<a href=/blog.xml data-tinylytics-event=footer.rss>RSS</a></div></div><div class=footer-copy>MIT License &#183; Built by <a href=https://github.com/2389-research data-tinylytics-event=footer.org>2389 Research</a></div></div></footer><script src=/highlight.js></script></body></html>

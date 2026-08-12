@@ -1,24 +1,58 @@
-<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>What's New in Dippin v0.25 — Dippin</title><meta name=description content=".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should."><meta property="og:title" content="What's New in Dippin v0.25 — Dippin"><meta property="og:description" content=".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/blog/whats-new-v025.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/blog/whats-new-v025.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/blog/whats-new-v025.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="What's New in Dippin v0.25"><meta name=twitter:description content=".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should."><link rel=canonical href=https://dippin.org/blog/whats-new-v025.html><link rel=alternate type=application/rss+xml title="Dippin Blog" href=https://dippin.org/blog.xml><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"TechArticle","headline":"What\u0027s New in Dippin v0.25","description":".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should.","datePublished":"2026-05-11","dateModified":"2026-08-11","author":{"@id":"https:\/\/dippin.org\/#organization"},"publisher":{"@id":"https:\/\/dippin.org\/#organization"},"mainEntityOfPage":"https:\/\/dippin.org\/blog\/whats-new-v025.html"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https:\/\/dippin.org\/blog\/"},{"@type":"ListItem","position":3,"name":"What\u0027s New in Dippin v0.25"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>What's New in Dippin v0.25 — Dippin</title><meta name=description content=".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should."><meta property="og:title" content="What's New in Dippin v0.25 — Dippin"><meta property="og:description" content=".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/blog/whats-new-v025.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/blog/whats-new-v025.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/blog/whats-new-v025.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="What's New in Dippin v0.25"><meta name=twitter:description content=".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should."><link rel=canonical href=https://dippin.org/blog/whats-new-v025.html><link rel=alternate type=application/rss+xml title="Dippin Blog" href=https://dippin.org/blog.xml><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"TechArticle","headline":"What\u0027s New in Dippin v0.25","description":".dipx format v1.1 — real cancellation through Pack and Open, an inspect that actually inspects, and exit code 2 that actually fires when the spec says it should.","datePublished":"2026-05-11","dateModified":"2026-08-12","author":{"@id":"https:\/\/dippin.org\/#organization"},"publisher":{"@id":"https:\/\/dippin.org\/#organization"},"mainEntityOfPage":"https:\/\/dippin.org\/blog\/whats-new-v025.html"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https:\/\/dippin.org\/blog\/"},{"@type":"ListItem","position":3,"name":"What\u0027s New in Dippin v0.25"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
 <button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
 <span></span><span></span><span></span></button><div class=nav-primary><a href=/language.html>Docs</a>
 <a href=/playground.html>Playground</a>
 <a href=/blog.html>Blog</a>
-<a href=https://github.com/2389-research/dippin-lang class=nav-gh data-tinylytics-event=nav.github>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/cli.html>CLI</a>
-<a href=/language.html>Language</a>
-<a href=/testing.html>Testing</a>
-<a href=/validation.html>Validation</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh data-tinylytics-event=nav.github>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><span class=nav-group>Get Started</span>
+<a href=/introduction.html>Introduction</a>
+<span class=nav-group>Language</span>
+<a href=/language.html>Overview</a>
+<a href=/nodes.html>Nodes</a>
+<a href=/edges.html>Edges & Routing</a>
+<a href=/prompts.html>Prompts & Context</a>
+<a href=/inputs.html>Inputs</a>
+<span class=nav-group>Configuration</span>
+<a href=/configuration.html>Configuration</a>
+<a href=/models.html>Models & Pricing</a>
+<span class=nav-group>Tooling</span>
+<a href=/cli.html>CLI</a>
 <a href=/analysis.html>Analysis</a>
-<a href=/architecture.html>Architecture</a>
+<a href=/testing.html>Testing</a>
+<a href=/export.html>Export & Visualization</a>
+<span class=nav-group>Diagnostics</span>
+<a href=/validation.html>Structural Validation</a>
+<a href=/lint.html>Lint Rules</a>
+<span class=nav-group>Integrations</span>
 <a href=/editors.html>Editors</a>
+<span class=nav-group>Reference</span>
+<a href=/glossary.html>Glossary</a>
+<a href=/architecture.html>Architecture</a>
 <a href=/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/language.html>Docs</a>
 <a href=/playground.html>Playground</a>
-<a href=/blog.html>Blog</a><div class=nav-divider></div><a href=/cli.html>CLI</a>
-<a href=/language.html>Language</a>
-<a href=/testing.html>Testing</a>
-<a href=/validation.html>Validation</a>
+<a href=/blog.html>Blog</a><div class=nav-divider></div><span class=nav-group-m>Get Started</span>
+<a href=/introduction.html>Introduction</a>
+<span class=nav-group-m>Language</span>
+<a href=/language.html>Overview</a>
+<a href=/nodes.html>Nodes</a>
+<a href=/edges.html>Edges & Routing</a>
+<a href=/prompts.html>Prompts & Context</a>
+<a href=/inputs.html>Inputs</a>
+<span class=nav-group-m>Configuration</span>
+<a href=/configuration.html>Configuration</a>
+<a href=/models.html>Models & Pricing</a>
+<span class=nav-group-m>Tooling</span>
+<a href=/cli.html>CLI</a>
 <a href=/analysis.html>Analysis</a>
-<a href=/architecture.html>Architecture</a>
+<a href=/testing.html>Testing</a>
+<a href=/export.html>Export & Visualization</a>
+<span class=nav-group-m>Diagnostics</span>
+<a href=/validation.html>Structural Validation</a>
+<a href=/lint.html>Lint Rules</a>
+<span class=nav-group-m>Integrations</span>
 <a href=/editors.html>Editors</a>
+<span class=nav-group-m>Reference</span>
+<a href=/glossary.html>Glossary</a>
+<a href=/architecture.html>Architecture</a>
 <a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=post-header><h1>What's New in Dippin v0.25</h1><div class=post-meta-bar><span class="post-tag release">RELEASE</span>
 <span class=read-time>5 min read</span>
 <span>May 11, 2026</span></div></div><div class=doc-body><p><code>v0.24.0</code> introduced <code>.dipx</code> — a deterministic, hash-verified bundle format for shipping workflows. The shape was right. The implementation was mostly right. But shipping a format means it leaves your machine and starts getting opened, packed, and inspected by <em>other</em> code — runtimes, CI scripts, forensic tools — and that&rsquo;s where the gaps showed up.</p><p><code>v0.25.0</code> is the follow-up release that closes them. The format itself (v1.1 in the spec) is unchanged in any way that affects bundles you&rsquo;ve already packed. What changes is the contract between the library and its callers: cancellation works end-to-end, <code>inspect</code> actually does what its flags claim, error sentinels match the spec, and the exit codes you script against are the ones the spec promises.</p><p>If you&rsquo;re a downstream consumer (anything importing <code>github.com/2389-research/dippin-lang/dipx</code>), there are two breaking changes — both small, both worth taking. Migration is at the bottom.</p><h2 id=cancellation-that-actually-cancels>Cancellation that actually cancels</h2><p><code>Pack</code> walks a source tree and hashes every file. <code>Open</code> verifies every hash against the manifest. Both are O(files × bytes). For a small pipeline that&rsquo;s nothing; for a many-file workflow with large heredocs, it can take long enough that you&rsquo;d like to be able to cancel.</p><p>Before v0.25, you could pass a <code>context.Context</code> into the entry points, but it was decorative for most of the work. <code>verifyAllHashes</code> opened and hashed every entry in a single loop with no ctx check. <code>walkSourceTree</code> did the same on the producer side. <code>writeBundle</code> happily streamed entries to disk regardless. So you&rsquo;d cancel a Pack, the calling goroutine would unblock, and the work would continue running to completion in the background.</p><p>v0.25 fixes the hot paths:</p><ul><li><code>verifyAllHashes</code> checks <code>ctx.Err()</code> between each manifest entry (P10.10).</li><li><code>walkSourceTree</code> checks <code>ctx.Err()</code> between each iteration of the ref walk (P10.7).</li><li><code>writeBundle</code> checks <code>ctx.Err()</code> between each entry it writes (P10.2).</li></ul><p>The practical effect: a long Open against a many-entry bundle, or a long Pack against a deep source tree, can be canceled within one entry&rsquo;s worth of processing time instead of one bundle&rsquo;s worth. Whatever timeout you set actually means something now.</p><p>Part of making cancellation honest required a small but breaking signature change to <code>Source.Workflow</code>. It now takes <code>context.Context</code> as its first argument:</p><pre><code class=language-go>// before (v0.24)

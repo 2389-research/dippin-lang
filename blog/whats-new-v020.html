@@ -1,24 +1,58 @@
-<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>What's New in Dippin v0.17–v0.20 — Dippin</title><meta name=description content="Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements."><meta property="og:title" content="What's New in Dippin v0.17–v0.20 — Dippin"><meta property="og:description" content="Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/blog/whats-new-v020.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/blog/whats-new-v020.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/blog/whats-new-v020.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="What's New in Dippin v0.17–v0.20"><meta name=twitter:description content="Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements."><link rel=canonical href=https://dippin.org/blog/whats-new-v020.html><link rel=alternate type=application/rss+xml title="Dippin Blog" href=https://dippin.org/blog.xml><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"TechArticle","headline":"What\u0027s New in Dippin v0.17–v0.20","description":"Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements.","datePublished":"2026-04-17","dateModified":"2026-08-11","author":{"@id":"https:\/\/dippin.org\/#organization"},"publisher":{"@id":"https:\/\/dippin.org\/#organization"},"mainEntityOfPage":"https:\/\/dippin.org\/blog\/whats-new-v020.html"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https:\/\/dippin.org\/blog\/"},{"@type":"ListItem","position":3,"name":"What\u0027s New in Dippin v0.17–v0.20"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
+<!doctype html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>What's New in Dippin v0.17–v0.20 — Dippin</title><meta name=description content="Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements."><meta property="og:title" content="What's New in Dippin v0.17–v0.20 — Dippin"><meta property="og:description" content="Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements."><meta property="og:type" content="article"><meta property="og:url" content="https://dippin.org/blog/whats-new-v020.html"><meta property="og:site_name" content="Dippin"><meta property="og:image" content="https://dippin.org/og/blog/whats-new-v020.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://dippin.org/og/blog/whats-new-v020.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="What's New in Dippin v0.17–v0.20"><meta name=twitter:description content="Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements."><link rel=canonical href=https://dippin.org/blog/whats-new-v020.html><link rel=alternate type=application/rss+xml title="Dippin Blog" href=https://dippin.org/blog.xml><link rel=preconnect href=https://fonts.googleapis.com><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/style.css><script type=application/ld+json>{"@context":"https://schema.org","@type":"TechArticle","headline":"What\u0027s New in Dippin v0.17–v0.20","description":"Conditional nodes, workflow variables, shell-aware linting, per-node backend selection, and a Zed extension — four releases of toolchain improvements.","datePublished":"2026-04-17","dateModified":"2026-08-12","author":{"@id":"https:\/\/dippin.org\/#organization"},"publisher":{"@id":"https:\/\/dippin.org\/#organization"},"mainEntityOfPage":"https:\/\/dippin.org\/blog\/whats-new-v020.html"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/dippin.org\/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https:\/\/dippin.org\/blog\/"},{"@type":"ListItem","position":3,"name":"What\u0027s New in Dippin v0.17–v0.20"}]}</script><script src=https://tinylytics.app/embed/P9ztN_RGACo4BA6mW-89.js?events defer></script></head><body><div class=dots><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div><div class=dot></div></div><nav class=nav><div class=nav-top><a href=/ class=nav-brand>Dippin</a>
 <button class=nav-toggle onclick='document.querySelector(".nav-mobile").classList.toggle("open")' aria-label=Menu>
 <span></span><span></span><span></span></button><div class=nav-primary><a href=/language.html>Docs</a>
 <a href=/playground.html>Playground</a>
 <a href=/blog.html>Blog</a>
-<a href=https://github.com/2389-research/dippin-lang class=nav-gh data-tinylytics-event=nav.github>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><a href=/cli.html>CLI</a>
-<a href=/language.html>Language</a>
-<a href=/testing.html>Testing</a>
-<a href=/validation.html>Validation</a>
+<a href=https://github.com/2389-research/dippin-lang class=nav-gh data-tinylytics-event=nav.github>GitHub</a></div></div><div class=nav-sub><div class=nav-sub-inner><span class=nav-group>Get Started</span>
+<a href=/introduction.html>Introduction</a>
+<span class=nav-group>Language</span>
+<a href=/language.html>Overview</a>
+<a href=/nodes.html>Nodes</a>
+<a href=/edges.html>Edges & Routing</a>
+<a href=/prompts.html>Prompts & Context</a>
+<a href=/inputs.html>Inputs</a>
+<span class=nav-group>Configuration</span>
+<a href=/configuration.html>Configuration</a>
+<a href=/models.html>Models & Pricing</a>
+<span class=nav-group>Tooling</span>
+<a href=/cli.html>CLI</a>
 <a href=/analysis.html>Analysis</a>
-<a href=/architecture.html>Architecture</a>
+<a href=/testing.html>Testing</a>
+<a href=/export.html>Export & Visualization</a>
+<span class=nav-group>Diagnostics</span>
+<a href=/validation.html>Structural Validation</a>
+<a href=/lint.html>Lint Rules</a>
+<span class=nav-group>Integrations</span>
 <a href=/editors.html>Editors</a>
+<span class=nav-group>Reference</span>
+<a href=/glossary.html>Glossary</a>
+<a href=/architecture.html>Architecture</a>
 <a href=/changelog.html>Changelog</a></div></div><div class=nav-mobile><a href=/language.html>Docs</a>
 <a href=/playground.html>Playground</a>
-<a href=/blog.html>Blog</a><div class=nav-divider></div><a href=/cli.html>CLI</a>
-<a href=/language.html>Language</a>
-<a href=/testing.html>Testing</a>
-<a href=/validation.html>Validation</a>
+<a href=/blog.html>Blog</a><div class=nav-divider></div><span class=nav-group-m>Get Started</span>
+<a href=/introduction.html>Introduction</a>
+<span class=nav-group-m>Language</span>
+<a href=/language.html>Overview</a>
+<a href=/nodes.html>Nodes</a>
+<a href=/edges.html>Edges & Routing</a>
+<a href=/prompts.html>Prompts & Context</a>
+<a href=/inputs.html>Inputs</a>
+<span class=nav-group-m>Configuration</span>
+<a href=/configuration.html>Configuration</a>
+<a href=/models.html>Models & Pricing</a>
+<span class=nav-group-m>Tooling</span>
+<a href=/cli.html>CLI</a>
 <a href=/analysis.html>Analysis</a>
-<a href=/architecture.html>Architecture</a>
+<a href=/testing.html>Testing</a>
+<a href=/export.html>Export & Visualization</a>
+<span class=nav-group-m>Diagnostics</span>
+<a href=/validation.html>Structural Validation</a>
+<a href=/lint.html>Lint Rules</a>
+<span class=nav-group-m>Integrations</span>
 <a href=/editors.html>Editors</a>
+<span class=nav-group-m>Reference</span>
+<a href=/glossary.html>Glossary</a>
+<a href=/architecture.html>Architecture</a>
 <a href=/changelog.html>Changelog</a><div class=nav-divider></div><a href=https://github.com/2389-research/dippin-lang>GitHub</a></div></nav><section class=doc><div class=container><div class=post-header><h1>What's New in Dippin v0.17–v0.20</h1><div class=post-meta-bar><span class="post-tag release">RELEASE</span>
 <span class=read-time>6 min read</span>
 <span>April 17, 2026</span></div></div><div class=doc-body><p>Four releases shipped in two weeks. Here&rsquo;s what changed and why.</p><h2 id=conditional-nodes-pure-routing-without-llm-calls>Conditional nodes: pure routing without LLM calls</h2><p><strong>v0.17.0</strong> — The biggest addition. Before this, routing decisions required an <code>agent</code> node with <code>auto_status: true</code> — which meant burning an LLM API call just to check a condition. Now there&rsquo;s a dedicated node kind:</p><pre><code class=language-dippin>conditional CheckOutcome
