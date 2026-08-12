@@ -271,6 +271,13 @@ func contextExplanations() map[string]Explanation {
 			Fix:     "Use a supported model/provider combination from the catalog.",
 			Example: "node A { model gpt-5-turbo provider openai }  # unknown model",
 		},
+		DIP161: {
+			Code:    DIP161,
+			Summary: "agent pins a deprecated model",
+			Trigger: "An agent node names a provider/model pair that is in the catalog but flagged deprecated — retired on the provider's first-party API. It still validates and still prices (it bills on passthrough platforms like Bedrock/Vertex), but a first-party call would hit a dead endpoint, and the pin quietly drifts away from the current model the author meant. Complements DIP108, which flags models not in the catalog at all.",
+			Fix:     "Pin a current, non-deprecated model for the provider.",
+			Example: "agent A\n  provider: anthropic\n  model: claude-opus-4-1  # DIP161: deprecated; pin a current Opus",
+		},
 		DIP109: {
 			Code:    DIP109,
 			Summary: "duplicate subgraph reference",

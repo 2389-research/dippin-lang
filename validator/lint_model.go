@@ -132,7 +132,25 @@ func validateModelProvider(n *ir.Node, model, provider string, extra ExtraModels
 			Help:     fmt.Sprintf("known models for %s: %s", provider, knownModelList(provider, extra)),
 		}}
 	}
-	return nil
+	return deprecatedModelDiag(n, model, provider)
+}
+
+// deprecatedModelDiag emits DIP161 when a known model resolves to a pricing
+// catalog entry flagged Deprecated (retired on the first-party API, still
+// billed on passthrough platforms like Bedrock/Vertex). Only the base pricing
+// catalog carries the flag — extra-catalog models never trip this.
+func deprecatedModelDiag(n *ir.Node, model, provider string) []Diagnostic {
+	mp, ok := pricing.LookupProvider(provider, model)
+	if !ok || !mp.Deprecated {
+		return nil
+	}
+	return []Diagnostic{{
+		Code:     DIP161,
+		Severity: SeverityWarning,
+		Message:  fmt.Sprintf("model %q (provider %q) is deprecated — retired on the first-party API (still billed on passthrough); pin a current model", model, provider),
+		Location: n.Source,
+		Help:     "pin a current, non-deprecated model for this provider",
+	}}
 }
 
 // providerKnown reports whether the provider appears in the pricing catalog

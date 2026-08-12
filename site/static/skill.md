@@ -395,7 +395,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP160) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP161) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -539,6 +539,7 @@ The primary loop for authoring .dip files:
 | DIP158 | An input constraint is invalid or inapplicable — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (Error) | Fix the constraint or move it to an applicable type |
 | DIP159 | A declared input is never referenced — a dead input (Warning). `file`/`secret` inputs are exempt (consumed out-of-band by staged path) | Reference the input, or remove it |
 | DIP160 | A `subgraph` node's call-site binding omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's binding (`inputs:` dip 2 / `params:` dip 1) |
+| DIP161 | An agent pins a `provider`/`model` in the catalog but flagged `deprecated` — retired on the first-party API, still billed on passthrough (Bedrock/Vertex). Complements DIP108, which flags models not in the catalog (Warning) | Pin a current, non-deprecated model for the provider |
 
 ## Best Practices
 

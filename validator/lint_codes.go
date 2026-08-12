@@ -65,6 +65,7 @@ const (
 	DIP158 = "DIP158" // input declares an invalid or inapplicable constraint
 	DIP159 = "DIP159" // declared input is never referenced (dead input)
 	DIP160 = "DIP160" // subgraph params omits a required input of the referenced child (cross-file)
+	DIP161 = "DIP161" // agent pins a model flagged deprecated in the catalog (retired first-party, still billed on passthrough)
 )
 
 func init() {
@@ -135,4 +136,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP158: "input declares an invalid or inapplicable constraint",
 	DIP159: "declared input is never referenced (dead input)",
 	DIP160: "subgraph params omits a required input of the referenced child",
+	DIP161: "agent pins a deprecated model (retired first-party, still billed on passthrough)",
 }
