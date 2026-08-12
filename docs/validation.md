@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 71 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (70 documented sections):
+Dippin registers 72 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (71 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP161): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP162): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP161<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP162<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP161)
+## Semantic Lint Warnings (DIP101–DIP162)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1584,6 +1584,32 @@ warning[DIP161]: model "claude-opus-4-1" (provider "anthropic") is deprecated �
 
 ---
 
+### DIP162: Unresolvable Model Alias
+
+**Severity**: Warning
+
+An `agent` node's `model:` is a **family alias** — `[<provider>/]<family>@<selector>`
+(e.g. `opus@latest`, `anthropic/opus@stable`), where the selector is one of
+`latest`, `stable`, or `sota`. The alias lets an author say "the current top
+Opus" instead of pinning a concrete id that silently rots when a provider retires
+a model. `dippin fmt` resolves a valid alias **in place** (author-time, one-way)
+to its concrete catalog id — e.g. `opus@latest` → `claude-opus-5` — and the
+resolution excludes any deprecated, preview, or unpriced member.
+
+DIP162 fires when an alias resolves to **no eligible model**: the family is
+unknown for the provider, the selector is not one of the fixed vocabulary, or
+every member of the family is deprecated/preview/unpriced. A resolvable alias is
+valid and fires neither DIP108 nor DIP162.
+
+```text
+warning[DIP162]: node "A" model alias "bogus@latest" resolves to no eligible model in that family/selector for provider "anthropic"
+```
+
+**Fix:** Use a known family and a valid selector (`latest`, `stable`, `sota`), or
+pin a concrete model id directly.
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1600,7 +1626,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP161 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP162 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

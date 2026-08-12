@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/pricing"
 )
 
 // Format renders a workflow to canonical Dippin source text.
@@ -552,10 +553,13 @@ func writeCommonNodeFields(wr *writer, n *ir.Node) {
 	}
 }
 
-// writeAgentModelFields writes model-related fields for agent nodes.
+// writeAgentModelFields writes model-related fields for agent nodes. A resolvable
+// family alias in model: (e.g. "opus@latest") is pinned to its concrete catalog
+// id here — author-time, one-way resolution (#264). An alias that does not
+// resolve is left untouched (DIP162 flags it); a concrete id is emitted as-is.
 func writeAgentModelFields(wr *writer, cfg ir.AgentConfig) {
 	if cfg.Model != "" {
-		wr.line("model: %s", quoteValue(cfg.Model))
+		wr.line("model: %s", quoteValue(pinModelAlias(cfg.Provider, cfg.Model)))
 	}
 	if cfg.Provider != "" {
 		wr.line("provider: %s", quoteValue(cfg.Provider))
@@ -566,6 +570,16 @@ func writeAgentModelFields(wr *writer, cfg ir.AgentConfig) {
 	if cfg.Fidelity != "" {
 		wr.line("fidelity: %s", quoteValue(cfg.Fidelity))
 	}
+}
+
+// pinModelAlias resolves a family-alias model value to its concrete catalog id,
+// pinning it in place. A non-alias value, or an alias that does not resolve, is
+// returned unchanged.
+func pinModelAlias(provider, model string) string {
+	if concrete, resolved, isAlias := pricing.ResolveModelRef(provider, model); isAlias && resolved {
+		return concrete
+	}
+	return model
 }
 
 // writeAgentRuntimeFields writes runtime behavior fields for agent nodes.

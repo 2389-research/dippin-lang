@@ -45,6 +45,32 @@ func TestRankFamilySkipsAliases(t *testing.T) {
 	}
 }
 
+func TestResolveModelRef(t *testing.T) {
+	cases := []struct {
+		nodeProvider, modelValue string
+		wantConcrete             string
+		wantResolved, wantAlias  bool
+	}{
+		{"anthropic", "opus@latest", "claude-opus-5", true, true},
+		{"anthropic", "opus@stable", "claude-opus-4-8", true, true},
+		{"anthropic", "sonnet@latest", "claude-sonnet-5", true, true},
+		{"", "anthropic/opus@stable", "claude-opus-4-8", true, true},     // provider from prefix
+		{"openai", "anthropic/opus@latest", "claude-opus-5", true, true}, // prefix overrides node
+		{"anthropic", "bogus@latest", "", false, true},                   // alias, unresolvable
+		{"anthropic", "opus@newest", "", false, false},                   // bad selector → not an alias
+		{"anthropic", "claude-opus-5", "", false, false},                 // concrete id
+		{"anthropic", "", "", false, false},                              // empty
+	}
+	for _, c := range cases {
+		concrete, resolved, isAlias := ResolveModelRef(c.nodeProvider, c.modelValue)
+		if concrete != c.wantConcrete || resolved != c.wantResolved || isAlias != c.wantAlias {
+			t.Errorf("ResolveModelRef(%q,%q) = (%q,%v,%v), want (%q,%v,%v)",
+				c.nodeProvider, c.modelValue, concrete, resolved, isAlias,
+				c.wantConcrete, c.wantResolved, c.wantAlias)
+		}
+	}
+}
+
 func TestResolveAliasNeverReturnsDeprecated(t *testing.T) {
 	for _, sel := range []string{"latest", "stable", "sota"} {
 		if got, _ := ResolveAlias("anthropic", "opus", sel); got == "claude-opus-4-0" || got == "claude-opus-4-1" {

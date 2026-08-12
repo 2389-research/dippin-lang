@@ -278,6 +278,13 @@ func contextExplanations() map[string]Explanation {
 			Fix:     "Pin a current, non-deprecated model for the provider.",
 			Example: "agent A\n  provider: anthropic\n  model: claude-opus-4-1  # DIP161: deprecated; pin a current Opus",
 		},
+		DIP162: {
+			Code:    DIP162,
+			Summary: "unresolvable model alias",
+			Trigger: "An agent's model is a family alias (family@selector, e.g. opus@latest) that resolves to no eligible model — the family is unknown for the provider, the selector is not one of latest/stable/sota, or every member of the family is deprecated/preview/unpriced. A resolvable alias is valid and does not fire DIP108 or this code; dippin fmt pins it to a concrete id.",
+			Fix:     "Use a known family and a valid selector (latest, stable, sota), or pin a concrete model id directly.",
+			Example: "agent A\n  provider: anthropic\n  model: bogus@latest  # DIP162: no eligible model in family \"bogus\"",
+		},
 		DIP109: {
 			Code:    DIP109,
 			Summary: "duplicate subgraph reference",

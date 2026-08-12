@@ -1,8 +1,8 @@
 ---
 title: "Lint Rules"
-description: "61 semantic lint checks (DIP101–DIP161) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
+description: "62 semantic lint checks (DIP101–DIP162) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
 section_label: "Diagnostics"
-subtitle: "Semantic lint: 61 checks (DIP101–DIP161) grouped by concern."
+subtitle: "Semantic lint: 62 checks (DIP101–DIP162) grouped by concern."
 ---
 
 ## Semantic Warnings vs Errors
@@ -81,6 +81,13 @@ warning[DIP153]: edges-block edge 'Fan -> A' redundantly repeats the inline para
   <span class="diag-code">DIP161</span> — Deprecated Model
   <p>An <code>agent</code> pins a model that <em>is</em> in the catalog but flagged <code>deprecated</code> — retired on the first-party provider API, though still billed on passthrough platforms (Bedrock/Vertex). The workflow still runs, but you're pinned to a model on its way out; move to a current one. Complements DIP108: that fires for models <em>not</em> in the catalog, DIP161 for models in it but deprecated — a drift smoke-detector for pipelines pinned to retiring models.</p>
   <pre>warning[DIP161]: model "claude-opus-4-1" (provider "anthropic") is deprecated
+  --&gt; pipeline.dip:15:5</pre>
+</div>
+
+<div class="diag-card warning">
+  <span class="diag-code">DIP162</span> — Unresolvable Model Alias
+  <p>An <code>agent</code>'s <code>model:</code> is a family alias — <code>[provider/]family@selector</code> (e.g. <code>opus@latest</code>, <code>anthropic/opus@stable</code>), selector one of <code>latest</code>/<code>stable</code>/<code>sota</code> — that resolves to no eligible model: an unknown family, a bad selector, or a family whose every member is deprecated/preview/unpriced. A resolvable alias is valid (no DIP108, no DIP162) and <code>dippin fmt</code> pins it to a concrete id. Resolution excludes deprecated/preview/unpriced members, so a valid alias never lands on a retired model.</p>
+  <pre>warning[DIP162]: node "A" model alias "bogus@latest" resolves to no eligible model
   --&gt; pipeline.dip:15:5</pre>
 </div>
 
@@ -301,4 +308,4 @@ warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be
 
 ## Full Catalog
 
-This page groups the semantic diagnostics by concern and highlights the most common ones. For every code (DIP001–DIP010, DIP101–DIP161) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 (and the error-severity DIP155–DIP158) are documented there.
+This page groups the semantic diagnostics by concern and highlights the most common ones. For every code (DIP001–DIP010, DIP101–DIP162) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 (and the error-severity DIP155–DIP158) are documented there.

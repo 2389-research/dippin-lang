@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/pricing"
 )
 
 // ModelPrice holds per-token pricing for a model.
@@ -167,6 +168,11 @@ func getModelProvider(ac ir.AgentConfig, w *ir.Workflow) (string, string) {
 	provider := ac.Provider
 	if provider == "" {
 		provider = w.Defaults.Provider
+	}
+	// A family alias (opus@latest, #264) prices on its resolved concrete id, so
+	// `dippin cost` works on an un-pinned alias instead of estimating $0.
+	if concrete, resolved, isAlias := pricing.ResolveModelRef(provider, model); isAlias && resolved {
+		model = concrete
 	}
 	return model, provider
 }

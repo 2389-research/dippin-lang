@@ -142,3 +142,43 @@ func TestLintDIP161DeprecatedModel(t *testing.T) {
 		t.Errorf("current model claude-opus-4-8 wrongly tripped DIP161: %v", codes(diags))
 	}
 }
+
+// aliasSrc builds a one-agent workflow whose model is the given alias.
+func aliasSrc(model string) string {
+	return fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: anthropic
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, model)
+}
+
+// TestLintModelAliasResolvable covers #264 Phase 2: a valid family alias
+// (opus@latest) must NOT trip DIP108 (unknown model) or DIP162 (unresolvable).
+func TestLintModelAliasResolvable(t *testing.T) {
+	diags := lintSrc(t, aliasSrc("opus@latest"))
+	if hasCode(diags, DIP108) {
+		t.Errorf("resolvable alias opus@latest tripped DIP108: %v", codes(diags))
+	}
+	if hasCode(diags, DIP162) {
+		t.Errorf("resolvable alias opus@latest tripped DIP162: %v", codes(diags))
+	}
+}
+
+// TestLintModelAliasUnresolvable covers #264 Phase 2: an unresolvable alias
+// trips DIP162, not DIP108.
+func TestLintModelAliasUnresolvable(t *testing.T) {
+	diags := lintSrc(t, aliasSrc("bogus@latest"))
+	if !hasCode(diags, DIP162) {
+		t.Errorf("unresolvable alias bogus@latest did not trip DIP162: %v", codes(diags))
+	}
+	if hasCode(diags, DIP108) {
+		t.Errorf("unresolvable alias should be DIP162, not DIP108: %v", codes(diags))
+	}
+}
