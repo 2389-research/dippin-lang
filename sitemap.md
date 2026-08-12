@@ -16,7 +16,7 @@ A flat index of every page on this site, grouped for agent consumption. The cano
 - [Inputs](https://dippin.org/inputs.html) — Typed workflow inputs: the inputs block, input types, attributes, the closed ${inputs.*} namespace, validation, and the dippin inputs introspection contract.
 - [Introduction](https://dippin.org/introduction.html) — What Dippin is and why it exists — a DSL and toolchain for authoring AI pipeline workflows that replaces Graphviz DOT as the authoring format.
 - [Language Overview](https://dippin.org/language.html) — The shape of a .dip workflow file: file structure, format version, the workflow header, and where each language feature is documented.
-- [Lint Rules](https://dippin.org/lint.html) — 61 semantic lint checks (DIP101–DIP161) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint.
+- [Lint Rules](https://dippin.org/lint.html) — 62 semantic lint checks (DIP101–DIP162) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint.
 - [Models & Pricing](https://dippin.org/models.html) — The supported model providers, the embedded model catalog that backs DIP108 and cost estimation, and how per-token and cached-input pricing is derived.
 - [Nodes](https://dippin.org/nodes.html) — The eight .dip node kinds — agent, human, tool, parallel, fan_in, subgraph, manager_loop, conditional — with their shared and per-kind fields.
 - [Playground](https://dippin.org/playground.html) — Try Dippin in your browser. Lint, format, visualize, and health-check workflows live — nothing leaves your machine.
