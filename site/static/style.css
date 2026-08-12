@@ -298,6 +298,16 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
   .doc-sidebar { display: none; }
   .doc-main { padding: 2rem 1.5rem; }
 }
+/* Two-up code comparisons don't fit beside the sidebar at mid widths — stack them. */
+@media (max-width: 1200px) {
+  .doc-body .compare-grid, .doc-body .side-by-side { grid-template-columns: 1fr; }
+}
+
+/* Glossary: turn the wall of bold-led paragraphs into a scannable term list —
+   each entry divided, with its term as a coloured hanging label. */
+.doc-main .doc-body.glossary > p { max-width: none; margin-bottom: 1.15rem; padding-bottom: 1.15rem; border-bottom: 1px solid var(--border); }
+.doc-body.glossary > p:last-of-type { border-bottom: none; }
+.doc-body.glossary > p > strong:first-child { color: var(--green-deep); font-size: 1.06em; letter-spacing: 0.01em; }
 .doc-header { margin-bottom: 2.5rem; }
 .doc-header h1 { font-family: var(--serif); font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.1; margin-bottom: 0.8rem; }
 .doc-header p { color: var(--text-soft); font-size: 1.05rem; max-width: 720px; }
@@ -328,9 +338,13 @@ footer { padding: 3.5rem 0; border-top: 1.5px solid var(--border); position: rel
 .diag-card.warning .diag-code { color: var(--yellow-deep); }
 
 /* Flow & pipeline */
-.flow-diagram { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin: 1.5rem 0 2rem; }
-.flow-step { background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 0.4rem 0.8rem; font-family: var(--mono); font-size: 0.74rem; font-weight: 600; white-space: nowrap; }
-.flow-arrow { color: var(--lavender-deep); font-size: 1rem; font-weight: 700; }
+.flow-diagram { display: flex; align-items: stretch; flex-wrap: wrap; gap: 0.75rem 0; margin: 1.5rem 0 2rem; }
+.flow-step { position: relative; display: flex; flex-direction: column; justify-content: center; background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 0.55rem 0.95rem; font-family: var(--mono); font-size: 0.74rem; font-weight: 600; line-height: 1.55; white-space: nowrap; }
+/* Arrow lives between boxes as a ::before on every step but the first, so it
+   can never dangle at the end of a wrapped row (a new row just opens with →). */
+.flow-step:not(:first-child) { margin-left: 2rem; }
+.flow-step:not(:first-child)::before { content: "\2192"; position: absolute; left: -1.55rem; top: 50%; transform: translateY(-50%); color: var(--lavender-deep); font-weight: 700; font-size: 1rem; }
+.flow-arrow { display: none; }
 
 /* Badges */
 .group-badge { display: inline-block; font-family: var(--mono); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.7rem; border-radius: 99px; margin-bottom: 1rem; }
