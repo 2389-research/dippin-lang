@@ -4,6 +4,15 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.66.1] — 2026-08-12
+
+### Added
+- **Capability data for Anthropic, OpenAI, and Gemini** ([#267](https://github.com/2389-research/dippin-lang/issues/267)). Populated `context_window` / `max_output` / `capabilities` for **49 models** (Anthropic 12, OpenAI 26, Gemini 11), verified 2026-08-12 against each provider's official model pages. This is the capability half of the DRY catalog consolidation — a consumer can now derive context windows / output limits / tool·vision·reasoning support from dippin instead of a parallel table. The remaining providers populate in later verified batches (absent = unknown, never zero).
+- **`/models.json` alias + JSON Schema.** The public catalog is now also served at [`/models.json`](https://dippin.org/models.json) — a clearer name now that it carries capabilities and context windows, not just prices (`/prices.json` is unchanged) — with a JSON Schema at [`/models.schema.json`](https://dippin.org/models.schema.json) so consumers can validate the shape.
+
+### Changed
+- `gemini-2.0-flash` and `gemini-3.1-flash-lite-preview` are marked `deprecated` — both are shut down per Google's official model pages (so they now also trip DIP161 if pinned).
+
 ## [v0.66.0] — 2026-08-12
 
 ### Added
