@@ -4,6 +4,19 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.66.0] — 2026-08-12
+
+### Added
+- **Model-catalog drift resistance (Phase 0 + resolver foundation)** ([#264](https://github.com/2389-research/dippin-lang/issues/264)). New lint **DIP161** warns when an `agent` pins a catalog model flagged `deprecated` (retired first-party, still billed on passthrough) — the "drift smoke detector" that catches today's rot with zero new syntax. The catalog gains optional `family`/`rank`/`maturity` metadata and a `pricing.ResolveAlias(provider, family, selector)` resolver (`latest`/`sota` = newest eligible; `stable` = one release back), with eligibility that structurally excludes deprecated/unpriced/preview models. The Anthropic opus/sonnet/haiku families are populated. Design: `docs/superpowers/specs/2026-08-12-model-aliases-drift-resistance-design.md`. (The `@`-syntax + `dippin fmt` pin-resolution are a later phase.)
+- **Model capability metadata schema** ([#267](https://github.com/2389-research/dippin-lang/issues/267)). Optional `context_window` / `max_output` / `capabilities` fields on catalog entries (`pricing.ModelPrice`), so a consumer can derive its whole model catalog from dippin instead of hand-maintaining a parallel one. Absent = unknown (not a claim of zero). Data populates in verified per-provider batches.
+- **Cache-coverage guard** ([#270](https://github.com/2389-research/dippin-lang/issues/270)). `pricing.CacheGaps()` lists priced models with no cache rate, and `TestCacheGapsAllowlist` fails if that set grows — so a new priced model can't ship without a verified cache rate (or a reasoned allowlist entry). Lets a downstream consumer retire its hard-coded cache-rate guess for everything else.
+- **Public pricing catalog JSON** ([#266](https://github.com/2389-research/dippin-lang/issues/266)). The embedded catalog (`pricing/prices.json`) is now published as consumable JSON at **`/prices.json`** (served `application/json` with `Access-Control-Allow-Origin: *`, refreshed each deploy), with a documented schema and a "report a correction" workflow on the Models & Pricing page.
+- **New models + cache rates**: `grok-4.6` and `deepseek-v4-pro-0813` (both released 2026-08-12, official-source-verified); cached-input rates for `grok-4.20-multi-agent-0309` and `grok-build-0.1`.
+- **Complex playground examples** ([#262](https://github.com/2389-research/dippin-lang/issues/262)): marker-routed tool pipeline, fan-out/fan-in specialist review, and a milestone loop with a human gate — showcasing typed routing, concurrency, and human-gated loops.
+
+### Changed
+- **Documentation site overhaul** ([#260](https://github.com/2389-research/dippin-lang/issues/260)/[#261](https://github.com/2389-research/dippin-lang/issues/261)/[#263](https://github.com/2389-research/dippin-lang/issues/263)). Split the two oversized pages (`language`, `validation`) into focused pages, replaced the flat sub-nav with a grouped sticky **sidebar**, added first-class **Models & Pricing** and **Configuration** pages, and polished the visuals (readable code-block contrast — root-caused to goldmark splitting terminal `<pre>` blocks at blank lines — smaller base font, wider reading column, non-orphaning diagrams, cache-busted CSS). Diagnostic-code count is now **71** (DIP101–DIP161) across all surfaces.
+
 ## [v0.65.1] — 2026-08-11
 
 ### Fixed
