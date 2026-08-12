@@ -12,6 +12,7 @@
     cp docs/generated-spec.md site/static/llms-full.txt && \
     cp AGENTS.md site/static/AGENTS.md && \
     cp pricing/prices.json site/static/prices.json && \
+    cp pricing/prices.json site/static/models.json && \
     cd site && hugo --minify
   """
   publish = "site/public"
@@ -30,6 +31,7 @@
     cp docs/generated-spec.md site/static/llms-full.txt && \
     cp AGENTS.md site/static/AGENTS.md && \
     cp pricing/prices.json site/static/prices.json && \
+    cp pricing/prices.json site/static/models.json && \
     cd site && hugo --minify --baseURL $URL
   """
 
@@ -43,6 +45,7 @@
     cp docs/generated-spec.md site/static/llms-full.txt && \
     cp AGENTS.md site/static/AGENTS.md && \
     cp pricing/prices.json site/static/prices.json && \
+    cp pricing/prices.json site/static/models.json && \
     cd site && hugo --minify --baseURL $DEPLOY_PRIME_URL
   """
 
@@ -82,6 +85,23 @@
     # pricing/prices.json, copied fresh each build). Allow cross-origin fetch.
     Access-Control-Allow-Origin = "*"
     Cache-Control = "public, max-age=300, must-revalidate"
+
+# /models.json is an alias of /prices.json — the catalog carries more than
+# prices (capabilities, context windows, drift metadata), so this is the
+# clearer name; /prices.json stays for existing consumers.
+[[headers]]
+  for = "/models.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+[[headers]]
+  for = "/models.schema.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=3600, must-revalidate"
 
 [[headers]]
   for = "/llms.txt"
