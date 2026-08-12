@@ -4,6 +4,14 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.66.2] — 2026-08-12
+
+### Added
+- **Capability data for the remaining providers** ([#267](https://github.com/2389-research/dippin-lang/issues/267)). Populated `context_window` / `max_output` / `capabilities` for DeepSeek, xAI/Grok, Z.AI/GLM, Moonshot/Kimi, MiniMax, Qwen, Mistral, and Cohere — verified against each provider's official docs. The catalog now carries capabilities for **98/111** models and context windows for **88/111**; ids not on any current official page are left `unknown` rather than guessed (DeepSeek rolling aliases, `grok-4-1-fast-*`, `command-r7b`, one Gemini preview). Mistral's redesigned docs no longer publish per-model context/output, so those stay unknown (capabilities populated from the capability pages).
+
+### Changed
+- Marked 5 more models `deprecated` from official retirement notices: Cohere `command-r` / `command-r-plus`; Mistral `ministral-8b` / `mistral-medium-3-1-2508` / `mistral-nemo`.
+
 ## [v0.66.1] — 2026-08-12
 
 ### Added

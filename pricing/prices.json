@@ -244,6 +244,9 @@
     {
       "provider": "cohere",
       "model": "command-a-03-2025",
+      "context_window": 256000,
+      "max_output": 8000,
+      "capabilities": ["tools"],
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://docs.cohere.com/docs/models",
@@ -253,6 +256,10 @@
     {
       "provider": "cohere",
       "model": "command-r",
+      "context_window": 128000,
+      "max_output": 4000,
+      "capabilities": ["tools"],
+      "deprecated": true,
       "input_per_m": 0.5,
       "output_per_m": 1.5,
       "source": "https://docs.cohere.com/docs/models",
@@ -262,6 +269,9 @@
     {
       "provider": "cohere",
       "model": "command-r-08-2024",
+      "context_window": 128000,
+      "max_output": 4000,
+      "capabilities": ["tools"],
       "input_per_m": 0.5,
       "output_per_m": 1.5,
       "source": "https://docs.cohere.com/docs/models",
@@ -271,6 +281,10 @@
     {
       "provider": "cohere",
       "model": "command-r-plus",
+      "context_window": 128000,
+      "max_output": 4000,
+      "capabilities": ["tools"],
+      "deprecated": true,
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://docs.cohere.com/docs/models",
@@ -280,6 +294,9 @@
     {
       "provider": "cohere",
       "model": "command-r-plus-08-2024",
+      "context_window": 128000,
+      "max_output": 4000,
+      "capabilities": ["tools"],
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://docs.cohere.com/docs/models",
@@ -298,6 +315,9 @@
     {
       "provider": "cohere",
       "model": "command-r7b-12-2024",
+      "context_window": 128000,
+      "max_output": 4000,
+      "capabilities": ["tools"],
       "input_per_m": 0.0375,
       "output_per_m": 0.15,
       "source": "https://docs.cohere.com/docs/models",
@@ -323,6 +343,9 @@
     {
       "provider": "deepseek",
       "model": "deepseek-v4-flash",
+      "context_window": 1000000,
+      "max_output": 384000,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.14,
       "output_per_m": 0.28,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
@@ -332,6 +355,9 @@
     {
       "provider": "deepseek",
       "model": "deepseek-v4-pro",
+      "context_window": 1000000,
+      "max_output": 384000,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.435,
       "output_per_m": 0.87,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
@@ -341,6 +367,9 @@
     {
       "provider": "deepseek",
       "model": "deepseek-v4-pro-0813",
+      "context_window": 1000000,
+      "max_output": 384000,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.435,
       "output_per_m": 0.87,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
@@ -509,6 +538,8 @@
     {
       "provider": "grok",
       "model": "grok-4.20-0309-non-reasoning",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision"],
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
@@ -518,6 +549,8 @@
     {
       "provider": "grok",
       "model": "grok-4.20-0309-reasoning",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
@@ -527,6 +560,8 @@
     {
       "provider": "grok",
       "model": "grok-4.20-multi-agent-0309",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
@@ -536,6 +571,8 @@
     {
       "provider": "grok",
       "model": "grok-4.3",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
@@ -545,6 +582,8 @@
     {
       "provider": "grok",
       "model": "grok-4.5",
+      "context_window": 500000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 2,
       "output_per_m": 6,
       "source": "https://docs.x.ai/docs/models",
@@ -554,6 +593,8 @@
     {
       "provider": "grok",
       "model": "grok-4.6",
+      "context_window": 500000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 2,
       "output_per_m": 6,
       "source": "https://docs.x.ai/docs/models",
@@ -563,6 +604,8 @@
     {
       "provider": "grok",
       "model": "grok-build-0.1",
+      "context_window": 256000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1,
       "output_per_m": 2,
       "source": "https://docs.x.ai/docs/models",
@@ -572,6 +615,8 @@
     {
       "provider": "minimax",
       "model": "MiniMax-M2",
+      "context_window": 204800,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
@@ -580,6 +625,8 @@
     {
       "provider": "minimax",
       "model": "MiniMax-M2.1",
+      "context_window": 204800,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
@@ -588,6 +635,8 @@
     {
       "provider": "minimax",
       "model": "MiniMax-M2.5",
+      "context_window": 204800,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
@@ -596,6 +645,8 @@
     {
       "provider": "minimax",
       "model": "MiniMax-M2.7",
+      "context_window": 204800,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
@@ -604,6 +655,8 @@
     {
       "provider": "minimax",
       "model": "MiniMax-M2.7-highspeed",
+      "context_window": 204800,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.6,
       "output_per_m": 2.4,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
@@ -612,6 +665,8 @@
     {
       "provider": "minimax",
       "model": "MiniMax-M3",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
@@ -620,6 +675,7 @@
     {
       "provider": "mistral",
       "model": "codestral",
+      "capabilities": ["tools"],
       "input_per_m": 0.3,
       "output_per_m": 0.9,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -629,6 +685,7 @@
     {
       "provider": "mistral",
       "model": "magistral-medium",
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 2,
       "output_per_m": 5,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -638,6 +695,7 @@
     {
       "provider": "mistral",
       "model": "ministral-3-14b-2512",
+      "capabilities": ["tools", "vision"],
       "input_per_m": 0.2,
       "output_per_m": 0.2,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -647,6 +705,7 @@
     {
       "provider": "mistral",
       "model": "ministral-3-3b-2512",
+      "capabilities": ["tools", "vision"],
       "input_per_m": 0.1,
       "output_per_m": 0.1,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -656,6 +715,7 @@
     {
       "provider": "mistral",
       "model": "ministral-3-8b-2512",
+      "capabilities": ["tools", "vision"],
       "input_per_m": 0.15,
       "output_per_m": 0.15,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -665,6 +725,7 @@
     {
       "provider": "mistral",
       "model": "ministral-8b",
+      "deprecated": true,
       "input_per_m": 0.1,
       "output_per_m": 0.1,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -674,6 +735,7 @@
     {
       "provider": "mistral",
       "model": "mistral-large-3",
+      "capabilities": ["tools", "vision"],
       "input_per_m": 0.5,
       "output_per_m": 1.5,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -692,6 +754,8 @@
     {
       "provider": "mistral",
       "model": "mistral-medium-3-1-2508",
+      "capabilities": ["tools", "vision"],
+      "deprecated": true,
       "input_per_m": 0.4,
       "output_per_m": 2,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -701,6 +765,7 @@
     {
       "provider": "mistral",
       "model": "mistral-medium-3-5-2604",
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1.5,
       "output_per_m": 7.5,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -710,6 +775,7 @@
     {
       "provider": "mistral",
       "model": "mistral-nemo",
+      "deprecated": true,
       "input_per_m": 0.02,
       "output_per_m": 0.04,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -719,6 +785,7 @@
     {
       "provider": "mistral",
       "model": "mistral-small",
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.1,
       "output_per_m": 0.3,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -728,6 +795,7 @@
     {
       "provider": "mistral",
       "model": "mistral-small-2603",
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.1,
       "output_per_m": 0.3,
       "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
@@ -737,6 +805,8 @@
     {
       "provider": "moonshot",
       "model": "kimi-k3",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
@@ -1061,6 +1131,9 @@
     {
       "provider": "qwen",
       "model": "qwen3.6-flash",
+      "context_window": 1000000,
+      "max_output": 65536,
+      "capabilities": ["tools", "vision", "reasoning"],
       "priced": false,
       "source": "https://www.alibabacloud.com/help/en/model-studio/models",
       "as_of": "2026-08-07"
@@ -1068,6 +1141,9 @@
     {
       "provider": "qwen",
       "model": "qwen3.7-max",
+      "context_window": 1000000,
+      "max_output": 65536,
+      "capabilities": ["tools", "reasoning"],
       "priced": false,
       "source": "https://www.alibabacloud.com/help/en/model-studio/models",
       "as_of": "2026-08-07"
@@ -1075,6 +1151,9 @@
     {
       "provider": "qwen",
       "model": "qwen3.7-plus",
+      "context_window": 1000000,
+      "max_output": 65536,
+      "capabilities": ["tools", "vision", "reasoning"],
       "priced": false,
       "source": "https://www.alibabacloud.com/help/en/model-studio/models",
       "as_of": "2026-08-07"
@@ -1082,6 +1161,9 @@
     {
       "provider": "zai",
       "model": "glm-4.5",
+      "context_window": 131072,
+      "max_output": 98304,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1091,6 +1173,9 @@
     {
       "provider": "zai",
       "model": "glm-4.5-air",
+      "context_window": 131072,
+      "max_output": 98304,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.2,
       "output_per_m": 1.1,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1100,6 +1185,9 @@
     {
       "provider": "zai",
       "model": "glm-4.5-airx",
+      "context_window": 131072,
+      "max_output": 98304,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 1.1,
       "output_per_m": 4.5,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1109,6 +1197,9 @@
     {
       "provider": "zai",
       "model": "glm-4.5-flash",
+      "context_window": 131072,
+      "max_output": 98304,
+      "capabilities": ["tools", "reasoning"],
       "priced": false,
       "source": "https://docs.z.ai/guides/overview/pricing",
       "as_of": "2026-08-07"
@@ -1116,6 +1207,9 @@
     {
       "provider": "zai",
       "model": "glm-4.5-x",
+      "context_window": 131072,
+      "max_output": 98304,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 2.2,
       "output_per_m": 8.9,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1125,6 +1219,9 @@
     {
       "provider": "zai",
       "model": "glm-4.6",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1134,6 +1231,9 @@
     {
       "provider": "zai",
       "model": "glm-4.7",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1143,6 +1243,9 @@
     {
       "provider": "zai",
       "model": "glm-4.7-flash",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "priced": false,
       "source": "https://docs.z.ai/guides/overview/pricing",
       "as_of": "2026-08-07"
@@ -1150,6 +1253,9 @@
     {
       "provider": "zai",
       "model": "glm-4.7-flashx",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 0.07,
       "output_per_m": 0.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1159,6 +1265,9 @@
     {
       "provider": "zai",
       "model": "glm-5",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 1,
       "output_per_m": 3.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1168,6 +1277,9 @@
     {
       "provider": "zai",
       "model": "glm-5-turbo",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 1.2,
       "output_per_m": 4,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1177,6 +1289,9 @@
     {
       "provider": "zai",
       "model": "glm-5.1",
+      "context_window": 204800,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
@@ -1186,6 +1301,9 @@
     {
       "provider": "zai",
       "model": "glm-5.2",
+      "context_window": 1048576,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning"],
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
