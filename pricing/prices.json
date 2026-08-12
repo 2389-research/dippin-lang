@@ -420,7 +420,8 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-12",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "grok",
@@ -455,7 +456,8 @@
       "input_per_m": 1,
       "output_per_m": 2,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-07"
+      "as_of": "2026-08-12",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "minimax",
