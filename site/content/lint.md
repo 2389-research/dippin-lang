@@ -77,6 +77,13 @@ warning[DIP153]: edges-block edge 'Fan -> A' redundantly repeats the inline para
   --&gt; pipeline.dip:15:5</pre>
 </div>
 
+<div class="diag-card warning">
+  <span class="diag-code">DIP161</span> — Deprecated Model
+  <p>An <code>agent</code> pins a model that <em>is</em> in the catalog but flagged <code>deprecated</code> — retired on the first-party provider API, though still billed on passthrough platforms (Bedrock/Vertex). The workflow still runs, but you're pinned to a model on its way out; move to a current one. Complements DIP108: that fires for models <em>not</em> in the catalog, DIP161 for models in it but deprecated — a drift smoke-detector for pipelines pinned to retiring models.</p>
+  <pre>warning[DIP161]: model "claude-opus-4-1" (provider "anthropic") is deprecated
+  --&gt; pipeline.dip:15:5</pre>
+</div>
+
 ## Agents & Prompts
 
 <div class="diag-card warning">
