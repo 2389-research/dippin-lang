@@ -77,21 +77,21 @@ A workflow that routes based on outcome, with matching test scenarios:
   <span class="kw">goal:</span> <span class="str">"Route based on outcome"</span>
   <span class="kw">start:</span> Start
   <span class="kw">exit:</span> Exit
-
+&nbsp;
   <span class="kw">agent</span> <span class="node">Start</span>
     <span class="kw">label:</span> Start
-
+&nbsp;
   <span class="kw">agent</span> <span class="node">Pass</span>
     <span class="kw">model:</span> claude-sonnet-4-6
     <span class="kw">prompt:</span> Handle success.
-
+&nbsp;
   <span class="kw">agent</span> <span class="node">Fix</span>
     <span class="kw">model:</span> claude-sonnet-4-6
     <span class="kw">prompt:</span> Handle failure.
-
+&nbsp;
   <span class="kw">agent</span> <span class="node">Exit</span>
     <span class="kw">label:</span> Exit
-
+&nbsp;
   <span class="kw">edges</span>
     Start <span class="op">-&gt;</span> Pass  <span class="kw">when</span> ctx.outcome = success
     Start <span class="op">-&gt;</span> Fix   <span class="kw">when</span> ctx.outcome = fail
@@ -142,7 +142,7 @@ A workflow that routes based on outcome, with matching test scenarios:
   <span class="pass">PASS</span>  failure path
 <span class="dim">&#9472;&#9472;&#9472; Summary &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
   <span class="pass">2 tests: 2 passed, 0 failed</span>
-
+&nbsp;
 <span class="prompt">$</span> dippin test --verbose gate.dip
 <span class="dim">&#9552;&#9552;&#9552; Test Results &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;</span>
   <span class="pass">PASS</span>  success path
