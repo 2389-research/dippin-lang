@@ -11,6 +11,7 @@
     ./scripts/gen-spec.sh && \
     cp docs/generated-spec.md site/static/llms-full.txt && \
     cp AGENTS.md site/static/AGENTS.md && \
+    cp pricing/prices.json site/static/prices.json && \
     cd site && hugo --minify
   """
   publish = "site/public"
@@ -28,6 +29,7 @@
     ./scripts/gen-spec.sh && \
     cp docs/generated-spec.md site/static/llms-full.txt && \
     cp AGENTS.md site/static/AGENTS.md && \
+    cp pricing/prices.json site/static/prices.json && \
     cd site && hugo --minify --baseURL $URL
   """
 
@@ -40,6 +42,7 @@
     ./scripts/gen-spec.sh && \
     cp docs/generated-spec.md site/static/llms-full.txt && \
     cp AGENTS.md site/static/AGENTS.md && \
+    cp pricing/prices.json site/static/prices.json && \
     cd site && hugo --minify --baseURL $DEPLOY_PRIME_URL
   """
 
@@ -70,6 +73,15 @@
     # a returning visitor run new JS against an hour-stale WASM (missing newly
     # exported functions), which broke the Graph view. Keep JS and WASM in lockstep.
     Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/prices.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    # Public, consumable model/pricing catalog (single source of truth:
+    # pricing/prices.json, copied fresh each build). Allow cross-origin fetch.
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=300, must-revalidate"
 
 [[headers]]
   for = "/llms.txt"
