@@ -80,41 +80,127 @@ disableKinds = ["taxonomy", "term"]
 
 # Docs sub-nav (second row)
 [[menus.docs]]
-  name = "CLI"
-  pageRef = "/cli"
+  name = "Introduction"
+  pageRef = "/introduction"
   weight = 1
+  [menus.docs.params]
+    group = "Get Started"
 
 [[menus.docs]]
-  name = "Language"
+  name = "Overview"
   pageRef = "/language"
   weight = 2
+  [menus.docs.params]
+    group = "Language"
 
 [[menus.docs]]
-  name = "Testing"
-  pageRef = "/testing"
+  name = "Nodes"
+  pageRef = "/nodes"
   weight = 3
+  [menus.docs.params]
+    group = "Language"
 
 [[menus.docs]]
-  name = "Validation"
-  pageRef = "/validation"
+  name = "Edges & Routing"
+  pageRef = "/edges"
   weight = 4
+  [menus.docs.params]
+    group = "Language"
+
+[[menus.docs]]
+  name = "Prompts & Context"
+  pageRef = "/prompts"
+  weight = 5
+  [menus.docs.params]
+    group = "Language"
+
+[[menus.docs]]
+  name = "Inputs"
+  pageRef = "/inputs"
+  weight = 6
+  [menus.docs.params]
+    group = "Language"
+
+[[menus.docs]]
+  name = "Configuration"
+  pageRef = "/configuration"
+  weight = 7
+  [menus.docs.params]
+    group = "Configuration"
+
+[[menus.docs]]
+  name = "Models & Pricing"
+  pageRef = "/models"
+  weight = 8
+  [menus.docs.params]
+    group = "Configuration"
+
+[[menus.docs]]
+  name = "CLI"
+  pageRef = "/cli"
+  weight = 9
+  [menus.docs.params]
+    group = "Tooling"
 
 [[menus.docs]]
   name = "Analysis"
   pageRef = "/analysis"
-  weight = 5
+  weight = 10
+  [menus.docs.params]
+    group = "Tooling"
 
 [[menus.docs]]
-  name = "Architecture"
-  pageRef = "/architecture"
-  weight = 6
+  name = "Testing"
+  pageRef = "/testing"
+  weight = 11
+  [menus.docs.params]
+    group = "Tooling"
+
+[[menus.docs]]
+  name = "Export & Visualization"
+  pageRef = "/export"
+  weight = 12
+  [menus.docs.params]
+    group = "Tooling"
+
+[[menus.docs]]
+  name = "Structural Validation"
+  pageRef = "/validation"
+  weight = 13
+  [menus.docs.params]
+    group = "Diagnostics"
+
+[[menus.docs]]
+  name = "Lint Rules"
+  pageRef = "/lint"
+  weight = 14
+  [menus.docs.params]
+    group = "Diagnostics"
 
 [[menus.docs]]
   name = "Editors"
   pageRef = "/editors"
-  weight = 7
+  weight = 15
+  [menus.docs.params]
+    group = "Integrations"
+
+[[menus.docs]]
+  name = "Glossary"
+  pageRef = "/glossary"
+  weight = 16
+  [menus.docs.params]
+    group = "Reference"
+
+[[menus.docs]]
+  name = "Architecture"
+  pageRef = "/architecture"
+  weight = 17
+  [menus.docs.params]
+    group = "Reference"
 
 [[menus.docs]]
   name = "Changelog"
   pageRef = "/changelog"
-  weight = 8
+  weight = 18
+  [menus.docs.params]
+    group = "Reference"
