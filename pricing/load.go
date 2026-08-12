@@ -17,6 +17,13 @@ type fileEntry struct {
 	Deprecated      bool     `json:"deprecated,omitempty"`
 	Source          string   `json:"source"`
 	AsOf            string   `json:"as_of"`
+	// Drift metadata (#264) + capability metadata (#267); all optional.
+	Family          string   `json:"family,omitempty"`
+	Rank            int      `json:"rank,omitempty"`
+	Maturity        string   `json:"maturity,omitempty"`
+	ContextWindow   int      `json:"context_window,omitempty"`
+	MaxOutput       int      `json:"max_output,omitempty"`
+	Capabilities    []string `json:"capabilities,omitempty"`
 }
 
 type priceFile struct {
@@ -67,6 +74,12 @@ func (idx *catalogIndex) add(e fileEntry) {
 		Deprecated:      e.Deprecated,
 		Source:          e.Source,
 		AsOf:            e.AsOf,
+		Family:          e.Family,
+		Rank:            e.Rank,
+		Maturity:        e.Maturity,
+		ContextWindow:   e.ContextWindow,
+		MaxOutput:       e.MaxOutput,
+		Capabilities:    e.Capabilities,
 	}
 	idx.put(e.Provider, e.Model, p)
 	for _, a := range e.Aliases {
