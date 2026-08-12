@@ -46,6 +46,8 @@ Each entry describes one model and its published price:
 | `cached_input_per_m` | Absolute cached-input price per million tokens, when published that way |
 | `priced` | `false` marks a known-but-unpriced model |
 | `deprecated` | `true` marks a model retired first-party but still billed on passthrough |
+| `family` / `rank` / `maturity` | Optional drift-resistance metadata (see [below](#drift-resistance--capability-metadata)) — the family a model belongs to, its ordering within that family (higher `rank` = newer), and `stable`/`preview` |
+| `context_window` / `max_output` / `capabilities` | Optional capability metadata — max input/output tokens and capability tags (`tools`, `vision`, `reasoning`) |
 
 Every priced entry carries its `source` URL and an `as_of` date. Prices are verified against official provider documentation before they are committed — never from model training data, which goes stale.
 
@@ -86,13 +88,28 @@ Two flags mark entries that behave differently from an ordinary priced model:
 - **`priced: false`** — a *known-but-unpriced* model. It is recognized by DIP108 (so it never warns), but it is priced at `$0`. This is used when a provider's USD rate can't be verified from an official page.
 - **`deprecated: true`** — a model retired on the first-party provider API but still priced, because it continues to bill on passthrough platforms. Catalog membership therefore does **not** imply first-party callability: a consumer treating the catalog as a first-party allowlist should filter on the deprecated flag, because being in the catalog and being callable first-party are two different things.
 
+## Drift Resistance & Capability Metadata
+
+Beyond price, an entry can carry optional metadata so a consumer can derive its **whole** model catalog from dippin instead of hand-maintaining a parallel one:
+
+- **`family` / `rank` / `maturity`** — the family a model belongs to (e.g. `opus`), its ordering within that family (`rank`, higher = newer), and `stable`/`preview`. This lets a consumer resolve a *family reference* to a concrete model without string-parsing irregular IDs — newest-in-family, one release back, and so on. Resolution deliberately excludes deprecated, unpriced, and preview models, so it can never land on a retired or unpriced model. Go consumers can call `pricing.ResolveAlias(provider, family, selector)` (`latest`/`sota` = newest eligible, `stable` = one release back); a JSON consumer resolves from these fields directly.
+- **`context_window` / `max_output` / `capabilities`** — max input context tokens, max output tokens, and capability tags (`tools`, `vision`, `reasoning`). Absent means **unknown**, never a claim of zero. Populated in verified per-provider batches.
+
+### Cache coverage
+
+Every priced model should carry a cache rate so a consumer never has to guess one. dippin's own tests fail if a new priced model ships without a cache rate (or a documented, reasoned exception), so the set of models lacking a verified rate only shrinks over time. Go consumers can read that set via `pricing.CacheGaps()`.
+
+### Deprecation detection (DIP161)
+
+Because the catalog records `deprecated`, dippin warns when a workflow pins a retired model: **[DIP161](/lint/)** fires when an `agent` names a model that is in the catalog but flagged deprecated — a drift smoke-detector that catches a pipeline still pinned to a model that's been retired first-party (but is still billed on passthrough platforms).
+
 ## Estimating Cost
 
 Because pricing lives in the same embedded catalog the validator uses, `dippin cost` can estimate a workflow's per-run token spend directly from the model each agent names — no separate price table to configure. For the cost command, its assumptions, and the related coverage and optimization tools, see [Analysis Tools](/analysis/).
 
 ## Use the catalog in your own tools
 
-The full catalog is published as consumable JSON at **[`/prices.json`](/prices.json)** — the exact file dippin embeds, refreshed on every deploy, and served with `Access-Control-Allow-Origin: *` so you can fetch it straight from a browser. Each entry carries `provider`, `model`, `input_per_m` / `output_per_m` (USD per million tokens), optional cache fields (`cache_read_mult` / `cache_write_mult`, or an absolute `cached_input_per_m`), the `priced` / `deprecated` flags, and provenance (`source` URL + `as_of` date). A top-level `provider_aliases` map resolves shorthand names (e.g. `xai` → `grok`) to canonical providers.
+The full catalog is published as consumable JSON at **[`/prices.json`](/prices.json)** — the exact file dippin embeds, refreshed on every deploy, and served with `Access-Control-Allow-Origin: *` so you can fetch it straight from a browser. Each entry carries `provider`, `model`, `input_per_m` / `output_per_m` (USD per million tokens), optional cache fields (`cache_read_mult` / `cache_write_mult`, or an absolute `cached_input_per_m`), the `priced` / `deprecated` flags, optional drift metadata (`family` / `rank` / `maturity`) and capability metadata (`context_window` / `max_output` / `capabilities`), and provenance (`source` URL + `as_of` date). A top-level `provider_aliases` map resolves shorthand names (e.g. `xai` → `grok`) to canonical providers.
 
 ```sh
 curl -s https://dippin.org/prices.json | jq '.models[] | select(.provider == "anthropic")'
