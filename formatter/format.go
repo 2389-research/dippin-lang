@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/2389-research/dippin-lang/ir"
+	"github.com/2389-research/dippin-lang/pricing"
 )
 
 // Format renders a workflow to canonical Dippin source text.
@@ -552,13 +553,17 @@ func writeCommonNodeFields(wr *writer, n *ir.Node) {
 	}
 }
 
-// writeAgentModelFields writes model-related fields for agent nodes.
+// writeAgentModelFields writes model-related fields for agent nodes. A resolvable
+// family alias in model: (e.g. "opus@latest") is pinned to its concrete catalog
+// id here — author-time, one-way resolution (#264). An alias that does not
+// resolve is left untouched (DIP162 flags it); a concrete id is emitted as-is.
 func writeAgentModelFields(wr *writer, cfg ir.AgentConfig) {
-	if cfg.Model != "" {
-		wr.line("model: %s", quoteValue(cfg.Model))
+	model, provider := pinModelAlias(cfg.Provider, cfg.Model)
+	if model != "" {
+		wr.line("model: %s", quoteValue(model))
 	}
-	if cfg.Provider != "" {
-		wr.line("provider: %s", quoteValue(cfg.Provider))
+	if provider != "" {
+		wr.line("provider: %s", quoteValue(provider))
 	}
 	if cfg.ReasoningEffort != "" {
 		wr.line("reasoning_effort: %s", quoteValue(cfg.ReasoningEffort))
@@ -566,6 +571,23 @@ func writeAgentModelFields(wr *writer, cfg ir.AgentConfig) {
 	if cfg.Fidelity != "" {
 		wr.line("fidelity: %s", quoteValue(cfg.Fidelity))
 	}
+}
+
+// pinModelAlias resolves a family-alias model value to its concrete catalog id,
+// pinning it in place. A non-alias value, or an alias that does not resolve, is
+// returned unchanged.
+// pinModelAlias resolves a family alias (opus@latest, #264) to its concrete
+// catalog id at fmt time, returning the pinned model and the provider it should
+// be written under. A provider-prefixed cross-provider alias (e.g.
+// anthropic/opus@latest on a node with provider: openai) also rewrites the
+// provider to the one it resolved under, so the pinned pair stays lint-clean
+// instead of tripping DIP108. Non-aliases (and unresolvable aliases) pass
+// through unchanged.
+func pinModelAlias(provider, model string) (string, string) {
+	if concrete, aliasProvider, resolved, isAlias := pricing.ResolveModelRef(provider, model); isAlias && resolved {
+		return concrete, aliasProvider
+	}
+	return model, provider
 }
 
 // writeAgentRuntimeFields writes runtime behavior fields for agent nodes.

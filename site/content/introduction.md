@@ -79,7 +79,7 @@ Dippin is more than a syntax — it's a full toolchain that lets you catch probl
 </div>
 
 - **Author** — write `.dip` files, or scaffold one with `dippin new`.
-- **Validate & Lint** — 71 diagnostic rules (DIP001-DIP010 structural, DIP101-DIP161 semantic) catch dead edges, unreachable nodes, missing prompts, and invalid models. See the [CLI Reference](/cli/).
+- **Validate & Lint** — 72 diagnostic rules (DIP001-DIP010 structural, DIP101-DIP162 semantic) catch dead edges, unreachable nodes, missing prompts, and invalid models. See the [CLI Reference](/cli/).
 - **Test** — `dippin test` injects context, simulates every conditional branch, and checks assertions, with CI-ready output. See [Testing](/testing/).
 - **Analyze** — `dippin cost`, `dippin coverage`, and `dippin doctor` estimate spend, check reachability, and grade a workflow A&ndash;F. See [Analysis](/analysis/).
 - **Export** — turn a workflow into a live diagram with `export-mermaid` or `export-dot`. See [Export & Visualization](/export/).

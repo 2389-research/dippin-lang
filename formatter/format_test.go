@@ -2872,3 +2872,87 @@ func TestFormat_DefaultsSystemPromptFile(t *testing.T) {
 		t.Fatalf("not idempotent:\n--- first ---\n%s\n--- second ---\n%s", out, Format(w2))
 	}
 }
+
+// TestFormatPinsModelAlias verifies dippin fmt resolves a family alias in an
+// agent's model: to the concrete catalog id (author-time, one-way pinning, #264).
+func TestFormatPinsModelAlias(t *testing.T) {
+	src := `workflow t {
+  start: A
+  exit: A
+  agent A
+    provider: anthropic
+    model: opus@latest
+    prompt: "go"
+}
+`
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "model: claude-opus-5") {
+		t.Errorf("alias opus@latest not pinned to concrete id:\n%s", out)
+	}
+	if strings.Contains(out, "opus@latest") {
+		t.Errorf("alias still present after fmt:\n%s", out)
+	}
+	// Idempotent: re-formatting the pinned output changes nothing.
+	w2, err := parser.NewParser(out, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("reparse: %v\n%s", err, out)
+	}
+	if Format(w2) != out {
+		t.Fatalf("not idempotent:\n--- first ---\n%s\n--- second ---\n%s", out, Format(w2))
+	}
+}
+
+// TestFormatPinsProviderPrefixedAlias verifies that pinning a provider-prefixed
+// cross-provider alias also reconciles the node's provider field, so the pinned
+// model/provider pair stays lint-clean instead of tripping DIP108.
+func TestFormatPinsProviderPrefixedAlias(t *testing.T) {
+	src := `workflow t {
+  start: A
+  exit: A
+  agent A
+    provider: openai
+    model: anthropic/opus@latest
+    prompt: "go"
+}
+`
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "model: claude-opus-5") {
+		t.Errorf("cross-provider alias not pinned to concrete id:\n%s", out)
+	}
+	if !strings.Contains(out, "provider: anthropic") {
+		t.Errorf("provider not reconciled to the resolved provider:\n%s", out)
+	}
+	if strings.Contains(out, "provider: openai") {
+		t.Errorf("stale provider left after pinning cross-provider alias:\n%s", out)
+	}
+}
+
+// TestFormatLeavesUnresolvableAlias verifies an alias that resolves to nothing is
+// left untouched (DIP162 flags it) rather than silently dropped.
+func TestFormatLeavesUnresolvableAlias(t *testing.T) {
+	src := `workflow t {
+  start: A
+  exit: A
+  agent A
+    provider: anthropic
+    model: bogus@latest
+    prompt: "go"
+}
+`
+	w, err := parser.NewParser(src, "t.dip").Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := Format(w)
+	if !strings.Contains(out, "bogus@latest") {
+		t.Errorf("unresolvable alias should be preserved:\n%s", out)
+	}
+}

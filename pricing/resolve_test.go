@@ -45,6 +45,33 @@ func TestRankFamilySkipsAliases(t *testing.T) {
 	}
 }
 
+func TestResolveModelRef(t *testing.T) {
+	cases := []struct {
+		nodeProvider, modelValue string
+		wantConcrete             string
+		wantProvider             string
+		wantResolved, wantAlias  bool
+	}{
+		{"anthropic", "opus@latest", "claude-opus-5", "anthropic", true, true},
+		{"anthropic", "opus@stable", "claude-opus-4-8", "anthropic", true, true},
+		{"anthropic", "sonnet@latest", "claude-sonnet-5", "anthropic", true, true},
+		{"", "anthropic/opus@stable", "claude-opus-4-8", "anthropic", true, true},     // provider from prefix
+		{"openai", "anthropic/opus@latest", "claude-opus-5", "anthropic", true, true}, // prefix overrides node
+		{"anthropic", "bogus@latest", "", "anthropic", false, true},                   // alias, unresolvable
+		{"anthropic", "opus@newest", "", "", false, false},                            // bad selector → not an alias
+		{"anthropic", "claude-opus-5", "", "", false, false},                          // concrete id
+		{"anthropic", "", "", "", false, false},                                       // empty
+	}
+	for _, c := range cases {
+		concrete, provider, resolved, isAlias := ResolveModelRef(c.nodeProvider, c.modelValue)
+		if concrete != c.wantConcrete || provider != c.wantProvider || resolved != c.wantResolved || isAlias != c.wantAlias {
+			t.Errorf("ResolveModelRef(%q,%q) = (%q,%q,%v,%v), want (%q,%q,%v,%v)",
+				c.nodeProvider, c.modelValue, concrete, provider, resolved, isAlias,
+				c.wantConcrete, c.wantProvider, c.wantResolved, c.wantAlias)
+		}
+	}
+}
+
 func TestResolveAliasNeverReturnsDeprecated(t *testing.T) {
 	for _, sel := range []string{"latest", "stable", "sota"} {
 		if got, _ := ResolveAlias("anthropic", "opus", sel); got == "claude-opus-4-0" || got == "claude-opus-4-1" {

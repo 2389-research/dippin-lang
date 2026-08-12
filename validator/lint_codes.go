@@ -66,6 +66,7 @@ const (
 	DIP159 = "DIP159" // declared input is never referenced (dead input)
 	DIP160 = "DIP160" // subgraph params omits a required input of the referenced child (cross-file)
 	DIP161 = "DIP161" // agent pins a model flagged deprecated in the catalog (retired first-party, still billed on passthrough)
+	DIP162 = "DIP162" // agent model is a family alias that resolves to no eligible model (unknown family/selector or all members ineligible)
 )
 
 func init() {
@@ -137,4 +138,5 @@ var linterCodeDescriptions = map[string]string{
 	DIP159: "declared input is never referenced (dead input)",
 	DIP160: "subgraph params omits a required input of the referenced child",
 	DIP161: "agent pins a deprecated model (retired first-party, still billed on passthrough)",
+	DIP162: "unresolvable model alias — no eligible model in that family/selector",
 }

@@ -1,6 +1,10 @@
 package pricing
 
-import "sort"
+import (
+	"regexp"
+	"sort"
+	"strings"
+)
 
 // rankedModel pairs a concrete model id with its in-family rank for resolution.
 type rankedModel struct {
@@ -72,4 +76,42 @@ func ResolveAlias(provider, family, selector string) (string, bool) {
 		return c[min(1, len(c)-1)].id, true
 	}
 	return "", false
+}
+
+// aliasRe matches a family-alias model reference: an optional "provider/"
+// prefix, a family tag, and one of the fixed selectors after "@".
+var aliasRe = regexp.MustCompile(`^([a-z0-9]+/)?[a-z0-9.\-]+@(latest|sota|stable)$`)
+
+// parseAliasRef splits an alias model value into (provider, family, selector).
+// provider is the "provider/" prefix if present, else nodeProvider. The caller
+// must have confirmed modelValue is an alias (aliasRe matched).
+func parseAliasRef(nodeProvider, modelValue string) (provider, family, selector string) {
+	provider = nodeProvider
+	ref := modelValue
+	if i := strings.IndexByte(ref, '/'); i >= 0 {
+		provider = ref[:i]
+		ref = ref[i+1:]
+	}
+	at := strings.IndexByte(ref, '@')
+	return provider, ref[:at], ref[at+1:]
+}
+
+// ResolveModelRef is the shared entry point for the author-facing family@selector
+// alias syntax (#264). Given a node's provider and its model value:
+//
+//   - If modelValue is a family alias ([provider/]family@selector), isAlias is
+//     true. The optional provider/ prefix overrides nodeProvider; provider
+//     reports which provider the alias resolved under (the prefix if present,
+//     else nodeProvider) so callers can reconcile a cross-provider alias.
+//     resolved reports whether the alias points at a concrete, eligible model;
+//     concrete is that model id (empty when resolved is false).
+//   - Otherwise isAlias is false (concrete="", provider="", resolved=false): an
+//     ordinary concrete model id, handled by the existing catalog paths.
+func ResolveModelRef(nodeProvider, modelValue string) (concrete, provider string, resolved, isAlias bool) {
+	if !aliasRe.MatchString(modelValue) {
+		return "", "", false, false
+	}
+	prov, family, selector := parseAliasRef(nodeProvider, modelValue)
+	id, ok := ResolveAlias(prov, family, selector)
+	return id, prov, ok, true
 }

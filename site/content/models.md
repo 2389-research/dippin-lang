@@ -95,6 +95,22 @@ Beyond price, an entry can carry optional metadata so a consumer can derive its 
 - **`family` / `rank` / `maturity`** — the family a model belongs to (e.g. `opus`), its ordering within that family (`rank`, higher = newer), and `stable`/`preview`. This lets a consumer resolve a *family reference* to a concrete model without string-parsing irregular IDs — newest-in-family, one release back, and so on. Resolution deliberately excludes deprecated, unpriced, and preview models, so it can never land on a retired or unpriced model. Go consumers can call `pricing.ResolveAlias(provider, family, selector)` (`latest`/`sota` = newest eligible, `stable` = one release back); a JSON consumer resolves from these fields directly.
 - **`context_window` / `max_output` / `capabilities`** — max input context tokens, max output tokens, and capability tags (`tools`, `vision`, `reasoning`). Absent means **unknown**, never a claim of zero. Populated in verified per-provider batches.
 
+### Model families / aliases
+
+An `agent`'s `model:` may be a **family alias** instead of a concrete id:
+`[<provider>/]<family>@<selector>`, where the selector is `latest`, `stable`, or
+`sota` — for example `opus@latest` (provider taken from the node's `provider:`)
+or the self-contained `anthropic/opus@stable`. It lets an author say "the current
+top Opus" rather than pinning an id that silently rots when the provider retires a
+model. `dippin fmt` **pins** a resolvable alias in place to its concrete catalog
+id (author-time, one-way — e.g. `opus@latest` → `claude-opus-5`); after that the
+value is a normal id and prices/lints like any other. Resolution excludes
+deprecated, preview, and unpriced members, so an alias can never pin to a retired
+or unpriced model. An alias that resolves to nothing is left untouched by `fmt`
+and flagged **[DIP162](/lint/)**. Aliases resolve only for families that carry
+`family`/`rank` metadata (currently the Anthropic families: `opus`, `sonnet`,
+`haiku`).
+
 ### Cache coverage
 
 Every priced model should carry a cache rate so a consumer never has to guess one. dippin's own tests fail if a new priced model ships without a cache rate (or a documented, reasoned exception), so the set of models lacking a verified rate only shrinks over time. Go consumers can read that set via `pricing.CacheGaps()`.

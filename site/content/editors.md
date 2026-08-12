@@ -11,7 +11,7 @@ The built-in LSP server (`dippin lsp`) provides rich editing features for any LS
 
 | Feature | Description |
 |---------|-------------|
-| **Diagnostics** | Parse errors and lint warnings published on every change (DIP001-DIP010 structural, DIP101-DIP161 semantic) |
+| **Diagnostics** | Parse errors and lint warnings published on every change (DIP001-DIP010 structural, DIP101-DIP162 semantic) |
 | **Hover** | Tooltip showing node kind and a per-kind field summary — model/provider for agents, command for tools, mode for human gates |
 | **Go-to-definition** | Jump from a node reference in an edge to the node's declaration |
 | **Autocomplete** | Node IDs in edges and field names within node blocks |

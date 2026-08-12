@@ -112,8 +112,13 @@ func resolveModelProvider(cfg ir.AgentConfig, w *ir.Workflow) (model, provider s
 }
 
 // validateModelProvider checks if a model/provider combination is known,
-// consulting the base catalog plus the scoped extra catalog.
+// consulting the base catalog plus the scoped extra catalog. A family alias
+// (family@selector, #264) is handled first: a resolvable alias is valid (no
+// diagnostic), an unresolvable one is DIP162.
 func validateModelProvider(n *ir.Node, model, provider string, extra ExtraModels) []Diagnostic {
+	if diags, isAlias := aliasModelDiag(n, model, provider); isAlias {
+		return diags
+	}
 	if !providerKnown(provider, extra) {
 		return []Diagnostic{{
 			Code:     DIP108,
@@ -151,6 +156,24 @@ func deprecatedModelDiag(n *ir.Node, model, provider string) []Diagnostic {
 		Location: n.Source,
 		Help:     "pin a current, non-deprecated model for this provider",
 	}}
+}
+
+// aliasModelDiag handles a family-alias model value (family@selector). isAlias
+// reports whether model is an alias at all; when it is, a resolvable alias
+// yields no diagnostic and an unresolvable one yields DIP162. A non-alias value
+// returns isAlias=false so the caller falls through to the DIP108 catalog check.
+func aliasModelDiag(n *ir.Node, model, provider string) (diags []Diagnostic, isAlias bool) {
+	_, _, resolved, isAlias := pricing.ResolveModelRef(provider, model)
+	if !isAlias || resolved {
+		return nil, isAlias
+	}
+	return []Diagnostic{{
+		Code:     DIP162,
+		Severity: SeverityWarning,
+		Message:  fmt.Sprintf("node %q model alias %q resolves to no eligible model in that family/selector for provider %q", n.ID, model, provider),
+		Location: n.Source,
+		Help:     "check the family and selector (latest, stable, sota); the family may be unknown or all its members deprecated/preview",
+	}}, true
 }
 
 // providerKnown reports whether the provider appears in the pricing catalog
