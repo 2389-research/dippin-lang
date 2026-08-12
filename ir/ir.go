@@ -34,6 +34,15 @@ type Workflow struct {
 	ElseTargetSource SourceLocation   // Source location of the `else` entry, for diagnostics
 	Stylesheet       []StylesheetRule // Theme/styling rules
 	SourceMap        *SourceMap       // File/line mapping for diagnostics
+	// HeaderComment holds the leading file-level comment block: the contiguous
+	// run of `#` comment lines at the very top of the source, before the `dip N`
+	// pragma or `workflow` declaration. Each entry is a raw line verbatim
+	// (leading `#` included), with surrounding blank lines dropped but interior
+	// blank lines preserved. Empty when the file has no leading comment. The
+	// formatter re-emits these so `dippin fmt` no longer erases `# ABOUTME:` /
+	// provider-dependency headers (#259). Inline/trailing/between-node comments
+	// are not yet retained.
+	HeaderComment []string
 }
 
 // StylesheetRule pairs a selector with a set of properties.

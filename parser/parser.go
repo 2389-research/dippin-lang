@@ -22,9 +22,55 @@ func NewParser(input string, filename string) *Parser {
 		filename: filename,
 		version:  1,
 		workflow: &ir.Workflow{
-			SourceMap: &ir.SourceMap{},
+			SourceMap:     &ir.SourceMap{},
+			HeaderComment: leadingCommentBlock(strings.Split(input, "\n")),
 		},
 	}
+}
+
+// leadingCommentBlock returns the file-level comment lines at the very top of the
+// source: the contiguous run of blank/comment lines before the first code line
+// (the `dip N` pragma or `workflow` declaration), with surrounding blank lines
+// dropped but interior blank lines preserved. Each returned line keeps its
+// leading `#` verbatim. Returns nil when there is no leading comment (#259).
+func leadingCommentBlock(lines []string) []string {
+	end := 0
+	for end < len(lines) && isBlankOrComment(strings.TrimRight(lines[end], "\r")) {
+		end++
+	}
+	return trimBlankEdges(lines[:end])
+}
+
+// trimBlankEdges drops leading and trailing blank-only lines from a block,
+// returning the interior verbatim (trailing \r stripped) or nil if all-blank.
+func trimBlankEdges(block []string) []string {
+	lo, hi := blankTrimRange(block)
+	if lo == hi {
+		return nil
+	}
+	out := make([]string, hi-lo)
+	for i := lo; i < hi; i++ {
+		out[i-lo] = strings.TrimRight(block[i], "\r")
+	}
+	return out
+}
+
+// blankTrimRange returns the [lo, hi) slice bounds of block with leading and
+// trailing blank-only lines excluded.
+func blankTrimRange(block []string) (int, int) {
+	lo, hi := 0, len(block)
+	for lo < hi && isBlankLine(block[lo]) {
+		lo++
+	}
+	for hi > lo && isBlankLine(block[hi-1]) {
+		hi--
+	}
+	return lo, hi
+}
+
+// isBlankLine reports whether a line is empty or whitespace-only.
+func isBlankLine(line string) bool {
+	return len(strings.TrimSpace(line)) == 0
 }
 
 func (p *Parser) Parse() (*ir.Workflow, error) {

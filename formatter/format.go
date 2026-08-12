@@ -22,6 +22,7 @@ func Format(w *ir.Workflow) string {
 		dip2 = true
 	}
 	wr := &writer{dip2: dip2}
+	writeHeaderComment(wr, w)
 	writeWorkflowHeader(wr, w)
 	writeWorkflowSections(wr, w)
 	return wr.String()
@@ -135,6 +136,19 @@ func (wr *writer) String() string {
 }
 
 // --- Section emitters ---
+
+// writeHeaderComment emits the retained leading file-level comment block verbatim
+// at the very top of the output, followed by a blank line separating it from the
+// `dip N` / `workflow` header. No-op (byte-identical output) when empty (#259).
+func writeHeaderComment(wr *writer, w *ir.Workflow) {
+	if len(w.HeaderComment) == 0 {
+		return
+	}
+	for _, l := range w.HeaderComment {
+		wr.line("%s", l)
+	}
+	wr.blank()
+}
 
 func writeWorkflowHeader(wr *writer, w *ir.Workflow) {
 	if v, err := strconv.Atoi(w.Version); err == nil && v > 1 {
