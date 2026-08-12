@@ -107,6 +107,9 @@ pre code {
 .nav-sub-inner::-webkit-scrollbar { display: none; }
 .nav-sub-inner a { color: var(--text-soft); font-weight: 600; text-decoration: none; transition: color 0.2s; white-space: nowrap; }
 .nav-sub-inner a:hover, .nav-sub-inner a.active { color: var(--green-deep); }
+.nav-sub-inner .nav-group { font-family: var(--mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lavender-deep); white-space: nowrap; margin-left: 0.6rem; padding-left: 0.6rem; border-left: 1px solid var(--border); align-self: center; }
+.nav-sub-inner .nav-group:first-child { margin-left: 0; padding-left: 0; border-left: none; }
+.nav-group-m { display: block; font-family: var(--mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lavender-deep); margin: 0.6rem 0 0.1rem; }
 
 /* Hamburger + mobile menu (hidden on desktop) */
 .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }

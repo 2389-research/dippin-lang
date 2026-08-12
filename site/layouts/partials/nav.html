@@ -20,7 +20,9 @@
 </div>
 <div class="nav-sub">
   <div class="nav-sub-inner">
+    {{ $lastGroup := "" }}
     {{ range .Site.Menus.docs }}
+      {{ with .Params.group }}{{ if ne . $lastGroup }}<span class="nav-group">{{ . }}</span>{{ $lastGroup = . }}{{ end }}{{ end }}
       <a href="{{ .URL }}"{{ if eq $.RelPermalink .URL }} class="active"{{ end }}>{{ .Name }}</a>
     {{ end }}
   </div>
@@ -36,7 +38,9 @@
     {{ end }}
   {{ end }}
   <div class="nav-divider"></div>
+  {{ $lastGroupM := "" }}
   {{ range .Site.Menus.docs }}
+    {{ with .Params.group }}{{ if ne . $lastGroupM }}<span class="nav-group-m">{{ . }}</span>{{ $lastGroupM = . }}{{ end }}{{ end }}
     <a href="{{ .URL }}"{{ if eq $.RelPermalink .URL }} class="active"{{ end }}>{{ .Name }}</a>
   {{ end }}
   <div class="nav-divider"></div>
