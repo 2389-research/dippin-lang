@@ -89,3 +89,15 @@ Two flags mark entries that behave differently from an ordinary priced model:
 ## Estimating Cost
 
 Because pricing lives in the same embedded catalog the validator uses, `dippin cost` can estimate a workflow's per-run token spend directly from the model each agent names — no separate price table to configure. For the cost command, its assumptions, and the related coverage and optimization tools, see [Analysis Tools](/analysis/).
+
+## Use the catalog in your own tools
+
+The full catalog is published as consumable JSON at **[`/prices.json`](/prices.json)** — the exact file dippin embeds, refreshed on every deploy, and served with `Access-Control-Allow-Origin: *` so you can fetch it straight from a browser. Each entry carries `provider`, `model`, `input_per_m` / `output_per_m` (USD per million tokens), optional cache fields (`cache_read_mult` / `cache_write_mult`, or an absolute `cached_input_per_m`), the `priced` / `deprecated` flags, and provenance (`source` URL + `as_of` date). A top-level `provider_aliases` map resolves shorthand names (e.g. `xai` → `grok`) to canonical providers.
+
+```sh
+curl -s https://dippin.org/prices.json | jq '.models[] | select(.provider == "anthropic")'
+```
+
+## Report a correction
+
+Every price is verified against the provider's **official** pricing page — each entry records the `source` URL and the `as_of` date it was last checked. Prices are never taken from model memory or third-party aggregators as ground truth, so a correction needs a first-party citation. If you spot a stale or wrong number, open an issue or a PR against [`pricing/prices.json`](https://github.com/2389-research/dippin-lang/blob/main/pricing/prices.json), **including the official source URL and the date you checked**.
