@@ -57,7 +57,7 @@ A model identifier may be written with dots or with dashes, and the two forms re
 
 When an agent node names a `provider` / `model` pair that isn't in the catalog, the linter emits **DIP108 — Unknown Model/Provider**. It is a warning, not an error: the workflow still runs, but an unknown model can't be priced and may be a typo.
 
-To teach the tools about private or in-house models, extend the catalog for a single run with `--extra-models`. The flag is available on `dippin validate`, `dippin lint`, and `dippin doctor`, and takes a `provider:model1,model2;provider2:model3` spec:
+To teach the tools about private or in-house models, extend the catalog for a single run with `--extra-models`. The flag is available on `dippin lint` and `dippin doctor` (it tunes the DIP108 catalog check, which `dippin validate` does not run), and takes a `provider:model1,model2;provider2:model3` spec:
 
 ```sh
 dippin lint --extra-models "custom-corp:custom-llm-v1" pipeline.dip
