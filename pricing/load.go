@@ -18,12 +18,12 @@ type fileEntry struct {
 	Source          string   `json:"source"`
 	AsOf            string   `json:"as_of"`
 	// Drift metadata (#264) + capability metadata (#267); all optional.
-	Family          string   `json:"family,omitempty"`
-	Rank            int      `json:"rank,omitempty"`
-	Maturity        string   `json:"maturity,omitempty"`
-	ContextWindow   int      `json:"context_window,omitempty"`
-	MaxOutput       int      `json:"max_output,omitempty"`
-	Capabilities    []string `json:"capabilities,omitempty"`
+	Family        string   `json:"family,omitempty"`
+	Rank          int      `json:"rank,omitempty"`
+	Maturity      string   `json:"maturity,omitempty"`
+	ContextWindow int      `json:"context_window,omitempty"`
+	MaxOutput     int      `json:"max_output,omitempty"`
+	Capabilities  []string `json:"capabilities,omitempty"`
 }
 
 type priceFile struct {

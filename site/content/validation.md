@@ -11,7 +11,7 @@ Dippin provides two levels of analysis:
 
 **Structural validation** (DIP001-DIP010): Errors that must be fixed. A workflow with any of these cannot execute. Run with `dippin validate`.
 
-**Semantic linting** (DIP101-DIP160): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
+**Semantic linting** (DIP101-DIP161): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. Run with `dippin lint` for both levels.
 
 ### Diagnostic Format
 
