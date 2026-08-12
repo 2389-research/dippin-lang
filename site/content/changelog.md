@@ -4,6 +4,16 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.67.0] — 2026-08-12
+
+### Added
+- **Model family aliases — `[provider/]family@selector`** ([#264](https://github.com/2389-research/dippin-lang/issues/264), Phase 2). An `agent`'s `model:` may now be a family alias (`opus@latest`, `anthropic/opus@stable`) with selector `latest` / `stable` / `sota`, instead of a concrete id that silently rots when a provider retires a model. `dippin fmt` **pins** a resolvable alias in place to its concrete catalog id (author-time, one-way) — and a provider-prefixed cross-provider alias also reconciles the node's `provider:` field, so pinning never turns a lint-clean file into a warning. `dippin cost` prices an un-pinned alias on its resolved id. Resolution excludes deprecated / preview / unpriced members, so an alias can never land on a retired or unpriced model. Builds on the `pricing.ResolveAlias` foundation from v0.66.0; adds the shared `pricing.ResolveModelRef` resolver.
+- **DIP162 — Unresolvable Model Alias.** Warns when a `family@selector` alias resolves to no eligible model (unknown family, invalid selector, or every member deprecated/preview). A resolvable alias is valid — no DIP108, no DIP162.
+
+### Changed
+- **`dippin fmt` retains a file's leading comment block** ([#259](https://github.com/2389-research/dippin-lang/issues/259)). A `.dip` file's leading blank/comment header — license banners, `ABOUTME:` lines — is now captured and re-emitted by `fmt` instead of being silently dropped. (Interior/inline comment retention remains future work; the lexer strips comments at tokenize time.)
+- Diagnostic-code count is now **72** (DIP101–DIP162) across all doc and site surfaces.
+
 ## [v0.66.2] — 2026-08-12
 
 ### Added
