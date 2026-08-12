@@ -100,16 +100,18 @@ func parseAliasRef(nodeProvider, modelValue string) (provider, family, selector 
 // alias syntax (#264). Given a node's provider and its model value:
 //
 //   - If modelValue is a family alias ([provider/]family@selector), isAlias is
-//     true. The optional provider/ prefix overrides nodeProvider. resolved
-//     reports whether the alias points at a concrete, eligible model; concrete is
-//     that model id (empty when resolved is false).
-//   - Otherwise isAlias is false (concrete="", resolved=false): an ordinary
-//     concrete model id, handled by the existing catalog paths.
-func ResolveModelRef(nodeProvider, modelValue string) (concrete string, resolved, isAlias bool) {
+//     true. The optional provider/ prefix overrides nodeProvider; provider
+//     reports which provider the alias resolved under (the prefix if present,
+//     else nodeProvider) so callers can reconcile a cross-provider alias.
+//     resolved reports whether the alias points at a concrete, eligible model;
+//     concrete is that model id (empty when resolved is false).
+//   - Otherwise isAlias is false (concrete="", provider="", resolved=false): an
+//     ordinary concrete model id, handled by the existing catalog paths.
+func ResolveModelRef(nodeProvider, modelValue string) (concrete, provider string, resolved, isAlias bool) {
 	if !aliasRe.MatchString(modelValue) {
-		return "", false, false
+		return "", "", false, false
 	}
-	provider, family, selector := parseAliasRef(nodeProvider, modelValue)
-	id, ok := ResolveAlias(provider, family, selector)
-	return id, ok, true
+	prov, family, selector := parseAliasRef(nodeProvider, modelValue)
+	id, ok := ResolveAlias(prov, family, selector)
+	return id, prov, ok, true
 }

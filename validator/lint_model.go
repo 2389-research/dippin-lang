@@ -163,7 +163,7 @@ func deprecatedModelDiag(n *ir.Node, model, provider string) []Diagnostic {
 // yields no diagnostic and an unresolvable one yields DIP162. A non-alias value
 // returns isAlias=false so the caller falls through to the DIP108 catalog check.
 func aliasModelDiag(n *ir.Node, model, provider string) (diags []Diagnostic, isAlias bool) {
-	_, resolved, isAlias := pricing.ResolveModelRef(provider, model)
+	_, _, resolved, isAlias := pricing.ResolveModelRef(provider, model)
 	if !isAlias || resolved {
 		return nil, isAlias
 	}

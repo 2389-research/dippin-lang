@@ -171,8 +171,9 @@ func getModelProvider(ac ir.AgentConfig, w *ir.Workflow) (string, string) {
 	}
 	// A family alias (opus@latest, #264) prices on its resolved concrete id, so
 	// `dippin cost` works on an un-pinned alias instead of estimating $0.
-	if concrete, resolved, isAlias := pricing.ResolveModelRef(provider, model); isAlias && resolved {
+	if concrete, aliasProvider, resolved, isAlias := pricing.ResolveModelRef(provider, model); isAlias && resolved {
 		model = concrete
+		provider = aliasProvider
 	}
 	return model, provider
 }

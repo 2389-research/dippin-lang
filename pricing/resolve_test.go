@@ -49,24 +49,25 @@ func TestResolveModelRef(t *testing.T) {
 	cases := []struct {
 		nodeProvider, modelValue string
 		wantConcrete             string
+		wantProvider             string
 		wantResolved, wantAlias  bool
 	}{
-		{"anthropic", "opus@latest", "claude-opus-5", true, true},
-		{"anthropic", "opus@stable", "claude-opus-4-8", true, true},
-		{"anthropic", "sonnet@latest", "claude-sonnet-5", true, true},
-		{"", "anthropic/opus@stable", "claude-opus-4-8", true, true},     // provider from prefix
-		{"openai", "anthropic/opus@latest", "claude-opus-5", true, true}, // prefix overrides node
-		{"anthropic", "bogus@latest", "", false, true},                   // alias, unresolvable
-		{"anthropic", "opus@newest", "", false, false},                   // bad selector → not an alias
-		{"anthropic", "claude-opus-5", "", false, false},                 // concrete id
-		{"anthropic", "", "", false, false},                              // empty
+		{"anthropic", "opus@latest", "claude-opus-5", "anthropic", true, true},
+		{"anthropic", "opus@stable", "claude-opus-4-8", "anthropic", true, true},
+		{"anthropic", "sonnet@latest", "claude-sonnet-5", "anthropic", true, true},
+		{"", "anthropic/opus@stable", "claude-opus-4-8", "anthropic", true, true},     // provider from prefix
+		{"openai", "anthropic/opus@latest", "claude-opus-5", "anthropic", true, true}, // prefix overrides node
+		{"anthropic", "bogus@latest", "", "anthropic", false, true},                   // alias, unresolvable
+		{"anthropic", "opus@newest", "", "", false, false},                            // bad selector → not an alias
+		{"anthropic", "claude-opus-5", "", "", false, false},                          // concrete id
+		{"anthropic", "", "", "", false, false},                                       // empty
 	}
 	for _, c := range cases {
-		concrete, resolved, isAlias := ResolveModelRef(c.nodeProvider, c.modelValue)
-		if concrete != c.wantConcrete || resolved != c.wantResolved || isAlias != c.wantAlias {
-			t.Errorf("ResolveModelRef(%q,%q) = (%q,%v,%v), want (%q,%v,%v)",
-				c.nodeProvider, c.modelValue, concrete, resolved, isAlias,
-				c.wantConcrete, c.wantResolved, c.wantAlias)
+		concrete, provider, resolved, isAlias := ResolveModelRef(c.nodeProvider, c.modelValue)
+		if concrete != c.wantConcrete || provider != c.wantProvider || resolved != c.wantResolved || isAlias != c.wantAlias {
+			t.Errorf("ResolveModelRef(%q,%q) = (%q,%q,%v,%v), want (%q,%q,%v,%v)",
+				c.nodeProvider, c.modelValue, concrete, provider, resolved, isAlias,
+				c.wantConcrete, c.wantProvider, c.wantResolved, c.wantAlias)
 		}
 	}
 }
