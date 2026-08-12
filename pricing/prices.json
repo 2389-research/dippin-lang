@@ -264,6 +264,15 @@
       "cached_input_per_m": 0.003625
     },
     {
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro-0813",
+      "input_per_m": 0.435,
+      "output_per_m": 0.87,
+      "source": "https://api-docs.deepseek.com/quick_start/pricing",
+      "as_of": "2026-08-12",
+      "cached_input_per_m": 0.003625
+    },
+    {
       "provider": "gemini",
       "model": "gemini-2.0-flash",
       "input_per_m": 0.1,
@@ -430,6 +439,15 @@
       "source": "https://docs.x.ai/docs/models",
       "as_of": "2026-08-10",
       "cached_input_per_m": 0.3
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.6",
+      "input_per_m": 2,
+      "output_per_m": 6,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-08-12",
+      "cached_input_per_m": 0.5
     },
     {
       "provider": "grok",
