@@ -1,13 +1,18 @@
 {{ define "main" }}
 <section class="doc">
 <div class="container">
-  <div class="doc-header">
-    <div class="section-label">History</div>
-    <h1>Changelog</h1>
-    <p>All notable changes to dippin-lang. Versions follow <a href="https://semver.org/">semver</a>.</p>
-  </div>
-  <div class="doc-body">
-    {{ .Content }}
+  <div class="doc-layout">
+    {{ partial "docs-sidebar.html" . }}
+    <main class="doc-main">
+      <div class="doc-header">
+        <div class="section-label">History</div>
+        <h1>Changelog</h1>
+        <p>All notable changes to dippin-lang. Versions follow <a href="https://semver.org/">semver</a>.</p>
+      </div>
+      <div class="doc-body">
+        {{ .Content }}
+      </div>
+    </main>
   </div>
 </div>
 </section>

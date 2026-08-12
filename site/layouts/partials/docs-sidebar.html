@@ -1,0 +1,10 @@
+<aside class="doc-sidebar" aria-label="Documentation">
+  <nav class="doc-nav">
+    {{ $cur := .RelPermalink }}
+    {{ $lastGroup := "" }}
+    {{ range .Site.Menus.docs }}
+      {{ with .Params.group }}{{ if ne . $lastGroup }}<div class="doc-nav-group">{{ . }}</div>{{ $lastGroup = . }}{{ end }}{{ end }}
+      <a href="{{ .URL }}"{{ if eq $cur .URL }} class="active" aria-current="page"{{ end }}>{{ .Name }}</a>
+    {{ end }}
+  </nav>
+</aside>
