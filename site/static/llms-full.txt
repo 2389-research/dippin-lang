@@ -8,12 +8,18 @@ Generate from template: `dippin new minimal`, `dippin new parallel`, `dippin new
 
 ## Grammar (simplified BNF)
 
-```
+```dippin
 workflow <Name>
   goal: "<text>"
   [requires: <dep1>, <dep2>, ...]
   start: <NodeID>
   exit: <NodeID>
+
+  [inputs
+    <name>: <text|number|bool|enum|file|secret>
+      [required: true] [default: <value>] [prompt: "<text>"] [description: "<text>"]
+      [options: <a>, <b>] [pattern: "<regex>"] [min: <n>] [max: <n>] [max_length: <int>] [multiline: true]
+    ...]
 
   [defaults
     model: <string>
@@ -57,7 +63,7 @@ workflow <Name>
 | `tool` | `command` (or `command_file`) | `timeout` (e.g. 30s, 5m), `outputs` (CSV), `marker_grep` (regex), `route_required` (bool), `output_limit` (bytes), `command_file` (path to external script, relative to .dip dir) |
 | `parallel` | `-> Target1, Target2` (inline) | — |
 | `fan_in` | `<- Source1, Source2` (inline) | — |
-| `subgraph` | `ref` | `params` |
+| `subgraph` | `ref` | `params` (dip 1) / `inputs` (dip 2, #227) |
 
 All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`, `base_delay`, `retry_target`, and the retry-exhaustion route — spelled `fallback_target` in `dip 1`, `fallback_retry_target` in `dip 2` (`dippin fmt --migrate` relabels it). These are the engine's retry channel, read from the node, not the `edges` block.
 
@@ -65,7 +71,7 @@ All kinds also accept: `label`, `reads`, `writes`, `retry_policy`, `max_retries`
 
 ## Edge Conditions
 
-```
+```dippin
 when <variable> <op> <value>
 when <expr> and <expr>
 when <expr> or <expr>
@@ -77,7 +83,7 @@ on <token>                       # sugar: equality vs the source node's outcome 
 
 **`on <token>` shorthand:** desugars to `when <channel> = <token>`, where the channel is the source node's natural outcome channel — `ctx.outcome` for agent nodes, `ctx.tool_marker` for tool nodes with `marker_grep`. IR-identical to the equivalent `when`; `dippin fmt` rewrites eligible `when` edges to `on`. The value must be a single bare identifier (`[A-Za-z0-9][A-Za-z0-9_-]*`); quoted, multi-token, or any other values require an explicit `when <channel> = ...`. Source nodes with no outcome channel must use `when`: human gates (which route on the choice/label, not `ctx.outcome`), `conditional` nodes, and tools without `marker_grep`.
 
-**Variables:** Always namespace-qualified: `ctx.outcome`, `ctx.status`, `graph.goal`
+**Variables:** Always namespace-qualified: `ctx.outcome`, `ctx.status`, `graph.goal`, `params.*` (subgraph params), `inputs.*` (declared workflow inputs — a closed namespace; an undeclared reference is DIP156)
 
 ---
 
@@ -110,7 +116,7 @@ Tool nodes that declare `marker_grep:` are also treated as exhaustive (typed rou
 
 This means the common pattern below is valid with zero warnings:
 
-```
+```dippin
 Gate -> Fix when ctx.outcome = fail
 Gate -> Next when ctx.outcome = success
 ```
@@ -119,7 +125,7 @@ Gate -> Next when ctx.outcome = success
 
 ## Example: Conditional Routing
 
-```
+```dippin
 workflow ReviewPipeline
   goal: "Review code and route by outcome"
   start: Analyze
@@ -157,7 +163,7 @@ workflow ReviewPipeline
 
 **Identifiers:** `[a-zA-Z0-9][a-zA-Z0-9_\-./]*` — letters, digits, underscore, dash, dot, slash.
 
-**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `override`, `label`, `weight`.
+**Contextual keywords** (not reserved — usable as node IDs): `workflow`, `agent`, `human`, `tool`, `subgraph`, `parallel`, `fan_in`, `edges`, `defaults`, `inputs`, `vars`, `when`, `on`, `and`, `or`, `not`, `true`, `false`, `restart`, `loop`, `override`, `label`, `weight`.
 
 **Position-reserved keyword:** `else` is the one exception — it is reserved *only* as the first token of an `edges`-block line (where it introduces the section default), so it cannot be an edge *source* node ID there. Everywhere else `else` is an ordinary identifier and may be used as a node ID.
 
@@ -197,10 +203,10 @@ Workflow: author and lint as `.dip`; package with `dippin pack` for distribution
 
 ## Diagnostic Code Summary
 
-70 diagnostic codes across two categories:
+71 diagnostic codes across two categories:
 
 - **DIP001–DIP010** (errors): start/exit missing, unknown refs, unreachable nodes, cycles, duplicates, parallel/fan_in mismatch, unparseable edge conditions
-- **DIP101–DIP160** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade), unknown input type (DIP155), reference to an undeclared input in a prompt or edge condition (DIP156), `${inputs.x}` inside a tool `command:` which never interpolates (DIP157), invalid or inapplicable input constraint (DIP158), declared-but-unreferenced input / dead input (DIP159), subgraph params omitting a required input of the referenced child (cross-file, DIP160). DIP155–DIP158 are error-severity — they fail `dippin lint`/`check` (DIP159 is a warning)
+- **DIP101–DIP161** (warnings): conditional reachability, missing defaults, overlapping conditions, unbounded retries, undefined variables, unknown models, empty prompts, missing timeouts, invalid policy/fidelity/reasoning_effort, stylesheet refs, namespace prefixes, condition type checking, structured output validation, manager_loop checks, tool-access safety, writable-paths safety, subgraph tool_access boundary, agent failure route, negative budget defaults, cross-file subgraph tool_access, restricted→tool-bearing info-flow (chain-attack), negative last_response_truncate, ambiguous routing (multiple unconditional edges), human-gate choice key (label routes without explicit choice), edge weight (unused by routing), marker coverage (marker_grep enumerates a marker no edge routes), redundant parallel/fan_in edge (edges-block re-declaration of an inline fork; the inline list is authoritative), prompt-cascade opt-out no-op (prompt_prefix/suffix: none with no defaults cascade), unknown input type (DIP155), reference to an undeclared input in a prompt or edge condition (DIP156), `${inputs.x}` inside a tool `command:` which never interpolates (DIP157), invalid or inapplicable input constraint — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (DIP158), declared-but-unreferenced input / dead input (DIP159), subgraph params omitting a required input of the referenced child (cross-file, DIP160), agent pinned to a deprecated catalog model — retired first-party, still billed on passthrough (DIP161). DIP155–DIP158 are error-severity — they cause `dippin lint` and `dippin check` to exit non-zero (DIP159 is a warning).
 
 ---
 
@@ -217,13 +223,20 @@ workflow <Name>
     model: claude-sonnet-4-6
     provider: anthropic
 
+  inputs
+    idea: text
+      required: true
+      prompt: "What do you want built?"
+
   <node declarations>
 
   edges
     <edge declarations>
 ```
 
-Four sections in order: **header** (workflow name, goal, optional `requires`, start, exit) → **defaults** (optional) → **nodes** (any order) → **edges** (optional). `defaults` and `edges` are bare keywords — no colon after them. `requires:` is a comma-separated list of environmental dependencies (e.g. `git, docker, jq`); semantics live in downstream consumers and unknown entries are accepted without a parser diagnostic.
+Sections in canonical order: **header** (workflow name, goal, optional `requires`, start, exit) → **inputs** (optional) → **defaults** (optional) → **vars** (optional) → **nodes** (any order) → **stylesheet** (optional) → **edges** (optional). `inputs`, `defaults`, `vars`, and `edges` are bare keywords — no colon after them. `requires:` is a comma-separated list of environmental dependencies (e.g. `git, docker, jq`); semantics live in downstream consumers and unknown entries are accepted without a parser diagnostic.
+
+`inputs` declares the workflow's callee-side signature: entries are `name: type` (types: `text`, `number`, `bool`, `enum`, `file`, `secret`) with an optional indented block of attributes (`required`, `prompt`, `description`, `default`, `options`, `pattern`, `min`, `max`, `max_length`, `multiline`). Declaration order is significant and never reordered by the formatter. Reference a declared input as `${inputs.name}` in a prompt — never inside a tool `command:`, which never interpolates it (DIP157); an undeclared reference is DIP156, and an unrecognized type is DIP155.
 
 Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blocks).
 
@@ -575,7 +588,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP160) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP161) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -719,6 +732,7 @@ The primary loop for authoring .dip files:
 | DIP158 | An input constraint is invalid or inapplicable — enum default ∉ options, min > max, bad pattern regex, or a constraint on a type that lacks it (Error) | Fix the constraint or move it to an applicable type |
 | DIP159 | A declared input is never referenced — a dead input (Warning). `file`/`secret` inputs are exempt (consumed out-of-band by staged path) | Reference the input, or remove it |
 | DIP160 | A `subgraph` node's call-site binding omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's binding (`inputs:` dip 2 / `params:` dip 1) |
+| DIP161 | An agent pins a `provider`/`model` in the catalog but flagged `deprecated` — retired on the first-party API, still billed on passthrough (Bedrock/Vertex). Complements DIP108, which flags models not in the catalog (Warning) | Pin a current, non-deprecated model for the provider |
 
 ## Best Practices
 

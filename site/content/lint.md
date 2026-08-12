@@ -2,7 +2,7 @@
 title: "Lint Rules"
 description: "61 semantic lint checks (DIP101–DIP161) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
 section_label: "Diagnostics"
-subtitle: "Semantic lint: 60 checks (DIP101–DIP161) grouped by concern."
+subtitle: "Semantic lint: 61 checks (DIP101–DIP161) grouped by concern."
 ---
 
 ## Semantic Warnings vs Errors

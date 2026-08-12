@@ -15,12 +15,27 @@ func aliasEligible(p ModelPrice) bool {
 	return p.Priced && !p.Deprecated && p.Maturity != "preview"
 }
 
+// familyMember reports whether the entry stored under key id is a rankable
+// member of family: a canonical (non-alias) key, in the family, and eligible.
+func familyMember(id string, p ModelPrice, family string) bool {
+	return !isAliasKey("", id, p) && p.Family == family && aliasEligible(p)
+}
+
 // familyCandidates returns the eligible models of one family within a provider,
 // newest first (by Rank, then id for a deterministic tie-break).
 func familyCandidates(provider, family string) []rankedModel {
+	return rankFamily(index.byProvider[canonicalProvider(provider)], family)
+}
+
+// rankFamily is the testable core of familyCandidates. It skips alias keys
+// (byProvider holds every model under its canonical id AND each of its aliases,
+// so an aliased model would otherwise be counted more than once — which could
+// let "stable" resolve to a second spelling of the newest model instead of the
+// true one-release-back model).
+func rankFamily(models map[string]ModelPrice, family string) []rankedModel {
 	var c []rankedModel
-	for id, p := range index.byProvider[canonicalProvider(provider)] {
-		if p.Family == family && aliasEligible(p) {
+	for id, p := range models {
+		if familyMember(id, p, family) {
 			c = append(c, rankedModel{id, p.Rank})
 		}
 	}

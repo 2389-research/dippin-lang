@@ -26,6 +26,25 @@ func TestResolveAlias(t *testing.T) {
 	}
 }
 
+// TestRankFamilySkipsAliases guards the alias double-count fix: byProvider holds
+// a model under its canonical id AND each alias, so a family-tagged model with an
+// alias must not be counted twice (which would let "stable" resolve to a second
+// spelling of the newest model instead of the true one-release-back model).
+func TestRankFamilySkipsAliases(t *testing.T) {
+	models := map[string]ModelPrice{
+		"opus-new":       {Family: "opus", Rank: 50, Priced: true, Aliases: []string{"opus-new-alias"}},
+		"opus-new-alias": {Family: "opus", Rank: 50, Priced: true, Aliases: []string{"opus-new-alias"}},
+		"opus-old":       {Family: "opus", Rank: 40, Priced: true},
+	}
+	got := rankFamily(models, "opus")
+	if len(got) != 2 {
+		t.Fatalf("rankFamily counted aliases: got %d candidates, want 2 (%v)", len(got), got)
+	}
+	if got[0].id != "opus-new" || got[1].id != "opus-old" {
+		t.Errorf("rankFamily order wrong: got %v, want [opus-new opus-old] (latest=canonical, stable=true second)", got)
+	}
+}
+
 func TestResolveAliasNeverReturnsDeprecated(t *testing.T) {
 	for _, sel := range []string{"latest", "stable", "sota"} {
 		if got, _ := ResolveAlias("anthropic", "opus", sel); got == "claude-opus-4-0" || got == "claude-opus-4-1" {

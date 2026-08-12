@@ -1,6 +1,6 @@
 # Validation and Linting Reference
 
-Dippin registers 70 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (69 documented sections):
+Dippin registers 71 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (70 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
 - **Semantic linting** (DIP101–DIP161): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.

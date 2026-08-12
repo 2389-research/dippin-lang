@@ -28,23 +28,13 @@ func CacheGaps() []string {
 	var out []string
 	for prov, models := range index.byProvider {
 		for id, p := range models {
-			if cacheGapEntry(p) {
+			// Skip alias keys so a model isn't listed under both its id and an
+			// alias spelling (byProvider holds it under every name).
+			if !isAliasKey("", id, p) && cacheGapEntry(p) {
 				out = append(out, prov+"/"+id)
 			}
 		}
 	}
 	sort.Strings(out)
-	return dedupSorted(out)
-}
-
-// dedupSorted removes adjacent duplicates from a sorted slice (a model reachable
-// under both its id and an alias would otherwise be listed twice).
-func dedupSorted(s []string) []string {
-	out := s[:0:0]
-	for i, v := range s {
-		if i == 0 || v != s[i-1] {
-			out = append(out, v)
-		}
-	}
 	return out
 }
