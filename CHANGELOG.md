@@ -4,6 +4,14 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.68.0] — 2026-08-21
+
+### Added
+- **Verified `display_name` in the model catalog** ([#285](https://github.com/2389-research/dippin-lang/issues/285)). Each catalog entry can now carry the model's human-facing product name exactly as the provider writes it (`GPT-4o`, `Command R+`, `GLM-4.5-AirX`), verified against the same official page the entry cites in `source`. Populated for **97/111** models across all 11 providers; the rest have no confirmable name on a current official page and are left `unknown` (absent, never guessed). Plumbs through `pricing.ModelPrice.DisplayName`, published in `/models.schema.json`, documented on the Models & Pricing page. This lets a consumer label a model without title-casing the id (which loses branding) or hand-maintaining a parallel name table — closing the last gap that blocked retiring a downstream identity catalog.
+
+### Changed
+- Refreshed stale pricing verifications and suppressed a Gemini 3.6 Flash intro-rate drift ([#284](https://github.com/2389-research/dippin-lang/issues/284)).
+
 ## [v0.67.0] — 2026-08-12
 
 ### Added
