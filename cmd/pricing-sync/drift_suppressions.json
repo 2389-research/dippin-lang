@@ -33,6 +33,14 @@
   },
   {
     "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "kind": "price",
+    "aggregator_value": "0.75/3.75",
+    "reason": "models.dev reports the introductory rate; catalog 1.5/7.5 is the durable list price.",
+    "review_by": "2026-11-08"
+  },
+  {
+    "provider": "gemini",
     "model": "gemini-2.0-flash",
     "kind": "deprecated",
     "aggregator_value": "deprecated",
