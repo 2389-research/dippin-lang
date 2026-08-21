@@ -24,6 +24,7 @@
       "properties": {
         "provider": { "type": "string", "description": "Canonical provider name." },
         "model": { "type": "string", "description": "Model identifier. Dotted and dashed forms are equivalent." },
+        "display_name": { "type": "string", "description": "Human-facing product name, verified from source (e.g. 'Claude Opus 4.8', 'GPT-4o', 'Command R+'). Absent = unknown; derive from the id or overlay." },
         "aliases": { "type": "array", "items": { "type": "string" }, "description": "Alternate model spellings that resolve to this entry." },
         "input_per_m": { "type": "number", "description": "Input price, USD per 1M tokens." },
         "output_per_m": { "type": "number", "description": "Output price, USD per 1M tokens." },
