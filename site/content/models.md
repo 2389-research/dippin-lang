@@ -38,6 +38,7 @@ Each entry describes one model and its published price:
 | --- | --- |
 | `provider` | Canonical provider name |
 | `model` | Model identifier |
+| `display_name` | Optional human-facing product name, verified from `source` (e.g. `GPT-4o`, `Command R+`) — absent means unknown |
 | `input_per_m` | Input price per million tokens |
 | `output_per_m` | Output price per million tokens |
 | `source` | URL of the official provider page the price was read from |
@@ -94,6 +95,7 @@ Beyond price, an entry can carry optional metadata so a consumer can derive its 
 
 - **`family` / `rank` / `maturity`** — the family a model belongs to (e.g. `opus`), its ordering within that family (`rank`, higher = newer), and `stable`/`preview`. This lets a consumer resolve a *family reference* to a concrete model without string-parsing irregular IDs — newest-in-family, one release back, and so on. Resolution deliberately excludes deprecated, unpriced, and preview models, so it can never land on a retired or unpriced model. Go consumers can call `pricing.ResolveAlias(provider, family, selector)` (`latest`/`sota` = newest eligible, `stable` = one release back); a JSON consumer resolves from these fields directly.
 - **`context_window` / `max_output` / `capabilities`** — max input context tokens, max output tokens, and capability tags (`tools`, `vision`, `reasoning`). Absent means **unknown**, never a claim of zero. Populated in verified per-provider batches.
+- **`display_name`** — the model's human-facing product name as the provider writes it (`GPT-4o`, `Command R+`, `GLM-4.5-AirX`), verified against the same official page in `source` — so a UI can label a model without title-casing the id (which loses branding) or hand-maintaining a parallel name table. Absent means **unknown**; a consumer derives from the id or overlays its own.
 
 ### Model families / aliases
 
@@ -125,7 +127,7 @@ Because pricing lives in the same embedded catalog the validator uses, `dippin c
 
 ## Use the catalog in your own tools
 
-The full catalog is published as consumable JSON at **[`/prices.json`](/prices.json)** (also aliased as **[`/models.json`](/models.json)** — the catalog carries more than prices) — the exact file dippin embeds, refreshed on every deploy, and served with `Access-Control-Allow-Origin: *` so you can fetch it straight from a browser. A JSON Schema for the shape is published at **[`/models.schema.json`](/models.schema.json)**. Each entry carries `provider`, `model`, `input_per_m` / `output_per_m` (USD per million tokens), optional cache fields (`cache_read_mult` / `cache_write_mult`, or an absolute `cached_input_per_m`), the `priced` / `deprecated` flags, optional drift metadata (`family` / `rank` / `maturity`) and capability metadata (`context_window` / `max_output` / `capabilities`), and provenance (`source` URL + `as_of` date). A top-level `provider_aliases` map resolves shorthand names (e.g. `xai` → `grok`) to canonical providers.
+The full catalog is published as consumable JSON at **[`/prices.json`](/prices.json)** (also aliased as **[`/models.json`](/models.json)** — the catalog carries more than prices) — the exact file dippin embeds, refreshed on every deploy, and served with `Access-Control-Allow-Origin: *` so you can fetch it straight from a browser. A JSON Schema for the shape is published at **[`/models.schema.json`](/models.schema.json)**. Each entry carries `provider`, `model`, an optional human-facing `display_name`, `input_per_m` / `output_per_m` (USD per million tokens), optional cache fields (`cache_read_mult` / `cache_write_mult`, or an absolute `cached_input_per_m`), the `priced` / `deprecated` flags, optional drift metadata (`family` / `rank` / `maturity`) and capability metadata (`context_window` / `max_output` / `capabilities`), and provenance (`source` URL + `as_of` date). A top-level `provider_aliases` map resolves shorthand names (e.g. `xai` → `grok`) to canonical providers.
 
 ```sh
 curl -s https://dippin.org/prices.json | jq '.models[] | select(.provider == "anthropic")'
