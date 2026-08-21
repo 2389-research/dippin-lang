@@ -24,6 +24,9 @@ type fileEntry struct {
 	ContextWindow int      `json:"context_window,omitempty"`
 	MaxOutput     int      `json:"max_output,omitempty"`
 	Capabilities  []string `json:"capabilities,omitempty"`
+	// Human-facing product name, verified from source (#285); optional (absent =
+	// unknown, consumer derives or overlays).
+	DisplayName string `json:"display_name,omitempty"`
 }
 
 type priceFile struct {
@@ -80,6 +83,7 @@ func (idx *catalogIndex) add(e fileEntry) {
 		ContextWindow:   e.ContextWindow,
 		MaxOutput:       e.MaxOutput,
 		Capabilities:    e.Capabilities,
+		DisplayName:     e.DisplayName,
 	}
 	idx.put(e.Provider, e.Model, p)
 	for _, a := range e.Aliases {

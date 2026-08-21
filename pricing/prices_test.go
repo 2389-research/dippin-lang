@@ -26,6 +26,32 @@ func TestCatalogProvenance(t *testing.T) {
 	}
 }
 
+// TestDisplayNameLoads verifies the optional display_name field (#285) plumbs
+// through the loader to ModelPrice, and that a verified name carries its exact
+// provider branding.
+func TestDisplayNameLoads(t *testing.T) {
+	cases := map[string]string{
+		"claude-opus-4-8": "Claude Opus 4.8",
+		"gpt-4o":          "GPT-4o",
+		"command-r-plus":  "Command R+",
+		"glm-4.5-airx":    "GLM-4.5-AirX",
+	}
+	for model, want := range cases {
+		p, ok := Lookup(model)
+		if !ok {
+			t.Errorf("%s not found", model)
+			continue
+		}
+		if p.DisplayName != want {
+			t.Errorf("%s DisplayName = %q, want %q", model, p.DisplayName, want)
+		}
+	}
+	// A model without a verified name leaves DisplayName empty (unknown, not "").
+	if p, ok := Lookup("qwen3.7-max"); ok && p.DisplayName != "" {
+		t.Errorf("unverified qwen3.7-max should have empty DisplayName, got %q", p.DisplayName)
+	}
+}
+
 func TestLookupExactAndFold(t *testing.T) {
 	// Exact.
 	if _, ok := Lookup("claude-opus-5"); !ok {

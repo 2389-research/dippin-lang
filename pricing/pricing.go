@@ -47,6 +47,10 @@ type ModelPrice struct {
 	ContextWindow int      // max input context window in tokens
 	MaxOutput     int      // max output tokens per response
 	Capabilities  []string // e.g. "tools", "vision", "reasoning"
+
+	// Human-facing product name (optional; #285), verified from Source. Empty =
+	// unknown; a consumer derives from the id or overlays its own.
+	DisplayName string // e.g. "Claude Opus 4.8", "GPT-4o", "Command R+"
 }
 
 // Usage is a neutral token-count struct so the one Cost implementation serves
