@@ -57,6 +57,14 @@
   },
   {
     "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "kind": "price",
+    "aggregator_value": "4/20",
+    "reason": "models.dev reports an introductory rate; catalog 5/30 remains the durable list price from OpenAI's pricing page.",
+    "review_by": "2026-11-23"
+  },
+  {
+    "provider": "openai",
     "model": "gpt-4.1-nano",
     "kind": "deprecated",
     "aggregator_value": "deprecated",

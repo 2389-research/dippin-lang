@@ -353,7 +353,7 @@
       "input_per_m": 0.14,
       "output_per_m": 0.28,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-25"
     },
     {
       "provider": "deepseek",
@@ -361,7 +361,7 @@
       "input_per_m": 0.14,
       "output_per_m": 0.28,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-25"
     },
     {
       "provider": "deepseek",
@@ -561,7 +561,7 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-25"
     },
     {
       "provider": "grok",
@@ -569,7 +569,7 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-06-10"
+      "as_of": "2026-08-25"
     },
     {
       "provider": "grok",
