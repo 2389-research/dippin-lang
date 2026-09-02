@@ -121,8 +121,12 @@ releases):
 - `just check-prices` — flags catalog entries overdue for re-verification.
 - `just sync-prices` — diffs `prices.json` against models.dev and reports
   candidates (report-only; a human confirms against each official `source`).
+- `just new-prices` — reports only upstream models missing from the catalog,
+  filtered to actionable text-model adds on priced providers.
 - A daily GitHub Action opens a rolling issue when it detects price/deprecation
-  drift for existing models.
+  drift for existing models **or** new upstream models the catalog is missing.
+  Persistent non-candidates (models we deliberately don't carry) are silenced
+  via `cmd/pricing-sync/drift_suppressions.json`.
 
 When dippin cuts a new tag with refreshed prices, tracker bumps its pin to adopt
 it — the same flow tracker already uses for every other dippin feature.
