@@ -4,6 +4,21 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.69.0] — 2026-09-02
+
+### Added
+- **Six verified models in the catalog** ([#291](https://github.com/2389-research/dippin-lang/issues/291)). `claude-fable-5-1` (10/50, 1M ctx, and the documented 0.025x cache-read exception unique to Fable 5.1 / Mythos 5.1), `gemini-3.7-flash` and `gemini-3.8-flash` (1.5/7.5), `glm-5.3` (1.4/4.4), `glm-5.3-flash` (0.15/0.5), and `MiniMax-M2.5-highspeed` (0.6/2.4). Each price was confirmed against the provider's official page and carries an `as_of` of 2026-09-02. Catalog is now **117** entries.
+- **`sync --new-only`** ([#290](https://github.com/2389-research/dippin-lang/pull/290)). Reports upstream models missing from the catalog, filtered to actionable text-model adds on priced providers. Exposed as `just new-prices`.
+
+### Fixed
+- **The daily pricing-sync Action could never report a new model** ([#290](https://github.com/2389-research/dippin-lang/pull/290)). The job ran `sync --existing-only`, which drops every `new` candidate before the report is written, so the issue-upsert gate always saw an empty report. The job reported success every morning while the catalog fell two Gemini Flash releases behind. It now runs both halves and files both in one rolling issue.
+- **A failing `pricing-sync` no longer passes silently.** Both workflow steps used `set +e`, so a fetch or parse failure was written into the report file, matched no candidate lines, recorded `changed=false`, and left the job green having detected nothing. Both steps now fail loudly.
+- **Z.AI models were reported twice.** models.dev exposes Z.AI as both `zai` and `zhipuai`, which both map to our `zai` key. Deduped across every report mode; rows that disagree on price are preserved, since that disagreement is signal.
+
+### Changed
+- Dispositioned 60 drift candidates into `cmd/pricing-sync/drift_suppressions.json` — superseded generations, JS-gated provider pages, vendor `-latest` aliases, non-text SKUs, and three introductory rates (Gemini 3.7/3.8 Flash, GLM-5.3-Flash) where the catalog carries the durable list price.
+- Corrected the stale `knownCacheGaps` note claiming MiniMax publishes no token cache price; it does, but not yet reliably machine-readable ([#292](https://github.com/2389-research/dippin-lang/issues/292)).
+
 ## [v0.68.0] — 2026-08-21
 
 ### Added

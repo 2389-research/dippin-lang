@@ -120,11 +120,11 @@ func reportChanges(cands []candidate, tol float64, mode reportMode, failOnChange
 func applyMode(changes []change, mode reportMode) []change {
 	switch mode {
 	case modeExistingOnly:
-		return dropNew(changes)
+		return dedupe(dropNew(changes))
 	case modeNewOnly:
 		return filterNew(changes)
 	default:
-		return changes
+		return dedupe(changes)
 	}
 }
 

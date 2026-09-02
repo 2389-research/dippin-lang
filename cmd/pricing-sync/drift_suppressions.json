@@ -86,5 +86,485 @@
     "aggregator_value": "deprecated",
     "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
     "review_by": "2026-11-08"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-a-plus-05-2026",
+    "kind": "new",
+    "aggregator_value": "2.5/10",
+    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-a-reasoning-08-2025",
+    "kind": "new",
+    "aggregator_value": "2.5/10",
+    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-a-translate-08-2025",
+    "kind": "new",
+    "aggregator_value": "2.5/10",
+    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-a-vision-07-2025",
+    "kind": "new",
+    "aggregator_value": "2.5/10",
+    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-r7b-arabic-02-2025",
+    "kind": "new",
+    "aggregator_value": "0.0375/0.15",
+    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash-vision-exp",
+    "kind": "new",
+    "aggregator_value": "0.14/0.28",
+    "reason": "Experimental preview SKU (-exp), not a durable entry on DeepSeek's pricing page (which lists deepseek-v4-flash/-pro).",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "deep-research-max-preview-04-2026",
+    "kind": "new",
+    "aggregator_value": "2/12",
+    "reason": "Specialized non-chat SKU (deep research / computer use / audio-out omni) outside the catalog's text-generation scope.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "deep-research-preview-04-2026",
+    "kind": "new",
+    "aggregator_value": "2/12",
+    "reason": "Specialized non-chat SKU (deep research / computer use / audio-out omni) outside the catalog's text-generation scope.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-2.5-computer-use-preview-10-2025",
+    "kind": "new",
+    "aggregator_value": "1.25/10",
+    "reason": "Specialized non-chat SKU (deep research / computer use / audio-out omni) outside the catalog's text-generation scope.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-flash-latest",
+    "kind": "new",
+    "aggregator_value": "0.75/3.75",
+    "reason": "Vendor rolling alias. The catalog resolves newest / one-back via pricing.ResolveAlias(provider, family, selector) rather than carrying vendor -latest pointers, which would drift silently.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-flash-lite-latest",
+    "kind": "new",
+    "aggregator_value": "0.3/2.5",
+    "reason": "Vendor rolling alias. The catalog resolves newest / one-back via pricing.ResolveAlias(provider, family, selector) rather than carrying vendor -latest pointers, which would drift silently.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-omni-flash-preview",
+    "kind": "new",
+    "aggregator_value": "1.5/17.5",
+    "reason": "Specialized non-chat SKU (deep research / computer use / audio-out omni) outside the catalog's text-generation scope.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "devstral-2512",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "devstral-latest",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "devstral-medium-2507",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "devstral-medium-latest",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "devstral-small-2505",
+    "kind": "new",
+    "aggregator_value": "0.1/0.3",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "devstral-small-2507",
+    "kind": "new",
+    "aggregator_value": "0.1/0.3",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "magistral-small",
+    "kind": "new",
+    "aggregator_value": "0.5/1.5",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "ministral-3b-latest",
+    "kind": "new",
+    "aggregator_value": "0.04/0.04",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-2411",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-2512",
+    "kind": "new",
+    "aggregator_value": "0.5/1.5",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-latest",
+    "kind": "new",
+    "aggregator_value": "0.5/1.5",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-medium-2505",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-medium-2508",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-medium-2604",
+    "kind": "new",
+    "aggregator_value": "1.5/7.5",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-medium-latest",
+    "kind": "new",
+    "aggregator_value": "1.5/7.5",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-small-2506",
+    "kind": "new",
+    "aggregator_value": "0.1/0.3",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "open-mistral-7b",
+    "kind": "new",
+    "aggregator_value": "0.25/0.25",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "open-mistral-nemo",
+    "kind": "new",
+    "aggregator_value": "0.15/0.15",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "open-mixtral-8x22b",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "open-mixtral-8x7b",
+    "kind": "new",
+    "aggregator_value": "0.7/0.7",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "pixtral-12b",
+    "kind": "new",
+    "aggregator_value": "0.15/0.15",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "pixtral-large-latest",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable, so this rate cannot be confirmed against an official source. Not carried until it can be.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "mistral",
+    "model": "zai-glm-5-2",
+    "kind": "new",
+    "aggregator_value": "1.4/4.4",
+    "reason": "Aggregator artifact: models.dev lists a Z.AI GLM model under the Mistral provider. The catalog carries GLM models under the zai provider.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2-0711-preview",
+    "kind": "new",
+    "aggregator_value": "0.6/2.5",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2-0905-preview",
+    "kind": "new",
+    "aggregator_value": "0.6/2.5",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2-thinking",
+    "kind": "new",
+    "aggregator_value": "0.6/2.5",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2-thinking-turbo",
+    "kind": "new",
+    "aggregator_value": "1.15/8",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2-turbo-preview",
+    "kind": "new",
+    "aggregator_value": "2.4/10",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.5",
+    "kind": "new",
+    "aggregator_value": "0.6/3",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.6",
+    "kind": "new",
+    "aggregator_value": "0.95/4",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.7-code",
+    "kind": "new",
+    "aggregator_value": "0.95/4",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.7-code-highspeed",
+    "kind": "new",
+    "aggregator_value": "1.9/8",
+    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-3.5-turbo",
+    "kind": "new",
+    "aggregator_value": "0.5/1.5",
+    "reason": "Superseded generation the catalog deliberately does not carry; retained upstream for backwards compatibility only.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-4",
+    "kind": "new",
+    "aggregator_value": "30/60",
+    "reason": "Superseded generation the catalog deliberately does not carry; retained upstream for backwards compatibility only.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-4-turbo",
+    "kind": "new",
+    "aggregator_value": "10/30",
+    "reason": "Superseded generation the catalog deliberately does not carry; retained upstream for backwards compatibility only.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.2-chat-latest",
+    "kind": "new",
+    "aggregator_value": "1.75/14",
+    "reason": "Not listed separately on OpenAI's pricing page; the reported 1.75/14 is gpt-5.3-codex's rate, which the catalog already carries.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.3-chat-latest",
+    "kind": "new",
+    "aggregator_value": "1.75/14",
+    "reason": "Not listed separately on OpenAI's pricing page; the reported 1.75/14 is gpt-5.3-codex's rate, which the catalog already carries.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.3-codex-spark",
+    "kind": "new",
+    "aggregator_value": "1.75/14",
+    "reason": "Not listed separately on OpenAI's pricing page; the reported 1.75/14 is gpt-5.3-codex's rate, which the catalog already carries.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.6",
+    "kind": "new",
+    "aggregator_value": "4/20",
+    "reason": "Not listed on OpenAI's pricing page; the reported 4/20 is gpt-5.6-sol's promotional rate, and the catalog already carries gpt-5.6-sol at its durable 5/30.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "o1",
+    "kind": "new",
+    "aggregator_value": "15/60",
+    "reason": "Superseded generation the catalog deliberately does not carry; retained upstream for backwards compatibility only.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "openai",
+    "model": "o1-pro",
+    "kind": "new",
+    "aggregator_value": "150/600",
+    "reason": "Superseded generation the catalog deliberately does not carry; retained upstream for backwards compatibility only.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5v",
+    "kind": "new",
+    "aggregator_value": "0.6/1.8",
+    "reason": "Vision/multimodal variant not priced on the text rows of Z.AI's pricing page; models.dev also reports conflicting rates for glm-5v-turbo.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6v",
+    "kind": "new",
+    "aggregator_value": "0.3/0.9",
+    "reason": "Vision/multimodal variant not priced on the text rows of Z.AI's pricing page; models.dev also reports conflicting rates for glm-5v-turbo.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5v-turbo",
+    "kind": "new",
+    "aggregator_value": "5/22",
+    "reason": "Vision/multimodal variant not priced on the text rows of Z.AI's pricing page; models.dev also reports conflicting rates for glm-5v-turbo.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5v-turbo",
+    "kind": "new",
+    "aggregator_value": "1.2/4",
+    "reason": "Vision/multimodal variant not priced on the text rows of Z.AI's pricing page; models.dev also reports conflicting rates for glm-5v-turbo.",
+    "review_by": "2026-12-01"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-3.7-flash",
+    "kind": "price",
+    "aggregator_value": "0.75/3.75",
+    "reason": "models.dev reports the introductory rate; the official page prints \"$0.75 through December 31, 2026. $1.50 starting January 1, 2027\" and the catalog carries the durable 1.5/7.5. Same disposition as gemini-3.6-flash.",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "kind": "price",
+    "aggregator_value": "0.75/3.75",
+    "reason": "models.dev reports the introductory rate; the official page prints \"$0.75 through December 31, 2026. $1.50 starting January 1, 2027\" and the catalog carries the durable 1.5/7.5. Same disposition as gemini-3.6-flash.",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "kind": "price",
+    "aggregator_value": "0.075/0.25",
+    "reason": "models.dev reports the 50% promotional rate, which Z.AI's pricing page says ends 2026-09-09; the catalog carries the regular 0.15/0.5.",
+    "review_by": "2026-09-16"
   }
 ]
