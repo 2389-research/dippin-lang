@@ -1481,6 +1481,67 @@
       "source": "https://docs.z.ai/guides/overview/pricing",
       "as_of": "2026-09-02",
       "cached_input_per_m": 0.03
+    },
+    {
+      "provider": "meta",
+      "model": "muse-spark-1.1",
+      "display_name": "Muse Spark 1.1",
+      "context_window": 1000000,
+      "input_per_m": 1.25,
+      "output_per_m": 4.25,
+      "source": "https://developer.meta.com/ai/products/meta-model-api/",
+      "as_of": "2026-09-02",
+      "cached_input_per_m": 0.15,
+      "family": "muse-spark",
+      "rank": 1
+    },
+    {
+      "provider": "meta",
+      "model": "muse-spark-1.2",
+      "display_name": "Muse Spark 1.2",
+      "context_window": 1000000,
+      "input_per_m": 1.25,
+      "output_per_m": 4.25,
+      "source": "https://developer.meta.com/ai/products/meta-model-api/",
+      "as_of": "2026-09-02",
+      "cached_input_per_m": 0.15,
+      "family": "muse-spark",
+      "rank": 2
+    },
+    {
+      "provider": "meta",
+      "model": "muse-spark-1.2-contributor",
+      "display_name": "Muse Spark 1.2 (Contributor)",
+      "context_window": 1000000,
+      "input_per_m": 0.1,
+      "output_per_m": 0.2,
+      "source": "https://developer.meta.com/ai/products/meta-model-api/",
+      "as_of": "2026-09-02",
+      "cached_input_per_m": 0.002
+    },
+    {
+      "provider": "meta",
+      "model": "muse-spark-1.3",
+      "display_name": "Muse Spark 1.3",
+      "context_window": 1000000,
+      "input_per_m": 1.25,
+      "output_per_m": 4.25,
+      "source": "https://developer.meta.com/ai/products/meta-model-api/",
+      "as_of": "2026-09-02",
+      "cached_input_per_m": 0.15,
+      "family": "muse-spark",
+      "rank": 3
+    },
+    {
+      "provider": "meta",
+      "model": "muse-spark-1.3-contributor",
+      "display_name": "Muse Spark 1.3 (Contributor)",
+      "context_window": 1000000,
+      "input_per_m": 0.1,
+      "output_per_m": 0.2,
+      "source": "https://developer.meta.com/ai/products/meta-model-api/",
+      "as_of": "2026-09-02",
+      "cached_input_per_m": 0.002
     }
   ]
 }

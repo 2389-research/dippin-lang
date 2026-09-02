@@ -7,7 +7,7 @@ subtitle: "Supported providers, the model catalog, and how cost is priced."
 
 ## Supported Providers
 
-Dippin recognizes models from eleven providers. Any agent node whose `provider` / `model` pair resolves to a catalog entry is considered known; anything else raises [DIP108](/lint/).
+Dippin recognizes models from twelve providers. Any agent node whose `provider` / `model` pair resolves to a catalog entry is considered known; anything else raises [DIP108](/lint/).
 
 - Anthropic
 - OpenAI
@@ -20,6 +20,7 @@ Dippin recognizes models from eleven providers. Any agent node whose `provider` 
 - Moonshot/Kimi
 - MiniMax
 - Qwen
+- Meta/Muse
 
 Several providers are known by more than one name. The catalog carries a small alias map so that, for example, `google` resolves to `gemini`, `xai` to `grok`, and `kimi` to `moonshot`.
 

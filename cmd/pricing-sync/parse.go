@@ -26,6 +26,8 @@ var aggregatorProvider = map[string]string{
 	"z-ai":       "zai",
 	"moonshotai": "moonshot",
 	"moonshot":   "moonshot",
+	"meta":       "meta",
+	"meta-llama": "meta",
 	"minimax":    "minimax",
 	"alibaba":    "qwen",
 	"qwen":       "qwen",
