@@ -46,8 +46,17 @@ jobs:
           # --existing-only keeps the signal actionable: price and deprecation
           # drift for models we already carry, not the hundreds of upstream
           # image/tts/embedding models we don't price.
-          set +e
-          go run ./cmd/pricing-sync sync --existing-only --tolerance 0.02 > drift.txt 2>&1
+          # Do NOT swallow a nonzero exit. pricing-sync only exits nonzero on a
+          # genuine failure (fetch/parse error, bad suppressions file, bad
+          # flags) — finding candidates is exit 0 unless --fail-on-changes. If
+          # the tool fails, the error text lands in drift.txt, the candidate
+          # grep matches nothing and the job would record changed=false and go
+          # green while detecting nothing. Fail loudly instead.
+          if ! go run ./cmd/pricing-sync sync --existing-only --tolerance 0.02 > drift.txt 2>&1; then
+            cat drift.txt
+            echo "::error::pricing-sync sync --existing-only failed; drift detection did not run"
+            exit 1
+          fi
           cat drift.txt
           # A candidate line is indented and starts with "[".
           if grep -qE '^\s+\[' drift.txt; then
@@ -66,8 +75,14 @@ jobs:
           # --new-only filters to text models on priced providers, dropping
           # non-text modalities, 0/0-priced entries and dated/preview snapshots
           # of models we already carry.
-          set +e
-          go run ./cmd/pricing-sync sync --new-only --tolerance 0.02 > new.txt 2>&1
+          # Same failure-propagation rule as the drift step above: a silent
+          # green run that detects nothing is the exact bug this step exists to
+          # fix, so a tool failure must fail the job.
+          if ! go run ./cmd/pricing-sync sync --new-only --tolerance 0.02 > new.txt 2>&1; then
+            cat new.txt
+            echo "::error::pricing-sync sync --new-only failed; new-model detection did not run"
+            exit 1
+          fi
           cat new.txt
           if grep -qE '^\s+\[' new.txt; then
             echo "changed=true" >> "$GITHUB_OUTPUT"

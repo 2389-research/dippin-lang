@@ -174,3 +174,30 @@ func TestDedupe_KeepsConflictingPrices(t *testing.T) {
 		t.Errorf("got %d rows, want both conflicting prices preserved", len(got))
 	}
 }
+
+// OpenAI publishes ISO-dated snapshots (gpt-4o-2024-08-06); the catalog carries
+// the undated gpt-4o, so these are covered, not new.
+func TestFilterNew_DropsISODatedSnapshotOfCatalogedModel(t *testing.T) {
+	got := filterNew([]change{
+		newChange("openai", "gpt-4o-2024-05-13"),
+		newChange("openai", "gpt-4o-2024-08-06"),
+		newChange("openai", "gpt-4o-2024-11-20"),
+	})
+	if len(got) != 0 {
+		t.Errorf("kept %v, want none (all ISO-dated snapshots of cataloged gpt-4o)", models(got))
+	}
+}
+
+// Fail closed on an unrecognized provider. Today every aggregator target maps to
+// a catalog provider, so this is unreachable — but if a provider is added to
+// aggregatorProvider before it has catalog entries, a denylist would let its
+// entire model list flood the daily report. An allowlist cannot.
+func TestFilterNew_DropsProviderAbsentFromCatalog(t *testing.T) {
+	got := filterNew([]change{
+		newChange("someNewProvider", "shiny-model-1"),
+		newChange("openai", "gpt-5.6"),
+	})
+	if len(got) != 1 || got[0].Provider != "openai" {
+		t.Errorf("kept %v, want only the cataloged-provider entry", models(got))
+	}
+}

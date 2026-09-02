@@ -23,8 +23,9 @@ var nonTextMarker = []string{
 
 // snapshotSuffix strips a trailing dated-snapshot marker so a model can be
 // compared against its undated catalog entry: "-20251001" (YYYYMMDD),
-// "-05-2026" (MM-YYYY), or a trailing "-preview"/"-latest" marker.
-var snapshotSuffix = regexp.MustCompile(`(?:-\d{8}|-\d{2}-\d{4}|-preview|-latest)$`)
+// "-2024-08-06" (ISO, OpenAI's convention), "-05-2026" (MM-YYYY), or a trailing
+// "-preview"/"-latest" marker.
+var snapshotSuffix = regexp.MustCompile(`(?:-\d{8}|-\d{4}-\d{2}-\d{2}|-\d{2}-\d{4}|-preview|-latest)$`)
 
 // filterNew reduces raw "new" candidates to the actionable signal: text models
 // on providers we actually price, that are not just a redundant naming variant
@@ -34,10 +35,10 @@ var snapshotSuffix = regexp.MustCompile(`(?:-\d{8}|-\d{2}-\d{4}|-preview|-latest
 // and the job goes unread — which is how the catalog fell two Gemini Flash
 // releases behind while the Action reported "success" every morning.
 func filterNew(changes []change) []change {
-	unpriced := unpricedProviders()
+	priced := pricedProviders()
 	var out []change
 	for _, c := range changes {
-		if c.Kind == "new" && actionableNew(c, unpriced) {
+		if c.Kind == "new" && actionableNew(c, priced) {
 			out = append(out, c)
 		}
 	}
@@ -62,20 +63,26 @@ func dedupe(changes []change) []change {
 	return out
 }
 
-func actionableNew(c change, unpriced map[string]bool) bool {
-	if unpriced[c.Provider] || c.Agg == "0/0" {
+func actionableNew(c change, priced map[string]bool) bool {
+	if !priced[c.Provider] || c.Agg == "0/0" {
 		return false
 	}
 	return isTextModel(c.Model) && !variantOfCataloged(c.Provider, c.Model)
 }
 
-// unpricedProviders lists providers whose every catalog entry is priced:false
-// (e.g. Qwen, whose USD rates are console-gated and unverifiable). Derived from
-// the catalog rather than hardcoded, so it self-corrects once one is priced.
-func unpricedProviders() map[string]bool {
+// pricedProviders is the allowlist of providers carrying at least one priced
+// catalog entry. Derived from the catalog rather than hardcoded, so it
+// self-corrects when a provider gains its first verifiable rate.
+//
+// An allowlist, not a denylist of unpriced providers: this fails closed. It
+// excludes Qwen (every entry priced:false — console-gated, no verifiable USD
+// rate) and also any provider added to aggregatorProvider before it has catalog
+// entries, which under a denylist would flood the daily report with its entire
+// upstream model list.
+func pricedProviders() map[string]bool {
 	out := map[string]bool{}
 	for provider, models := range pricing.Providers() {
-		if !anyPriced(models) {
+		if anyPriced(models) {
 			out[provider] = true
 		}
 	}
