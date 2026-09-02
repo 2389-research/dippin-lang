@@ -201,3 +201,13 @@ func TestFilterNew_DropsProviderAbsentFromCatalog(t *testing.T) {
 		t.Errorf("kept %v, want only the cataloged-provider entry", models(got))
 	}
 }
+
+// The Z.AI duplicate reaches the price/deprecation path too, not just the
+// new-model path, so dedupe must run for every report mode.
+func TestApplyMode_DedupesExistingOnly(t *testing.T) {
+	dup := change{Kind: "price", Provider: "zai", Model: "glm-5.3-flash", Agg: "0.075/0.25"}
+	got := applyMode([]change{dup, dup, {Kind: "new", Provider: "zai", Model: "x"}}, modeExistingOnly)
+	if len(got) != 1 {
+		t.Errorf("got %d rows, want 1 (duplicate collapsed, new dropped)", len(got))
+	}
+}

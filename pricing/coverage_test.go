@@ -19,10 +19,17 @@ var knownCacheGaps = []string{
 	// grok-4-1-fast-*: superseded, absent from the current x.ai models page.
 	"grok/grok-4-1-fast-non-reasoning",
 	"grok/grok-4-1-fast-reasoning",
-	// MiniMax: official pricing page publishes no token cache price.
+	// MiniMax: the pricing page does now show "Prompt caching Read"/"Write"
+	// columns for these models, so the earlier "publishes no token cache price"
+	// note is stale. It is still not reliably machine-readable: two automated
+	// reads of the same page disagreed on the read rate ($0.03/M vs. $0.06/M
+	// for <=512k with $0.12/M above it), and M3 shows no write price at all.
+	// Left as a gap rather than committing an unconfirmed number — a human must
+	// read the table and set the rates. Tracked in #292.
 	"minimax/MiniMax-M2",
 	"minimax/MiniMax-M2.1",
 	"minimax/MiniMax-M2.5",
+	"minimax/MiniMax-M2.5-highspeed",
 	"minimax/MiniMax-M2.7",
 	"minimax/MiniMax-M2.7-highspeed",
 	"minimax/MiniMax-M3",
