@@ -56,8 +56,27 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: New-model report (upstream models missing from the catalog)
+        id: new
+        run: |
+          # The complement of --existing-only. Without this the job could only
+          # ever see price drift on models we already carry, so newly released
+          # models were invisible — the catalog silently fell two Gemini Flash
+          # releases behind while this job reported success every morning.
+          # --new-only filters to text models on priced providers, dropping
+          # non-text modalities, 0/0-priced entries and dated/preview snapshots
+          # of models we already carry.
+          set +e
+          go run ./cmd/pricing-sync sync --new-only --tolerance 0.02 > new.txt 2>&1
+          cat new.txt
+          if grep -qE '^\s+\[' new.txt; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upsert drift issue
-        if: steps.drift.outputs.changed == 'true'
+        if: steps.drift.outputs.changed == 'true' || steps.new.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -65,7 +84,7 @@ jobs:
           # Assemble the issue body from the tool's own output files (trusted;
           # no github.event.* input is used anywhere in this workflow).
           {
-            echo "Automated daily check found **price or deprecation drift** for models already in \`pricing/prices.json\`, and/or entries overdue for re-verification."
+            echo "Automated daily check found **price or deprecation drift**, **new upstream models** missing from \`pricing/prices.json\`, and/or entries overdue for re-verification."
             echo
             echo "> ⚠️ **Human-gated.** Confirm each candidate against the model's official \`source\` URL before editing \`pricing/prices.json\`. models.dev is a detection aid, not an authority — it can reflect introductory or discounted rates (an intro price vs. the durable list price)."
             echo
@@ -74,6 +93,11 @@ jobs:
             echo '### Price / deprecation drift (`sync --existing-only --tolerance 0.02`)'
             echo '```'
             cat drift.txt
+            echo '```'
+            echo
+            echo '### New upstream models (`sync --new-only`)'
+            echo '```'
+            cat new.txt
             echo '```'
             echo
             echo '### Staleness (`check`)'

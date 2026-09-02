@@ -34,16 +34,38 @@ type change struct {
 	Agg string
 }
 
+// syncOptions is the parsed command line for `sync`.
+type syncOptions struct {
+	tol           float64
+	mode          reportMode
+	failOnChanges bool
+}
+
+// parseSyncFlags parses and validates the flag set. Split out of runSync to
+// keep both functions within the repo's complexity ceiling.
+func parseSyncFlags(args []string) (syncOptions, int) {
+	fs := flag.NewFlagSet("sync", flag.ContinueOnError)
+	tol := fs.Float64("tolerance", 0.0, "ignore price deltas at or below this fraction (e.g. 0.05 = 5%)")
+	existingOnly := fs.Bool("existing-only", false, "report only price/deprecation drift for models already in the catalog (drop 'new'); the low-noise daily signal")
+	newOnly := fs.Bool("new-only", false, "report only new upstream models, filtered to actionable text-model adds on priced providers; the complement of --existing-only")
+	failOnChanges := fs.Bool("fail-on-changes", false, "exit non-zero when any candidate is reported (for CI gating)")
+	if err := fs.Parse(args); err != nil {
+		return syncOptions{}, 2
+	}
+	if *existingOnly && *newOnly {
+		fmt.Fprintln(errOut, "pricing-sync: --existing-only and --new-only are mutually exclusive")
+		return syncOptions{}, 2
+	}
+	return syncOptions{tol: *tol, mode: selectMode(*existingOnly, *newOnly), failOnChanges: *failOnChanges}, 0
+}
+
 // runSync fetches machine-readable aggregators, diffs against the embedded
 // catalog, and prints candidate changes. It never writes prices.json — the
 // aggregators drive detection, not authority.
 func runSync(ctx context.Context, args []string) int {
-	fs := flag.NewFlagSet("sync", flag.ContinueOnError)
-	tol := fs.Float64("tolerance", 0.0, "ignore price deltas at or below this fraction (e.g. 0.05 = 5%)")
-	existingOnly := fs.Bool("existing-only", false, "report only price/deprecation drift for models already in the catalog (drop 'new'); the low-noise daily signal")
-	failOnChanges := fs.Bool("fail-on-changes", false, "exit non-zero when any candidate is reported (for CI gating)")
-	if err := fs.Parse(args); err != nil {
-		return 2
+	opts, code := parseSyncFlags(args)
+	if code != 0 {
+		return code
 	}
 	sups, err := loadSuppressions()
 	if err != nil {
@@ -55,17 +77,35 @@ func runSync(ctx context.Context, args []string) int {
 		fmt.Fprintf(errOut, "pricing-sync: fetch failed: %v\n", err)
 		return 1
 	}
-	return reportChanges(cands, *tol, *existingOnly, *failOnChanges, sups, time.Now())
+	return reportChanges(cands, opts.tol, opts.mode, opts.failOnChanges, sups, time.Now())
+}
+
+// reportMode picks which slice of the diff a run reports. The daily Action runs
+// both halves separately so each gets its own section in the drift issue.
+type reportMode int
+
+const (
+	modeAll reportMode = iota
+	modeExistingOnly
+	modeNewOnly
+)
+
+func selectMode(existingOnly, newOnly bool) reportMode {
+	switch {
+	case existingOnly:
+		return modeExistingOnly
+	case newOnly:
+		return modeNewOnly
+	default:
+		return modeAll
+	}
 }
 
 // reportChanges diffs, filters (drop-new + suppress-list), prints, and returns
 // the exit code. Suppressed candidates are dispositioned drift the daily Action
 // should not re-open an issue for (see drift_suppressions.json).
-func reportChanges(cands []candidate, tol float64, existingOnly, failOnChanges bool, sups []suppression, now time.Time) int {
-	changes := diff(cands, tol)
-	if existingOnly {
-		changes = dropNew(changes)
-	}
+func reportChanges(cands []candidate, tol float64, mode reportMode, failOnChanges bool, sups []suppression, now time.Time) int {
+	changes := applyMode(diff(cands, tol), mode)
 	changes, suppressed := applySuppressions(changes, sups, now)
 	printChanges(changes, len(cands))
 	if suppressed > 0 {
@@ -75,6 +115,17 @@ func reportChanges(cands []candidate, tol float64, existingOnly, failOnChanges b
 		return 1
 	}
 	return 0
+}
+
+func applyMode(changes []change, mode reportMode) []change {
+	switch mode {
+	case modeExistingOnly:
+		return dropNew(changes)
+	case modeNewOnly:
+		return filterNew(changes)
+	default:
+		return changes
+	}
 }
 
 // dropNew filters out "new" (upstream-only) candidates, leaving price and

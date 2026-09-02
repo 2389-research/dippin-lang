@@ -176,3 +176,8 @@ check-prices:
 # Diff the catalog against models.dev and report candidate changes (report-only)
 sync-prices:
     go run ./cmd/pricing-sync sync
+
+# Report only NEW upstream models missing from the catalog (what the daily
+# Action's new-model section runs). Filtered to actionable text-model adds.
+new-prices:
+    go run ./cmd/pricing-sync sync --new-only --tolerance 0.02
