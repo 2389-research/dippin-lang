@@ -265,3 +265,70 @@ func TestDeprecatedModelsMarked(t *testing.T) {
 		t.Error("claude-opus-5 must not be Deprecated")
 	}
 }
+
+// TestMetaMuseCatalog covers #294: Meta's Muse Spark family. Meta ships each
+// Spark version as two distinct model ids — a standard id and a "-contributor"
+// id whose ~12x/21x cheaper tokens are bought by granting Meta permission to
+// train on the prompts and completions. Both are real ids on Meta's pricing
+// page, so both are priced here; only the standard ids carry Family metadata,
+// so a "muse-spark@latest" alias can never silently resolve a user onto the
+// train-on-my-data tier.
+func TestMetaMuseCatalog(t *testing.T) {
+	standard := map[string]struct{ in, cached, out float64 }{
+		"muse-spark-1.1": {1.25, 0.15, 4.25},
+		"muse-spark-1.2": {1.25, 0.15, 4.25},
+		"muse-spark-1.3": {1.25, 0.15, 4.25},
+	}
+	for model, want := range standard {
+		p, ok := LookupProvider("meta", model)
+		if !ok {
+			t.Errorf("%s not found under provider meta", model)
+			continue
+		}
+		if p.InputPerM != want.in || p.OutputPerM != want.out || p.CachedInputPerM != want.cached {
+			t.Errorf("%s = %v/%v/%v, want %v/%v/%v (in/cached/out)",
+				model, p.InputPerM, p.CachedInputPerM, p.OutputPerM, want.in, want.cached, want.out)
+		}
+		// Cache reads bill at the absolute cached price, not the input rate.
+		if got := Cost(Usage{CacheRead: 1_000_000}, p); got != want.cached {
+			t.Errorf("%s cache-read cost = %v, want %v", model, got, want.cached)
+		}
+		if p.ContextWindow != 1_000_000 {
+			t.Errorf("%s context window = %d, want 1000000", model, p.ContextWindow)
+		}
+	}
+
+	// The contributor tier is a real, separately-priced Meta model id.
+	for _, v := range []string{"1.2", "1.3"} {
+		std, ok := Lookup("muse-spark-" + v)
+		if !ok {
+			t.Fatalf("muse-spark-%s not found", v)
+		}
+		con, ok := Lookup("muse-spark-" + v + "-contributor")
+		if !ok {
+			t.Errorf("muse-spark-%s-contributor not found in catalog", v)
+			continue
+		}
+		if con.InputPerM != 0.10 || con.OutputPerM != 0.20 || con.CachedInputPerM != 0.002 {
+			t.Errorf("muse-spark-%s-contributor = %v/%v/%v, want 0.10/0.002/0.20",
+				v, con.InputPerM, con.CachedInputPerM, con.OutputPerM)
+		}
+		if con.InputPerM >= std.InputPerM || con.OutputPerM >= std.OutputPerM {
+			t.Errorf("muse-spark-%s-contributor is not cheaper than standard", v)
+		}
+		// Not alias-addressable: no Family, so it can never win @latest.
+		if con.Family != "" {
+			t.Errorf("muse-spark-%s-contributor has Family %q; contributor ids must not be alias-addressable",
+				v, con.Family)
+		}
+	}
+
+	// muse-spark@latest resolves to the newest STANDARD model.
+	got, ok := ResolveAlias("meta", "muse-spark", "latest")
+	if !ok {
+		t.Fatal("ResolveAlias(meta, muse-spark, latest) failed")
+	}
+	if got != "muse-spark-1.3" {
+		t.Errorf("muse-spark@latest = %q, want muse-spark-1.3", got)
+	}
+}

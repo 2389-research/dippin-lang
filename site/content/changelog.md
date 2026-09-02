@@ -4,6 +4,32 @@ description: "Version history and release notes for dippin-lang."
 navActive: "changelog"
 layout: "changelog"
 ---
+## [v0.70.0] — 2026-09-02
+
+### Added
+- **Meta is now a catalog provider — the Muse Spark family** ([#294](https://github.com/2389-research/dippin-lang/issues/294)). Meta's Model API has been in public preview since 2026-07-09 and was never represented here at all: no Meta entries, and no Meta key in `cmd/pricing-sync`. Adds five token-priced ids verified against Meta's official product page — `muse-spark-1.1`, `muse-spark-1.2`, `muse-spark-1.3` (all 1.25/4.25, $0.15/M cached input, 1M context) and the separately-priced `muse-spark-1.2-contributor` / `muse-spark-1.3-contributor` (0.10/0.20, $0.002/M cached). Catalog is now **122** entries across **twelve** providers.
+- **The contributor tier is modeled as what it is: distinct model ids.** Meta ships each Spark version twice — a standard id, and a `-contributor` id whose ~12x cheaper input and ~21x cheaper output are bought by granting Meta permission to train on your prompts and completions ("Used to improve our products" vs "Not used to improve our products"). These are Meta's own ids, not a synthesized naming scheme, so both are priced rather than picking a tier. **Only the standard ids carry `family`/`rank` metadata**, so `muse-spark@latest` resolves to `muse-spark-1.3` and an alias can never silently land a user on the train-on-my-data tier.
+- `meta` / `meta-llama` added to `cmd/pricing-sync`'s `aggregatorProvider` map. Note this is forward-looking insurance only: models.dev does not currently expose Meta at all (269 models scanned, no Meta candidates), so the daily sync could not have caught Muse even with the key — the gap was upstream of the fix in [#290](https://github.com/2389-research/dippin-lang/pull/290), not the same bug.
+
+### Notes
+- `max_output` and `capabilities` are left **absent** for every Muse entry — Meta's page states the 1M context window but publishes no per-version output limit or capability matrix, and the catalog's rule is absent-not-guessed.
+- **Muse Image** ($0.01/image) and **Muse Voice Transcribe** ($3.00/1,000 minutes) are deliberately out of scope: both are non-token SKUs, which this per-token catalog does not model (consistent with the existing non-text-SKU drift suppressions).
+
+## [v0.69.0] — 2026-09-02
+
+### Added
+- **Six verified models in the catalog** ([#291](https://github.com/2389-research/dippin-lang/issues/291)). `claude-fable-5-1` (10/50, 1M ctx, and the documented 0.025x cache-read exception unique to Fable 5.1 / Mythos 5.1), `gemini-3.7-flash` and `gemini-3.8-flash` (1.5/7.5), `glm-5.3` (1.4/4.4), `glm-5.3-flash` (0.15/0.5), and `MiniMax-M2.5-highspeed` (0.6/2.4). Each price was confirmed against the provider's official page and carries an `as_of` of 2026-09-02. Catalog is now **117** entries.
+- **`sync --new-only`** ([#290](https://github.com/2389-research/dippin-lang/pull/290)). Reports upstream models missing from the catalog, filtered to actionable text-model adds on priced providers. Exposed as `just new-prices`.
+
+### Fixed
+- **The daily pricing-sync Action could never report a new model** ([#290](https://github.com/2389-research/dippin-lang/pull/290)). The job ran `sync --existing-only`, which drops every `new` candidate before the report is written, so the issue-upsert gate always saw an empty report. The job reported success every morning while the catalog fell two Gemini Flash releases behind. It now runs both halves and files both in one rolling issue.
+- **A failing `pricing-sync` no longer passes silently.** Both workflow steps used `set +e`, so a fetch or parse failure was written into the report file, matched no candidate lines, recorded `changed=false`, and left the job green having detected nothing. Both steps now fail loudly.
+- **Z.AI models were reported twice.** models.dev exposes Z.AI as both `zai` and `zhipuai`, which both map to our `zai` key. Deduped across every report mode; rows that disagree on price are preserved, since that disagreement is signal.
+
+### Changed
+- Dispositioned 60 drift candidates into `cmd/pricing-sync/drift_suppressions.json` — superseded generations, JS-gated provider pages, vendor `-latest` aliases, non-text SKUs, and three introductory rates (Gemini 3.7/3.8 Flash, GLM-5.3-Flash) where the catalog carries the durable list price.
+- Corrected the stale `knownCacheGaps` note claiming MiniMax publishes no token cache price; it does, but not yet reliably machine-readable ([#292](https://github.com/2389-research/dippin-lang/issues/292)).
+
 ## [v0.68.0] — 2026-08-21
 
 ### Added

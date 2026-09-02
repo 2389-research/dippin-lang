@@ -4,6 +4,17 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.70.0] — 2026-09-02
+
+### Added
+- **Meta is now a catalog provider — the Muse Spark family** ([#294](https://github.com/2389-research/dippin-lang/issues/294)). Meta's Model API has been in public preview since 2026-07-09 and was never represented here at all: no Meta entries, and no Meta key in `cmd/pricing-sync`. Adds five token-priced ids verified against Meta's official product page — `muse-spark-1.1`, `muse-spark-1.2`, `muse-spark-1.3` (all 1.25/4.25, $0.15/M cached input, 1M context) and the separately-priced `muse-spark-1.2-contributor` / `muse-spark-1.3-contributor` (0.10/0.20, $0.002/M cached). Catalog is now **122** entries across **twelve** providers.
+- **The contributor tier is modeled as what it is: distinct model ids.** Meta ships each Spark version twice — a standard id, and a `-contributor` id whose ~12x cheaper input and ~21x cheaper output are bought by granting Meta permission to train on your prompts and completions ("Used to improve our products" vs "Not used to improve our products"). These are Meta's own ids, not a synthesized naming scheme, so both are priced rather than picking a tier. **Only the standard ids carry `family`/`rank` metadata**, so `muse-spark@latest` resolves to `muse-spark-1.3` and an alias can never silently land a user on the train-on-my-data tier.
+- `meta` / `meta-llama` added to `cmd/pricing-sync`'s `aggregatorProvider` map. Note this is forward-looking insurance only: models.dev does not currently expose Meta at all (269 models scanned, no Meta candidates), so the daily sync could not have caught Muse even with the key — the gap was upstream of the fix in [#290](https://github.com/2389-research/dippin-lang/pull/290), not the same bug.
+
+### Notes
+- `max_output` and `capabilities` are left **absent** for every Muse entry — Meta's page states the 1M context window but publishes no per-version output limit or capability matrix, and the catalog's rule is absent-not-guessed.
+- **Muse Image** ($0.01/image) and **Muse Voice Transcribe** ($3.00/1,000 minutes) are deliberately out of scope: both are non-token SKUs, which this per-token catalog does not model (consistent with the existing non-text-SKU drift suppressions).
+
 ## [v0.69.0] — 2026-09-02
 
 ### Added
