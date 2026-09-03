@@ -40,6 +40,7 @@ func (p *Parser) parseNode(kind ir.NodeKind) {
 	p.parseNodeBody(node)
 	p.expect(TokenOutdent)
 	p.workflow.Nodes = append(p.workflow.Nodes, node)
+	p.recordNodeSpan(node, node.Source.Line)
 }
 
 // parseNodeBody parses the indented fields within a node declaration.
@@ -788,27 +789,31 @@ func (p *Parser) parseParamLine(params map[string]string, line string) {
 }
 
 func (p *Parser) parseParallel() {
+	decl := p.lexer.PeekToken().Location
 	p.lexer.NextToken() // parallel
 	id := p.lexer.NextToken().Value
 
 	if p.lexer.PeekToken().Type == TokenArrow {
-		p.parseParallelInline(id)
+		p.parseParallelInline(id, decl)
 		return
 	}
-	p.parseParallelBlock(id)
+	p.parseParallelBlock(id, decl)
 }
 
 // parseParallelInline handles: parallel ID -> target, target
 // An optional indented params: block may follow the inline target list.
-func (p *Parser) parseParallelInline(id string) {
+func (p *Parser) parseParallelInline(id string, decl ir.SourceLocation) {
 	p.expect(TokenArrow)
 	targets := p.parseCommaList()
 	params := p.parseOptionalParamsBlock("parallel")
-	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
+	node := &ir.Node{
 		ID:     id,
 		Kind:   ir.NodeParallel,
+		Source: decl,
 		Config: ir.ParallelConfig{Targets: targets, Params: params},
-	})
+	}
+	p.workflow.Nodes = append(p.workflow.Nodes, node)
+	p.recordNodeSpan(node, decl.Line)
 }
 
 // tokenIsIdent reports whether t is the given keyword identifier.
@@ -907,22 +912,25 @@ func (p *Parser) skipBalancedBlock() {
 }
 
 // parseParallelBlock handles block form with per-branch config and an optional params block.
-func (p *Parser) parseParallelBlock(id string) {
+func (p *Parser) parseParallelBlock(id string, decl ir.SourceLocation) {
 	p.expect(TokenNewline)
 	p.expect(TokenIndent)
 	branches, params := p.parseParallelBody()
 	p.expect(TokenOutdent)
 
 	targets := branchTargets(branches)
-	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
-		ID:   id,
-		Kind: ir.NodeParallel,
+	node := &ir.Node{
+		ID:     id,
+		Kind:   ir.NodeParallel,
+		Source: decl,
 		Config: ir.ParallelConfig{
 			Targets:  targets,
 			Branches: branches,
 			Params:   params,
 		},
-	})
+	}
+	p.workflow.Nodes = append(p.workflow.Nodes, node)
+	p.recordNodeSpan(node, decl.Line)
 }
 
 // parseParallelBody parses branch declarations and an optional params block
@@ -1056,14 +1064,18 @@ func branchTargets(branches []ir.BranchConfig) []string {
 // parseFanIn handles: fan_in ID <- source, source
 // An optional indented params: block may follow the source list.
 func (p *Parser) parseFanIn() {
+	decl := p.lexer.PeekToken().Location
 	p.lexer.NextToken() // fan_in
 	id := p.lexer.NextToken().Value
 	p.expect(TokenBackArrow)
 	sources := p.parseCommaList()
 	params := p.parseOptionalParamsBlock("fan_in")
-	p.workflow.Nodes = append(p.workflow.Nodes, &ir.Node{
+	node := &ir.Node{
 		ID:     id,
 		Kind:   ir.NodeFanIn,
+		Source: decl,
 		Config: ir.FanInConfig{Sources: sources, Params: params},
-	})
+	}
+	p.workflow.Nodes = append(p.workflow.Nodes, node)
+	p.recordNodeSpan(node, decl.Line)
 }

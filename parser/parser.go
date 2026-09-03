@@ -14,6 +14,12 @@ type Parser struct {
 	diagnostics []string // Simple for now
 	workflow    *ir.Workflow
 	version     int // .dip format version; defaults to 1 when no `dip N` declaration is present
+	// Comment-attachment bookkeeping, populated while parsing and consumed by
+	// attachComments (#259): declaration lines of nodes and edges, plus every
+	// top-level identifier line (the extent cap for node bodies).
+	nodeSpans []nodeSpan
+	edgeSpans []edgeSpan
+	topLines  []int
 }
 
 func NewParser(input string, filename string) *Parser {
@@ -77,6 +83,7 @@ func (p *Parser) Parse() (*ir.Workflow, error) {
 	p.diagnostics = append(p.diagnostics, p.lexer.Errors()...)
 	p.parseVersionDeclaration()
 	p.parseTopLevel()
+	p.attachComments()
 	p.rejectRedundantFanEdgesUnderV2()
 	if len(p.diagnostics) > 0 {
 		return p.workflow, fmt.Errorf("parsing errors: %s", strings.Join(p.diagnostics, "; "))
@@ -181,6 +188,7 @@ func (p *Parser) parseWorkflowBody() {
 			continue
 		}
 		if t.Type == TokenIdentifier {
+			p.topLines = append(p.topLines, t.Location.Line)
 			p.dispatchWorkflowField(t)
 		} else {
 			p.lexer.NextToken()

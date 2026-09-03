@@ -30,6 +30,24 @@ const (
 	TokenRawBlock // Raw text block (multiline prompt/command content)
 )
 
+// commentKind distinguishes the two comment shapes the lexer records during
+// tokenization (#259).
+type commentKind int
+
+const (
+	commentStandalone commentKind = iota // whole-line `#` comment
+	commentTrailing                      // trailing inline comment after code
+)
+
+// lineComment is a comment stripped during tokenization, kept so the parser
+// can attach it to a parsed entity by source line (#259). Text is verbatim
+// with the leading `#`.
+type lineComment struct {
+	line int
+	kind commentKind
+	text string
+}
+
 type Token struct {
 	Type     TokenType
 	Value    string
@@ -45,11 +63,16 @@ type Lexer struct {
 	indentStack []int
 	tokens      []Token
 	tokenIdx    int
-	errs        []string // lex-time errors (e.g. unterminated string), surfaced by Parse
+	errs        []string      // lex-time errors (e.g. unterminated string), surfaced by Parse
+	comments    []lineComment // comments stripped during tokenization, in line order (#259)
 }
 
 // Errors returns the lex-time errors accumulated during tokenization.
 func (l *Lexer) Errors() []string { return l.errs }
+
+// Comments returns the comments stripped during tokenization, in source-line
+// order, for the parser to attach to parsed entities (#259).
+func (l *Lexer) Comments() []lineComment { return l.comments }
 
 func NewLexer(input string, filename string) *Lexer {
 	l := &Lexer{
@@ -201,12 +224,33 @@ func opensSingleQuote(s string, i int) bool {
 // whitespace (not inside a value). Does NOT strip # that starts the line content.
 func stripComment(line string) string {
 	trimmed := strings.TrimRight(line, " \t\r")
-	idx := findUnquotedHash(trimmed)
-	if idx < 0 {
+	code, comment := splitTrailingComment(trimmed)
+	if comment == "" {
 		return trimmed
 	}
-	if isStrippableHash(trimmed, idx) {
-		return trimmed[:idx]
+	return code
+}
+
+// splitTrailingComment splits a (trailing-whitespace-trimmed) line into its code
+// portion and its trailing comment portion — the `# ...` tail, trimmed and kept
+// verbatim including the leading `#`. The comment portion is empty when the line
+// has no strippable comment (a # inside quotes, or one not preceded by
+// whitespace). The code portion may retain the whitespace that separated it from
+// the comment; callers that lex it are unaffected.
+func splitTrailingComment(line string) (code, comment string) {
+	idx := findUnquotedHash(line)
+	if idx < 0 || !isStrippableHash(line, idx) {
+		return line, ""
+	}
+	return line[:idx], strings.TrimSpace(line[idx:])
+}
+
+// standaloneCommentText returns the trimmed whole-line comment text if the line
+// is a `#` comment, or "" for a blank line or code line.
+func standaloneCommentText(line string) string {
+	trimmed := strings.TrimSpace(line)
+	if len(trimmed) == 0 || trimmed[0] != '#' {
+		return ""
 	}
 	return trimmed
 }
@@ -242,10 +286,16 @@ func (l *Lexer) lexOneLine(i int, filename string) (bool, int) {
 	trimmed := strings.TrimRight(line, " \t\r")
 
 	if l.shouldSkipLine(trimmed) {
+		if text := standaloneCommentText(trimmed); text != "" {
+			l.comments = append(l.comments, lineComment{line: i + 1, kind: commentStandalone, text: text})
+		}
 		return false, 0
 	}
 
-	trimmed = stripComment(trimmed)
+	trimmed, comment := splitTrailingComment(trimmed)
+	if comment != "" {
+		l.comments = append(l.comments, lineComment{line: i + 1, kind: commentTrailing, text: comment})
+	}
 	if len(strings.TrimSpace(trimmed)) == 0 {
 		return false, 0
 	}
