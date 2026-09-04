@@ -24,23 +24,12 @@ func (p *Parser) recordNodeSpan(n *ir.Node, declLine int) {
 
 // attachComments transfers the comments the lexer stripped during
 // tokenization onto the parsed workflow (#259), so `dippin fmt` can re-emit
-// them instead of silently dropping them:
-//
-//   - a contiguous run of whole-line comments immediately above a node
-//     declaration becomes that node's HeaderComment;
-//   - comments on lines within a node's extent — trailing inline after a body
-//     line, or whole-line — become the node's BodyComments, in source order;
-//   - a contiguous run of whole-line comments immediately above an edge line
-//     becomes the edge's HeaderComment, and the trailing inline comment on
-//     the edge line itself becomes its TrailingComment.
+// them instead of silently dropping them. It indexes the recorded comments by
+// line, then runs three attachment phases: node header runs, edge header +
+// trailing inline, and node body comments.
 //
 // Comments on other lines (the dip pragma, workflow header fields, defaults,
 // vars, inputs, stylesheet) have no IR slot yet and are dropped, as before.
-// Node extents are capped at the next top-level line so a comment between a
-// node and a later section attaches to the node, not the section. Header
-// runs are maximal consecutive line-number runs ending at the declaration
-// line minus one: a blank line between a comment and a node breaks the run
-// (matching Workflow.HeaderComment's surrounding-blank trimming).
 func (p *Parser) attachComments() {
 	comms := p.lexer.Comments()
 	if len(comms) == 0 {
@@ -57,68 +46,90 @@ func (p *Parser) attachComments() {
 	}
 	claimed := make(map[int]bool, len(comms))
 
-	// Node header blocks: the maximal run of whole-line comment lines ending
-	// exactly at the declaration line minus one.
 	for i := range p.nodeSpans {
-		ns := &p.nodeSpans[i]
-		var block []string
-		for l := ns.start - 1; ; l-- {
-			text, ok := standalone[l]
-			if !ok {
-				break
-			}
-			block = append([]string{text}, block...)
-			claimed[l] = true
-		}
-		ns.node.HeaderComment = block
+		p.attachNodeHeader(&p.nodeSpans[i], standalone, claimed)
 	}
-
-	// Edge header blocks + trailing inline comments. A run stops at a line
-	// already claimed by a node header (a node declared after the edges
-	// block in the source).
 	for i := range p.edgeSpans {
-		es := &p.edgeSpans[i]
-		var block []string
-		for l := es.line - 1; ; l-- {
-			if claimed[l] {
-				break
-			}
-			text, ok := standalone[l]
-			if !ok {
-				break
-			}
-			block = append([]string{text}, block...)
-			claimed[l] = true
-		}
-		es.edge.HeaderComment = block
-		if text, ok := trailing[es.line]; ok {
-			es.edge.TrailingComment = text
-		}
+		p.attachEdgeComments(&p.edgeSpans[i], standalone, trailing, claimed)
 	}
-
-	// Node body comments: every unclaimed comment on a line from the node's
-	// declaration through the line before the next top-level construct.
-	maxLine := len(p.lexer.lines)
 	for i := range p.nodeSpans {
-		ns := &p.nodeSpans[i]
-		end := maxLine
-		for _, l := range p.topLines {
-			if l > ns.start && l < end {
-				end = l
-			}
-		}
-		var body []string
-		for l := ns.start; l < end; l++ {
-			if claimed[l] {
-				continue
-			}
-			if text, ok := trailing[l]; ok {
-				body = append(body, text)
-			}
-			if text, ok := standalone[l]; ok {
-				body = append(body, text)
-			}
-		}
-		ns.node.BodyComments = body
+		p.attachNodeBody(&p.nodeSpans[i], standalone, trailing, claimed)
 	}
+}
+
+// attachNodeHeader sets the node's HeaderComment to the maximal run of
+// whole-line comment lines ending exactly at the declaration line minus one.
+// A blank line between a comment and a node breaks the run (matching
+// Workflow.HeaderComment's surrounding-blank trimming). Lines in the run are
+// marked claimed so later phases do not double-attach them.
+func (p *Parser) attachNodeHeader(ns *nodeSpan, standalone map[int]string, claimed map[int]bool) {
+	var block []string
+	for l := ns.start - 1; ; l-- {
+		text, ok := standalone[l]
+		if !ok {
+			break
+		}
+		block = append([]string{text}, block...)
+		claimed[l] = true
+	}
+	ns.node.HeaderComment = block
+}
+
+// attachEdgeComments sets the edge's HeaderComment to the run of whole-line
+// comment lines immediately above the edge line, and its TrailingComment to
+// the inline comment on the edge line itself. The header run stops at a line
+// already claimed by a node header (a node declared after the edges block in
+// the source) as well as at any non-comment line.
+func (p *Parser) attachEdgeComments(es *edgeSpan, standalone, trailing map[int]string, claimed map[int]bool) {
+	var block []string
+	for l := es.line - 1; ; l-- {
+		if claimed[l] {
+			break
+		}
+		text, ok := standalone[l]
+		if !ok {
+			break
+		}
+		block = append([]string{text}, block...)
+		claimed[l] = true
+	}
+	es.edge.HeaderComment = block
+	if text, ok := trailing[es.line]; ok {
+		es.edge.TrailingComment = text
+	}
+}
+
+// attachNodeBody sets the node's BodyComments to every unclaimed comment on a
+// line within the node's extent, in source order. The extent runs from the
+// declaration line to the line before the next top-level construct, so a
+// comment between a node and a later section attaches to the node, not the
+// section.
+func (p *Parser) attachNodeBody(ns *nodeSpan, standalone, trailing map[int]string, claimed map[int]bool) {
+	end := p.nodeBodyEnd(ns.start)
+	var body []string
+	for l := ns.start; l < end; l++ {
+		if claimed[l] {
+			continue
+		}
+		if text, ok := trailing[l]; ok {
+			body = append(body, text)
+		}
+		if text, ok := standalone[l]; ok {
+			body = append(body, text)
+		}
+	}
+	ns.node.BodyComments = body
+}
+
+// nodeBodyEnd returns the one-past-the-last source line belonging to a node's
+// extent: the smallest top-level line greater than start, or the input's line
+// count when the node is the last top-level construct.
+func (p *Parser) nodeBodyEnd(start int) int {
+	end := len(p.lexer.lines)
+	for _, l := range p.topLines {
+		if l > start && l < end {
+			end = l
+		}
+	}
+	return end
 }
