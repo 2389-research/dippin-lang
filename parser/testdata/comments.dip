@@ -1,0 +1,24 @@
+# ABOUTME: comment retention fixture (#259)
+# Whole-line, trailing inline, and edge comments must survive fmt.
+workflow Comments
+  goal: "Keep every comment through fmt"
+  start: First
+  exit: Done
+
+  # whole-line comment directly above a node
+  agent First
+    label: First        # trailing inline on an attribute
+    # a whole-line comment mid-body
+    prompt: "Greet."
+  agent Middle
+    prompt: "Pass through."
+      # indented mid-body comment
+  # between-nodes comment
+
+  agent Done
+    prompt: "Wrap up."
+
+  edges
+    # routing note above an edge
+    First -> Middle  # trailing edge comment
+    Middle -> Done

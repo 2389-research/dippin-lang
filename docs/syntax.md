@@ -57,7 +57,7 @@ workflow Example         # level 0
 
 ## Comments
 
-Line comments start with `#` and extend to the end of the line. They are ignored by the parser.
+Line comments start with `#` and extend to the end of the line. A `#` inside a quoted value is part of the value, not a comment.
 
 ```dippin
 # This is a comment
@@ -66,6 +66,8 @@ workflow Example   # Inline comment
 ```
 
 Section headers like `# ── Phase 1 ──────────` are purely decorative — the parser treats them as regular comments.
+
+**`dippin fmt` retains comments** (issue #259): the leading file-level header block, whole-line comments immediately above a node or edge, trailing inline comments on node body lines and edge lines, and whole-line comments inside a node body all survive `fmt` verbatim. A trailing inline comment on an attribute line is re-emitted at the end of that node's body — `fmt`'s canonical position for it — so a file is not byte-identical after its first format, but formatting is idempotent: `fmt(fmt(x)) == fmt(x)`, which is what makes `dippin fmt -check` usable as a CI gate. Comments on other lines (the `dip` pragma, `goal`/`start`/`exit`, `defaults`, `vars`, `inputs`, `stylesheet`) are not yet retained and are dropped by `fmt`, as before. Comments inside a multiline block (`prompt:`, `command:`, …) are block content, not comments — they always survive.
 
 ---
 

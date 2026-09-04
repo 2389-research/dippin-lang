@@ -40,8 +40,9 @@ type Workflow struct {
 	// (leading `#` included), with surrounding blank lines dropped but interior
 	// blank lines preserved. Empty when the file has no leading comment. The
 	// formatter re-emits these so `dippin fmt` no longer erases `# ABOUTME:` /
-	// provider-dependency headers (#259). Inline/trailing/between-node comments
-	// are not yet retained.
+	// provider-dependency headers (#259). Node/edge comment retention lives on
+	// ir.Node.HeaderComment/BodyComments and ir.Edge.HeaderComment/
+	// TrailingComment (#259).
 	HeaderComment []string
 }
 
@@ -118,6 +119,19 @@ type Node struct {
 	Retry   RetryConfig
 	IO      NodeIO // Declared inputs/outputs (advisory in v1)
 	Source  SourceLocation
+	// HeaderComment holds the contiguous run of whole-line `#` comment lines
+	// immediately above the node declaration, in source order, each line
+	// verbatim (leading `#` included). Empty when there is none. The formatter
+	// re-emits them directly above the node declaration so `dippin fmt`
+	// preserves them (#259).
+	HeaderComment []string
+	// BodyComments holds the comments captured from within the node's body
+	// extent — trailing inline comments after body lines and whole-line
+	// comments between them — in source order, each verbatim (leading `#`
+	// included). The formatter re-emits them as the last lines of the node
+	// body: fmt's canonical position for a comment whose original attribute
+	// line is no longer where the formatter places that attribute (#259).
+	BodyComments []string
 }
 
 // NodeKind enumerates node types explicitly.

@@ -13,7 +13,14 @@ type Edge struct {
 	Restart   bool       // Back-edge: triggers downstream clear + re-execution
 	Override  bool       // Carried, not interpreted: human-authored validation override (tracker#271)
 	Comment   string     // Optional leading `# ` line the formatter emits before this edge (migration review notes)
-	Source    SourceLocation
+	// HeaderComment holds the contiguous run of whole-line `#` comment lines
+	// immediately above the edge line, in source order, each verbatim (leading
+	// `#` included). The formatter re-emits them above the edge (#259).
+	// Distinct from Comment, which stores a single unadorned line produced by
+	// the DOT migration path.
+	HeaderComment   []string
+	TrailingComment string // Trailing inline `# ...` comment on the edge line itself, verbatim (leading `#` included); the formatter appends it to the re-emitted edge line (#259)
+	Source          SourceLocation
 }
 
 // EdgeRoutesOnFail reports whether an edge's guard routes the failure outcome

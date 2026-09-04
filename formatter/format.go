@@ -362,13 +362,29 @@ func writeVars(wr *writer, vars map[string]string) {
 }
 
 func writeNode(wr *writer, n *ir.Node) {
+	for _, l := range n.HeaderComment {
+		wr.line("%s", l)
+	}
 	if writeStructuralNode(wr, n) {
+		writeNodeBodyComments(wr, n)
 		return
 	}
 	wr.line("%s %s", n.Kind, n.ID)
 	wr.push()
 	writeNodeConfigFields(wr, n)
+	writeNodeBodyComments(wr, n)
 	wr.pop()
+}
+
+// writeNodeBodyComments emits the retained node-body comments (trailing inline
+// and whole-line comments captured from the body) verbatim as the last lines
+// of the node body — fmt's canonical position for a comment whose original
+// line is no longer where the formatter places that attribute, so formatting
+// is idempotent (#259).
+func writeNodeBodyComments(wr *writer, n *ir.Node) {
+	for _, l := range n.BodyComments {
+		wr.line("%s", l)
+	}
 }
 
 // writeStructuralNode writes parallel/fan_in nodes. Returns true if handled.
@@ -935,6 +951,9 @@ func writeEdges(wr *writer, w *ir.Workflow) {
 }
 
 func writeEdge(wr *writer, w *ir.Workflow, e *ir.Edge) {
+	for _, l := range e.HeaderComment {
+		wr.line("%s", l)
+	}
 	if e.Comment != "" {
 		wr.line("# %s", e.Comment)
 	}
@@ -942,7 +961,11 @@ func writeEdge(wr *writer, w *ir.Workflow, e *ir.Edge) {
 	parts = append(parts, fmt.Sprintf("%s -> %s", e.From, e.To))
 	parts = appendEdgeCondition(parts, w, e)
 	parts = appendEdgeAttrs(parts, e)
-	wr.line("%s", strings.Join(parts, "  "))
+	line := strings.Join(parts, "  ")
+	if e.TrailingComment != "" {
+		line += "  " + e.TrailingComment
+	}
+	wr.line("%s", line)
 }
 
 // appendEdgeCondition appends the condition part if one is present. When the

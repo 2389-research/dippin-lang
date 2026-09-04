@@ -67,7 +67,43 @@ func assertWorkflowsEqual(t *testing.T, a, b *ir.Workflow) {
 	if len(a.Edges) != len(b.Edges) {
 		t.Errorf("Edges: %d vs %d", len(a.Edges), len(b.Edges))
 	}
+	assertCommentsEqual(t, a, b)
 	assertRequiresEqual(t, a.Requires, b.Requires)
+}
+
+// assertCommentsEqual verifies comment retention (#259) survives the
+// parse -> Format -> parse round trip: the reparse of the formatted output
+// carries the same node/edge comments as the first parse.
+func assertCommentsEqual(t *testing.T, a, b *ir.Workflow) {
+	t.Helper()
+	for i := range a.Nodes {
+		if !equalCommentSlices(a.Nodes[i].HeaderComment, b.Nodes[i].HeaderComment) {
+			t.Errorf("Nodes[%d].HeaderComment: %#v vs %#v", i, a.Nodes[i].HeaderComment, b.Nodes[i].HeaderComment)
+		}
+		if !equalCommentSlices(a.Nodes[i].BodyComments, b.Nodes[i].BodyComments) {
+			t.Errorf("Nodes[%d].BodyComments: %#v vs %#v", i, a.Nodes[i].BodyComments, b.Nodes[i].BodyComments)
+		}
+	}
+	for i := range a.Edges {
+		if !equalCommentSlices(a.Edges[i].HeaderComment, b.Edges[i].HeaderComment) {
+			t.Errorf("Edges[%d].HeaderComment: %#v vs %#v", i, a.Edges[i].HeaderComment, b.Edges[i].HeaderComment)
+		}
+		if a.Edges[i].TrailingComment != b.Edges[i].TrailingComment {
+			t.Errorf("Edges[%d].TrailingComment: %q vs %q", i, a.Edges[i].TrailingComment, b.Edges[i].TrailingComment)
+		}
+	}
+}
+
+func equalCommentSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func assertRequiresEqual(t *testing.T, a, b []string) {

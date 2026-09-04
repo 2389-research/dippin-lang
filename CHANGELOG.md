@@ -4,6 +4,12 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+### Added
+- **`dippin fmt` now retains node and edge comments** ([#259](https://github.com/2389-research/dippin-lang/issues/259)). Whole-line comments immediately above a node or edge, trailing inline comments on node body lines and edge lines, and whole-line comments inside a node body all survive `fmt` verbatim, joining the leading file-level header block retained in v0.67.0. The lexer records each comment it strips (with its source line) and the parser re-attaches it to the owning entity (`ir.Node.HeaderComment`/`BodyComments`, `ir.Edge.HeaderComment`/`TrailingComment`); the formatter re-emits it at a canonical position — node/edge headers stay above the declaration, a trailing inline comment on an attribute line moves to the end of that node's body, and a trailing edge comment appends to the re-emitted edge line. Formatting is idempotent (`fmt(fmt(x)) == fmt(x)`), which unblocks `dippin fmt -check` as a CI gate for enforcing canonical formatting — the pipelines repo's `# ABOUTME:` convention across ~60 files can now be canonicalized safely.
+
+### Notes
+- Comment positions with no IR slot yet — the `dip` pragma, `goal`/`start`/`exit`, `defaults`, `vars`, `inputs`, `stylesheet` lines — are still dropped by `fmt`, as before (strictly an improvement; nothing is newly lost). Comments inside a multiline block (`prompt:`, `command:`, …) are block content, not comments, and always survive; a `#` inside a quoted value is not a comment and never was.
+
 ## [v0.70.0] — 2026-09-02
 
 ### Added

@@ -77,12 +77,13 @@ func (p *Parser) parseElseDefault() {
 
 // parseSingleEdge parses a single edge declaration: "from -> to [attributes...]"
 func (p *Parser) parseSingleEdge() {
-	from := p.lexer.NextToken().Value
+	fromTok := p.lexer.NextToken()
 	p.expect(TokenArrow)
 	to := p.lexer.NextToken().Value
-	edge := &ir.Edge{From: from, To: to}
+	edge := &ir.Edge{From: fromTok.Value, To: to}
 	p.parseEdgeAttributes(edge)
 	p.workflow.Edges = append(p.workflow.Edges, edge)
+	p.edgeSpans = append(p.edgeSpans, edgeSpan{edge: edge, line: fromTok.Location.Line})
 	p.expect(TokenNewline)
 }
 
