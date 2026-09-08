@@ -1192,11 +1192,12 @@
       "context_window": 922000,
       "max_output": 128000,
       "capabilities": ["tools", "vision", "reasoning"],
-      "input_per_m": 5,
-      "output_per_m": 30,
+      "input_per_m": 4,
+      "output_per_m": 20,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "as_of": "2026-09-08",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "openai",
@@ -1210,6 +1211,19 @@
       "source": "https://developers.openai.com/api/docs/pricing",
       "as_of": "2026-08-10",
       "cache_read_mult": 0.1
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-astra",
+      "display_name": "GPT-6 Astra",
+      "context_window": 1050000,
+      "capabilities": ["vision"],
+      "input_per_m": 10,
+      "output_per_m": 50,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-09-08",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "openai",

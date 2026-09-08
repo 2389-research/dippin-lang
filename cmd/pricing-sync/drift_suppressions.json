@@ -566,5 +566,205 @@
     "aggregator_value": "0.075/0.25",
     "reason": "models.dev reports the 50% promotional rate, which Z.AI's pricing page says ends 2026-09-09; the catalog carries the regular 0.15/0.5.",
     "review_by": "2026-09-16"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "kind": "price",
+    "aggregator_value": "0.08554/0.1711",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "kind": "disagree",
+    "aggregator_value": "md:0.14/0.28 or:0.08554/0.1711",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "kind": "price",
+    "aggregator_value": "0.9532/1.906",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "kind": "disagree",
+    "aggregator_value": "md:0.435/0.87 or:0.9532/1.906",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro-0813",
+    "kind": "price",
+    "aggregator_value": "0.5795/1.738",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2",
+    "kind": "price",
+    "aggregator_value": "0.255/1.02",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2",
+    "kind": "disagree",
+    "aggregator_value": "md:0.3/1.2 or:0.255/1.02",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.5",
+    "kind": "price",
+    "aggregator_value": "0.27/1.08",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.5",
+    "kind": "disagree",
+    "aggregator_value": "md:0.3/1.2 or:0.27/1.08",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-nemo",
+    "kind": "price",
+    "aggregator_value": "0.019/0.03",
+    "reason": "OpenRouter tracks the catalog's verified 0.02/0.04 rate; the models.dev 0.15/0.15 it conflicts with is stale (already dispositioned). Dispositioned in the 2026-09-08 triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-nemo",
+    "kind": "disagree",
+    "aggregator_value": "md:0.15/0.15 or:0.019/0.03",
+    "reason": "models.dev's 0.15/0.15 is stale (already dispositioned); OpenRouter tracks the catalog's verified 0.02/0.04. Dispositioned in the 2026-09-08 triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "kind": "price",
+    "aggregator_value": "2/10",
+    "reason": "OpenRouter lists a 50%-off promotional rate (2/10 = half the list price); catalog and models.dev now agree with the official $4/$20 list price. Dispositioned in the 2026-09-08 triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "kind": "disagree",
+    "aggregator_value": "md:4/20 or:2/10",
+    "reason": "OpenRouter lists a 50%-off promotional rate; models.dev agrees with the catalog's verified $4/$20 list price. Dispositioned in the 2026-09-08 triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5-air",
+    "kind": "price",
+    "aggregator_value": "0.13/0.85",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5-air",
+    "kind": "disagree",
+    "aggregator_value": "md:0.2/1.1 or:0.13/0.85",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6",
+    "kind": "price",
+    "aggregator_value": "0.55/2.2",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6",
+    "kind": "disagree",
+    "aggregator_value": "md:0.6/2.2 or:0.55/2.2",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.7",
+    "kind": "price",
+    "aggregator_value": "0.4/1.75",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.7",
+    "kind": "disagree",
+    "aggregator_value": "md:0.6/2.2 or:0.4/1.75",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5",
+    "kind": "price",
+    "aggregator_value": "0.6/1.92",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5",
+    "kind": "disagree",
+    "aggregator_value": "md:1/3.2 or:0.6/1.92",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "price",
+    "aggregator_value": "0.966/3.036",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "disagree",
+    "aggregator_value": "md:1.4/4.4 or:0.966/3.036",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.2",
+    "kind": "price",
+    "aggregator_value": "0.966/3.036",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.2",
+    "kind": "disagree",
+    "aggregator_value": "md:1.4/4.4 or:0.966/3.036",
+    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
+    "review_by": "2026-12-07"
   }
 ]
