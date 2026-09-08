@@ -86,19 +86,20 @@ func candidatesForProvider(provider string, node modelsDevProvider) []candidate 
 			InputPerM:  m.Cost.Input,
 			OutputPerM: m.Cost.Output,
 			Deprecated: m.Status == "deprecated",
+			Source:     "models.dev",
 		})
 	}
 	return out
 }
 
 // printChanges renders the sync report.
-func printChanges(changes []change, scanned int) {
+func printChanges(changes []change, scannedMD, scannedOR int) {
 	if len(changes) == 0 {
-		printfOut("pricing-sync: catalog agrees with models.dev across %d scanned models\n", scanned)
+		printfOut("pricing-sync: catalog agrees with both aggregators (models.dev: %d, openrouter: %d models scanned)\n", scannedMD, scannedOR)
 		return
 	}
-	printfOut("pricing-sync: %d candidate change(s) from models.dev (%d models scanned) — confirm against each official source before editing prices.json:\n", len(changes), scanned)
+	printfOut("pricing-sync: %d candidate change(s) from models.dev + openrouter — confirm against each official source before editing prices.json:\n", len(changes))
 	for _, c := range changes {
-		printfOut("  [%-10s] %-10s %-28s %s\n", c.Kind, c.Provider, c.Model, c.Detail)
+		printfOut("  [%-10s] %-10s %-28s %s  [%s]\n", c.Kind, c.Provider, c.Model, c.Detail, c.Source)
 	}
 }

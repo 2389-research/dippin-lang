@@ -3,7 +3,8 @@
 //
 //	pricing-sync check              staleness report (AsOf age / missing source)
 //	pricing-sync sync               diff the catalog against machine-readable
-//	                                aggregators (models.dev) and report candidates
+//	                                aggregators (models.dev + OpenRouter,
+//	                                cross-referenced) and report candidates
 //
 // Detection is mechanical; authoritative verification is not (no provider
 // publishes price as data), so this prints proposals for a human to confirm

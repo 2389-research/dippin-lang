@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -54,7 +55,7 @@ func TestEmbeddedSuppressionsWellFormed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("embedded drift_suppressions.json does not parse: %v", err)
 	}
-	validKind := map[string]bool{"price": true, "deprecated": true, "new": true}
+	validKind := map[string]bool{"price": true, "deprecated": true, "new": true, "disagree": true}
 	for _, s := range sups {
 		if s.Provider == "" || s.Model == "" || s.Aggregator == "" || s.Reason == "" {
 			t.Errorf("incomplete suppression: %+v", s)
@@ -165,5 +166,92 @@ func TestDropNewKeepsOnlyExistingModelDrift(t *testing.T) {
 		if c.Kind == "new" {
 			t.Errorf("dropNew leaked a 'new' change: %+v", c)
 		}
+	}
+}
+
+func TestParseOpenRouterMapsAndNormalizes(t *testing.T) {
+	body := []byte(`{"data": [
+		{"id": "anthropic/claude-fable-5.1", "pricing": {"prompt": "0.00001", "completion": "0.00005"}},
+		{"id": "x-ai/grok-4-1", "pricing": {"prompt": "0.000003", "completion": "0.000015"}},
+		{"id": "openai/gpt-6-astra:batch", "pricing": {"prompt": "0.000005", "completion": "0.000025"}},
+		{"id": "inclusionai/ling-3.0-flash-sante:free", "pricing": {"prompt": "0", "completion": "0"}},
+		{"id": "~anthropic/claude-opus-5", "pricing": {"prompt": "0.000005", "completion": "0.000025"}},
+		{"id": "some-unknown/model", "pricing": {"prompt": "0.000001", "completion": "0.000001"}},
+		{"id": "openai/broken", "pricing": {"prompt": "free", "completion": "0"}}
+	]}`)
+	cands, err := parseOpenRouter(body)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	got := map[string]candidate{}
+	for _, c := range cands {
+		got[c.Provider+"/"+c.Model] = c
+	}
+	fable, ok := got["anthropic/claude-fable-5.1"]
+	if !ok || fable.InputPerM != 10 || fable.OutputPerM != 50 || fable.Source != "openrouter" {
+		t.Errorf("claude-fable-5.1 not normalized (per-token → per-MTok): %+v", fable)
+	}
+	if grok, ok := got["grok/grok-4-1"]; !ok || grok.InputPerM != 3 {
+		t.Errorf("x-ai must map to grok: %+v", grok)
+	}
+	if len(got) != 2 {
+		t.Errorf(":batch/:free variants, ~-prefixes, unknown providers, and bad prices must be skipped; got %v", keys(got))
+	}
+}
+
+func keys(m map[string]candidate) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+func TestCrossCheckFlagsDisagreement(t *testing.T) {
+	md := []candidate{{Provider: "anthropic", Model: "claude-opus-5", InputPerM: 5, OutputPerM: 25, Source: "models.dev"}}
+	// Agreement → no row.
+	if got := crossCheck(md, []candidate{{Provider: "anthropic", Model: "claude-opus-5", InputPerM: 5, OutputPerM: 25, Source: "openrouter"}}, 0.02); len(got) != 0 {
+		t.Errorf("agreeing sources must not yield a row, got %+v", got)
+	}
+	// Disagreement → "disagree" row naming both values.
+	got := crossCheck(md, []candidate{{Provider: "anthropic", Model: "claude-opus-5", InputPerM: 6, OutputPerM: 30, Source: "openrouter"}}, 0.02)
+	if len(got) != 1 || got[0].Kind != "disagree" || got[0].Source != "both" {
+		t.Fatalf("expected one disagree row, got %+v", got)
+	}
+	if !strings.Contains(got[0].Detail, "5/25") || !strings.Contains(got[0].Detail, "6/30") {
+		t.Errorf("detail must name both aggregators' prices: %q", got[0].Detail)
+	}
+}
+
+func TestCrossCheckMatchesAcrossCaseAndDotFold(t *testing.T) {
+	// models.dev keeps provider-native casing and dashes; OpenRouter
+	// lowercases and dots. The same model must cross-match, not false-flag.
+	md := []candidate{{Provider: "minimax", Model: "MiniMax-M2.5-highspeed", InputPerM: 3, OutputPerM: 12, Source: "models.dev"}}
+	or := []candidate{{Provider: "minimax", Model: "minimax-m2.5-highspeed", InputPerM: 3, OutputPerM: 12, Source: "openrouter"}}
+	if got := crossCheck(md, or, 0); len(got) != 0 {
+		t.Errorf("case/dot-folded same model must cross-match, got %+v", got)
+	}
+}
+
+func TestDiffMatchesOpenRouterLowercaseIDToCatalog(t *testing.T) {
+	// OpenRouter's lowercase dotted id matches the catalog's dash-cased
+	// claude-fable-5-1 (10/50); a different price must yield a "price" change
+	// keyed on the catalog's model id (suppressions key on it).
+	cands := []candidate{{Provider: "anthropic", Model: "claude-fable-5.1", InputPerM: 11, OutputPerM: 50, Source: "openrouter"}}
+	changes := diff(cands, 0)
+	c := findChange(changes, "claude-fable-5-1")
+	if c == nil || c.Kind != "price" {
+		t.Fatalf("expected a 'price' change under the catalog id claude-fable-5-1, got %+v", changes)
+	}
+}
+
+func TestDedupeMergesBothSources(t *testing.T) {
+	changes := []change{
+		{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5", Agg: "2/10", Source: "models.dev"},
+		{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5", Agg: "2/10", Source: "openrouter"},
+	}
+	out := dedupe(changes)
+	if len(out) != 1 || out[0].Source != "both" {
+		t.Errorf("two sources reporting the same row must merge into one 'both' row, got %+v", out)
 	}
 }

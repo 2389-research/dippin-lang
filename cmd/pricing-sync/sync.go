@@ -7,27 +7,32 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/2389-research/dippin-lang/pricing"
 )
 
 // candidate is one model+price as reported by an aggregator, normalized to our
-// per-1M-token convention.
+// per-1M-token convention. Source names the aggregator ("models.dev" /
+// "openrouter").
 type candidate struct {
 	Provider   string
 	Model      string
 	InputPerM  float64
 	OutputPerM float64
 	Deprecated bool
+	Source     string
 }
 
 // change is a proposed catalog edit for a human to confirm against the official source.
 type change struct {
-	Kind     string // "new" | "price" | "deprecated"
+	Kind     string // "new" | "price" | "deprecated" | "disagree"
 	Provider string
 	Model    string
 	Detail   string
+	Source   string // which aggregator reported it; "both" when both agree
 	// Agg is the canonical aggregator-side value used to match a suppression:
 	// "%.4g/%.4g" input/output for new/price changes, "deprecated" for a
 	// deprecation flag. A suppression only applies while this value is unchanged.
@@ -72,12 +77,29 @@ func runSync(ctx context.Context, args []string) int {
 		fmt.Fprintf(errOut, "pricing-sync: bad drift_suppressions.json: %v\n", err)
 		return 1
 	}
-	cands, err := modelsDevFetcher{}.Fetch(ctx)
+	md, or, err, orErr := fetchSources(ctx)
 	if err != nil {
 		fmt.Fprintf(errOut, "pricing-sync: fetch failed: %v\n", err)
 		return 1
 	}
-	return reportChanges(cands, opts.tol, opts.mode, opts.failOnChanges, sups, time.Now())
+	if orErr != nil {
+		fmt.Fprintf(errOut, "pricing-sync: openrouter fetch failed: %v (cross-check disabled)\n", orErr)
+		or = nil
+	}
+	changes := sortChanges(append(diff(append(md, or...), opts.tol), crossCheck(md, or, opts.tol)...))
+	return reportChanges(changes, len(md), len(or), opts.mode, opts.failOnChanges, sups, time.Now())
+}
+
+// fetchSources pulls both aggregators in parallel. A models.dev failure is the
+// fatal one (it is the primary source); an OpenRouter failure degrades to a
+// warning so the catalog diff still runs.
+func fetchSources(ctx context.Context) (md, or []candidate, err, orErr error) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() { defer wg.Done(); md, err = modelsDevFetcher{}.Fetch(ctx) }()
+	go func() { defer wg.Done(); or, orErr = openRouterFetcher{}.Fetch(ctx) }()
+	wg.Wait()
+	return
 }
 
 // reportMode picks which slice of the diff a run reports. The daily Action runs
@@ -101,13 +123,14 @@ func selectMode(existingOnly, newOnly bool) reportMode {
 	}
 }
 
-// reportChanges diffs, filters (drop-new + suppress-list), prints, and returns
-// the exit code. Suppressed candidates are dispositioned drift the daily Action
-// should not re-open an issue for (see drift_suppressions.json).
-func reportChanges(cands []candidate, tol float64, mode reportMode, failOnChanges bool, sups []suppression, now time.Time) int {
-	changes := applyMode(diff(cands, tol), mode)
+// reportChanges filters the pre-computed change list (mode + suppress-list),
+// prints it, and returns the exit code. Suppressed candidates are dispositioned
+// drift the daily Action should not re-open an issue for (see
+// drift_suppressions.json).
+func reportChanges(changes []change, scannedMD, scannedOR int, mode reportMode, failOnChanges bool, sups []suppression, now time.Time) int {
+	changes = applyMode(changes, mode)
 	changes, suppressed := applySuppressions(changes, sups, now)
-	printChanges(changes, len(cands))
+	printChanges(changes, scannedMD, scannedOR)
 	if suppressed > 0 {
 		printfOut("pricing-sync: %d dispositioned candidate(s) suppressed via drift_suppressions.json\n", suppressed)
 	}
@@ -152,6 +175,10 @@ func diff(cands []candidate, tol float64) []change {
 	for _, c := range cands {
 		out = appendChange(out, c, tol)
 	}
+	return sortChanges(out)
+}
+
+func sortChanges(out []change) []change {
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Provider != out[j].Provider {
 			return out[i].Provider < out[j].Provider
@@ -161,26 +188,113 @@ func diff(cands []candidate, tol float64) []change {
 	return out
 }
 
+// foldKey canonicalizes a provider or model id for cross-source matching:
+// OpenRouter lowercases ids and uses dots where the catalog and models.dev use
+// dashes ("anthropic/claude-fable-5.1" vs. claude-fable-5-1).
+func foldKey(s string) string {
+	return strings.ToLower(pricing.CanonicalModelID(s))
+}
+
+// catalogMatch resolves an aggregator (provider, model) to the catalog entry,
+// tolerating case and dot/dash differences (OpenRouter lowercases ids and dots
+// where the catalog uses dashes). Returns the matched catalog model id so
+// change rows stay keyed on the catalog's spelling (suppressions key on it).
+func catalogMatch(provider, model string) (pricing.ModelPrice, string, bool) {
+	if p, ok := pricing.LookupProvider(provider, model); ok {
+		return p, catalogSpelling(provider, foldKey(model), model), true
+	}
+	return catalogMatchFolded(provider, model)
+}
+
+// catalogMatchFolded is the last resort for aggregators that spell ids with
+// different case than the catalog (OpenRouter lowercases).
+func catalogMatchFolded(provider, model string) (pricing.ModelPrice, string, bool) {
+	want := foldKey(model)
+	for _, id := range pricing.ModelIDs(provider) {
+		if foldKey(id) == want {
+			p, _ := pricing.LookupProvider(provider, id)
+			return p, id, true
+		}
+	}
+	return pricing.ModelPrice{}, "", false
+}
+
+// catalogSpelling returns the catalog's own spelling for a folded id, so rows
+// and suppressions key on the catalog id rather than the aggregator's variant.
+func catalogSpelling(provider, folded, fallback string) string {
+	for _, id := range pricing.ModelIDs(provider) {
+		if foldKey(id) == folded {
+			return id
+		}
+	}
+	return fallback
+}
+
 func appendChange(out []change, c candidate, tol float64) []change {
 	agg := fmt.Sprintf("%.4g/%.4g", c.InputPerM, c.OutputPerM)
-	p, found := pricing.LookupProvider(c.Provider, c.Model)
+	p, catID, found := catalogMatch(c.Provider, c.Model)
 	if !found {
 		return append(out, change{Kind: "new", Provider: c.Provider, Model: c.Model,
-			Detail: fmt.Sprintf("%s per MTok (not in catalog)", agg), Agg: agg})
+			Detail: fmt.Sprintf("%s per MTok (not in catalog)", agg), Agg: agg, Source: c.Source})
 	}
+	id := displayID(c.Model, catID)
 	if !p.Priced {
 		return out
 	}
 	if c.Deprecated {
-		out = append(out, change{Kind: "deprecated", Provider: c.Provider, Model: c.Model,
-			Detail: "aggregator marks deprecated", Agg: "deprecated"})
+		out = append(out, change{Kind: "deprecated", Provider: c.Provider, Model: id,
+			Detail: "aggregator marks deprecated", Agg: "deprecated", Source: c.Source})
 	}
 	if priceDiffers(p, c, tol) {
-		out = append(out, change{Kind: "price", Provider: c.Provider, Model: c.Model,
+		out = append(out, change{Kind: "price", Provider: c.Provider, Model: id,
 			Detail: fmt.Sprintf("catalog %.4g/%.4g → aggregator %s",
-				p.InputPerM, p.OutputPerM, agg), Agg: agg})
+				p.InputPerM, p.OutputPerM, agg), Agg: agg, Source: c.Source})
 	}
 	return out
+}
+
+// displayID prefers the catalog's spelling of a matched model (change rows and
+// suppressions key on it); unmatched models keep the aggregator's id.
+func displayID(model, catID string) string {
+	if catID != "" {
+		return catID
+	}
+	return model
+}
+
+// crossCheck compares the two aggregators with each other: a model both list
+// at materially different prices is a "disagree" change — at least one
+// aggregator is stale or wrong, so a human must check the official source
+// before trusting either number. Also run for models not yet in the catalog,
+// so a "new" proposal is only as strong as the two sources agreeing on it.
+func crossCheck(md, or []candidate, tol float64) []change {
+	fromMD := map[string]candidate{}
+	for _, c := range md {
+		fromMD[crossKey(c)] = c
+	}
+	var out []change
+	for _, o := range or {
+		if m, ok := fromMD[crossKey(o)]; ok && sourcesDisagree(m, o, tol) {
+			out = append(out, disagreeChange(m, o))
+		}
+	}
+	return out
+}
+
+func crossKey(c candidate) string { return foldKey(c.Provider) + "/" + foldKey(c.Model) }
+
+// sourcesDisagree reports whether the two aggregators differ by more than tol
+// on either side (symmetric; priceDiffers is anchored to the catalog value).
+func sourcesDisagree(a, b candidate, tol float64) bool {
+	return exceeds(a.InputPerM, b.InputPerM, tol) || exceeds(b.InputPerM, a.InputPerM, tol) ||
+		exceeds(a.OutputPerM, b.OutputPerM, tol) || exceeds(b.OutputPerM, a.OutputPerM, tol)
+}
+
+func disagreeChange(m, o candidate) change {
+	return change{Kind: "disagree", Provider: o.Provider, Model: o.Model, Source: "both",
+		Detail: fmt.Sprintf("models.dev %.4g/%.4g vs openrouter %.4g/%.4g per MTok",
+			m.InputPerM, m.OutputPerM, o.InputPerM, o.OutputPerM),
+		Agg: fmt.Sprintf("md:%.4g/%.4g or:%.4g/%.4g", m.InputPerM, m.OutputPerM, o.InputPerM, o.OutputPerM)}
 }
 
 // priceDiffers reports whether input or output differs by more than tol (a
@@ -210,7 +324,17 @@ const modelsDevURL = "https://models.dev/api.json"
 type modelsDevFetcher struct{}
 
 func (modelsDevFetcher) Fetch(ctx context.Context) ([]candidate, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, modelsDevURL, nil)
+	body, err := getJSON(ctx, modelsDevURL)
+	if err != nil {
+		return nil, err
+	}
+	return parseModelsDev(body)
+}
+
+// getJSON GETs a URL with a 30s timeout and returns the body, erroring on any
+// non-200. Shared by both aggregator fetchers.
+func getJSON(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -221,11 +345,7 @@ func (modelsDevFetcher) Fetch(ctx context.Context) ([]candidate, error) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("models.dev returned %d", resp.StatusCode)
+		return nil, fmt.Errorf("%s returned %d", url, resp.StatusCode)
 	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return parseModelsDev(body)
+	return io.ReadAll(resp.Body)
 }

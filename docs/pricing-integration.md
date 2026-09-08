@@ -119,8 +119,10 @@ dippin owns the freshness process (you consume a pinned tag and adopt new
 releases):
 
 - `just check-prices` — flags catalog entries overdue for re-verification.
-- `just sync-prices` — diffs `prices.json` against models.dev and reports
-  candidates (report-only; a human confirms against each official `source`).
+- `just sync-prices` — diffs `prices.json` against models.dev **and OpenRouter**
+  (cross-referenced: a model the two aggregators price differently is reported
+  as a `disagree` candidate) and reports candidates (report-only; a human
+  confirms against each official `source`).
 - `just new-prices` — reports only upstream models missing from the catalog,
   filtered to actionable text-model adds on priced providers.
 - A daily GitHub Action opens a rolling issue when it detects price/deprecation

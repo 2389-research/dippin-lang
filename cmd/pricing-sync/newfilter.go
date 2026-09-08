@@ -45,19 +45,26 @@ func filterNew(changes []change) []change {
 	return dedupe(out)
 }
 
-// dedupe collapses rows identical in provider+model+aggregator value. models.dev
-// exposes some providers under several ids that map to one canonical key of
-// ours (zai/zhipuai/z-ai), which otherwise reports the same model twice.
-// Rows that agree on the model but disagree on price are kept — that
-// disagreement is signal, not duplication.
+// dedupe collapses rows identical in provider+model+kind+aggregator value.
+// models.dev exposes some providers under several ids that map to one canonical
+// key of ours (zai/zhipuai/z-ai), which otherwise reports the same model
+// twice. Rows that agree on the model but disagree on price are kept — that
+// disagreement is signal, not duplication. When both aggregators report the
+// same row, the survivor is marked "both": two independent sources agreeing
+// against the catalog is stronger signal than one.
 func dedupe(changes []change) []change {
-	seen := map[change]bool{}
+	type key struct{ kind, provider, model, agg string }
+	idx := map[key]int{}
 	var out []change
 	for _, c := range changes {
-		if seen[c] {
+		k := key{c.Kind, c.Provider, c.Model, c.Agg}
+		if i, ok := idx[k]; ok {
+			if out[i].Source != c.Source {
+				out[i].Source = "both"
+			}
 			continue
 		}
-		seen[c] = true
+		idx[k] = len(out)
 		out = append(out, c)
 	}
 	return out
@@ -117,7 +124,7 @@ func variantOfCataloged(provider, model string) bool {
 		if trimmed == base {
 			return false
 		}
-		if _, found := pricing.LookupProvider(provider, trimmed); found {
+		if _, _, found := catalogMatch(provider, trimmed); found {
 			return true
 		}
 		base = trimmed

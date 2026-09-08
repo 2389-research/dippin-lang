@@ -173,7 +173,9 @@ clean:
 check-prices:
     go run ./cmd/pricing-sync check
 
-# Diff the catalog against models.dev and report candidate changes (report-only)
+# Diff the catalog against models.dev + OpenRouter (cross-referenced: a model the
+# two price differently is reported as a "disagree" candidate) and report
+# candidate changes (report-only)
 sync-prices:
     go run ./cmd/pricing-sync sync
 

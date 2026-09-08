@@ -5,7 +5,7 @@ name: Pricing sync
 # rolling issue when it finds actionable drift, and a human confirms each change
 # against the model's official `source` before editing prices.json.
 #
-# Detection is mechanical (models.dev is machine-readable JSON); authoritative
+# Detection is mechanical (models.dev and OpenRouter are machine-readable JSON); authoritative
 # verification is not (no provider publishes price as data). See
 # docs/superpowers/specs/2026-08-07-pricing-package-and-autosync-design.md and
 # docs/pricing-integration.md.
@@ -40,7 +40,7 @@ jobs:
           go run ./cmd/pricing-sync check > stale.txt 2>&1 || true
           cat stale.txt
 
-      - name: Drift report (existing-model price/deprecation changes vs models.dev)
+      - name: Drift report (existing-model price/deprecation changes vs models.dev + OpenRouter)
         id: drift
         run: |
           # --existing-only keeps the signal actionable: price and deprecation
@@ -101,7 +101,7 @@ jobs:
           {
             echo "Automated daily check found **price or deprecation drift**, **new upstream models** missing from \`pricing/prices.json\`, and/or entries overdue for re-verification."
             echo
-            echo "> ⚠️ **Human-gated.** Confirm each candidate against the model's official \`source\` URL before editing \`pricing/prices.json\`. models.dev is a detection aid, not an authority — it can reflect introductory or discounted rates (an intro price vs. the durable list price)."
+            echo "> ⚠️ **Human-gated.** Confirm each candidate against the model's official \`source\` URL before editing \`pricing/prices.json\`. the aggregators (models.dev, OpenRouter) are detection aids, not authorities — they can reflect introductory or discounted rates (an intro price vs. the durable list price)."
             echo
             echo "> Already-dispositioned candidates are filtered by \`cmd/pricing-sync/drift_suppressions.json\` (they re-surface if the aggregator value changes or the entry's \`review_by\` passes). To silence a persistent false alarm, add an entry there."
             echo
@@ -128,5 +128,5 @@ jobs:
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body-file body.md
           else
-            gh issue create --title "Pricing drift detected vs models.dev" --label pricing-drift --body-file body.md
+            gh issue create --title "Pricing drift detected vs models.dev + OpenRouter" --label pricing-drift --body-file body.md
           fi
