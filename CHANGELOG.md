@@ -4,11 +4,24 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.71.0] — 2026-09-08
+
 ### Added
+- **`pricing-sync` cross-references OpenRouter alongside models.dev.** A second aggregator (`openrouter.ai/api/v1/models`, per-token string prices normalized to per-1M) is fetched in parallel and compared against models.dev. New `disagree` rows flag models the two sources price differently — a stale-aggregator signal no single source can produce — and every change row is now source-tagged (`[models.dev]` / `[openrouter]` / `[both]`), with a row both aggregators report merged into one `both` row. OpenRouter's lowercase dotted ids are matched to catalog spellings with a case + dot/dash fold, so rows and suppressions stay keyed on the catalog's id. Models.dev failure is still fatal; OpenRouter failure degrades to a warning and disables the cross-check only, preserving the daily Action's existing gating.
+- **`gpt-6-astra` in the catalog** — 10/50 per MTok, 1.05M context, 0.1× cache-read / 1.25× cache-write, verified against the [official pricing page](https://developers.openai.com/api/docs/pricing) (as_of 2026-09-08). The first release caught by the new cross-check before a human found it: both aggregators agreed, and the official page confirmed. Catalog is now **123** entries across twelve providers. Downstream uptake: [#296](https://github.com/2389-research/dippin-lang/issues/296).
 - **`dippin fmt` now retains node and edge comments** ([#259](https://github.com/2389-research/dippin-lang/issues/259)). Whole-line comments immediately above a node or edge, trailing inline comments on node body lines and edge lines, and whole-line comments inside a node body all survive `fmt` verbatim, joining the leading file-level header block retained in v0.67.0. The lexer records each comment it strips (with its source line) and the parser re-attaches it to the owning entity (`ir.Node.HeaderComment`/`BodyComments`, `ir.Edge.HeaderComment`/`TrailingComment`); the formatter re-emits it at a canonical position — node/edge headers stay above the declaration, a trailing inline comment on an attribute line moves to the end of that node's body, and a trailing edge comment appends to the re-emitted edge line. Formatting is idempotent (`fmt(fmt(x)) == fmt(x)`), which unblocks `dippin fmt -check` as a CI gate for enforcing canonical formatting — the pipelines repo's `# ABOUTME:` convention across ~60 files can now be canonicalized safely.
+
+### Fixed
+- **`gpt-5.6-sol` was stale** — 5/30 matched neither aggregator; the official page lists a $4/$20 standard tier ($8/$30 long-context). Now 4/20 with the official 0.1×/1.25× cache multipliers. Cost estimates for this model were ~25% high on input.
+
+### Changed
+- Dispositioned 25 OpenRouter drift candidates into `cmd/pricing-sync/drift_suppressions.json`: CNY-converted/regional rates (DeepSeek v4, MiniMax M2/M2.5, GLM 4.5-air→5.2), a 50%-off promotional rate (gpt-5.6-sol on OpenRouter), and a stale-source conflict (mistral-nemo, where OpenRouter tracks the verified catalog rate and the conflicting models.dev value was already dispositioned).
+- `disagree` rows are scoped to models with a **priced** catalog entry — the unit a disagree row defends. For unpriced entries (Qwen's console-gated models) and uncataloged models the source split is already visible on the paired `new` rows, so no third row is emitted.
 
 ### Notes
 - Comment positions with no IR slot yet — the `dip` pragma, `goal`/`start`/`exit`, `defaults`, `vars`, `inputs`, `stylesheet` lines — are still dropped by `fmt`, as before (strictly an improvement; nothing is newly lost). Comments inside a multiline block (`prompt:`, `command:`, …) are block content, not comments, and always survive; a `#` inside a quoted value is not a comment and never was.
+- **`gpt-6-astra-pro` is deliberately not in the catalog**: OpenRouter lists it at 10/50, but it is not yet on OpenAI's own pricing page, so it fails the official-source bar. It stays a `new-only` candidate until it appears. Two further drift items remain surfaced for official confirmation: `deepseek/deepseek-chat` (OpenRouter *higher*, 0.32/0.89) and `zai/glm-5.3-flash` (both aggregators at ~half the catalog — likely a real price cut). See [#296](https://github.com/2389-research/dippin-lang/issues/296).
+- OpenRouter's live promotional rates move; suppressions match the aggregator value exactly, so a moved promo rate resurfaces the row for re-review by design.
 
 ## [v0.70.0] — 2026-09-02
 
