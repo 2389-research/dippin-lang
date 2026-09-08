@@ -233,6 +233,23 @@ func TestCrossCheckMatchesAcrossCaseAndDotFold(t *testing.T) {
 	}
 }
 
+func TestCrossCheckSkipsUncatalogedModels(t *testing.T) {
+	// Neither model has a priced catalog entry (qwen3-max and gemma-4 are not
+	// carried): no catalog number needs defending, so no disagree row — the
+	// split stays visible on the paired "new" rows.
+	md := []candidate{
+		{Provider: "qwen", Model: "qwen3-max", InputPerM: 1.2, OutputPerM: 6, Source: "models.dev"},
+		{Provider: "gemini", Model: "gemma-4-31b-it", InputPerM: 0, OutputPerM: 0, Source: "models.dev"},
+	}
+	or := []candidate{
+		{Provider: "qwen", Model: "qwen3-max", InputPerM: 0.78, OutputPerM: 3.9, Source: "openrouter"},
+		{Provider: "gemini", Model: "gemma-4-31b-it", InputPerM: 0.09, OutputPerM: 0.34, Source: "openrouter"},
+	}
+	if got := crossCheck(md, or, 0); len(got) != 0 {
+		t.Errorf("unpriced/uncataloged models must not yield disagree rows, got %+v", got)
+	}
+}
+
 func TestDiffMatchesOpenRouterLowercaseIDToCatalog(t *testing.T) {
 	// OpenRouter's lowercase dotted id matches the catalog's dash-cased
 	// claude-fable-5-1 (10/50); a different price must yield a "price" change

@@ -265,20 +265,39 @@ func displayID(model, catID string) string {
 // crossCheck compares the two aggregators with each other: a model both list
 // at materially different prices is a "disagree" change — at least one
 // aggregator is stale or wrong, so a human must check the official source
-// before trusting either number. Also run for models not yet in the catalog,
-// so a "new" proposal is only as strong as the two sources agreeing on it.
+// before trusting either number. Scoped to models with a priced catalog
+// entry: for models we don't price, the source consensus is already visible
+// on the paired "new" rows ([both] vs. two disagreeing rows), and no
+// catalog number needs defending.
 func crossCheck(md, or []candidate, tol float64) []change {
-	fromMD := map[string]candidate{}
-	for _, c := range md {
-		fromMD[crossKey(c)] = c
-	}
+	fromMD := crossIndex(md)
 	var out []change
 	for _, o := range or {
-		if m, ok := fromMD[crossKey(o)]; ok && sourcesDisagree(m, o, tol) {
-			out = append(out, disagreeChange(m, o))
+		m, ok := fromMD[crossKey(o)]
+		if !ok {
+			continue
 		}
+		p, catID, found := catalogMatch(o.Provider, o.Model)
+		if !driftable(found, p) || !sourcesDisagree(m, o, tol) {
+			continue
+		}
+		out = append(out, disagreeChange(m, o, catID))
 	}
 	return out
+}
+
+func crossIndex(md []candidate) map[string]candidate {
+	out := map[string]candidate{}
+	for _, c := range md {
+		out[crossKey(c)] = c
+	}
+	return out
+}
+
+// driftable reports whether the model has a priced catalog entry (the unit a
+// disagree row defends; unpriced entries like Qwen's cannot drift).
+func driftable(found bool, p pricing.ModelPrice) bool {
+	return found && p.Priced
 }
 
 func crossKey(c candidate) string { return foldKey(c.Provider) + "/" + foldKey(c.Model) }
@@ -290,8 +309,8 @@ func sourcesDisagree(a, b candidate, tol float64) bool {
 		exceeds(a.OutputPerM, b.OutputPerM, tol) || exceeds(b.OutputPerM, a.OutputPerM, tol)
 }
 
-func disagreeChange(m, o candidate) change {
-	return change{Kind: "disagree", Provider: o.Provider, Model: o.Model, Source: "both",
+func disagreeChange(m, o candidate, model string) change {
+	return change{Kind: "disagree", Provider: o.Provider, Model: model, Source: "both",
 		Detail: fmt.Sprintf("models.dev %.4g/%.4g vs openrouter %.4g/%.4g per MTok",
 			m.InputPerM, m.OutputPerM, o.InputPerM, o.OutputPerM),
 		Agg: fmt.Sprintf("md:%.4g/%.4g or:%.4g/%.4g", m.InputPerM, m.OutputPerM, o.InputPerM, o.OutputPerM)}
