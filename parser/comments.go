@@ -35,15 +35,7 @@ func (p *Parser) attachComments() {
 	if len(comms) == 0 {
 		return
 	}
-	standalone := make(map[int]string, len(comms))
-	trailing := make(map[int]string, len(comms))
-	for _, c := range comms {
-		if c.kind == commentStandalone {
-			standalone[c.line] = c.text
-		} else {
-			trailing[c.line] = c.text
-		}
-	}
+	standalone, trailing := indexComments(comms)
 	claimed := make(map[int]bool, len(comms))
 
 	for i := range p.nodeSpans {
@@ -55,6 +47,21 @@ func (p *Parser) attachComments() {
 	for i := range p.nodeSpans {
 		p.attachNodeBody(&p.nodeSpans[i], standalone, trailing, claimed)
 	}
+}
+
+// indexComments splits the lexer's comment records into two line-keyed maps:
+// whole-line (standalone) comments and trailing inline comments.
+func indexComments(comms []lineComment) (standalone, trailing map[int]string) {
+	standalone = make(map[int]string, len(comms))
+	trailing = make(map[int]string, len(comms))
+	for _, c := range comms {
+		if c.kind == commentStandalone {
+			standalone[c.line] = c.text
+		} else {
+			trailing[c.line] = c.text
+		}
+	}
+	return standalone, trailing
 }
 
 // attachNodeHeader sets the node's HeaderComment to the maximal run of

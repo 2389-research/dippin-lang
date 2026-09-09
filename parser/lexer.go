@@ -286,16 +286,11 @@ func (l *Lexer) lexOneLine(i int, filename string) (bool, int) {
 	trimmed := strings.TrimRight(line, " \t\r")
 
 	if l.shouldSkipLine(trimmed) {
-		if text := standaloneCommentText(trimmed); text != "" {
-			l.comments = append(l.comments, lineComment{line: i + 1, kind: commentStandalone, text: text})
-		}
+		l.recordComment(i+1, commentStandalone, standaloneCommentText(trimmed))
 		return false, 0
 	}
 
-	trimmed, comment := splitTrailingComment(trimmed)
-	if comment != "" {
-		l.comments = append(l.comments, lineComment{line: i + 1, kind: commentTrailing, text: comment})
-	}
+	trimmed = l.stripTrailingComment(i+1, trimmed)
 	if len(strings.TrimSpace(trimmed)) == 0 {
 		return false, 0
 	}
@@ -312,6 +307,23 @@ func (l *Lexer) lexOneLine(i int, filename string) (bool, int) {
 	l.lexLine(content, filename)
 	l.tokens = append(l.tokens, Token{Type: TokenNewline, Location: ir.SourceLocation{File: filename, Line: l.line, Column: len(line) + 1}})
 	return false, 0
+}
+
+// recordComment appends a stripped comment to the lexer's record for later
+// re-attachment (#259). An empty text records nothing.
+func (l *Lexer) recordComment(line int, kind commentKind, text string) {
+	if text == "" {
+		return
+	}
+	l.comments = append(l.comments, lineComment{line: line, kind: kind, text: text})
+}
+
+// stripTrailingComment removes a trailing inline comment from a content line,
+// recording it against line, and returns the remaining content.
+func (l *Lexer) stripTrailingComment(line int, trimmed string) string {
+	rest, comment := splitTrailingComment(trimmed)
+	l.recordComment(line, commentTrailing, comment)
+	return rest
 }
 
 // shouldSkipLine returns true if the line is blank/comment and should be skipped.
