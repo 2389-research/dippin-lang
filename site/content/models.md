@@ -79,7 +79,7 @@ defaults
   model: org-router/general-v3   # whatever the router serves; no --extra-models needed
 ```
 
-The exemption is scoped to the declared name. `openai` with an uncatalogued id still fires DIP108, and so does an undeclared gateway name — the escape hatch is named, not a wildcard. An id containing `@` under `openai-compat` is an opaque id rather than a family alias, so it fires neither DIP108 nor DIP162 and `dippin fmt` leaves it alone. Downstream consumers can test for the case with `pricing.CustomProvider(provider)`.
+The exemption is scoped to the declared name. `openai` with an uncatalogued id still fires DIP108, and so does an undeclared gateway name — the escape hatch is named, not a wildcard. An id containing `@` under `openai-compat` is an opaque id rather than a family alias, so it fires neither DIP108 nor DIP162 and `dippin fmt` leaves it alone. `openai-compatible` is a provider alias for the same thing. Downstream consumers can test for the case with `pricing.CustomProvider(provider)`.
 
 ## Cache & Cached-Input Pricing
 
