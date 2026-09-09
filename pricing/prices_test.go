@@ -344,6 +344,10 @@ func TestCustomProviderKnownButUnpriced(t *testing.T) {
 	if !KnownProvider("openai-compat") {
 		t.Error("KnownProvider must recognize a custom provider")
 	}
+	// The long spelling used by some provider registries is an alias.
+	if !CustomProvider("openai-compatible") {
+		t.Error("openai-compatible must alias openai-compat")
+	}
 	p, ok := LookupProvider("openai-compat", "whatever-the-router-serves")
 	if !ok {
 		t.Fatal("any model under a custom provider must be found")

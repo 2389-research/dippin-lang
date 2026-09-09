@@ -2,7 +2,8 @@
   "provider_aliases": {
     "google": "gemini",
     "xai": "grok",
-    "kimi": "moonshot"
+    "kimi": "moonshot",
+    "openai-compatible": "openai-compat"
   },
   "custom_providers": {
     "openai-compat": {
