@@ -2,6 +2,7 @@ package cost
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -553,5 +554,30 @@ func TestNewFrontierProvidersPriced(t *testing.T) {
 		if price.InputPer1M <= 0 || price.OutputPer1M <= 0 {
 			t.Errorf("%s/%s priced at %+v, want non-zero", c.provider, c.model, price)
 		}
+	}
+}
+
+// A custom-gateway provider (#297) prices at $0 like any unknown model, but the
+// assumption must say so in those terms — the provider is known, and the id is
+// unpriceable by design, not a typo.
+func TestAnalyzeCustomProviderUnpricedAssumption(t *testing.T) {
+	w := &ir.Workflow{
+		Name:  "custom_gateway",
+		Start: "a1",
+		Exit:  "a1",
+		Nodes: []*ir.Node{
+			{ID: "a1", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:   "Summarize",
+				Provider: "openai-compat",
+				Model:    "edge-router-model",
+			}},
+		},
+	}
+	r := Analyze(w, DefaultPricing())
+	if nc := r.Nodes["a1"]; nc.Cost.Max != 0 {
+		t.Errorf("custom-provider model should cost $0, got %+v", nc.Cost)
+	}
+	if len(r.Assumptions) != 1 || !strings.Contains(r.Assumptions[0], "custom-gateway provider \"openai-compat\"") {
+		t.Errorf("want a custom-gateway assumption, got %v", r.Assumptions)
 	}
 }

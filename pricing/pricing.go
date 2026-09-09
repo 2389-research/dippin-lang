@@ -109,8 +109,17 @@ func Lookup(model string) (ModelPrice, bool) {
 
 // LookupProvider resolves (provider, model), applying provider aliases
 // (google→gemini, xai→grok, kimi→moonshot) and the version-separator fold.
+//
+// Under a custom provider (see CustomProvider) every model id is found and
+// returned as a known-but-unpriced entry (Priced=false, zero rates): the
+// gateway decides what ids exist, so the catalog cannot say "unknown", but it
+// equally cannot price them. Consumers should treat this exactly like any
+// other Priced=false entry ($0, no DIP108).
 func LookupProvider(provider, model string) (ModelPrice, bool) {
 	prov := canonicalProvider(provider)
+	if index.customProviders[prov] {
+		return ModelPrice{}, true
+	}
 	models, ok := index.byProvider[prov]
 	if !ok {
 		return ModelPrice{}, false
@@ -118,6 +127,12 @@ func LookupProvider(provider, model string) (ModelPrice, bool) {
 	if p, ok := models[model]; ok {
 		return p, true
 	}
+	return lookupCanonical(models, model)
+}
+
+// lookupCanonical finds model in models by the version-separator fold
+// (CanonicalModelID) after an exact match has already missed.
+func lookupCanonical(models map[string]ModelPrice, model string) (ModelPrice, bool) {
 	want := CanonicalModelID(model)
 	for id, p := range models {
 		if CanonicalModelID(id) == want {
@@ -161,14 +176,35 @@ func ProviderAliases() map[string]string {
 	return out
 }
 
-// KnownProvider reports whether a provider (alias or canonical) is in the catalog.
+// KnownProvider reports whether a provider (alias, canonical, or custom) is in
+// the catalog.
 func KnownProvider(provider string) bool {
-	_, ok := index.byProvider[canonicalProvider(provider)]
+	prov := canonicalProvider(provider)
+	if index.customProviders[prov] {
+		return true
+	}
+	_, ok := index.byProvider[prov]
 	return ok
 }
 
-// ProviderNames returns every provider key — canonical and alias — sorted.
-// Used for the "known providers" diagnostic help.
+// CustomProvider reports whether provider names a BYOK / custom-gateway
+// upstream (e.g. "openai-compat", #297) declared under custom_providers in
+// prices.json. A custom provider has no enumerable model list: the ids are
+// whatever the client's gateway serves, so every model under it is treated as
+// known-but-unpriced rather than unknown. This keeps DIP108 strict for real
+// first-party providers while giving edge-router deployments a named escape
+// hatch that needs no per-run --extra-models spec.
+func CustomProvider(provider string) bool {
+	return index.customProviders[canonicalProvider(provider)]
+}
+
+// CustomProviders returns the declared custom-gateway provider names, sorted.
+func CustomProviders() []string {
+	return sortedKeys(index.customProviders)
+}
+
+// ProviderNames returns every provider key — canonical, alias, and custom —
+// sorted. Used for the "known providers" diagnostic help.
 func ProviderNames() []string {
 	seen := map[string]bool{}
 	for p := range index.byProvider {
@@ -177,11 +213,15 @@ func ProviderNames() []string {
 	for a := range index.providerAliases {
 		seen[a] = true
 	}
+	for c := range index.customProviders {
+		seen[c] = true
+	}
 	return sortedKeys(seen)
 }
 
 // ModelIDs returns every model ID (priced and unpriced) known for a provider
 // (alias-resolved), sorted. Used for the "known models for <provider>" help.
+// A custom provider has no enumerable ids and returns nil.
 func ModelIDs(provider string) []string {
 	models, ok := index.byProvider[canonicalProvider(provider)]
 	if !ok {

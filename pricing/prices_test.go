@@ -332,3 +332,61 @@ func TestMetaMuseCatalog(t *testing.T) {
 		t.Errorf("muse-spark@latest = %q, want muse-spark-1.3", got)
 	}
 }
+
+// A custom-gateway provider (#297) is a known provider whose ids cannot be
+// enumerated: the edge router / BYOK gateway decides what it serves. Every id
+// under it must therefore look up as known-but-unpriced, exactly like a Qwen
+// entry, so DIP108 stays quiet and cost prices it at $0.
+func TestCustomProviderKnownButUnpriced(t *testing.T) {
+	if !CustomProvider("openai-compat") {
+		t.Fatal("openai-compat must be a custom provider")
+	}
+	if !KnownProvider("openai-compat") {
+		t.Error("KnownProvider must recognize a custom provider")
+	}
+	p, ok := LookupProvider("openai-compat", "whatever-the-router-serves")
+	if !ok {
+		t.Fatal("any model under a custom provider must be found")
+	}
+	if p.Priced {
+		t.Error("custom-provider models must be Priced=false")
+	}
+	if Cost(Usage{Input: 1_000_000, Output: 1_000_000}, p) != 0 {
+		t.Error("custom-provider models must cost $0")
+	}
+}
+
+func TestCustomProviderStaysOutOfPricedCatalog(t *testing.T) {
+	// No enumerable ids: neither the priced projection nor the help list.
+	if _, in := Providers()["openai-compat"]; in {
+		t.Error("Providers() must not carry a custom provider (it has no priced entries)")
+	}
+	if ids := ModelIDs("openai-compat"); ids != nil {
+		t.Errorf("ModelIDs(custom) = %v, want nil", ids)
+	}
+	// But the provider must appear in the "known providers" help list.
+	found := false
+	for _, n := range ProviderNames() {
+		found = found || n == "openai-compat"
+	}
+	if !found {
+		t.Error("ProviderNames() must list custom providers")
+	}
+	if got := CustomProviders(); len(got) != 1 || got[0] != "openai-compat" {
+		t.Errorf("CustomProviders() = %v, want [openai-compat]", got)
+	}
+}
+
+func TestCustomProviderDoesNotLoosenRealProviders(t *testing.T) {
+	// The escape hatch is scoped to the declared provider: a real provider
+	// still rejects an unknown id, and an undeclared provider is still unknown.
+	if _, ok := LookupProvider("openai", "whatever-the-router-serves"); ok {
+		t.Error("openai must still reject an uncatalogued id")
+	}
+	if CustomProvider("openai") || CustomProvider("my-gateway") {
+		t.Error("only declared custom providers qualify")
+	}
+	if KnownProvider("my-gateway") {
+		t.Error("an undeclared gateway provider must remain unknown")
+	}
+}

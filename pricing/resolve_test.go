@@ -79,3 +79,21 @@ func TestResolveAliasNeverReturnsDeprecated(t *testing.T) {
 		}
 	}
 }
+
+// A custom provider (#297) has no families, and a gateway may serve an id that
+// happens to contain "@". Such a value is an opaque concrete id, not an alias:
+// no DIP162, and fmt must not try to pin it.
+func TestResolveModelRefCustomProviderIsOpaque(t *testing.T) {
+	concrete, prov, resolved, isAlias := ResolveModelRef("openai-compat", "router-model@latest")
+	if isAlias || resolved || concrete != "" || prov != "" {
+		t.Errorf("custom-provider value must be opaque, got (%q, %q, %v, %v)", concrete, prov, resolved, isAlias)
+	}
+	if _, _, _, isAlias := ResolveModelRef("openai", "openai-compat/served-model@latest"); isAlias {
+		t.Error("a custom-provider prefix must be opaque regardless of the node provider")
+	}
+	// A provider/ prefix naming a real provider still resolves as an alias,
+	// even from a node whose own provider is custom.
+	if _, prov, resolved, isAlias := ResolveModelRef("openai-compat", "anthropic/opus@latest"); !isAlias || !resolved || prov != "anthropic" {
+		t.Error("explicit real-provider prefix must still resolve as an alias")
+	}
+}

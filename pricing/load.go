@@ -29,9 +29,16 @@ type fileEntry struct {
 	DisplayName string `json:"display_name,omitempty"`
 }
 
+// customProviderEntry is the on-disk shape of one custom_providers entry. The
+// note is documentation only: it records why the provider has no model list.
+type customProviderEntry struct {
+	Note string `json:"note"`
+}
+
 type priceFile struct {
-	ProviderAliases map[string]string `json:"provider_aliases"`
-	Models          []fileEntry       `json:"models"`
+	ProviderAliases map[string]string              `json:"provider_aliases"`
+	CustomProviders map[string]customProviderEntry `json:"custom_providers"`
+	Models          []fileEntry                    `json:"models"`
 }
 
 // catalogIndex holds the parsed, lookup-ready catalog.
@@ -40,6 +47,7 @@ type catalogIndex struct {
 	byModel         map[string]ModelPrice            // model -> price (exact)
 	byCanonModel    map[string]ModelPrice            // CanonicalModelID(model) -> price
 	providerAliases map[string]string                // alias -> canonical
+	customProviders map[string]bool                  // BYOK / custom-gateway providers with no enumerable model list (#297)
 }
 
 // index is the package-level catalog, built once from the embedded JSON. A
@@ -57,6 +65,10 @@ func buildIndex() catalogIndex {
 		byModel:         map[string]ModelPrice{},
 		byCanonModel:    map[string]ModelPrice{},
 		providerAliases: pf.ProviderAliases,
+		customProviders: map[string]bool{},
+	}
+	for name := range pf.CustomProviders {
+		idx.customProviders[name] = true
 	}
 	for _, e := range pf.Models {
 		idx.add(e)
