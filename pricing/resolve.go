@@ -107,11 +107,18 @@ func parseAliasRef(nodeProvider, modelValue string) (provider, family, selector 
 //     concrete is that model id (empty when resolved is false).
 //   - Otherwise isAlias is false (concrete="", provider="", resolved=false): an
 //     ordinary concrete model id, handled by the existing catalog paths.
+//   - A value that would resolve under a custom provider (CustomProvider, #297)
+//     is never an alias: such a provider has no families, and the gateway may
+//     legitimately serve an id containing "@". It is reported as an ordinary
+//     concrete id so it neither fires DIP162 nor is rewritten by fmt.
 func ResolveModelRef(nodeProvider, modelValue string) (concrete, provider string, resolved, isAlias bool) {
 	if !aliasRe.MatchString(modelValue) {
 		return "", "", false, false
 	}
 	prov, family, selector := parseAliasRef(nodeProvider, modelValue)
+	if CustomProvider(prov) {
+		return "", "", false, false
+	}
 	id, ok := ResolveAlias(prov, family, selector)
 	return id, prov, ok, true
 }

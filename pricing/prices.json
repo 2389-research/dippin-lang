@@ -4,6 +4,11 @@
     "xai": "grok",
     "kimi": "moonshot"
   },
+  "custom_providers": {
+    "openai-compat": {
+      "note": "BYOK / custom-gateway upstream speaking the OpenAI-compatible API (edge routers, self-hosted vLLM, corporate proxies). The model id is whatever the gateway serves and cannot be enumerated by a static catalog, so every model under this provider is known-but-unpriced (Priced=false, $0). Recognized by DIP108; not an entry in models[]. See #297."
+    }
+  },
   "models": [
     {
       "provider": "anthropic",

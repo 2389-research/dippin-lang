@@ -406,6 +406,21 @@ warning[DIP108]: unknown model/provider combination
 
 **How to fix**: Check for typos. Use recognized model/provider combinations.
 
+**Custom gateways (`openai-compat`)**: a model served by a BYOK / OpenAI-compatible
+edge router has an id the static catalog cannot know. Declare the provider as
+`openai-compat` and DIP108 stays quiet for *any* model id under it — the model is
+treated as known-but-unpriced (`Priced=false`, `$0` in `dippin cost`), the same
+state a Qwen catalog entry carries. No `--extra-models` spec is needed. The
+exemption is scoped to that provider name: `openai` with an uncatalogued id, or an
+undeclared gateway name, still fires DIP108. An id containing `@` under
+`openai-compat` is an opaque id, not a family alias (no DIP162).
+
+```dip
+defaults
+  provider: openai-compat
+  model: org-router/general-v3   # any id the router serves; no DIP108
+```
+
 **Version-separator spelling**: the model catalog and cost table treat `.` and
 `-` in the version portion as equivalent, so a dotted ID and its dashed form are
 the same model — `anthropic/claude-haiku-4.5` (the

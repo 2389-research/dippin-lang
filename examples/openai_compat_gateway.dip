@@ -1,0 +1,33 @@
+# ABOUTME: BYOK / custom-gateway deployment behind an OpenAI-compatible edge router.
+# ABOUTME: provider openai-compat is a known-but-unpriced provider: any model id validates (no DIP108), costs $0.
+workflow OpenAICompatGateway
+  goal: "Route every agent through the org's OpenAI-compatible edge router"
+  start: Triage
+  exit: Done
+
+  defaults
+    provider: openai-compat
+    model: org-router/general-v3
+    on_failure: Escalate
+
+  agent Triage
+    prompt: "Classify the incoming request and note which team owns it."
+    max_turns: 3
+
+  agent Draft
+    prompt: "Draft a response for the owning team to review."
+    model: org-router/writer-large
+    max_turns: 6
+
+  human Escalate
+    mode: freeform
+    prompt: "The edge router rejected a call. How should we proceed?"
+
+  agent Done
+    prompt: "Summarize the outcome in one paragraph."
+    model: claude-sonnet-4-6
+    provider: anthropic
+
+  edges
+    Triage -> Draft
+    Draft -> Done

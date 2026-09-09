@@ -149,14 +149,24 @@ func estimateNodeCost(n *ir.Node, w *ir.Workflow, pricing PricingTable, r *Repor
 
 	price, found := lookupPrice(nc.Provider, nc.Model, pricing)
 	if !found {
-		r.Assumptions = append(r.Assumptions,
-			fmt.Sprintf("unknown model %q (provider %q): cost set to $0", nc.Model, nc.Provider))
+		r.Assumptions = append(r.Assumptions, unpricedAssumption(nc.Model, nc.Provider))
 		return nc
 	}
 
 	nc.Cost = computeCostRange(nc.Tokens, nc.Turns, price)
 	nc.Cost = applyLoopMultiplier(n.ID, w, nc.Cost)
 	return nc
+}
+
+// unpricedAssumption words the $0 assumption for a model the table cannot
+// price. A custom-gateway provider (pricing.CustomProvider, #297) is a known
+// provider whose ids are by design unpriceable, so it is reported as such
+// rather than as an "unknown model" the author might read as a typo.
+func unpricedAssumption(model, provider string) string {
+	if pricing.CustomProvider(provider) {
+		return fmt.Sprintf("model %q on custom-gateway provider %q is unpriced: cost set to $0", model, provider)
+	}
+	return fmt.Sprintf("unknown model %q (provider %q): cost set to $0", model, provider)
 }
 
 // getModelProvider resolves the model and provider for an agent node.

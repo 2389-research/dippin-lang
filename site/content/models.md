@@ -69,6 +69,18 @@ dippin lint --extra-models "custom-corp:custom-llm-v1" pipeline.dip
 
 Models added this way suppress DIP108 for the run but are unpriced (they carry no rate), so they contribute nothing to a cost estimate.
 
+## Custom Gateways (`openai-compat`)
+
+An org deploying behind a BYOK / OpenAI-compatible edge router (a corporate proxy, a self-hosted vLLM, a routing layer that picks the upstream) serves model ids the static catalog cannot know. For that case the catalog declares a **custom provider**, `openai-compat`, under `custom_providers` in `prices.json`. It has no model list: *every* id under it resolves as known-but-unpriced — `pricing.LookupProvider("openai-compat", anything)` returns found with `Priced=false`, DIP108 stays quiet, and `dippin cost` prices it at `$0` with an assumption naming the gateway.
+
+```dip
+defaults
+  provider: openai-compat
+  model: org-router/general-v3   # whatever the router serves; no --extra-models needed
+```
+
+The exemption is scoped to the declared name. `openai` with an uncatalogued id still fires DIP108, and so does an undeclared gateway name — the escape hatch is named, not a wildcard. An id containing `@` under `openai-compat` is an opaque id rather than a family alias, so it fires neither DIP108 nor DIP162 and `dippin fmt` leaves it alone. Downstream consumers can test for the case with `pricing.CustomProvider(provider)`.
+
 ## Cache & Cached-Input Pricing
 
 Providers discount tokens served from a prompt cache, and they publish that discount in one of two shapes. The catalog records whichever shape the provider uses:

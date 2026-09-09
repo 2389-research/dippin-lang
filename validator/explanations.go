@@ -267,8 +267,8 @@ func contextExplanations() map[string]Explanation {
 		DIP108: {
 			Code:    DIP108,
 			Summary: "unknown model/provider combination",
-			Trigger: "A node specifies a model or provider not in the known catalog.",
-			Fix:     "Use a supported model/provider combination from the catalog.",
+			Trigger: "A node specifies a model or provider not in the known catalog. A BYOK / custom-gateway provider (openai-compat) is exempt: its model ids are whatever the gateway serves, so every model under it is known-but-unpriced and never fires this code.",
+			Fix:     "Use a supported model/provider combination from the catalog, or set provider: openai-compat for a model served by an OpenAI-compatible edge router (validates, prices $0).",
 			Example: "node A { model gpt-5-turbo provider openai }  # unknown model",
 		},
 		DIP161: {

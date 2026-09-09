@@ -2275,3 +2275,38 @@ func TestLintEmptyPrompts_PromptFileSuppresses(t *testing.T) {
 		}
 	}
 }
+
+// A BYOK / custom-gateway provider (#297) is a first-class escape hatch: any
+// model under it is known-but-unpriced, so DIP108 must not fire and no
+// --extra-models spec is needed. The id may even contain "@" without being
+// mistaken for a family alias (no DIP162).
+func TestLintDIP108CustomProviderSuppressed(t *testing.T) {
+	for _, model := range []string{"edge-router-model", "served-model@latest", "openai-compat/served-model@latest"} {
+		diags := Lint(customModelWorkflow("openai-compat", model)).Diagnostics
+		if hasCode(diags, DIP108) {
+			t.Errorf("model %q: unexpected DIP108 under openai-compat", model)
+		}
+		if hasCode(diags, DIP162) {
+			t.Errorf("model %q: unexpected DIP162 under openai-compat", model)
+		}
+	}
+}
+
+func TestLintDIP108CustomProviderViaDefaults(t *testing.T) {
+	w := customModelWorkflow("", "edge-router-model")
+	w.Defaults.Provider = "openai-compat"
+	if hasCode(Lint(w).Diagnostics, DIP108) {
+		t.Error("unexpected DIP108 when openai-compat comes from defaults")
+	}
+}
+
+func TestLintDIP108CustomProviderStaysScoped(t *testing.T) {
+	// The escape hatch must not loosen DIP108 for real providers or for an
+	// undeclared gateway name.
+	if !hasCode(Lint(customModelWorkflow("openai", "edge-router-model")).Diagnostics, DIP108) {
+		t.Error("expected DIP108 for an uncatalogued openai model")
+	}
+	if !hasCode(Lint(customModelWorkflow("my-gateway", "edge-router-model")).Diagnostics, DIP108) {
+		t.Error("expected DIP108 for an undeclared gateway provider")
+	}
+}
