@@ -230,7 +230,23 @@ func catalogSpelling(provider, folded, fallback string) string {
 	return fallback
 }
 
+// appendChange proposes a change for one aggregator candidate, unless it is a
+// dated/preview/latest naming variant of a family the catalog already
+// carries (e.g. gpt-4o-2024-05-13 vs. our gpt-4o) — covered, not new, and not
+// a price comparison against its own id, since pricing.LookupProvider now
+// resolves it directly (#301) and would otherwise key a price/disagree row
+// on the aggregator's dated id. Split from appendCatalogChange to keep both
+// within the complexity ceiling.
 func appendChange(out []change, c candidate, tol float64) []change {
+	if variantOfCataloged(c.Provider, c.Model) {
+		return out
+	}
+	return appendCatalogChange(out, c, tol)
+}
+
+// appendCatalogChange resolves c against the catalog and appends the
+// resulting new/deprecated/price change(s), if any.
+func appendCatalogChange(out []change, c candidate, tol float64) []change {
 	agg := fmt.Sprintf("%.4g/%.4g", c.InputPerM, c.OutputPerM)
 	p, catID, found := catalogMatch(c.Provider, c.Model)
 	if !found {
@@ -273,17 +289,33 @@ func crossCheck(md, or []candidate, tol float64) []change {
 	fromMD := crossIndex(md)
 	var out []change
 	for _, o := range or {
-		m, ok := fromMD[crossKey(o)]
-		if !ok {
-			continue
+		if c, ok := crossCheckOne(fromMD, o, tol); ok {
+			out = append(out, c)
 		}
-		p, catID, found := catalogMatch(o.Provider, o.Model)
-		if !driftable(found, p) || !sourcesDisagree(m, o, tol) {
-			continue
-		}
-		out = append(out, disagreeChange(m, o, catID))
 	}
 	return out
+}
+
+// crossCheckOne resolves one OpenRouter candidate against its models.dev
+// counterpart (if any), reporting a disagree change when both aggregators
+// know the model, it has a priced catalog entry, and their prices differ
+// beyond tol. Split out of crossCheck to keep both within the complexity
+// ceiling.
+//
+// A dated/preview/latest naming variant of a cataloged family (#301) is
+// skipped the same way appendChange skips it: pricing.LookupProvider now
+// resolves it directly, but a disagree row keyed on the aggregator's dated
+// id would defend nothing the family row doesn't already cover.
+func crossCheckOne(fromMD map[string]candidate, o candidate, tol float64) (change, bool) {
+	m, ok := fromMD[crossKey(o)]
+	if !ok || variantOfCataloged(o.Provider, o.Model) {
+		return change{}, false
+	}
+	p, catID, found := catalogMatch(o.Provider, o.Model)
+	if !driftable(found, p) || !sourcesDisagree(m, o, tol) {
+		return change{}, false
+	}
+	return disagreeChange(m, o, catID), true
 }
 
 func crossIndex(md []candidate) map[string]candidate {

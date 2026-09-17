@@ -111,11 +111,13 @@ func TestLookupDatedSnapshot(t *testing.T) {
 	if _, ok := Lookup("nonexistent-9-9-20251001"); ok {
 		t.Error("nonexistent-9-9-20251001 must not resolve")
 	}
-	// Negative: a non-date numeric suffix must not be stripped.
-	if _, ok := Lookup("nonexistent-9-9-1234567"); ok {
+	// Negative: a non-date numeric suffix must not be stripped, even on a
+	// real family (claude-haiku-4-5 is in the catalog; nonexistent-9-9 is
+	// not, so a check against it would pass even if the regex over-matched).
+	if _, ok := Lookup("claude-haiku-4-5-1234567"); ok {
 		t.Error("7-digit numeric suffix must not be treated as a date")
 	}
-	if _, ok := Lookup("nonexistent-9-9-123456789"); ok {
+	if _, ok := Lookup("claude-haiku-4-5-123456789"); ok {
 		t.Error("9-digit numeric suffix must not be treated as a date")
 	}
 }
@@ -130,7 +132,9 @@ func TestStripSnapshotDate(t *testing.T) {
 		{"claude-haiku-4-5-20251001", "claude-haiku-4-5"},
 		{"gpt-4o-2026-04-23", "gpt-4o"},
 		{"claude-haiku-4-5", "claude-haiku-4-5"},
-		{"nonexistent-9-9-2025100", "nonexistent-9-9-2025100"},
+		{"claude-haiku-4-5-2025100", "claude-haiku-4-5-2025100"},
+		{"claude-haiku-4-5-1234567", "claude-haiku-4-5-1234567"},
+		{"claude-haiku-4-5-123456789", "claude-haiku-4-5-123456789"},
 	}
 	for _, c := range cases {
 		if got := StripSnapshotDate(c.in); got != c.want {

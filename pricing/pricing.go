@@ -133,7 +133,8 @@ func Lookup(model string) (ModelPrice, bool) {
 }
 
 // LookupProvider resolves (provider, model), applying provider aliases
-// (google→gemini, xai→grok, kimi→moonshot) and the version-separator fold.
+// (google→gemini, xai→grok, kimi→moonshot), the version-separator fold, and a
+// trailing dated-snapshot suffix (#301), in that precedence order.
 //
 // Under a custom provider (see CustomProvider) every model id is found and
 // returned as a known-but-unpriced entry (Priced=false, zero rates): the
