@@ -4,6 +4,9 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+### Fixed
+- **`pricing.Lookup`/`LookupProvider` strip a trailing dated-snapshot suffix** ([#301](https://github.com/2389-research/dippin-lang/issues/301)). A provider-returned concrete snapshot id (Anthropic `claude-*-YYYYMMDD`, OpenAI `gpt-*-YYYY-MM-DD`) missed the undated catalog key and priced at $0. New exported `pricing.StripSnapshotDate` strips both spellings after the existing exact-match and version-separator-fold tiers miss, so a dated id now resolves to its undated family price (and no longer trips DIP108 as an unknown model).
+
 ## [v0.72.0] — 2026-09-08
 
 ### Added

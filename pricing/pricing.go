@@ -11,12 +11,18 @@ package pricing
 
 import (
 	_ "embed"
+	"regexp"
 	"sort"
 	"strings"
 )
 
 //go:embed prices.json
 var pricesJSON []byte
+
+// snapshotDateRe matches a trailing dated-snapshot suffix in either spelling
+// providers use: -YYYYMMDD (Anthropic, e.g. -20251001) or -YYYY-MM-DD (OpenAI,
+// e.g. -2026-04-23). Anchored to the end of the string.
+var snapshotDateRe = regexp.MustCompile(`-(\d{8}|\d{4}-\d{2}-\d{2})$`)
 
 // ModelPrice is the price of one model, carried the way providers publish it.
 // Cache fields follow the "zero means use the other / default" convention so a
@@ -93,15 +99,34 @@ func CanonicalModelID(model string) string {
 	return strings.ReplaceAll(model, ".", "-")
 }
 
-// Lookup resolves a model ID across all providers, honoring aliases and the
-// version-separator fold. found is false for a model not in the catalog; the
-// caller sets policy for unknowns (a runtime treats unknown as $0 + warning; a
-// linter can flag it louder). A found-but-unpriced entry returns Priced=false.
+// StripSnapshotDate strips a trailing dated-snapshot suffix from a model id,
+// in either spelling providers use: -YYYYMMDD (Anthropic, e.g.
+// claude-haiku-4-5-20251001) or -YYYY-MM-DD (OpenAI, e.g.
+// gpt-4o-2026-04-23). A dated snapshot prices as its undated family, since
+// prices.json keys families undated (#301). A model id with no dated suffix
+// is returned unchanged.
+func StripSnapshotDate(model string) string {
+	return snapshotDateRe.ReplaceAllString(model, "")
+}
+
+// Lookup resolves a model ID across all providers, honoring aliases, the
+// version-separator fold, and a trailing dated-snapshot suffix (#301). found
+// is false for a model not in the catalog; the caller sets policy for
+// unknowns (a runtime treats unknown as $0 + warning; a linter can flag it
+// louder). A found-but-unpriced entry returns Priced=false.
+//
+// Precedence: exact match, then the canonical (dot-fold) match, then the
+// canonical match of the id with its dated-snapshot suffix stripped — so a
+// genuinely dated catalog key, were one ever added, still wins over the
+// stripped fallback.
 func Lookup(model string) (ModelPrice, bool) {
 	if p, ok := index.byModel[model]; ok {
 		return p, true
 	}
 	if p, ok := index.byCanonModel[CanonicalModelID(model)]; ok {
+		return p, true
+	}
+	if p, ok := index.byCanonModel[CanonicalModelID(StripSnapshotDate(model))]; ok {
 		return p, true
 	}
 	return ModelPrice{}, false
@@ -127,7 +152,10 @@ func LookupProvider(provider, model string) (ModelPrice, bool) {
 	if p, ok := models[model]; ok {
 		return p, true
 	}
-	return lookupCanonical(models, model)
+	if p, ok := lookupCanonical(models, model); ok {
+		return p, true
+	}
+	return lookupCanonical(models, StripSnapshotDate(model))
 }
 
 // lookupCanonical finds model in models by the version-separator fold
