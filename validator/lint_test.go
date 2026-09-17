@@ -1340,6 +1340,23 @@ func TestExtraModels_ScopedSuppressesDIP108(t *testing.T) {
 	}
 }
 
+// TestExtraModels_DatedSnapshotResolvesAgainstUndatedEntry covers #301 for
+// the --extra-models overlay: a gateway that returns a dated snapshot id for
+// a model declared undated in --extra-models (custom-llm-v1 vs.
+// custom-llm-v1-20250101) must not trip DIP108, mirroring the dot-fold
+// case above it.
+func TestExtraModels_DatedSnapshotResolvesAgainstUndatedEntry(t *testing.T) {
+	const provider = "custom-corp"
+	const undated = "custom-llm-v1"
+	const dated = undated + "-20250101"
+
+	w := customModelWorkflow(provider, dated)
+	opts := Options{ExtraModels: ParseExtraModels(provider + ":" + undated)}
+	if hasCode(LintWithOptions(w, opts).Diagnostics, DIP108) {
+		t.Error("dated snapshot of an --extra-models entry should not trip DIP108")
+	}
+}
+
 func TestExtraModels_HelpListsScopedModels(t *testing.T) {
 	const provider = "custom-corp"
 	const goodModel = "custom-llm-v1"

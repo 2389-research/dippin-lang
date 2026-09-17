@@ -67,6 +67,82 @@ func TestLookupExactAndFold(t *testing.T) {
 	}
 }
 
+// TestLookupDatedSnapshot covers issue #301: a provider-returned dated
+// snapshot id (Anthropic claude-*-YYYYMMDD, OpenAI gpt-*-YYYY-MM-DD) must
+// resolve to its undated family price, since prices.json keys families
+// undated and the concrete snapshot id would otherwise miss and price $0.
+func TestLookupDatedSnapshot(t *testing.T) {
+	undated, ok := Lookup("claude-haiku-4-5")
+	if !ok {
+		t.Fatal("claude-haiku-4-5 must be in the catalog")
+	}
+	dated, ok := Lookup("claude-haiku-4-5-20251001")
+	if !ok {
+		t.Fatal("claude-haiku-4-5-20251001 should resolve via date-strip")
+	}
+	if dated.InputPerM != undated.InputPerM || dated.OutputPerM != undated.OutputPerM {
+		t.Errorf("dated snapshot price = %+v, want undated family price %+v", dated, undated)
+	}
+
+	// Fold and date-strip must compose: dotted version + dated suffix.
+	if _, ok := Lookup("claude-haiku-4.5-20251001"); !ok {
+		t.Error("claude-haiku-4.5-20251001 should resolve via fold + date-strip")
+	}
+
+	// OpenAI-style -YYYY-MM-DD suffix on a real catalog key.
+	gpt4o, ok := Lookup("gpt-4o")
+	if !ok {
+		t.Fatal("gpt-4o must be in the catalog")
+	}
+	gpt4oDated, ok := Lookup("gpt-4o-2026-04-23")
+	if !ok {
+		t.Fatal("gpt-4o-2026-04-23 should resolve via date-strip")
+	}
+	if gpt4oDated.InputPerM != gpt4o.InputPerM || gpt4oDated.OutputPerM != gpt4o.OutputPerM {
+		t.Errorf("gpt-4o-2026-04-23 price = %+v, want gpt-4o price %+v", gpt4oDated, gpt4o)
+	}
+
+	// LookupProvider must apply the same date-strip.
+	if _, ok := LookupProvider("anthropic", "claude-haiku-4-5-20251001"); !ok {
+		t.Error(`LookupProvider("anthropic", "claude-haiku-4-5-20251001") should resolve`)
+	}
+
+	// Negative: an unknown family stays unknown even with a dated suffix.
+	if _, ok := Lookup("nonexistent-9-9-20251001"); ok {
+		t.Error("nonexistent-9-9-20251001 must not resolve")
+	}
+	// Negative: a non-date numeric suffix must not be stripped, even on a
+	// real family (claude-haiku-4-5 is in the catalog; nonexistent-9-9 is
+	// not, so a check against it would pass even if the regex over-matched).
+	if _, ok := Lookup("claude-haiku-4-5-1234567"); ok {
+		t.Error("7-digit numeric suffix must not be treated as a date")
+	}
+	if _, ok := Lookup("claude-haiku-4-5-123456789"); ok {
+		t.Error("9-digit numeric suffix must not be treated as a date")
+	}
+}
+
+// TestStripSnapshotDate is a table test for the exported helper: both dated
+// spellings are stripped, an undated id is unchanged, and near-miss suffixes
+// that aren't valid dates are left alone.
+func TestStripSnapshotDate(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"claude-haiku-4-5-20251001", "claude-haiku-4-5"},
+		{"gpt-4o-2026-04-23", "gpt-4o"},
+		{"claude-haiku-4-5", "claude-haiku-4-5"},
+		{"claude-haiku-4-5-2025100", "claude-haiku-4-5-2025100"},
+		{"claude-haiku-4-5-1234567", "claude-haiku-4-5-1234567"},
+		{"claude-haiku-4-5-123456789", "claude-haiku-4-5-123456789"},
+	}
+	for _, c := range cases {
+		if got := StripSnapshotDate(c.in); got != c.want {
+			t.Errorf("StripSnapshotDate(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
 func TestLookupProviderAlias(t *testing.T) {
 	// gemini models must resolve under the google alias.
 	viaGemini, ok1 := LookupProvider("gemini", "gemini-3.6-flash")

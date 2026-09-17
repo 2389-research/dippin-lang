@@ -114,6 +114,40 @@ func TestDiffClassifiesChanges(t *testing.T) {
 	}
 }
 
+// TestDiffSkipsDatedSnapshotOfCatalogedFamily covers #301: pricing.Lookup now
+// resolves a dated snapshot id directly to its undated family, which would
+// otherwise let a dated aggregator id (e.g. models.dev's gpt-4o-2024-05-13)
+// through catalogMatch and produce a price/disagree row keyed on the dated
+// id instead of the catalog's own gpt-4o spelling. It must instead be
+// treated as a covered variant — no change row at all — even when its
+// reported price differs from the family's.
+func TestDiffSkipsDatedSnapshotOfCatalogedFamily(t *testing.T) {
+	cands := []candidate{
+		{Provider: "openai", Model: "gpt-4o-2024-05-13", InputPerM: 999, OutputPerM: 999},
+	}
+	if got := diff(cands, 0); len(got) != 0 {
+		t.Errorf("dated snapshot of a cataloged family must yield no change row, got %+v", got)
+	}
+}
+
+// TestDiffKeepsPriceRowForCatalogedDatedID is the regression guard for the
+// final-review fix: command-r-08-2024 is itself a cataloged id (not merely a
+// naming variant reachable only via date-strip), and its stripped base
+// command-r also happens to be cataloged. variantOfCataloged's broader
+// snapshotSuffix regex (which also matches -preview/-latest, unlike
+// pricing.StripSnapshotDate) would misclassify it as a "covered variant" and
+// silently drop its price row — coveredVariant's direct-catalog-membership
+// check must prevent that.
+func TestDiffKeepsPriceRowForCatalogedDatedID(t *testing.T) {
+	cands := []candidate{
+		{Provider: "cohere", Model: "command-r-08-2024", InputPerM: 999, OutputPerM: 999},
+	}
+	got := diff(cands, 0)
+	if len(got) != 1 || got[0].Kind != "price" || got[0].Model != "command-r-08-2024" {
+		t.Errorf("command-r-08-2024 (a cataloged id in its own right) must still yield one price row, got %+v", got)
+	}
+}
+
 func TestDiffToleranceSuppressesSmallDeltas(t *testing.T) {
 	// sonnet-5 catalog is 3/15; a 4% output bump under a 5% tolerance is ignored.
 	cands := []candidate{{Provider: "anthropic", Model: "claude-sonnet-5", InputPerM: 3, OutputPerM: 15.6}}
@@ -220,6 +254,33 @@ func TestCrossCheckFlagsDisagreement(t *testing.T) {
 	}
 	if !strings.Contains(got[0].Detail, "5/25") || !strings.Contains(got[0].Detail, "6/30") {
 		t.Errorf("detail must name both aggregators' prices: %q", got[0].Detail)
+	}
+}
+
+// TestCrossCheckSkipsDatedSnapshotOfCatalogedFamily mirrors
+// TestDiffSkipsDatedSnapshotOfCatalogedFamily for the cross-aggregator path
+// (#301): both aggregators reporting the same dated snapshot id at
+// disagreeing prices must not produce a "disagree" row, since the id is a
+// covered variant of a cataloged family, not a value the row should defend.
+func TestCrossCheckSkipsDatedSnapshotOfCatalogedFamily(t *testing.T) {
+	md := []candidate{{Provider: "openai", Model: "gpt-4o-2024-05-13", InputPerM: 5, OutputPerM: 15, Source: "models.dev"}}
+	or := []candidate{{Provider: "openai", Model: "gpt-4o-2024-05-13", InputPerM: 6, OutputPerM: 30, Source: "openrouter"}}
+	if got := crossCheck(md, or, 0.02); len(got) != 0 {
+		t.Errorf("dated snapshot of a cataloged family must not yield a disagree row, got %+v", got)
+	}
+}
+
+// TestCrossCheckKeepsDisagreeRowForCatalogedDatedID mirrors
+// TestDiffKeepsPriceRowForCatalogedDatedID for the cross-aggregator path:
+// command-r-08-2024 is itself a cataloged id, not merely reachable via
+// date-strip, so coveredVariant must not suppress its disagree row even
+// though its stripped base (command-r) is also cataloged.
+func TestCrossCheckKeepsDisagreeRowForCatalogedDatedID(t *testing.T) {
+	md := []candidate{{Provider: "cohere", Model: "command-r-08-2024", InputPerM: 5, OutputPerM: 15, Source: "models.dev"}}
+	or := []candidate{{Provider: "cohere", Model: "command-r-08-2024", InputPerM: 6, OutputPerM: 30, Source: "openrouter"}}
+	got := crossCheck(md, or, 0.02)
+	if len(got) != 1 || got[0].Kind != "disagree" || got[0].Model != "command-r-08-2024" {
+		t.Errorf("command-r-08-2024 (a cataloged id in its own right) must still yield one disagree row, got %+v", got)
 	}
 }
 

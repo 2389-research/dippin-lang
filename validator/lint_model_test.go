@@ -73,6 +73,45 @@ func TestLintDIP108DottedAnthropicID(t *testing.T) {
 	}
 }
 
+// TestLintDIP108DatedSnapshotID covers #301: a provider-returned dated
+// snapshot ID (claude-haiku-4-5-20251001, the concrete snapshot the undated
+// alias resolves to) must be recognized as its undated family, so it does not
+// trip DIP108. A genuinely unknown model with a dated suffix must still be
+// flagged.
+func TestLintDIP108DatedSnapshotID(t *testing.T) {
+	known := fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: anthropic
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, "claude-haiku-4-5-20251001")
+	if diags := lintSrc(t, known); hasCode(diags, DIP108) {
+		t.Errorf("dated claude-haiku-4-5-20251001 tripped DIP108 (issue #301): %v", codes(diags))
+	}
+
+	unknown := fmt.Sprintf(`workflow w
+  start: A
+  exit: A
+
+  agent A
+    provider: anthropic
+    model: %s
+    prompt: go
+
+  edges
+    A -> A
+`, "claude-nonexistent-9-9-20251001")
+	if diags := lintSrc(t, unknown); !hasCode(diags, DIP108) {
+		t.Errorf("genuinely unknown dated model must still trip DIP108: %v", codes(diags))
+	}
+}
+
 // TestDIP108FrontierCatalog covers #189: current frontier models across every
 // provider (incl. the new zai/moonshot/minimax/qwen providers) must be
 // recognized so they don't trip a spurious DIP108.

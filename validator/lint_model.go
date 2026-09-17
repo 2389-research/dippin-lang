@@ -197,11 +197,17 @@ func modelKnown(provider, model string, extra ExtraModels) bool {
 	if extra[provider][model] {
 		return true
 	}
-	return modelKnownNormalized(extra[provider], model)
+	if modelKnownNormalized(extra[provider], model) {
+		return true
+	}
+	return modelKnownNormalized(extra[provider], pricing.StripSnapshotDate(model))
 }
 
 // modelKnownNormalized reports whether any key in an extra-catalog entry matches
 // model once their version separators are folded (dots to dashes). See #188.
+// Called a second time with a dated suffix already stripped from model, this
+// also covers a gateway-reported dated snapshot id (e.g. my-gw-model-20250101)
+// against an undated --extra-models entry (my-gw-model). See #301.
 func modelKnownNormalized(catalog map[string]bool, model string) bool {
 	want := pricing.CanonicalModelID(model)
 	for k := range catalog {
