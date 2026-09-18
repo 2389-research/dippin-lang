@@ -77,6 +77,54 @@ func exhaustiveElseWorkflow() *ir.Workflow {
 	}
 }
 
+// successOnlyElseWorkflow: Build guards only on ctx.outcome = success (no
+// explicit `on fail` edge, no unconditional edge of its own), plus a section
+// `else -> Cleanup`. Per docs/edges.md's Failure Handling contract, `else` is
+// success-side only — a genuine fail outcome must NOT route to Cleanup via
+// else. Used for issue #306.
+func successOnlyElseWorkflow() *ir.Workflow {
+	return &ir.Workflow{
+		Name: "SuccessOnlyElse", Version: "1", Start: "Setup", Exit: "Done",
+		ElseTarget: "Cleanup",
+		Nodes: []*ir.Node{
+			{ID: "Setup", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "setup"}},
+			{ID: "Build", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "build"}},
+			{ID: "Cleanup", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "cleanup"}},
+			{ID: "Done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done"}},
+		},
+		Edges: []*ir.Edge{
+			{From: "Setup", To: "Build"},
+			{From: "Build", To: "Done", Condition: &ir.Condition{Raw: "ctx.outcome = success"}},
+			{From: "Cleanup", To: "Done"},
+		},
+	}
+}
+
+// explicitFailEdgeElseWorkflow: like successOnlyElseWorkflow, but Build also
+// declares its own explicit `on fail` edge to Escalate. A fail outcome must
+// still route through that explicit fail edge (the failure cascade), not
+// through else, and not through the generic edges[0] fallback either.
+func explicitFailEdgeElseWorkflow() *ir.Workflow {
+	return &ir.Workflow{
+		Name: "ExplicitFailEdgeElse", Version: "1", Start: "Setup", Exit: "Done",
+		ElseTarget: "Cleanup",
+		Nodes: []*ir.Node{
+			{ID: "Setup", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "setup"}},
+			{ID: "Build", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "build"}},
+			{ID: "Escalate", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "escalate"}},
+			{ID: "Cleanup", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "cleanup"}},
+			{ID: "Done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done"}},
+		},
+		Edges: []*ir.Edge{
+			{From: "Setup", To: "Build"},
+			{From: "Build", To: "Done", Condition: &ir.Condition{Raw: "ctx.outcome = success"}},
+			{From: "Build", To: "Escalate", Condition: &ir.Condition{Raw: "ctx.outcome = fail"}},
+			{From: "Escalate", To: "Done"},
+			{From: "Cleanup", To: "Done"},
+		},
+	}
+}
+
 func pathContains(path []string, id string) bool {
 	for _, p := range path {
 		if p == id {
@@ -150,6 +198,57 @@ func TestRunAllPaths_NoElseBranchForExhaustive(t *testing.T) {
 // A gold/silver complete partition is exhaustive by declaration, so the
 // enumerator (which routes by declared conditions) must not emit an else path —
 // even though the single-run simulator would fall to else on an unhandled value.
+// Issue #306(a): a fail outcome against a success-only guard must NOT route
+// to the else target — else is success-side only per docs/edges.md.
+func TestSimulate_FailOutcomeDoesNotRouteToElse(t *testing.T) {
+	res, err := Run(successOnlyElseWorkflow(), Options{Scenario: map[string]string{"Build.outcome": "fail"}})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if pathContains(res.Path, "Cleanup") {
+		t.Errorf("fail outcome must not route to else target Cleanup; path=%v", res.Path)
+	}
+}
+
+// Issue #306(b): a fail outcome must still route via an explicit `on fail`
+// edge when one is declared — only the else shortcut is removed.
+func TestSimulate_FailOutcomeStillRoutesViaExplicitFailEdge(t *testing.T) {
+	res, err := Run(explicitFailEdgeElseWorkflow(), Options{Scenario: map[string]string{"Build.outcome": "fail"}})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !pathContains(res.Path, "Escalate") {
+		t.Errorf("fail outcome did not route via explicit on-fail edge to Escalate; path=%v", res.Path)
+	}
+	if pathContains(res.Path, "Cleanup") {
+		t.Errorf("fail outcome must not also route to else target Cleanup; path=%v", res.Path)
+	}
+}
+
+// Issue #306(c): a non-fail unmatched outcome must still route to else — the
+// fix is scoped to ctx.outcome == "fail" only, not "unmatched" in general.
+func TestSimulate_NonFailUnmatchedOutcomeStillRoutesToElse(t *testing.T) {
+	res, err := Run(successOnlyElseWorkflow(), Options{Scenario: map[string]string{"Build.outcome": "timeout"}})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !pathContains(res.Path, "Cleanup") {
+		t.Errorf("non-fail unmatched outcome did not route to else target Cleanup; path=%v", res.Path)
+	}
+}
+
+// Issue #306(d): the all-paths enumerator must not emit the else branch for
+// the outcome=fail complement of a success-only guard.
+func TestRunAllPaths_NoElseBranchOnFailComplement(t *testing.T) {
+	results, err := RunAllPaths(successOnlyElseWorkflow(), nil)
+	if err != nil {
+		t.Fatalf("RunAllPaths: %v", err)
+	}
+	if anyPathContains(results, "Cleanup") {
+		t.Errorf("success-only guard should not enumerate an else-on-fail branch; %d paths reached Cleanup", len(results))
+	}
+}
+
 func TestRunAllPaths_NoElseBranchForPartition(t *testing.T) {
 	results, err := RunAllPaths(partitionElseWorkflow(), nil)
 	if err != nil {

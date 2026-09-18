@@ -225,10 +225,10 @@ states "everything not handled above goes here" once.
   nodes without one.
 
 dippin validates that the `else` target node exists (DIP003) and treats it as reachable
-(DIP004); the runtime resolves an unmatched node to the `else` target. Note: `dippin
-simulate` / `dippin test` do not yet traverse the `else` default (tracked in
-[#158](https://github.com/2389-research/dippin-lang/issues/158)); a paired runtime
-resolves it. See
+(DIP004); the runtime resolves an unmatched node to the `else` target. `dippin simulate`
+(including `-all-paths`) and `dippin test` traverse the `else` default too, on the same
+success-side-only terms described above: a scenario `outcome=fail` never falls through to
+`else`, even when no other guard matches. See
 [the error-funnel decision](proposals/2026-06-16-error-funnel-default.md).
 
 ---

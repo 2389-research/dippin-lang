@@ -208,7 +208,10 @@ func (pe *pathEnumerator) exploreElseBranch(edges []*ir.Edge, events []event.Eve
 // elseApplies reports whether the section `else` default is a reachable branch
 // for this sibling edge set: an else must be declared, the node must have no
 // unconditional edge of its own, and the guards must be non-exhaustive (else the
-// no-match case cannot occur).
+// no-match case cannot occur). `else` is success-side only (docs/edges.md,
+// "Failure Handling"), so a guard set that tests only ctx.outcome and never
+// covers "fail" is excluded too — its unmatched complement is a genuine
+// failure, which routes via the failure cascade, never else.
 func (pe *pathEnumerator) elseApplies(edges []*ir.Edge) bool {
 	if pe.workflow.ElseTarget == "" {
 		return false
@@ -218,7 +221,27 @@ func (pe *pathEnumerator) elseApplies(edges []*ir.Edge) bool {
 			return false
 		}
 	}
-	return !ir.EdgesExhaustive(edges)
+	if ir.EdgesExhaustive(edges) {
+		return false
+	}
+	return !outcomeGuardOmitsFail(edges)
+}
+
+// outcomeGuardOmitsFail reports whether every sibling edge is a simple
+// equality guard on ctx.outcome, and none of them covers "fail" — meaning the
+// unmatched complement this guard set leaves open is the fail outcome, which
+// never routes through else.
+func outcomeGuardOmitsFail(edges []*ir.Edge) bool {
+	for _, e := range edges {
+		cmp, ok := ir.ExtractEqualityCondition(e)
+		if !ok || strings.TrimPrefix(cmp.Variable, "ctx.") != "outcome" {
+			return false
+		}
+		if cmp.Value == "fail" {
+			return false
+		}
+	}
+	return true
 }
 
 // buildEdgeTraverseEvent constructs an EdgeTraverse event from an edge.
