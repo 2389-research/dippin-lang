@@ -76,20 +76,59 @@ var placeholderPattern = regexp.MustCompile(`\$\{[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Z
 // the placeholder or the placeholder was concatenated with literal text,
 // e.g. "${p.x}suffix"), extraction returns "" since the real binary can't
 // be known before expansion.
+//
+// Two additional cases return "" because the symbol space becomes
+// unknowable: (1) if a "." or "source" command runs before the first
+// non-builtin command in the body, the script may be loading functions from
+// disk that the walk has no way to resolve — DIP125 is skipped for that
+// node, same precedent as the placeholder-as-command skip above (a "."/
+// "source" appearing *after* the first real command does not suppress it —
+// that first command is still checkable); (2) if the candidate binary name
+// matches a function defined by a FuncDecl anywhere in the body, it's a
+// shell function, not a PATH binary.
 func extractBinary(command string) string {
 	sanitized := placeholderPattern.ReplaceAllString(command, placeholderDummy)
-	parser := syntax.NewParser(syntax.KeepComments(false))
-	prog, err := parser.Parse(strings.NewReader(sanitized), "")
-	var bin string
-	if err != nil {
-		bin = extractBinaryFallback(sanitized)
-	} else {
-		syntax.Walk(prog, walkForBinary(&bin))
-	}
-	if strings.Contains(bin, placeholderDummy) {
+	bin, sawSource := parseBinary(sanitized)
+	if sawSource || strings.Contains(bin, placeholderDummy) {
 		return ""
 	}
 	return bin
+}
+
+// parseBinary shell-parses sanitized and returns the candidate binary name
+// plus whether a "."/"source" command was reached before it (see
+// extractBinary's doc comment). Falls back to token-based extraction on
+// parse errors.
+func parseBinary(sanitized string) (string, bool) {
+	parser := syntax.NewParser(syntax.KeepComments(false))
+	prog, err := parser.Parse(strings.NewReader(sanitized), "")
+	if err != nil {
+		return extractBinaryFallback(sanitized), false
+	}
+	var bin string
+	var sawSource bool
+	syntax.Walk(prog, walkForBinary(&bin, &sawSource))
+	if bin != "" && bodyDefinesFunc(prog, bin) {
+		bin = ""
+	}
+	return bin, sawSource
+}
+
+// bodyDefinesFunc reports whether the parsed command body declares a shell
+// function named name (a FuncDecl), meaning name is not a PATH binary.
+func bodyDefinesFunc(prog *syntax.File, name string) bool {
+	found := false
+	syntax.Walk(prog, func(node syntax.Node) bool {
+		if found {
+			return false
+		}
+		if fd, ok := node.(*syntax.FuncDecl); ok && fd.Name != nil && fd.Name.Value == name {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
 }
 
 // extractBinaryFallback performs best-effort extraction when shell parsing
@@ -104,19 +143,44 @@ func extractBinaryFallback(command string) string {
 }
 
 // walkForBinary returns a walk function that captures the first non-builtin,
-// non-preamble command binary into bin.
-func walkForBinary(bin *string) func(syntax.Node) bool {
+// non-preamble command binary into bin. If a "." or "source" command is
+// reached before any such binary, it sets sawSource and stops the walk
+// (bin stays empty) — the sourced file's contents make the symbol space
+// unknowable. A "."/"source" reached after bin is already set does not
+// affect the result, since the walk has already stopped by then.
+func walkForBinary(bin *string, sawSource *bool) func(syntax.Node) bool {
 	return func(node syntax.Node) bool {
-		if *bin != "" {
-			return false
-		}
-		name := callExprBinary(node)
-		if name != "" && !isSkippableCommand(name) {
-			*bin = name
-			return false
-		}
+		return visitForBinary(node, bin, sawSource)
+	}
+}
+
+// visitForBinary implements a single walk step for walkForBinary, pulled
+// out to a plain function so its branching doesn't stack on top of the
+// enclosing closure's nesting level.
+func visitForBinary(node syntax.Node, bin *string, sawSource *bool) bool {
+	if *bin != "" {
+		return false
+	}
+	name := callExprBinary(node)
+	if name == "" {
 		return true
 	}
+	if isSourceCommand(name) {
+		*sawSource = true
+		return false
+	}
+	if isSkippableCommand(name) {
+		return true
+	}
+	*bin = name
+	return false
+}
+
+// isSourceCommand reports whether name loads another file's definitions
+// into the current shell ("." or "source"), which makes the symbol space
+// unknowable to a static walk.
+func isSourceCommand(name string) bool {
+	return name == "." || name == "source"
 }
 
 // callExprBinary returns the literal binary name of a CallExpr node.
@@ -174,14 +238,18 @@ func extractWordLiteral(w *syntax.Word) string {
 
 // shellBuiltins are commands handled by the shell, not found on PATH.
 var shellBuiltins = map[string]bool{
-	"echo": true, "printf": true, "test": true, "[": true,
+	"echo": true, "printf": true, "test": true, "[": true, "[[": true,
 	"if": true, "then": true, "else": true, "fi": true,
 	"for": true, "while": true, "do": true, "done": true,
 	"case": true, "esac": true, "read": true, "eval": true,
 	"exec": true, "exit": true, "return": true, "shift": true,
 	"trap": true, "wait": true, "true": true, "false": true,
-	"source": true, ".": true, "local": true, "declare": true,
+	"source": true, ".": true, ":": true, "local": true, "declare": true,
 	"set": true, "cd": true, "export": true, "unset": true,
+	"alias": true, "break": true, "continue": true, "getopts": true,
+	"readonly": true, "times": true, "type": true, "ulimit": true,
+	"umask": true, "hash": true, "pwd": true, "kill": true,
+	"jobs": true, "fg": true, "bg": true, "let": true, "typeset": true,
 }
 
 // preambleCommands are external setup binaries skipped when finding

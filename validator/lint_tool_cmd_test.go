@@ -191,12 +191,49 @@ func TestExtractBinary(t *testing.T) {
 		{"command_p_exec", "command -p git status", "git"},
 		{"heredoc", "cat <<'EOF'\nhello\nEOF", "cat"},
 		{"arithmetic", "count=$((count + 1))\nprintf '%s' $count", ""},
+		// issue #315: colon builtin must not be treated as a binary.
+		{"colon_builtin", ": > out.log", ""},
+		{"colon_then_ls", ": > out.log\nls -la", "ls"},
+		// issue #315: "." / "source" before the first real command
+		// makes the symbol space unknowable - skip DIP125.
+		{"source_then_ls", ". ./lib.sh\nls -la", ""},
+		{"dot_source_then_func", "set -eu\n: > out.log\n. ./lib.sh\nmy_func", ""},
+		{"source_keyword_then_realbin", "source ./lib.sh\nrealbin", ""},
+		// "."/"source" AFTER the first real command does not suppress it.
+		{"ls_then_source", "ls x\n. ./lib.sh", "ls"},
+		// issue #315: a name matching a FuncDecl in the body is a
+		// shell function, not a PATH binary.
+		{"func_decl_then_call", "my_func() { echo hi; }\nmy_func", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractBinary(tt.cmd)
 			if got != tt.want {
 				t.Errorf("extractBinary(%q) = %q, want %q", tt.cmd, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestExtractBinary_NewBuiltins exercises every builtin added by issue #315
+// as a script's first command, confirming each is skipped in favor of the
+// real binary that follows.
+func TestExtractBinary_NewBuiltins(t *testing.T) {
+	builtins := []string{
+		":", "pwd", "umask", "type", "readonly", "alias", "getopts",
+		"times", "ulimit", "hash", "kill", "jobs", "fg", "bg", "let",
+		"typeset", "[[",
+	}
+	for _, b := range builtins {
+		t.Run(b, func(t *testing.T) {
+			cmd := b + " x\nrealbin"
+			if b == "[[" {
+				// [[ ... ]] is a compound test, not a simple command.
+				cmd = "[[ -n x ]]\nrealbin"
+			}
+			got := extractBinary(cmd)
+			if got != "realbin" {
+				t.Errorf("extractBinary(%q) = %q, want %q", cmd, got, "realbin")
 			}
 		})
 	}
