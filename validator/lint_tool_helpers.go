@@ -78,14 +78,20 @@ var placeholderPattern = regexp.MustCompile(`\$\{[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Z
 // be known before expansion.
 //
 // Two additional cases return "" because the symbol space becomes
-// unknowable: (1) if a "." or "source" command runs before the first
-// non-builtin command in the body, the script may be loading functions from
-// disk that the walk has no way to resolve — DIP125 is skipped for that
-// node, same precedent as the placeholder-as-command skip above (a "."/
-// "source" appearing *after* the first real command does not suppress it —
-// that first command is still checkable); (2) if the candidate binary name
-// matches a function defined by a FuncDecl anywhere in the body, it's a
-// shell function, not a PATH binary.
+// unknowable: (1) if a "." or "source" command appears, in source order,
+// before the first non-builtin command in the body, the script may be
+// loading functions from disk that the walk has no way to resolve — DIP125
+// is skipped for that node (a "."/"source" appearing *after* the first real
+// command does not suppress it — that first command is still checkable,
+// and a "." inside the body of an as-yet-uncalled function still counts as
+// "before" if it's reached first in source order); (2) if the candidate
+// binary name matches a function defined by a FuncDecl anywhere in the
+// body, it's a shell function, not a PATH binary. Note that
+// syntax.Walk returning false only prunes that node's children — it does
+// not stop the walk at siblings, so the walk may well continue past a "."
+// and still set bin to some later command. The "" this doc promises comes
+// from extractBinary's `sawSource ||` override below, not from the walk
+// itself; that flag, once set, is the load-bearing invariant.
 func extractBinary(command string) string {
 	sanitized := placeholderPattern.ReplaceAllString(command, placeholderDummy)
 	bin, sawSource := parseBinary(sanitized)
@@ -107,7 +113,9 @@ func parseBinary(sanitized string) (string, bool) {
 	}
 	var bin string
 	var sawSource bool
-	syntax.Walk(prog, walkForBinary(&bin, &sawSource))
+	syntax.Walk(prog, func(node syntax.Node) bool {
+		return visitForBinary(node, &bin, &sawSource)
+	})
 	if bin != "" && bodyDefinesFunc(prog, bin) {
 		bin = ""
 	}
@@ -132,9 +140,16 @@ func bodyDefinesFunc(prog *syntax.File, name string) bool {
 }
 
 // extractBinaryFallback performs best-effort extraction when shell parsing
-// fails. Skips builtins and preamble, returns the first plausible binary.
+// fails. Skips builtins and preamble, returns the first plausible binary. A
+// "."/"source" token, wherever it falls, makes the symbol space unknowable
+// and short-circuits to "" — mirroring the AST path's sawSource override —
+// so a malformed script that sources a lib before its real command can't
+// false-positive on a function name defined by that lib.
 func extractBinaryFallback(command string) string {
 	for _, field := range strings.Fields(command) {
+		if isSourceCommand(field) {
+			return ""
+		}
 		if !isSkippableCommand(field) {
 			return field
 		}
@@ -142,21 +157,17 @@ func extractBinaryFallback(command string) string {
 	return ""
 }
 
-// walkForBinary returns a walk function that captures the first non-builtin,
-// non-preamble command binary into bin. If a "." or "source" command is
-// reached before any such binary, it sets sawSource and stops the walk
-// (bin stays empty) — the sourced file's contents make the symbol space
-// unknowable. A "."/"source" reached after bin is already set does not
-// affect the result, since the walk has already stopped by then.
-func walkForBinary(bin *string, sawSource *bool) func(syntax.Node) bool {
-	return func(node syntax.Node) bool {
-		return visitForBinary(node, bin, sawSource)
-	}
-}
-
-// visitForBinary implements a single walk step for walkForBinary, pulled
-// out to a plain function so its branching doesn't stack on top of the
-// enclosing closure's nesting level.
+// visitForBinary is a single syntax.Walk step that captures the first
+// non-builtin, non-preamble command binary into bin. If a "." or "source"
+// command is reached (in walk order) before any such binary, it sets
+// sawSource — but returning false here only prunes that CallExpr's own
+// children, it does NOT stop the walk at later siblings, so bin may still
+// end up set by a command that textually follows the "."/"source". The
+// actual "" result for that case comes from parseBinary/extractBinary's
+// `sawSource ||` override, not from this function refusing to set bin. It's
+// pulled out as a plain function (rather than a closure returned from a
+// wrapper) so its branching doesn't stack on top of an enclosing closure's
+// nesting level for cognitive-complexity purposes.
 func visitForBinary(node syntax.Node, bin *string, sawSource *bool) bool {
 	if *bin != "" {
 		return false

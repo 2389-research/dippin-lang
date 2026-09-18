@@ -204,6 +204,13 @@ func TestExtractBinary(t *testing.T) {
 		// issue #315: a name matching a FuncDecl in the body is a
 		// shell function, not a PATH binary.
 		{"func_decl_then_call", "my_func() { echo hi; }\nmy_func", ""},
+		// FuncDecl detection is order-independent: bodyDefinesFunc walks
+		// the whole file, so a call before its declaration is still caught.
+		{"call_then_func_decl", "my_func\nmy_func() { echo; }", ""},
+		// A "." inside an as-yet-uncalled function body still counts as
+		// "before" in source order once that function is reached by the
+		// walk, per extractBinary's lexical-order semantics.
+		{"source_inside_func_then_realbin", "foo() { . lib.sh; }\nrealbin", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
