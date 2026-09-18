@@ -217,6 +217,62 @@ func TestLintToolBinary_VariableAssignment(t *testing.T) {
 	}
 }
 
+// TestLintToolBinary_Placeholder covers issue #305: a ${ns.key} placeholder
+// anywhere in the command body must not derail extraction to the "set"
+// argument or a whole assignment line. Each node here should extract the
+// same binary the placeholder-free path would (echo, a builtin -> no hint).
+func TestLintToolBinary_Placeholder(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "probe", Start: "Plain", Exit: "NoSet",
+		Nodes: []*ir.Node{
+			{ID: "Plain", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				Command: "set -eu\necho plain",
+			}},
+			{ID: "WithVar", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				Command: "set -eu\nX=\"${graph.workflow_dir}/lib\"\necho x",
+			}},
+			{ID: "ParamsVar", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				Command: "set -eu\nX=\"${params.foo}\"\necho x",
+			}},
+			{ID: "NoSet", Kind: ir.NodeTool, Config: ir.ToolConfig{
+				Command: "LIB=\"${graph.workflow_dir}/lib\"\necho x",
+			}},
+		},
+	}
+	diags := lintToolBinary(w)
+	if len(diags) != 0 {
+		t.Errorf("expected no DIP125 hints for placeholder-bearing commands, got %d: %v", len(diags), diags)
+	}
+}
+
+// TestExtractBinary_Placeholder exercises extractBinary directly for the
+// placeholder cases, plus a placeholder-as-binary-name case that must yield
+// "" since the real command can't be known before expansion.
+func TestExtractBinary_Placeholder(t *testing.T) {
+	tests := []struct {
+		name string
+		cmd  string
+		want string
+	}{
+		{"graph_var_then_echo", "set -eu\nX=\"${graph.workflow_dir}/lib\"\necho x", ""},
+		{"params_var_then_echo", "set -eu\nX=\"${params.foo}\"\necho x", ""},
+		{"no_set_assign_then_echo", "LIB=\"${graph.workflow_dir}/lib\"\necho x", ""},
+		{"placeholder_is_binary", "${params.bin} --flag", ""},
+		{"placeholder_concat_with_text", "${params.prefix}bin --flag", ""},
+		{"placeholder_var_then_nonbuiltin", "set -eu\nX=\"${params.foo}\"\nls x", "ls"},
+		{"plain_shell_var_then_realbin", "${TOOL} --flag\nrealbin x", "realbin"},
+		{"plain_shell_var_default_with_cmd_subst", "value=${CACHE:-$(missing-helper)}\necho \"$value\"", "missing-helper"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractBinary(tt.cmd)
+			if got != tt.want {
+				t.Errorf("extractBinary(%q) = %q, want %q", tt.cmd, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLintToolBinary_AgentNodeIgnored(t *testing.T) {
 	w := &ir.Workflow{
 		Name: "test", Start: "A", Exit: "A",
