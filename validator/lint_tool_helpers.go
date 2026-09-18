@@ -43,19 +43,38 @@ func checkToolCtxVars(n *ir.Node) []Diagnostic {
 	return diags
 }
 
+// placeholderDummy replaces every ${...} placeholder before shell parsing.
+// Dippin placeholders like ${graph.workflow_dir} or ${params.foo} contain a
+// "." inside the braces, which is not valid shell parameter-expansion syntax
+// and causes the mvdan shell parser to fail, misdirecting extraction to the
+// fallback word-splitter. Substituting a shell-safe dummy word lets the
+// parser succeed so the normal skip-set/assignment extraction logic runs.
+const placeholderDummy = "__dip_placeholder__"
+
 // extractBinary parses a shell command and returns the first non-builtin,
 // non-preamble command name. Uses a proper shell AST parser to correctly
 // handle variable assignments, pipes, subshells, command substitution, etc.
 // Shell builtins and preamble commands (mkdir) are skipped to find the
 // primary tool binary. Falls back to token-based extraction on parse errors.
+// Dippin ${ns.key} placeholders are substituted with a dummy word first so
+// they don't break the shell parse (see placeholderDummy); if the extracted
+// binary name still contains the dummy (whether it *is* the placeholder or
+// the placeholder was concatenated with literal text, e.g. "${p.x}suffix"),
+// extraction returns "" since the real binary can't be known before
+// expansion.
 func extractBinary(command string) string {
+	sanitized := varRefPattern.ReplaceAllString(command, placeholderDummy)
 	parser := syntax.NewParser(syntax.KeepComments(false))
-	prog, err := parser.Parse(strings.NewReader(command), "")
-	if err != nil {
-		return extractBinaryFallback(command)
-	}
+	prog, err := parser.Parse(strings.NewReader(sanitized), "")
 	var bin string
-	syntax.Walk(prog, walkForBinary(&bin))
+	if err != nil {
+		bin = extractBinaryFallback(sanitized)
+	} else {
+		syntax.Walk(prog, walkForBinary(&bin))
+	}
+	if strings.Contains(bin, placeholderDummy) {
+		return ""
+	}
 	return bin
 }
 
