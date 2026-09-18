@@ -101,6 +101,7 @@ func lintPasses(opts Options) []func(*ir.Workflow) []Diagnostic {
 		lintToolAccessValues,
 		lintParamsReenablesTools,
 		lintWritablePaths,
+		lintWritablePathsMode,
 		lintSubgraphToolAccess,
 		lintAgentFailureRoute,
 		lintBudgetRanges,
