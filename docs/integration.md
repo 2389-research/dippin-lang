@@ -109,7 +109,7 @@ if err := parser.ResolveFileDirectivesFS(workflow, bundled, "workflows"); err !=
 }
 ```
 
-The FS variant keeps the lexical rules (relative paths only, no `..` segment, `fs.ValidPath` on the joined name), the 4 MiB cap, and rejects a directory named by a directive. The disk-only checks — `O_NOFOLLOW` leaf-symlink rejection and symlink-chain parent containment — do not apply: an `fs.FS` has no symlink semantics, and containment is the FS's responsibility (`fs.Sub` scopes it).
+The FS variant keeps the lexical rules (relative paths only, no `..` segment, `fs.ValidPath` on the joined name), the 4 MiB cap, and rejects a directory named by a directive. Symlinks are enforced when the FS can express them: if `fsys` implements `fs.ReadLinkFS` (`os.DirFS`, `fstest.MapFS`), every component of the directive path below `baseDir` is `Lstat`-checked and any symlink — leaf or parent — is rejected, so an `os.DirFS` can never read host content outside its root through a link. An FS that cannot report symlinks (`embed.FS`) is trusted to be self-contained. For a disk-backed tree prefer `ResolveFileDirectives`, or pass an `os.DirFS`, which is checked; the disk-only `O_NOFOLLOW` single-fd open and `EvalSymlinks` containment do not apply to the FS variant.
 
 **`*_file` security constraints.** `ResolveFileDirectives` (disk) enforces: relative paths only (absolute paths are rejected), no `..`-based or symlink-based parent escape, leaf symlinks rejected atomically on Unix via `O_NOFOLLOW`, and a 4 MiB per-file cap. Error messages name only the user-written path, never the resolved absolute path.
 

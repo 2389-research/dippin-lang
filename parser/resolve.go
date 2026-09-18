@@ -46,10 +46,17 @@ func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
 // p, or any ".." segment in p, is rejected before joining, and the joined name
 // must satisfy fs.ValidPath. The 4 MiB per-file cap applies exactly as on
 // disk, and a directory (or any non-regular entry) named by a directive is an
-// error. The disk-only checks — O_NOFOLLOW leaf-symlink rejection and
-// EvalSymlinks parent containment — do not apply: an fs.FS has no symlink
-// semantics of its own, and containment is the FS's job (use fs.Sub to scope
-// it). Error messages name only the user-written path, as on disk.
+// error.
+//
+// Symlinks: when fsys implements fs.ReadLinkFS (os.DirFS, fstest.MapFS), every
+// component of the directive path below baseDir is Lstat-checked and any
+// symlink — leaf or parent — is rejected, so an os.DirFS can never read host
+// content from outside its root through a link. An FS that does not implement
+// ReadLinkFS cannot report symlinks and is trusted to be self-contained
+// (embed.FS, fstest.MapFS without symlink entries). For a disk-backed tree
+// prefer ResolveFileDirectives, or pass an os.DirFS, which is checked. The
+// disk-only O_NOFOLLOW single-fd open and EvalSymlinks containment do not
+// apply here. Error messages name only the user-written path, as on disk.
 func ResolveFileDirectivesFS(w *ir.Workflow, fsys fs.FS, baseDir string) error {
 	return resolveDirectives(w, fsReader(fsys, baseDir))
 }

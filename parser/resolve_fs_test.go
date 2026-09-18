@@ -352,3 +352,86 @@ func TestResolveFileDirectivesFS_SkipsInlineAndEmpty(t *testing.T) {
 		t.Errorf("inline Command modified: %q", got)
 	}
 }
+
+// symlinkRoot builds a temp root for os.DirFS symlink tests: root/wf/real.sh
+// (regular), root/wf/inlink -> real.sh (in-root leaf symlink), root/wf/link ->
+// <outside>/secret.txt, root/wf/linkdir -> <outside dir>. Skips when the
+// platform cannot create symlinks.
+func symlinkRoot(t *testing.T) (root, outside string) {
+	t.Helper()
+	root = t.TempDir()
+	outside = t.TempDir()
+	wf := filepath.Join(root, "wf")
+	if err := os.Mkdir(wf, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFiles(t, wf, map[string]string{"real.sh": "echo real"})
+	writeFiles(t, outside, map[string]string{"secret.txt": "TOP-SECRET-OUTSIDE"})
+	links := map[string]string{
+		"inlink":  filepath.Join(wf, "real.sh"),
+		"link":    filepath.Join(outside, "secret.txt"),
+		"linkdir": outside,
+	}
+	for name, target := range links {
+		if err := os.Symlink(target, filepath.Join(wf, name)); err != nil {
+			t.Skipf("symlink not supported on this platform: %v", err)
+		}
+	}
+	return root, outside
+}
+
+// TestResolveFileDirectivesFS_DirFSRejectsSymlinks covers the P1 review
+// finding: os.DirFS follows symlinks on Open, so a ReadLinkFS-capable FS must
+// have every component of the directive path Lstat-checked, mirroring the disk
+// resolver (no leaf symlink, no symlinked parent).
+func TestResolveFileDirectivesFS_DirFSRejectsSymlinks(t *testing.T) {
+	root, outside := symlinkRoot(t)
+	fsys := os.DirFS(root)
+	cases := []struct{ p, want string }{
+		{"link", "symlinks not allowed"},                            // leaf -> outside
+		{"linkdir/secret.txt", "resolves outside source directory"}, // symlinked parent -> outside
+		{"inlink", "symlinks not allowed"},                          // leaf symlink that stays in-root: O_NOFOLLOW parity
+	}
+	for _, tc := range cases {
+		w := toolWF(tc.p)
+		err := ResolveFileDirectivesFS(w, fsys, "wf")
+		if err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%q: want %q rejection; got %v", tc.p, tc.want, err)
+			continue
+		}
+		if !strings.Contains(err.Error(), tc.p) {
+			t.Errorf("%q: error should name the user path; got %v", tc.p, err)
+		}
+		if strings.Contains(err.Error(), root) || strings.Contains(err.Error(), outside) || strings.Contains(err.Error(), "wf/") {
+			t.Errorf("%q: error leaked a resolved or joined path; got %v", tc.p, err)
+		}
+		if cfg := w.Nodes[0].Config.(ir.ToolConfig); strings.Contains(cfg.Command, "SECRET") || strings.Contains(cfg.Command, "real") {
+			t.Errorf("%q: content was loaded through a symlink", tc.p)
+		}
+	}
+	// The real file next to the links still loads.
+	w := toolWF("real.sh")
+	if err := ResolveFileDirectivesFS(w, fsys, "wf"); err != nil {
+		t.Fatalf("regular file beside symlinks must load; got %v", err)
+	}
+	if got := w.Nodes[0].Config.(ir.ToolConfig).Command; got != "echo real" {
+		t.Errorf("Command = %q, want %q", got, "echo real")
+	}
+}
+
+// TestResolveFileDirectivesFS_MapFSSymlinkEntryRejected: fstest.MapFS is a
+// ReadLinkFS too, so a ModeSymlink entry is rejected the same way — and a plain
+// MapFS without symlinks is unaffected (the parity test covers that at scale).
+func TestResolveFileDirectivesFS_MapFSSymlinkEntryRejected(t *testing.T) {
+	fsys := fstest.MapFS{
+		"wf/real.sh": &fstest.MapFile{Data: []byte("echo real")},
+		"wf/link.sh": &fstest.MapFile{Data: []byte("real.sh"), Mode: fs.ModeSymlink},
+	}
+	err := ResolveFileDirectivesFS(toolWF("link.sh"), fsys, "wf")
+	if err == nil || !strings.Contains(err.Error(), "symlinks not allowed") {
+		t.Errorf("expected MapFS symlink entry rejection; got %v", err)
+	}
+	if err := ResolveFileDirectivesFS(toolWF("real.sh"), fsys, "wf"); err != nil {
+		t.Errorf("regular MapFS entry must still load; got %v", err)
+	}
+}
