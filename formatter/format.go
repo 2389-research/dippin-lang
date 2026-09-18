@@ -717,6 +717,7 @@ func writeIOFields(wr *writer, n *ir.Node) {
 func writeHumanFields(wr *writer, n *ir.Node, cfg ir.HumanConfig) {
 	writeCommonNodeFields(wr, n)
 	writeHumanModeFields(wr, cfg)
+	writeRetryFields(wr, n)
 	writeIOFields(wr, n)
 	if cfg.Prompt != "" {
 		wr.multilineBlock("prompt", cfg.Prompt)
@@ -781,6 +782,7 @@ func writeToolFields(wr *writer, n *ir.Node, cfg ir.ToolConfig) {
 
 func writeConditionalFields(wr *writer, n *ir.Node) {
 	writeCommonNodeFields(wr, n)
+	writeRetryFields(wr, n)
 	writeIOFields(wr, n)
 }
 
@@ -789,6 +791,7 @@ func writeSubgraphFields(wr *writer, n *ir.Node, cfg ir.SubgraphConfig) {
 	if cfg.Ref != "" {
 		wr.line("ref: %s", quoteValue(cfg.Ref))
 	}
+	writeRetryFields(wr, n)
 	writeSortedMapBlock(wr, subgraphBindingLabel(wr), cfg.Params)
 }
 

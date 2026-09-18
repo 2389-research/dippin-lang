@@ -3044,6 +3044,79 @@ func TestFormatToolRetryAllFieldsRoundTrip(t *testing.T) {
 	assertIdempotent(t, w)
 }
 
+// TestFormatRetryFieldsRoundTripAllNodeKinds verifies fmt preserves
+// max_retries and base_delay on human, subgraph, and conditional nodes too
+// (#300 follow-up). The parser applies retry attributes as common fields to
+// every node kind via applyCommonField/applyCommonComplexField, so the
+// formatter must emit them for every node kind — the bug wasn't
+// tool-specific, it was "fmt drops retry fields the parser accepts" for any
+// node kind whose emitter never called writeRetryFields.
+func TestFormatRetryFieldsRoundTripAllNodeKinds(t *testing.T) {
+	src := `dip 2
+
+workflow retry_all_kinds
+  start: pick
+  exit: done
+
+  conditional pick
+    max_retries: 2
+    base_delay: 100ms
+
+  human ask
+    mode: freeform
+    max_retries: 3
+    base_delay: 200ms
+
+  subgraph child
+    ref: "child.dip"
+    max_retries: 4
+    base_delay: 300ms
+
+  agent done
+    prompt: done
+
+  edges
+    pick -> ask
+    ask -> child
+    child -> done
+`
+	w1, err := parser.NewParser(src, "retry_kinds.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse: %v", err)
+	}
+
+	wantByID := map[string]struct {
+		maxRetries int
+		baseDelay  time.Duration
+	}{
+		"pick":  {2, 100 * time.Millisecond},
+		"ask":   {3, 200 * time.Millisecond},
+		"child": {4, 300 * time.Millisecond},
+	}
+
+	for id, want := range wantByID {
+		n := findNode(t, w1, id)
+		if n.Retry.MaxRetries != want.maxRetries || n.Retry.BaseDelay != want.baseDelay {
+			t.Fatalf("precondition: node %q parsed Retry = %+v, want MaxRetries=%d BaseDelay=%s", id, n.Retry, want.maxRetries, want.baseDelay)
+		}
+	}
+
+	formatted := Format(w1)
+	w2, err := parser.NewParser(formatted, "formatted.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse: %v\n%s", err, formatted)
+	}
+
+	for id, want := range wantByID {
+		n := findNode(t, w2, id)
+		if n.Retry.MaxRetries != want.maxRetries || n.Retry.BaseDelay != want.baseDelay {
+			t.Errorf("node %q retry fields not preserved across fmt round-trip: got %+v, want MaxRetries=%d BaseDelay=%s\nformatted:\n%s", id, n.Retry, want.maxRetries, want.baseDelay, formatted)
+		}
+	}
+
+	assertIdempotent(t, w1)
+}
+
 // findNode returns the node with the given ID, failing the test if absent.
 func findNode(t *testing.T, w *ir.Workflow, id string) *ir.Node {
 	t.Helper()
