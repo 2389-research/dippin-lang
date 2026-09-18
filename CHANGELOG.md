@@ -4,6 +4,15 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.76.0] — 2026-09-18
+
+### Changed
+- **DeepSeek repriced for V4.1-Flash** ([#296](https://github.com/2389-research/dippin-lang/issues/296) follow-up, [#316](https://github.com/2389-research/dippin-lang/pull/316)). DeepSeek launched DeepSeek-V4.1-Flash on 2026-09-10 with a price change and has billed peak/off-peak (off-peak = half) since 2026-08-16; the official page now lists only `deepseek-flash` and `deepseek-v4-pro`. The catalog carries **peak** (list) rates — the conservative choice for budget guards. New `deepseek-flash` (DeepSeek-V4.1-Flash: 0.30/1.20, cache-hit 0.006, 1M context, 384K output, tools+reasoning+vision). `deepseek-v4-pro` / `-0813` 0.435/0.87 → **1.32/3.96**, cache-hit 0.044. `deepseek-v4-flash` is retired-but-accepted and billed at the Flash price → 0.30/1.20, `deprecated: true`. `deepseek-chat` / `deepseek-reasoner` were discontinued 2026-07-24 (they were the flash-tier non-thinking/thinking aliases) → `deprecated: true` at the flash rate so a gateway that still routes them does not bill $0. DIP161 now warns on all three. The five DeepSeek drift suppressions that asserted agreement at the old price are removed so `pricing-sync` re-triages against the new catalog. Verified against [Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing) and the [Change Log](https://api-docs.deepseek.com/updates), as_of 2026-09-18. Catalog is now **124** entries.
+- `glm-5.3-flash` re-verified at 0.15/0.50 (cached 0.03) against [Z.AI's page](https://docs.z.ai/guides/overview/pricing); the aggregators still carry the 50% promo that ended 2026-09-09, so the drift suppression is extended to 2026-10-18. `gpt-6-astra-pro` remains absent from OpenAI's page and stays out of the catalog.
+
+### Fixed
+- **DIP125 knows the `:` builtin and skips functions loaded via `.` / `source`** ([#315](https://github.com/2389-research/dippin-lang/issues/315)). With placeholders no longer breaking the shell parse (#305), DIP125 reached the real first command in tracker's decomposed scripts and two false-positive classes appeared: `: > "$log"` reported `":" not found`, and `. "$LIB/counters.sh"` followed by `bump_counter` reported the shell function as a missing binary. `shellBuiltins` gains `:` and the other POSIX builtins that appear as a script's first command (`alias`, `break`, `continue`, `getopts`, `readonly`, `times`, `type`, `ulimit`, `umask`, `hash`, `pwd`, `kill`, `jobs`, `fg`, `bg`, `let`, `typeset`, `[[`). When a `.`/`source` command appears in source order before the first non-builtin command, the symbol space is unknowable and DIP125 is skipped for that node (same precedent as the #305 placeholder-as-command skip); a `.`/`source` after the first real command does not suppress the check. A name matching a `FuncDecl` anywhere in the body is a function, not a binary. Detection is lexical — a `.` inside an as-yet-uncalled function body counts — a deliberate conservative over-skip on a hint-severity rule.
+
 ## [v0.75.0] — 2026-09-18
 
 ### Added
