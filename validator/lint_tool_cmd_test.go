@@ -211,6 +211,11 @@ func TestExtractBinary(t *testing.T) {
 		// "before" in source order once that function is reached by the
 		// walk, per extractBinary's lexical-order semantics.
 		{"source_inside_func_then_realbin", "foo() { . lib.sh; }\nrealbin", ""},
+		// "command" explicitly bypasses shell-function lookup (POSIX), so
+		// a same-named FuncDecl must not exempt a binary reached this way.
+		{"command_bypasses_func_decl", "foo() { echo; }\ncommand foo", "foo"},
+		{"command_p_bypasses_func_decl", "foo() { echo; }\ncommand -p foo", "foo"},
+		{"plain_call_still_exempted_by_func_decl", "foo() { echo; }\nfoo", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

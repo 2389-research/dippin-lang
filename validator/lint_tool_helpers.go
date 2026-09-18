@@ -86,7 +86,11 @@ var placeholderPattern = regexp.MustCompile(`\$\{[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Z
 // and a "." inside the body of an as-yet-uncalled function still counts as
 // "before" if it's reached first in source order); (2) if the candidate
 // binary name matches a function defined by a FuncDecl anywhere in the
-// body, it's a shell function, not a PATH binary. Note that
+// body, it's a shell function, not a PATH binary — unless the candidate was
+// reached via the "command" builtin ("command foo", "command -p foo"),
+// which explicitly bypasses shell-function lookup by POSIX definition, so
+// the FuncDecl match is skipped in that case and the name is trusted as a
+// real binary. Note that
 // syntax.Walk returning false only prunes that node's children — it does
 // not stop the walk at siblings, so the walk may well continue past a "."
 // and still set bin to some later command. The "" this doc promises comes
@@ -112,11 +116,11 @@ func parseBinary(sanitized string) (string, bool) {
 		return extractBinaryFallback(sanitized), false
 	}
 	var bin string
-	var sawSource bool
+	var sawSource, viaCommand bool
 	syntax.Walk(prog, func(node syntax.Node) bool {
-		return visitForBinary(node, &bin, &sawSource)
+		return visitForBinary(node, &bin, &sawSource, &viaCommand)
 	})
-	if bin != "" && bodyDefinesFunc(prog, bin) {
+	if bin != "" && !viaCommand && bodyDefinesFunc(prog, bin) {
 		bin = ""
 	}
 	return bin, sawSource
@@ -158,21 +162,23 @@ func extractBinaryFallback(command string) string {
 }
 
 // visitForBinary is a single syntax.Walk step that captures the first
-// non-builtin, non-preamble command binary into bin. If a "." or "source"
-// command is reached (in walk order) before any such binary, it sets
-// sawSource — but returning false here only prunes that CallExpr's own
-// children, it does NOT stop the walk at later siblings, so bin may still
-// end up set by a command that textually follows the "."/"source". The
-// actual "" result for that case comes from parseBinary/extractBinary's
-// `sawSource ||` override, not from this function refusing to set bin. It's
-// pulled out as a plain function (rather than a closure returned from a
-// wrapper) so its branching doesn't stack on top of an enclosing closure's
-// nesting level for cognitive-complexity purposes.
-func visitForBinary(node syntax.Node, bin *string, sawSource *bool) bool {
+// non-builtin, non-preamble command binary into bin, and whether it was
+// reached via the "command" builtin into viaCommand (see callExprBinary and
+// parseBinary's FuncDecl skip). If a "." or "source" command is reached (in
+// walk order) before any such binary, it sets sawSource — but returning
+// false here only prunes that CallExpr's own children, it does NOT stop the
+// walk at later siblings, so bin may still end up set by a command that
+// textually follows the "."/"source". The actual "" result for that case
+// comes from parseBinary/extractBinary's `sawSource ||` override, not from
+// this function refusing to set bin. It's pulled out as a plain function
+// (rather than a closure returned from a wrapper) so its branching doesn't
+// stack on top of an enclosing closure's nesting level for
+// cognitive-complexity purposes.
+func visitForBinary(node syntax.Node, bin *string, sawSource, viaCommand *bool) bool {
 	if *bin != "" {
 		return false
 	}
-	name := callExprBinary(node)
+	name, isCommand := callExprBinary(node)
 	if name == "" {
 		return true
 	}
@@ -184,6 +190,7 @@ func visitForBinary(node syntax.Node, bin *string, sawSource *bool) bool {
 		return true
 	}
 	*bin = name
+	*viaCommand = isCommand
 	return false
 }
 
@@ -194,19 +201,22 @@ func isSourceCommand(name string) bool {
 	return name == "." || name == "source"
 }
 
-// callExprBinary returns the literal binary name of a CallExpr node.
-// Handles "command" specially: "command -v foo" is a query (returns ""),
-// "command foo" executes foo (returns "foo").
-func callExprBinary(node syntax.Node) string {
+// callExprBinary returns the literal binary name of a CallExpr node, and
+// whether that name was reached via the "command" builtin. Handles
+// "command" specially: "command -v foo" is a query (returns "", false),
+// "command foo"/"command -p foo" executes foo (returns "foo", true) — per
+// POSIX, "command" explicitly bypasses shell-function lookup, which is why
+// callers use the bool to skip the FuncDecl exemption for these names.
+func callExprBinary(node syntax.Node) (string, bool) {
 	call, ok := node.(*syntax.CallExpr)
 	if !ok || len(call.Args) == 0 {
-		return ""
+		return "", false
 	}
 	name := extractWordLiteral(call.Args[0])
 	if name == "command" {
-		return commandTarget(call.Args[1:])
+		return commandTarget(call.Args[1:]), true
 	}
-	return name
+	return name, false
 }
 
 // commandTarget resolves the actual binary from "command" arguments.
