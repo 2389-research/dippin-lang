@@ -285,11 +285,14 @@ func compareAgentBehavior(id string, ac, bc ir.AgentConfig) []Difference {
 	return diffs
 }
 
-// compareAgentLimits compares writable_paths and last_response_truncate.
+// compareAgentLimits compares writable_paths, writable_paths_mode, and last_response_truncate.
 func compareAgentLimits(id string, ac, bc ir.AgentConfig) []Difference {
 	var diffs []Difference
 	if strings.Join(ac.WritablePaths, ",") != strings.Join(bc.WritablePaths, ",") {
 		diffs = append(diffs, fieldDiff(id, "writable_paths", fmt.Sprintf("node %q writable_paths: %v vs %v", id, ac.WritablePaths, bc.WritablePaths)))
+	}
+	if ac.WritablePathsMode != bc.WritablePathsMode {
+		diffs = append(diffs, fieldDiff(id, "writable_paths_mode", fmt.Sprintf("node %q writable_paths_mode: %q vs %q", id, ac.WritablePathsMode, bc.WritablePathsMode)))
 	}
 	if ac.LastResponseTruncate != bc.LastResponseTruncate {
 		diffs = append(diffs, fieldDiff(id, "last_response_truncate", fmt.Sprintf("node %q last_response_truncate: %d vs %d", id, ac.LastResponseTruncate, bc.LastResponseTruncate)))
@@ -417,6 +420,7 @@ func branchScalarsEqual(a, b ir.BranchConfig) bool {
 // last_response_truncate fields of two branch configs match.
 func branchLimitsEqual(a, b ir.BranchConfig) bool {
 	return a.Fidelity == b.Fidelity && a.ToolAccess == b.ToolAccess &&
+		a.WritablePathsMode == b.WritablePathsMode &&
 		a.LastResponseTruncate == b.LastResponseTruncate
 }
 

@@ -1736,3 +1736,44 @@ func TestExportDOT_NoDuplicateArcForConditionalFanEdge(t *testing.T) {
 		t.Errorf("Fan->B should be synthesized:\n%s", dot)
 	}
 }
+
+func TestExportAgentWritablePathsMode(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:            "x",
+				WritablePaths:     []string{"workspace/**"},
+				WritablePathsMode: "prefer",
+			}},
+		},
+	}
+	dot := ExportDOT(w, ExportOptions{})
+	if !strings.Contains(dot, `writable_paths_mode="prefer"`) {
+		t.Errorf("DOT missing writable_paths_mode attr; got:\n%s", dot)
+	}
+}
+
+func TestExportAgentWritablePathsModeAbsentOmitted(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "A", Exit: "A",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "x", WritablePaths: []string{"workspace/**"}}},
+		},
+	}
+	if dot := ExportDOT(w, ExportOptions{}); strings.Contains(dot, "writable_paths_mode") {
+		t.Errorf("DOT must not emit writable_paths_mode when absent; got:\n%s", dot)
+	}
+}
+
+func TestExportDOTParallelBranchWritablePathsMode(t *testing.T) {
+	attrs := map[string]string{}
+	applyParallelAttrs(attrs, ir.ParallelConfig{
+		Branches: []ir.BranchConfig{
+			{Target: "a", WritablePathsMode: "prefer"},
+		},
+	})
+	if attrs["branches"] != "target=a;writable_paths_mode=prefer" {
+		t.Errorf("branches = %q, want target=a;writable_paths_mode=prefer", attrs["branches"])
+	}
+}

@@ -187,6 +187,16 @@ type AgentConfig struct {
 	// the native backend (Bash + its children included); claude-code/acp refuse to
 	// start. See issue #75.
 	WritablePaths []string
+	// WritablePathsMode selects how the runtime treats a host-capability jail
+	// refusal for WritablePaths: "require" (default) refuses to start on a host
+	// without Landlock ABI v3 (macOS, Linux < 6.2); "prefer" degrades to an
+	// UNJAILED run with a recorded jail_degraded event — a prefer node is NOT
+	// sandboxed on such hosts. Authoring (malformed glob) and backend
+	// (claude-code/acp) refusals still refuse in both modes. Stored VERBATIM:
+	// "" = absent = require; dippin never default-fills it. Any value other
+	// than exactly "require" or "prefer" lints as DIP163 (error) and is a
+	// load-time error at the runtime (fail-closed). See issue #307 (tracker #648).
+	WritablePathsMode string
 	// LastResponseTruncate caps, at the runtime, the number of Unicode
 	// characters of the auto-injected previous response ("last response") that
 	// this agent receives in its prompt. 0 / unset = no truncation (full
@@ -254,6 +264,11 @@ type BranchConfig struct {
 	// the runtime resolves effective = branch if non-empty else agent. dippin carries +
 	// lints; the runtime enforces. See issue #75.
 	WritablePaths []string
+	// WritablePathsMode is a per-branch override of the target agent's
+	// writable_paths_mode. Empty INHERITS the target agent's mode (which is
+	// require when absent). Stored verbatim; the runtime validates the branch
+	// value with the same exact-match check as the agent value. See issue #307.
+	WritablePathsMode string
 	// LastResponseTruncate is a per-branch override of the target agent's
 	// last_response_truncate. 0 INHERITS the target agent's value (never resets
 	// to "no truncation") — the runtime resolves effective = branch if > 0 else

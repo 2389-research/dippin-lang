@@ -592,3 +592,33 @@ func TestRoundTripStallTimeoutVarsCollision(t *testing.T) {
 		t.Errorf("stall_timeout leaked into Vars: %v", w2.Vars)
 	}
 }
+
+func TestMigrateWritablePathsMode(t *testing.T) {
+	w := &ir.Workflow{
+		Name: "T", Start: "split", Exit: "join",
+		Nodes: []*ir.Node{
+			{ID: "A", Kind: ir.NodeAgent, Config: ir.AgentConfig{
+				Prompt:            "x",
+				WritablePaths:     []string{"workspace/**"},
+				WritablePathsMode: "prefer",
+			}},
+			{ID: "split", Kind: ir.NodeParallel, Config: ir.ParallelConfig{
+				Targets:  []string{"A"},
+				Branches: []ir.BranchConfig{{Target: "A", WritablePathsMode: "require"}},
+			}},
+			{ID: "join", Kind: ir.NodeFanIn, Config: ir.FanInConfig{Sources: []string{"A"}}},
+		},
+	}
+	dot := export.ExportDOT(w, export.ExportOptions{})
+	got, err := Migrate(dot)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if m := got.Node("A").Config.(ir.AgentConfig).WritablePathsMode; m != "prefer" {
+		t.Errorf("agent WritablePathsMode after migrate = %q, want prefer", m)
+	}
+	branches := got.Node("split").Config.(ir.ParallelConfig).Branches
+	if len(branches) != 1 || branches[0].WritablePathsMode != "require" {
+		t.Errorf("branch WritablePathsMode after migrate = %+v, want require", branches)
+	}
+}

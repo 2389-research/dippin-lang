@@ -56,6 +56,7 @@ func fieldCompletions() []protocol.CompletionItem {
 		{"fidelity:", "Fidelity level"},
 		{"tool_access:", "LLM tool catalog gate on agent (none = no tools; omit = full)"},
 		{"writable_paths:", "Glob list bounding where this agent's tools may write (native backend; runtime-enforced fs jail)"},
+		{"writable_paths_mode:", "require (default: refuse to start without Landlock) or prefer (run UNJAILED on hosts without Landlock, recorded as jail_degraded)"},
 		{"marker_grep:", "Regex matched against tool stdout; sets ctx.tool_marker"},
 		{"command_file:", "External script reference for tool node (path relative to .dip source directory)"},
 		{"route_required:", "Fail the node if the command emits no runtime-recognized routing signal on stdout"},

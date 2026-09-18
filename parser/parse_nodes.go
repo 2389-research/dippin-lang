@@ -240,7 +240,7 @@ func (p *Parser) applyCommonComplexField(n *ir.Node, key, val string, loc ir.Sou
 
 // applyAgentField applies agent-specific configuration fields.
 func (p *Parser) applyAgentField(cfg *ir.AgentConfig, nodeID, key, val string, loc ir.SourceLocation) {
-	if p.rejectEmptyWritablePaths(key, val, loc) {
+	if p.rejectEmptyWritablePaths(key, val, loc) || p.rejectEmptyWritablePathsMode(key, val, loc) {
 		return
 	}
 	if applyAgentStringField(cfg, key, val) {
@@ -389,9 +389,21 @@ func applyAgentRuntimeField(cfg *ir.AgentConfig, key, val string) bool {
 		cfg.WorkingDir = val
 	case "tool_access":
 		cfg.ToolAccess = val
+	default:
+		return applyAgentJailField(cfg, key, val)
+	}
+	return true
+}
+
+// applyAgentJailField handles the write-jail fields (writable_paths and its
+// mode). The mode is stored verbatim — no trimming or case-folding — so DIP163
+// sees the exact spelling the runtime would reject.
+func applyAgentJailField(cfg *ir.AgentConfig, key, val string) bool {
+	switch key {
 	case "writable_paths":
 		cfg.WritablePaths = splitCommaNoEmpty(val)
-		return true
+	case "writable_paths_mode":
+		cfg.WritablePathsMode = val
 	default:
 		return false
 	}
@@ -414,6 +426,21 @@ func (p *Parser) rejectEmptyWritablePaths(key, val string, loc ir.SourceLocation
 	}
 	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
 		"writable_paths declared with no paths at %d:%d — list at least one glob or omit the field (an empty safety field would grant unbounded writes)",
+		loc.Line, loc.Column))
+	return true
+}
+
+// rejectEmptyWritablePathsMode appends a blocking diagnostic when
+// writable_paths_mode is present but empty. The string IR field cannot
+// distinguish present-but-empty from absent (absent = require), so the parser
+// fails closed here instead of letting "" silently read as require.
+// Returns true if the value was rejected (caller must not store it).
+func (p *Parser) rejectEmptyWritablePathsMode(key, val string, loc ir.SourceLocation) bool {
+	if key != "writable_paths_mode" || strings.TrimSpace(val) != "" {
+		return false
+	}
+	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
+		"writable_paths_mode declared with no value at %d:%d — use require or prefer, or omit the field (absent means require)",
 		loc.Line, loc.Column))
 	return true
 }
@@ -1021,7 +1048,7 @@ func (p *Parser) parseBranchFields(bc *ir.BranchConfig) {
 // last_response_truncate integer override, and emits an unknown-field hint
 // for unrecognized keys (FIX B).
 func (p *Parser) applyBranchFieldChecked(bc *ir.BranchConfig, key, val string, loc ir.SourceLocation) {
-	if p.rejectEmptyWritablePaths(key, val, loc) {
+	if p.rejectEmptyWritablePaths(key, val, loc) || p.rejectEmptyWritablePathsMode(key, val, loc) {
 		return
 	}
 	if key == "last_response_truncate" {
@@ -1036,11 +1063,12 @@ func (p *Parser) applyBranchFieldChecked(bc *ir.BranchConfig, key, val string, l
 // branchFieldSetters maps a branch field key to the BranchConfig field it sets.
 // Table-driven keeps applyBranchField under the cyclo≤5 cap as fields are added.
 var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
-	"model":          func(b *ir.BranchConfig, v string) { b.Model = v },
-	"provider":       func(b *ir.BranchConfig, v string) { b.Provider = v },
-	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
-	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
-	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitCommaNoEmpty(v) },
+	"model":               func(b *ir.BranchConfig, v string) { b.Model = v },
+	"provider":            func(b *ir.BranchConfig, v string) { b.Provider = v },
+	"fidelity":            func(b *ir.BranchConfig, v string) { b.Fidelity = v },
+	"tool_access":         func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
+	"writable_paths":      func(b *ir.BranchConfig, v string) { b.WritablePaths = splitCommaNoEmpty(v) },
+	"writable_paths_mode": func(b *ir.BranchConfig, v string) { b.WritablePathsMode = v },
 }
 
 // applyBranchField sets a field on a BranchConfig. Returns true if the key was recognized.
