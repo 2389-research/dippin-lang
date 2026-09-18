@@ -236,7 +236,7 @@ func (pe *pathEnumerator) elseApplies(edges []*ir.Edge) bool {
 func outcomeGuardOmitsFail(edges []*ir.Edge) bool {
 	for _, e := range edges {
 		cmp, ok := ir.ExtractEqualityCondition(e)
-		if !ok || !isOutcomeVariable(cmp.Variable) {
+		if !ok || !ir.IsOutcomeVariable(cmp.Variable) {
 			return false
 		}
 		if ir.EdgeRoutesOnFail(e) {
@@ -245,10 +245,6 @@ func outcomeGuardOmitsFail(edges []*ir.Edge) bool {
 	}
 	return true
 }
-
-// isOutcomeVariable reports whether a condition variable refers to
-// ctx.outcome, under either accepted spelling.
-func isOutcomeVariable(v string) bool { return v == "ctx.outcome" || v == "outcome" }
 
 // buildEdgeTraverseEvent constructs an EdgeTraverse event from an edge.
 func buildEdgeTraverseEvent(e *ir.Edge) event.EdgeTraverse {

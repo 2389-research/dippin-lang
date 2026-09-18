@@ -29,10 +29,13 @@ type Edge struct {
 // returns false.
 func EdgeRoutesOnFail(e *Edge) bool {
 	cmp, ok := ExtractEqualityCondition(e)
-	return ok && isOutcomeVariable(cmp.Variable) && IsFailOutcome(cmp.Value)
+	return ok && IsOutcomeVariable(cmp.Variable) && IsFailOutcome(cmp.Value)
 }
 
-func isOutcomeVariable(v string) bool { return v == "ctx.outcome" || v == "outcome" }
+// IsOutcomeVariable reports whether a condition variable refers to
+// ctx.outcome, under either accepted spelling ("ctx.outcome" or the bare
+// "outcome").
+func IsOutcomeVariable(v string) bool { return v == "ctx.outcome" || v == "outcome" }
 
 // IsFailOutcome reports whether a raw ctx.outcome value denotes failure.
 // Both spellings ("fail" and "failure") are accepted throughout dippin —

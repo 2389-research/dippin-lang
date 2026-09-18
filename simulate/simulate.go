@@ -224,6 +224,12 @@ func (s *simulator) visitNode(node *ir.Node) error {
 
 	// Parallel and fan-in nodes have special event sequences.
 	if handled := s.emitFanOutIn(node, enterEvt); handled {
+		// This node returns before applyNodeDefaults, which would otherwise
+		// refresh nodeOwnsOutcome. A parallel/fan-in node never owns
+		// ctx.outcome itself, so clear the flag explicitly — otherwise it
+		// would still carry a failed predecessor's true from the last node
+		// that did own it, wrongly suppressing this node's own else default.
+		s.nodeOwnsOutcome = false
 		return nil
 	}
 

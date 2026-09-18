@@ -220,6 +220,41 @@ func failOnlyElseWorkflow(t *testing.T) *ir.Workflow {
 `)
 }
 
+// toolFailFanInElseWorkflow: a tool T fails, routing (via its own explicit
+// fail guard) to a fan_in node Join. Join's only conditional edge doesn't
+// match and it has no unconditional edge of its own, so it must fall to
+// `else -> Cleanup` — a fan_in/parallel node never owns ctx.outcome itself
+// (visitNode returns before applyNodeDefaults for these kinds), so it must
+// not inherit T's true nodeOwnsOutcome / ctx.outcome="fail" and lose its own
+// else default. Regression fixture for #306 follow-up round 2.
+func toolFailFanInElseWorkflow(t *testing.T) *ir.Workflow {
+	return mustParseElseWorkflow(t, `workflow ToolFailFanInElse
+  start: T
+  exit: Done
+
+  tool T
+    command: "run"
+
+  fan_in Join <- T
+
+  agent Z1
+    prompt: "z1"
+
+  agent Cleanup
+    prompt: "cleanup"
+
+  agent Done
+    prompt: "done"
+
+  edges
+    T -> Join    when ctx.outcome = fail
+    Join -> Z1   when ctx.x = y
+    Z1 -> Done
+    Cleanup -> Done
+    else -> Cleanup
+`)
+}
+
 func pathContains(path []string, id string) bool {
 	for _, p := range path {
 		if p == id {
@@ -371,6 +406,21 @@ func TestSimulate_OnFailThenHumanNodeStillGetsOwnElse(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 	wantPath := []string{"Build", "Review", "Cleanup", "Done"}
+	if !equalPaths(res.Path, wantPath) {
+		t.Errorf("path = %v, want %v", res.Path, wantPath)
+	}
+}
+
+// Review round 2: a fan_in node reached after a tool failure must get its
+// own else default, not inherit the failing tool's nodeOwnsOutcome/ctx.outcome
+// via visitNode's early return for parallel/fan-in kinds (which skips
+// applyNodeDefaults — the only place nodeOwnsOutcome is normally refreshed).
+func TestSimulate_FanInAfterFailStillGetsOwnElse(t *testing.T) {
+	res, err := Run(toolFailFanInElseWorkflow(t), Options{Scenario: map[string]string{"T.outcome": "fail"}})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	wantPath := []string{"T", "Join", "Cleanup", "Done"}
 	if !equalPaths(res.Path, wantPath) {
 		t.Errorf("path = %v, want %v", res.Path, wantPath)
 	}
