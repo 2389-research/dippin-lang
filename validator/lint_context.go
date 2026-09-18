@@ -8,7 +8,7 @@ import (
 	"github.com/2389-research/dippin-lang/ir"
 )
 
-// varRefPattern matches ${...} variable references in prompt or command text.
+// varRefPattern matches ${...} variable references in prompt text.
 var varRefPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // lintUndefinedVariables checks DIP106: ${variable} references in prompts

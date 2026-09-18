@@ -260,6 +260,8 @@ func TestExtractBinary_Placeholder(t *testing.T) {
 		{"placeholder_is_binary", "${params.bin} --flag", ""},
 		{"placeholder_concat_with_text", "${params.prefix}bin --flag", ""},
 		{"placeholder_var_then_nonbuiltin", "set -eu\nX=\"${params.foo}\"\nls x", "ls"},
+		{"plain_shell_var_then_realbin", "${TOOL} --flag\nrealbin x", "realbin"},
+		{"plain_shell_var_default_with_cmd_subst", "value=${CACHE:-$(missing-helper)}\necho \"$value\"", "missing-helper"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
