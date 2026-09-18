@@ -136,6 +136,14 @@ type simulator struct {
 	events     []event.Event
 	path       []string
 	steps      int
+
+	// nodeOwnsOutcome is true when the node currently being visited itself
+	// determines ctx.outcome — a scenario override naming it (globally or
+	// as NodeID.outcome) or an auto-status agent/tool default — as opposed
+	// to inheriting a stale ctx.outcome value left over in the flat context
+	// map by a previously visited node. Recomputed per node in
+	// applyNodeDefaults; consulted by currentNodeFailed.
+	nodeOwnsOutcome bool
 }
 
 const maxSteps = 500 // safety valve against infinite loops
@@ -309,10 +317,14 @@ func (s *simulator) resolveConditionalNext(nodeID string, edges []*ir.Edge) (str
 	// scenario value no guard covers (e.g. tier=bronze against gold/silver
 	// guards) — falls to else, regardless of whether the guards look
 	// statically exhaustive. `else` is success-side only (see docs/edges.md
-	// "Failure Handling"): a genuine ctx.outcome=fail never falls through to
-	// else — an explicit `on fail` edge (handled by findMatchingEdge above)
+	// "Failure Handling"): a genuine failure on THIS node never falls through
+	// to else — an explicit `on fail` edge (handled by findMatchingEdge above)
 	// is the only way a fail outcome routes away from the happy-path default.
-	if s.workflow.ElseTarget != "" && s.ctx["outcome"] != "fail" {
+	// currentNodeFailed is scoped to this node's own outcome (see its doc) so
+	// a downstream node that merely inherits a stale ctx.outcome="fail" left
+	// by an earlier node — e.g. a human node reached via an `on fail` edge —
+	// still gets its own else default.
+	if s.workflow.ElseTarget != "" && !s.currentNodeFailed() {
 		s.emitEdgeTraverse(&ir.Edge{From: nodeID, To: s.workflow.ElseTarget})
 		return s.workflow.ElseTarget, nil
 	}
@@ -320,6 +332,17 @@ func (s *simulator) resolveConditionalNext(nodeID string, edges []*ir.Edge) (str
 	// No else default — fall back to the first edge (happy-path default).
 	s.emitEdgeTraverse(edges[0])
 	return edges[0].To, nil
+}
+
+// currentNodeFailed reports whether the node currently resolving its next
+// edge has itself failed — i.e. it owns ctx.outcome (see nodeOwnsOutcome)
+// and that outcome is a failure spelling ("fail" or "failure"). A node that
+// does not own ctx.outcome (e.g. a human node reached via an upstream `on
+// fail` edge, with no outcome scenario/default of its own) is never treated
+// as failed here, even if ctx.outcome still holds a stale value from an
+// earlier node — see #306 follow-up.
+func (s *simulator) currentNodeFailed() bool {
+	return s.nodeOwnsOutcome && ir.IsFailOutcome(s.ctx["outcome"])
 }
 
 // shouldBreakLoop returns true if a node has been visited too many times.

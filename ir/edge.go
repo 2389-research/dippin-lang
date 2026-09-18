@@ -29,12 +29,17 @@ type Edge struct {
 // returns false.
 func EdgeRoutesOnFail(e *Edge) bool {
 	cmp, ok := ExtractEqualityCondition(e)
-	return ok && isOutcomeVariable(cmp.Variable) && isFailOutcome(cmp.Value)
+	return ok && isOutcomeVariable(cmp.Variable) && IsFailOutcome(cmp.Value)
 }
 
 func isOutcomeVariable(v string) bool { return v == "ctx.outcome" || v == "outcome" }
 
-func isFailOutcome(v string) bool { return v == "fail" || v == "failure" }
+// IsFailOutcome reports whether a raw ctx.outcome value denotes failure.
+// Both spellings ("fail" and "failure") are accepted throughout dippin —
+// see docs/edges.md's Failure Handling section — so any code comparing an
+// outcome value against failure should call this rather than a literal
+// string compare.
+func IsFailOutcome(v string) bool { return v == "fail" || v == "failure" }
 
 // IsRedundantFanEdge reports whether e merely repeats a parallel/fan_in fork
 // already declared inline on a node's config, carrying no extra information —

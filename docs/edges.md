@@ -29,8 +29,10 @@ changes the spelling of the exhaustion route from `fallback_target` (dip 1) to
 `fallback_retry_target` (dip 2); `retry_target` keeps its name. `max_retries: N`
 bounds the retries.
 
-An `on fail` edge is a **distinct channel** — the genuine-failure route taken
-when a node fails outright. A node may carry both a `fallback_retry_target`
+An `on fail` edge (`ctx.outcome = fail` or `failure` — both spellings are
+recognized as failure everywhere in dippin) is a **distinct channel** — the
+genuine-failure route taken when a node fails outright. A node may carry both
+a `fallback_retry_target`
 (where retry exhaustion lands) and an `on fail` edge (where an unretried failure
 lands); they do not conflict and both survive migration.
 
@@ -227,8 +229,8 @@ states "everything not handled above goes here" once.
 dippin validates that the `else` target node exists (DIP003) and treats it as reachable
 (DIP004); the runtime resolves an unmatched node to the `else` target. `dippin simulate`
 (including `-all-paths`) and `dippin test` traverse the `else` default too, on the same
-success-side-only terms described above: a scenario `outcome=fail` never falls through to
-`else`, even when no other guard matches. See
+success-side-only terms described above: a scenario `outcome=fail` (or `failure`) never
+falls through to `else`, even when no other guard matches. See
 [the error-funnel decision](proposals/2026-06-16-error-funnel-default.md).
 
 ---
