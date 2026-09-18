@@ -4,6 +4,13 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.74.0] — 2026-09-18
+
+### Fixed
+- **`dippin fmt` no longer drops retry attributes** ([#300](https://github.com/2389-research/dippin-lang/issues/300)). `max_retries`, `base_delay`, `retry_policy`, `retry_target` and `fallback_target` are parsed as common fields on every node kind, but only the agent and manager_loop writers re-emitted them — a format round-trip silently reset a tool node's `max_retries` to `0` while `check` still reported `valid: true`. `writeRetryFields` is now called from every body-emitting writer (tool, human, conditional, subgraph) in the same canonical slot. All 39 examples format byte-identically before and after; formatting remains idempotent.
+- **DIP125 no longer reports `-eu` (or a whole assignment) as the tool binary when a `command:` body contains a `${ns.key}` placeholder** ([#305](https://github.com/2389-research/dippin-lang/issues/305)). Dotted dippin references (`${graph.workflow_dir}`, `${params.foo}`, `${ctx.x}`) are invalid shell, so the mvdan parse failed and the fallback word-split took the first token after `set`. `extractBinary` now substitutes exactly those references with a shell-safe dummy word before parsing, so the normal skip-`set`/skip-assignments/first-real-command walk runs; plain shell `${VAR}` / `${X:-$(cmd)}` expansions are left untouched. A command whose name is itself a placeholder (`${params.bin} --flag`) skips DIP125 — the binary can't be known before expansion.
+- **`dippin simulate` honors the `else` success-side-only contract** ([#306](https://github.com/2389-research/dippin-lang/issues/306)). `docs/edges.md` says `else` catches unmatched *non-failure* outcomes and failures route via the failure cascade, but `resolveConditionalNext` fell through to `ElseTarget` on an injected `outcome=fail` (and `-all-paths` listed the path), so simulate and the tracker runtime disagreed on exactly that case. The fail-gate is scoped to the *current* node (a human or non-auto_status agent reached via an `on fail` edge keeps its own `else`; fan-in nodes reset it), both `fail` and `failure` spellings are recognized via the newly exported `ir.IsFailOutcome` / `ir.IsOutcomeVariable`, and the enumerator uses `ir.EdgeRoutesOnFail`. With no `on fail` edge the pre-existing first-edge fallback is unchanged. `dippin test` shares `simulate.Run` and gets the fix for free. The stale "simulate does not yet traverse `else` (#158)" note in `docs/edges.md` is gone.
+
 ## [v0.73.0] — 2026-09-17
 
 ### Fixed
