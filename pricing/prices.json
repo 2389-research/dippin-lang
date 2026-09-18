@@ -370,31 +370,51 @@
     {
       "provider": "deepseek",
       "model": "deepseek-chat",
-      "input_per_m": 0.14,
-      "output_per_m": 0.28,
+      "display_name": "DeepSeek Chat (discontinued 2026-07-24 — flash-tier alias)",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-08-25"
+      "as_of": "2026-09-18",
+      "cached_input_per_m": 0.006,
+      "deprecated": true
     },
     {
       "provider": "deepseek",
       "model": "deepseek-reasoner",
-      "input_per_m": 0.14,
-      "output_per_m": 0.28,
+      "display_name": "DeepSeek Reasoner (discontinued 2026-07-24 — flash-tier alias)",
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-08-25"
+      "as_of": "2026-09-18",
+      "cached_input_per_m": 0.006,
+      "deprecated": true
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "display_name": "DeepSeek-V4.1-Flash",
+      "context_window": 1000000,
+      "max_output": 384000,
+      "capabilities": ["tools", "reasoning", "vision"],
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
+      "source": "https://api-docs.deepseek.com/quick_start/pricing",
+      "as_of": "2026-09-18",
+      "cached_input_per_m": 0.006
     },
     {
       "provider": "deepseek",
       "model": "deepseek-v4-flash",
-      "display_name": "DeepSeek-V4-Flash-0731",
+      "display_name": "DeepSeek-V4.1-Flash (legacy name)",
       "context_window": 1000000,
       "max_output": 384000,
-      "capabilities": ["tools", "reasoning"],
-      "input_per_m": 0.14,
-      "output_per_m": 0.28,
+      "capabilities": ["tools", "reasoning", "vision"],
+      "input_per_m": 0.3,
+      "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-08-10",
-      "cached_input_per_m": 0.0028
+      "as_of": "2026-09-18",
+      "cached_input_per_m": 0.006,
+      "deprecated": true
     },
     {
       "provider": "deepseek",
@@ -403,11 +423,11 @@
       "context_window": 1000000,
       "max_output": 384000,
       "capabilities": ["tools", "reasoning"],
-      "input_per_m": 0.435,
-      "output_per_m": 0.87,
+      "input_per_m": 1.32,
+      "output_per_m": 3.96,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-08-10",
-      "cached_input_per_m": 0.003625
+      "as_of": "2026-09-18",
+      "cached_input_per_m": 0.044
     },
     {
       "provider": "deepseek",
@@ -416,11 +436,11 @@
       "context_window": 1000000,
       "max_output": 384000,
       "capabilities": ["tools", "reasoning"],
-      "input_per_m": 0.435,
-      "output_per_m": 0.87,
+      "input_per_m": 1.32,
+      "output_per_m": 3.96,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-08-12",
-      "cached_input_per_m": 0.003625
+      "as_of": "2026-09-18",
+      "cached_input_per_m": 0.044
     },
     {
       "provider": "gemini",
@@ -1499,7 +1519,7 @@
       "input_per_m": 0.15,
       "output_per_m": 0.5,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-09-02",
+      "as_of": "2026-09-18",
       "cached_input_per_m": 0.03
     },
     {

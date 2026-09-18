@@ -243,8 +243,9 @@ func TestCacheRatesVerifiedProviders(t *testing.T) {
 // (not a multiplier), which Cost() honors directly.
 func TestProviderCachedInputPrices(t *testing.T) {
 	want := map[string]float64{
-		"deepseek-v4-flash": 0.0028,
-		"deepseek-v4-pro":   0.003625,
+		"deepseek-flash":    0.006,
+		"deepseek-v4-flash": 0.006,
+		"deepseek-v4-pro":   0.044,
 		"glm-5.2":           0.26,
 		"glm-5":             0.2,
 		"glm-4.5":           0.11,
