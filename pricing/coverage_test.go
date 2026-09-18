@@ -11,11 +11,6 @@ import (
 // — so a newly added priced model cannot ship without either a verified cache
 // rate in prices.json or a deliberate, reasoned entry here.
 var knownCacheGaps = []string{
-	// deepseek-chat/-reasoner: rolling aliases, not on the current DeepSeek
-	// pricing page (which lists deepseek-v4-flash/-pro), so no cache-hit price
-	// to verify against.
-	"deepseek/deepseek-chat",
-	"deepseek/deepseek-reasoner",
 	// grok-4-1-fast-*: superseded, absent from the current x.ai models page.
 	"grok/grok-4-1-fast-non-reasoning",
 	"grok/grok-4-1-fast-reasoning",

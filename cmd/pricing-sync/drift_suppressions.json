@@ -564,48 +564,8 @@
     "model": "glm-5.3-flash",
     "kind": "price",
     "aggregator_value": "0.075/0.25",
-    "reason": "models.dev reports the 50% promotional rate, which Z.AI's pricing page says ends 2026-09-09; the catalog carries the regular 0.15/0.5.",
-    "review_by": "2026-09-16"
-  },
-  {
-    "provider": "deepseek",
-    "model": "deepseek-v4-flash",
-    "kind": "price",
-    "aggregator_value": "0.08554/0.1711",
-    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
-  },
-  {
-    "provider": "deepseek",
-    "model": "deepseek-v4-flash",
-    "kind": "disagree",
-    "aggregator_value": "md:0.14/0.28 or:0.08554/0.1711",
-    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
-  },
-  {
-    "provider": "deepseek",
-    "model": "deepseek-v4-pro",
-    "kind": "price",
-    "aggregator_value": "0.9532/1.906",
-    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
-  },
-  {
-    "provider": "deepseek",
-    "model": "deepseek-v4-pro",
-    "kind": "disagree",
-    "aggregator_value": "md:0.435/0.87 or:0.9532/1.906",
-    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
-  },
-  {
-    "provider": "deepseek",
-    "model": "deepseek-v4-pro-0813",
-    "kind": "price",
-    "aggregator_value": "0.5795/1.738",
-    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
+    "reason": "Aggregators still carry the 50% promotional rate that Z.AI's page said ended 2026-09-09; official page re-verified 2026-09-18 at the regular 0.15/0.5.",
+    "review_by": "2026-10-18"
   },
   {
     "provider": "minimax",
