@@ -22,6 +22,7 @@ var agentFirstClassFields = map[string]bool{
 	"auto_status": true, "goal_gate": true,
 	"cache_tools": true, "compaction": true,
 	"compaction_threshold": true, "tool_access": true,
+	"writable_paths": true, "writable_paths_mode": true,
 }
 
 func lintResponseFormat(w *ir.Workflow) []Diagnostic {

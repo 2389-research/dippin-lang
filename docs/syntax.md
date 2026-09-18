@@ -210,7 +210,7 @@ There are **8 node kinds**: `agent`, `human`, `tool`, `parallel`, `fan_in`, `con
 
 ### Agent node: tool_access and writable_paths
 
-Two security-scoped fields are available on `agent` nodes:
+Three security-scoped fields are available on `agent` nodes:
 
 - **`tool_access: none`** — strips the LLM's tool catalog for that node. The agent sees no tools and cannot make tool calls. Scoped to the node only; no downstream taint. Other values are linted as DIP139 and fail closed at the runtime.
 

@@ -112,3 +112,39 @@ func TestLint_DIP133_ToolAccessShadow(t *testing.T) {
 		t.Errorf("expected DIP133 for params tool_access shadow; got: %v", codes(res.Diagnostics))
 	}
 }
+
+// params: { writable_paths_mode: ... } shadows the typed field (#307). Before the
+// typed field existed the key rode params: silently; now the params spelling
+// must surface as DIP133 so a stale `params: writable_paths_mode: Prefer` can
+// never lint clean while bypassing DIP163's exact-match check.
+func TestLint_DIP133_WritablePathsModeShadow(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    writable_paths: workspace/**
+    params:
+      writable_paths_mode: Prefer
+`
+	diags := lintSrc(t, src)
+	if !hasCodeMentioning(diags, DIP133, "writable_paths_mode") {
+		t.Errorf("expected DIP133 naming writable_paths_mode for the params shadow; got: %v", codes(diags))
+	}
+}
+
+func TestLint_DIP133_WritablePathsShadow(t *testing.T) {
+	src := `workflow X
+  start: A
+  exit: A
+
+  agent A
+    prompt: "x"
+    params:
+      writable_paths: workspace/**
+`
+	if !hasCodeMentioning(lintSrc(t, src), DIP133, "writable_paths") {
+		t.Errorf("expected DIP133 for params writable_paths shadow; got: %v", codes(lintSrc(t, src)))
+	}
+}

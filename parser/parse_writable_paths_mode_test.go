@@ -79,8 +79,8 @@ func TestParseAgentWritablePathsModeEmptyIsError(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected parse error for empty writable_paths_mode:, got nil")
 			}
-			if !strings.Contains(err.Error(), "writable_paths_mode") {
-				t.Errorf("error should name writable_paths_mode; got: %v", err)
+			if !strings.Contains(err.Error(), "writable_paths_mode") || !strings.Contains(err.Error(), `agent node "A"`) {
+				t.Errorf("error should name writable_paths_mode and the node; got: %v", err)
 			}
 		})
 	}
@@ -138,8 +138,8 @@ func TestParseBranchWritablePathsModeEmptyIsError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected parse error for empty branch writable_paths_mode:, got nil")
 	}
-	if !strings.Contains(err.Error(), "writable_paths_mode") {
-		t.Errorf("error should name writable_paths_mode; got: %v", err)
+	if !strings.Contains(err.Error(), "writable_paths_mode") || !strings.Contains(err.Error(), `parallel branch "a"`) {
+		t.Errorf("error should name writable_paths_mode and the branch; got: %v", err)
 	}
 }
 

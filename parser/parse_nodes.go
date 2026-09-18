@@ -240,7 +240,7 @@ func (p *Parser) applyCommonComplexField(n *ir.Node, key, val string, loc ir.Sou
 
 // applyAgentField applies agent-specific configuration fields.
 func (p *Parser) applyAgentField(cfg *ir.AgentConfig, nodeID, key, val string, loc ir.SourceLocation) {
-	if p.rejectEmptyWritablePaths(key, val, loc) || p.rejectEmptyWritablePathsMode(key, val, loc) {
+	if p.rejectEmptyWritablePaths(key, val, loc) || p.rejectEmptyWritablePathsMode(fmt.Sprintf("agent node %q", nodeID), key, val, loc) {
 		return
 	}
 	if applyAgentStringField(cfg, key, val) {
@@ -434,14 +434,16 @@ func (p *Parser) rejectEmptyWritablePaths(key, val string, loc ir.SourceLocation
 // writable_paths_mode is present but empty. The string IR field cannot
 // distinguish present-but-empty from absent (absent = require), so the parser
 // fails closed here instead of letting "" silently read as require.
+// subject names the declaration site (agent node or parallel branch) so the
+// error names the node, as tracker invariant C1 requires.
 // Returns true if the value was rejected (caller must not store it).
-func (p *Parser) rejectEmptyWritablePathsMode(key, val string, loc ir.SourceLocation) bool {
+func (p *Parser) rejectEmptyWritablePathsMode(subject, key, val string, loc ir.SourceLocation) bool {
 	if key != "writable_paths_mode" || strings.TrimSpace(val) != "" {
 		return false
 	}
 	p.diagnostics = append(p.diagnostics, fmt.Sprintf(
-		"writable_paths_mode declared with no value at %d:%d — use require or prefer, or omit the field (absent means require)",
-		loc.Line, loc.Column))
+		"%s declares writable_paths_mode with no value at %d:%d — use require or prefer, or omit the field (absent means require)",
+		subject, loc.Line, loc.Column))
 	return true
 }
 
@@ -1048,7 +1050,7 @@ func (p *Parser) parseBranchFields(bc *ir.BranchConfig) {
 // last_response_truncate integer override, and emits an unknown-field hint
 // for unrecognized keys (FIX B).
 func (p *Parser) applyBranchFieldChecked(bc *ir.BranchConfig, key, val string, loc ir.SourceLocation) {
-	if p.rejectEmptyWritablePaths(key, val, loc) || p.rejectEmptyWritablePathsMode(key, val, loc) {
+	if p.rejectEmptyWritablePaths(key, val, loc) || p.rejectEmptyWritablePathsMode(fmt.Sprintf("parallel branch %q", bc.Target), key, val, loc) {
 		return
 	}
 	if key == "last_response_truncate" {

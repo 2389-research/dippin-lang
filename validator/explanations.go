@@ -541,7 +541,7 @@ func writablePathsModeExplanations() map[string]Explanation {
 		DIP163: {
 			Code:    DIP163,
 			Summary: "writable_paths_mode must be exactly require or prefer",
-			Trigger: "An agent node or a parallel per-branch override sets writable_paths_mode to anything other than exactly `require` or `prefer`. The value is matched verbatim — `Prefer`, `preferred`, and a quoted \"prefer \" (trailing space) all fire — because the runtime fails closed on the same exact-match check at load time and refuses to load the node. Error severity: it fails `dippin lint` / `dippin check`. (A bare `writable_paths_mode:` with no value is rejected earlier, as a parse error.)",
+			Trigger: "An agent node or a parallel per-branch override sets writable_paths_mode to anything other than exactly `require` or `prefer`. The value is matched verbatim — `Prefer`, `preferred`, and a quoted \"prefer \" (trailing space) all fire — because the runtime fails closed on the same exact-match check at load time and refuses to load the node. Error severity: it fails `dippin lint` / `dippin check`. (A bare `writable_paths_mode:` with no value is rejected earlier, as a parse error.) Migration: the key used to ride the generic `params:` passthrough — a `params: writable_paths_mode:` entry now fires DIP133 (params key shadows a first-class field); move it to the typed field so this check can see it.",
 			Fix:     "Write `writable_paths_mode: require` (refuse to start on a host without Landlock ABI v3) or `writable_paths_mode: prefer` (run UNJAILED there, recorded as jail_degraded), or omit the field — absent means require.",
 			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths: workspace/**\n  writable_paths_mode: Prefer   # DIP163: not exactly require|prefer",
 		},
