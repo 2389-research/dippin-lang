@@ -52,10 +52,11 @@ func checkBranchWritablePathsMode(w *ir.Workflow, n *ir.Node, branches []ir.Bran
 }
 
 // branchTargetsWithScope reports whether any block-form parallel branch targets
-// the named agent and declares writable_paths of its own. Such a branch inherits
-// the agent's writable_paths_mode (tracker C1), so the agent's mode governs
-// that branch's jail and is not inert even when the agent has no globs. The
-// mirror image of targetHasWritablePaths.
+// the named agent, declares writable_paths of its own, and declares NO mode of
+// its own. Such a branch inherits the agent's writable_paths_mode (tracker C1),
+// so the agent's mode governs that branch's jail and is not inert even when the
+// agent has no globs. A branch with its own mode does not use the agent's, so
+// it gives it no scope. The mirror image of targetHasWritablePaths.
 func branchTargetsWithScope(w *ir.Workflow, agentID string) bool {
 	for _, n := range w.Nodes {
 		if cfg, ok := n.Config.(ir.ParallelConfig); ok && anyBranchWithScope(cfg.Branches, agentID) {
@@ -67,7 +68,7 @@ func branchTargetsWithScope(w *ir.Workflow, agentID string) bool {
 
 func anyBranchWithScope(branches []ir.BranchConfig, agentID string) bool {
 	for _, b := range branches {
-		if b.Target == agentID && len(b.WritablePaths) > 0 {
+		if b.Target == agentID && len(b.WritablePaths) > 0 && b.WritablePathsMode == "" {
 			return true
 		}
 	}

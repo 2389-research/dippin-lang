@@ -265,6 +265,7 @@ func TestLint_DIP164_AgentScopedByBranch(t *testing.T) {
 	}{
 		{"branch targeting agent declares paths", []string{"writable_paths: workspace/**"}, false},
 		{"branch targeting agent declares no paths", []string{"model: claude-sonnet-4-6"}, true},
+		{"branch with own mode and own paths does not inherit", []string{"writable_paths: workspace/**", "writable_paths_mode: prefer"}, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -272,8 +273,9 @@ func TestLint_DIP164_AgentScopedByBranch(t *testing.T) {
 			if got := hasCode(diags, DIP164); got != tc.want {
 				t.Errorf("agent DIP164 fired=%v, want %v; diags=%v", got, tc.want, codes(diags))
 			}
-			if n := len(onlyCode(diags, DIP165)); n != 1 {
-				t.Errorf("DIP165 should be unaffected (want 1 for the agent prefer), got %d", n)
+			wantPrefer := 1 + strings.Count(strings.Join(tc.branch, "\n"), "writable_paths_mode: prefer")
+			if n := len(onlyCode(diags, DIP165)); n != wantPrefer {
+				t.Errorf("DIP165 should be once per prefer declaration (want %d), got %d", wantPrefer, n)
 			}
 		})
 	}
