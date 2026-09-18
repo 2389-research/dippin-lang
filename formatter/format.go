@@ -770,6 +770,7 @@ func writeToolFields(wr *writer, n *ir.Node, cfg ir.ToolConfig) {
 	if cfg.Timeout != 0 {
 		wr.line("timeout: %s", formatDuration(cfg.Timeout))
 	}
+	writeRetryFields(wr, n)
 	writeIOFields(wr, n)
 	if cfg.CommandFile != "" {
 		wr.line("command_file: %s", quoteValue(cfg.CommandFile))

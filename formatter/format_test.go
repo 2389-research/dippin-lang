@@ -2935,6 +2935,127 @@ func TestFormatPinsProviderPrefixedAlias(t *testing.T) {
 	}
 }
 
+// TestFormatToolRetryFieldsRoundTrip verifies fmt preserves every retry field
+// on a tool node (#300). Previously writeToolFields never called
+// writeRetryFields, so retry_policy, max_retries, base_delay, retry_target,
+// and fallback_retry_target were all silently dropped for tool nodes,
+// changing parsed retry semantics across a format round-trip.
+func TestFormatToolRetryFieldsRoundTrip(t *testing.T) {
+	src := `dip 2
+
+workflow retry_roundtrip
+  goal: "Preserve tool retry limits during formatting"
+  start: run
+  exit: done
+
+  tool run
+    max_retries: 2
+    timeout: 1m
+    command: echo ok
+
+  agent done
+    label: done
+
+  edges
+    run -> done when ctx.outcome = success
+    run -> run when ctx.outcome = fail loop
+`
+	w1, err := parser.NewParser(src, "retry.dip").Parse()
+	if err != nil {
+		t.Fatalf("first parse: %v", err)
+	}
+
+	runNode := findNode(t, w1, "run")
+	if runNode.Retry.MaxRetries != 2 {
+		t.Fatalf("precondition: parsed MaxRetries = %d, want 2", runNode.Retry.MaxRetries)
+	}
+
+	formatted := Format(w1)
+	if !strings.Contains(formatted, "max_retries: 2") {
+		t.Errorf("formatted output dropped max_retries:\n%s", formatted)
+	}
+
+	w2, err := parser.NewParser(formatted, "formatted.dip").Parse()
+	if err != nil {
+		t.Fatalf("second parse: %v\n%s", err, formatted)
+	}
+
+	runNode2 := findNode(t, w2, "run")
+	if runNode2.Retry.MaxRetries != 2 {
+		t.Errorf("MaxRetries not preserved across fmt round-trip: got %d, want 2\nformatted:\n%s", runNode2.Retry.MaxRetries, formatted)
+	}
+
+	assertIdempotent(t, w1)
+}
+
+// TestFormatToolRetryAllFieldsRoundTrip covers the other four Retry fields
+// (Policy, BaseDelay, RetryTarget, FallbackTarget) on a tool node, verifying
+// none of them share the max_retries omission.
+func TestFormatToolRetryAllFieldsRoundTrip(t *testing.T) {
+	w := &ir.Workflow{
+		Name:    "tool_retry_all_fields",
+		Version: "2",
+		Start:   "run",
+		Exit:    "done",
+		Nodes: []*ir.Node{
+			{
+				ID:   "run",
+				Kind: ir.NodeTool,
+				Config: ir.ToolConfig{
+					Command: "echo ok",
+				},
+				Retry: ir.RetryConfig{
+					Policy:         "aggressive",
+					MaxRetries:     3,
+					BaseDelay:      250 * time.Millisecond,
+					RetryTarget:    "run",
+					FallbackTarget: "done",
+				},
+			},
+			{ID: "done", Kind: ir.NodeAgent, Config: ir.AgentConfig{Prompt: "done."}},
+		},
+		Edges: []*ir.Edge{
+			{From: "run", To: "done"},
+		},
+	}
+
+	out := Format(w)
+	assertContains(t, out, "retry_policy: aggressive")
+	assertContains(t, out, "max_retries: 3")
+	assertContains(t, out, "base_delay: 250ms")
+	assertContains(t, out, "retry_target: run")
+	assertContains(t, out, "fallback_retry_target: done")
+
+	w2, err := parser.NewParser(out, "t.dip").Parse()
+	if err != nil {
+		t.Fatalf("re-parse: %v\n%s", err, out)
+	}
+	runNode := findNode(t, w2, "run")
+	if runNode.Retry != (ir.RetryConfig{
+		Policy:         "aggressive",
+		MaxRetries:     3,
+		BaseDelay:      250 * time.Millisecond,
+		RetryTarget:    "run",
+		FallbackTarget: "done",
+	}) {
+		t.Errorf("tool node Retry not preserved across fmt round-trip: got %+v", runNode.Retry)
+	}
+
+	assertIdempotent(t, w)
+}
+
+// findNode returns the node with the given ID, failing the test if absent.
+func findNode(t *testing.T, w *ir.Workflow, id string) *ir.Node {
+	t.Helper()
+	for _, n := range w.Nodes {
+		if n.ID == id {
+			return n
+		}
+	}
+	t.Fatalf("node %q not found", id)
+	return nil
+}
+
 // TestFormatLeavesUnresolvableAlias verifies an alias that resolves to nothing is
 // left untouched (DIP162 flags it) rather than silently dropped.
 func TestFormatLeavesUnresolvableAlias(t *testing.T) {
