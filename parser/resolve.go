@@ -7,13 +7,18 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/2389-research/dippin-lang/ir"
 )
 
 const maxDirectiveFileSize = 4 << 20 // 4 MiB
+
+// directiveReader loads the bytes of one *_file directive path p, written by
+// the author relative to the workflow's base directory. The cascade/traversal
+// logic is written once against this abstraction; diskReader and fsReader are
+// the two backends, each owning its own path-safety policy.
+type directiveReader func(p string) ([]byte, error)
 
 // ResolveFileDirectives loads file contents for every *_file directive on a
 // node: a tool node's CommandFile into Command, and an agent node's PromptFile
@@ -25,13 +30,39 @@ const maxDirectiveFileSize = 4 << 20 // 4 MiB
 // CLI entry points call it after parsing. LSP and WASM contexts skip it;
 // the IR retains the CommandFile-set / Command-empty state, which is the
 // correct unresolved view for those consumers.
+//
+// See ResolveFileDirectivesFS for the same pass over an fs.FS.
 func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
-	cascade, err := loadPromptCascade(&w.Defaults, baseDir)
+	return resolveDirectives(w, diskReader(baseDir))
+}
+
+// ResolveFileDirectivesFS is ResolveFileDirectives over an fs.FS (an embed.FS,
+// fstest.MapFS, fs.Sub, ...), for hosts that bundle a workflow and its
+// sidecar files rather than reading them from disk. The cascade semantics
+// (prompt_file / system_prompt_file / command_file / prompt_include and the
+// defaults-block *_file cascade) are identical; only the reader differs.
+//
+// Paths are slash-separated and resolved as path.Join(baseDir, p). An absolute
+// p, or any ".." segment in p, is rejected before joining, and the joined name
+// must satisfy fs.ValidPath. The 4 MiB per-file cap applies exactly as on
+// disk, and a directory (or any non-regular entry) named by a directive is an
+// error. The disk-only checks — O_NOFOLLOW leaf-symlink rejection and
+// EvalSymlinks parent containment — do not apply: an fs.FS has no symlink
+// semantics of its own, and containment is the FS's job (use fs.Sub to scope
+// it). Error messages name only the user-written path, as on disk.
+func ResolveFileDirectivesFS(w *ir.Workflow, fsys fs.FS, baseDir string) error {
+	return resolveDirectives(w, fsReader(fsys, baseDir))
+}
+
+// resolveDirectives is the single cascade/traversal implementation shared by
+// the disk and fs.FS entry points.
+func resolveDirectives(w *ir.Workflow, read directiveReader) error {
+	cascade, err := loadPromptCascade(&w.Defaults, read)
 	if err != nil {
 		return err
 	}
 	for _, n := range w.Nodes {
-		if err := resolveNodeDirective(n, baseDir, cascade); err != nil {
+		if err := resolveNodeDirective(n, read, cascade); err != nil {
 			return err
 		}
 	}
@@ -49,15 +80,15 @@ type promptCascade struct {
 
 // loadPromptCascade resolves the defaults-block prompt cascade once per workflow
 // so N agents do not re-read the fragment files N times.
-func loadPromptCascade(d *ir.WorkflowDefaults, baseDir string) (promptCascade, error) {
+func loadPromptCascade(d *ir.WorkflowDefaults, read directiveReader) (promptCascade, error) {
 	c := promptCascade{prefix: d.PromptPrefix, suffix: d.PromptSuffix}
-	if err := loadDirectiveInto(&c.prefix, d.PromptPrefixFile, baseDir, "defaults", "prompt_prefix_file"); err != nil {
+	if err := loadDirectiveInto(&c.prefix, d.PromptPrefixFile, read, "defaults", "prompt_prefix_file"); err != nil {
 		return c, err
 	}
-	if err := loadDirectiveInto(&c.suffix, d.PromptSuffixFile, baseDir, "defaults", "prompt_suffix_file"); err != nil {
+	if err := loadDirectiveInto(&c.suffix, d.PromptSuffixFile, read, "defaults", "prompt_suffix_file"); err != nil {
 		return c, err
 	}
-	if err := loadDirectiveInto(&c.systemPrompt, d.SystemPromptFile, baseDir, "defaults", "system_prompt_file"); err != nil {
+	if err := loadDirectiveInto(&c.systemPrompt, d.SystemPromptFile, read, "defaults", "system_prompt_file"); err != nil {
 		return c, err
 	}
 	return c, nil
@@ -66,19 +97,19 @@ func loadPromptCascade(d *ir.WorkflowDefaults, baseDir string) (promptCascade, e
 // resolveNodeDirective resolves any file-directive fields on a single node.
 // Dispatches per node-config kind so the per-kind loader functions stay
 // focused on their own field set.
-func resolveNodeDirective(n *ir.Node, baseDir string, cascade promptCascade) error {
+func resolveNodeDirective(n *ir.Node, read directiveReader, cascade promptCascade) error {
 	switch cfg := n.Config.(type) {
 	case ir.ToolConfig:
-		return resolveToolDirective(n, cfg, baseDir)
+		return resolveToolDirective(n, cfg, read)
 	case ir.AgentConfig:
-		return resolveAgentDirective(n, cfg, baseDir, cascade)
+		return resolveAgentDirective(n, cfg, read, cascade)
 	}
 	return nil
 }
 
 // resolveToolDirective populates ToolConfig.Command from CommandFile, if set.
-func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
-	if err := loadDirectiveInto(&cfg.Command, cfg.CommandFile, baseDir, n.ID, "command_file"); err != nil {
+func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, read directiveReader) error {
+	if err := loadDirectiveInto(&cfg.Command, cfg.CommandFile, read, n.ID, "command_file"); err != nil {
 		return err
 	}
 	n.Config = cfg
@@ -88,15 +119,15 @@ func resolveToolDirective(n *ir.Node, cfg ir.ToolConfig, baseDir string) error {
 // resolveAgentDirective populates Prompt and SystemPrompt from their *File
 // twins on AgentConfig. The two slots are independent — either, both, or
 // neither may be set.
-func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string, cascade promptCascade) error {
-	if err := loadDirectiveInto(&cfg.Prompt, cfg.PromptFile, baseDir, n.ID, "prompt_file"); err != nil {
+func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, read directiveReader, cascade promptCascade) error {
+	if err := loadDirectiveInto(&cfg.Prompt, cfg.PromptFile, read, n.ID, "prompt_file"); err != nil {
 		return err
 	}
-	if err := resolveAgentSystemPrompt(&cfg, baseDir, n.ID, cascade); err != nil {
+	if err := resolveAgentSystemPrompt(&cfg, read, n.ID, cascade); err != nil {
 		return err
 	}
 	include := ""
-	if err := loadDirectiveInto(&include, cfg.PromptInclude, baseDir, n.ID, "prompt_include"); err != nil {
+	if err := loadDirectiveInto(&include, cfg.PromptInclude, read, n.ID, "prompt_include"); err != nil {
 		return err
 	}
 	applyPromptCascade(&cfg, include, cascade)
@@ -108,8 +139,8 @@ func resolveAgentDirective(n *ir.Node, cfg ir.AgentConfig, baseDir string, casca
 // applies the #72 defaults fallback: an agent that set no system prompt of its
 // own inherits the shared defaults system_prompt_file (its own value, inline or
 // file, is already non-empty here, so it always wins).
-func resolveAgentSystemPrompt(cfg *ir.AgentConfig, baseDir, nodeID string, cascade promptCascade) error {
-	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, baseDir, nodeID, "system_prompt_file"); err != nil {
+func resolveAgentSystemPrompt(cfg *ir.AgentConfig, read directiveReader, nodeID string, cascade promptCascade) error {
+	if err := loadDirectiveInto(&cfg.SystemPrompt, cfg.SystemPromptFile, read, nodeID, "system_prompt_file"); err != nil {
 		return err
 	}
 	if cfg.SystemPrompt == "" {
@@ -148,20 +179,27 @@ func effectiveSuffix(cfg ir.AgentConfig, cascade promptCascade) string {
 	return cascade.suffix
 }
 
-// loadDirectiveInto reads path (relative to baseDir) into *dst, no-op if path
-// is empty. When path is non-empty, *dst is always empty: the parser rejects a
+// loadDirectiveInto reads path through read into *dst, no-op if path is
+// empty. When path is non-empty, *dst is always empty: the parser rejects a
 // node declaring both an inline value and its *_file directive, and the CLI
 // bails on that parse error before reaching the resolver.
-func loadDirectiveInto(dst *string, path, baseDir, nodeID, directive string) error {
+func loadDirectiveInto(dst *string, path string, read directiveReader, nodeID, directive string) error {
 	if path == "" {
 		return nil
 	}
-	contents, err := loadDirectiveFile(baseDir, path)
+	contents, err := read(path)
 	if err != nil {
 		return fmt.Errorf("node %q %s: %w", nodeID, directive, err)
 	}
 	*dst = string(contents)
 	return nil
+}
+
+// diskReader returns the on-disk directiveReader: every path is resolved
+// relative to baseDir with the full safety policy (lexical containment,
+// symlink-chain containment, O_NOFOLLOW single-fd open/stat/read, size cap).
+func diskReader(baseDir string) directiveReader {
+	return func(p string) ([]byte, error) { return loadDirectiveFile(baseDir, p) }
 }
 
 // loadDirectiveFile resolves p relative to baseDir, applies path security
@@ -215,13 +253,14 @@ func openCheckRead(p, resolved string) ([]byte, error) {
 	return readFromFD(p, f)
 }
 
-// readFromFD reads the already-open fd, rewriting any error so it only mentions
-// the user-written path p (never the absolute resolved one). The read is bounded
-// by io.LimitReader as a belt to checkFileInfo's fstat size check: under
-// untrusted-.dip-in-CI a concurrent writer could grow the file on the same fd
-// between fstat and read, so capping the read at maxDirectiveFileSize+1 keeps
-// memory bounded regardless of post-fstat growth.
-func readFromFD(p string, f *os.File) ([]byte, error) {
+// readFromFD reads the already-open file, rewriting any error so it only
+// mentions the user-written path p (never the absolute resolved one). The read
+// is bounded by io.LimitReader as a belt to checkFileInfo's fstat size check:
+// under untrusted-.dip-in-CI a concurrent writer could grow the file on the
+// same fd between fstat and read, so capping the read at maxDirectiveFileSize+1
+// keeps memory bounded regardless of post-fstat growth. Shared with the fs.FS
+// backend, whose fs.File is likewise already open and stat-checked.
+func readFromFD(p string, f io.Reader) ([]byte, error) {
 	contents, err := io.ReadAll(io.LimitReader(f, maxDirectiveFileSize+1))
 	if err != nil {
 		return nil, pathErr(p, err, "read")
@@ -351,10 +390,5 @@ func formatMiB(n int64) string {
 // Used as defensive belt after filepath.Rel; should not fire on a
 // non-symlink filesystem since Rel canonicalizes already.
 func hasParentRef(rel string) bool {
-	for _, seg := range strings.Split(filepath.ToSlash(rel), "/") {
-		if seg == ".." {
-			return true
-		}
-	}
-	return false
+	return hasParentSegment(filepath.ToSlash(rel))
 }

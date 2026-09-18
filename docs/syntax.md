@@ -394,7 +394,7 @@ Tool commands work the same way:
 
 ### File directives (`*_file`)
 
-Instead of an inline multiline block, you can reference an external file. The parser itself stays pure and does **not** read the file; the contents are loaded in a separate post-parse step (`parser.ResolveFileDirectives`) that CLI entry points run after parsing. LSP and WASM consumers skip that step and retain the unresolved directive (the `*_file` field set, content empty).
+Instead of an inline multiline block, you can reference an external file. The parser itself stays pure and does **not** read the file; the contents are loaded in a separate post-parse step (`parser.ResolveFileDirectives`, or `parser.ResolveFileDirectivesFS` for a workflow bundled in an `fs.FS` such as `embed.FS`) that CLI entry points run after parsing. LSP and WASM consumers skip that step and retain the unresolved directive (the `*_file` field set, content empty).
 
 | Directive | Node kind | Replaces |
 |-----------|-----------|---------|
