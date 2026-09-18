@@ -259,6 +259,7 @@ func TestExtractBinary_Placeholder(t *testing.T) {
 		{"no_set_assign_then_echo", "LIB=\"${graph.workflow_dir}/lib\"\necho x", ""},
 		{"placeholder_is_binary", "${params.bin} --flag", ""},
 		{"placeholder_concat_with_text", "${params.prefix}bin --flag", ""},
+		{"placeholder_var_then_nonbuiltin", "set -eu\nX=\"${params.foo}\"\nls x", "ls"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

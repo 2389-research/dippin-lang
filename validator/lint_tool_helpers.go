@@ -61,7 +61,12 @@ const placeholderDummy = "__dip_placeholder__"
 // binary name still contains the dummy (whether it *is* the placeholder or
 // the placeholder was concatenated with literal text, e.g. "${p.x}suffix"),
 // extraction returns "" since the real binary can't be known before
-// expansion.
+// expansion. Note: varRefPattern also matches plain shell ${VAR} expansions
+// (it doesn't distinguish a dippin ${ns.key} from e.g. ${HOME} or ${TOOL}),
+// so a command whose first word is a plain shell variable expansion
+// (${TOOL} --flag, ${HOME}/bin/tool) now yields "" instead of the walker
+// skipping past it to a later command. This is an acceptable, intentional
+// tradeoff: it drops a hint rather than ever fabricating a wrong one.
 func extractBinary(command string) string {
 	sanitized := varRefPattern.ReplaceAllString(command, placeholderDummy)
 	parser := syntax.NewParser(syntax.KeepComments(false))
