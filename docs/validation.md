@@ -1,9 +1,9 @@
 # Validation and Linting Reference
 
-Dippin registers 72 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (71 documented sections):
+Dippin registers 75 diagnostic codes split into two categories; this page gives a dedicated section to every code except `DIP138`, which is reserved and has no firing logic (74 documented sections):
 
 - **Structural validation** (DIP001–DIP010): Errors that **must** be fixed. A workflow with any of these cannot execute.
-- **Semantic linting** (DIP101–DIP162): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed.
+- **Semantic linting** (DIP101–DIP165): Warnings that flag likely bugs or questionable patterns. They don't block execution but should be reviewed. (DIP155–DIP158 and DIP163 are error severity and do fail `lint`/`check`.)
 
 Run `dippin validate <file>` for structural checks only, or `dippin lint <file>` for both.
 
@@ -12,7 +12,7 @@ graph LR
     SRC[".dip file"] --> PARSE["Parser"]
     PARSE --> IR["IR"]
     IR --> VAL["Structural Validation<br>DIP001–DIP010<br>(errors)"]
-    IR --> LINT["Semantic Linting<br>DIP101–DIP162<br>(warnings)"]
+    IR --> LINT["Semantic Linting<br>DIP101–DIP165<br>(warnings)"]
     VAL --> DIAG["Diagnostics"]
     LINT --> DIAG
 ```
@@ -248,7 +248,7 @@ lints (DIP103/DIP120/DIP121/DIP122), so one bad condition no longer masks the re
 
 ---
 
-## Semantic Lint Warnings (DIP101–DIP162)
+## Semantic Lint Warnings (DIP101–DIP165)
 
 ### DIP101: Node Only Reachable via Conditional Edges
 
@@ -1625,6 +1625,100 @@ pin a concrete model id directly.
 
 ---
 
+### DIP163: `writable_paths_mode` Must Be Exactly `require` or `prefer`
+
+**Severity**: Error
+
+An agent node or a parallel per-branch override sets `writable_paths_mode` to
+anything other than **exactly** `require` or `prefer`. The value is matched
+verbatim — no trimming, no case-folding — because the runtime fails closed on
+the same exact-match check at load time and refuses to load the node
+(tracker #648, invariant C1). `Prefer`, `preferred`, `REQUIRE`, and a quoted
+`"prefer "` (trailing space) all fire; the message quotes the value so a stray
+space is visible. Absent is fine (it means `require`). A bare
+`writable_paths_mode:` with no value is rejected earlier, as a parse error.
+
+Like DIP155–DIP158 this is error severity: it fails `dippin lint` / `dippin check`.
+
+```text
+error[DIP163]: node "Recorder" has writable_paths_mode "Prefer" — the only legal values are exactly require and prefer (no case-folding, no surrounding whitespace); the runtime refuses to load this node
+error[DIP163]: node "Fan" branch "Recorder" has writable_paths_mode "prefer " — the only legal values are exactly require and prefer (no case-folding, no surrounding whitespace); the runtime refuses to load this node
+```
+
+**Fix:** Write `writable_paths_mode: require` (refuse to start on a host
+without Landlock ABI v3) or `writable_paths_mode: prefer` (run UNJAILED there,
+recorded as `jail_degraded`), or omit the field.
+
+```dip
+agent Recorder
+  prompt: "record"
+  writable_paths: workspace/**
+  writable_paths_mode: Prefer   # DIP163: not exactly require|prefer
+  # Fix: writable_paths_mode: prefer
+```
+
+---
+
+### DIP164: `writable_paths_mode` Set Without `writable_paths`
+
+**Severity**: Hint
+
+An agent node sets `writable_paths_mode` but declares no `writable_paths`, or a
+parallel branch sets `writable_paths_mode` while **neither** the branch **nor**
+its target agent declares `writable_paths` (a branch with no globs of its own
+inherits the target's). The mode only governs how a `writable_paths` jail
+refusal is handled — with no globs there is no jail, so the mode is inert.
+
+```text
+hint[DIP164]: node "Recorder" sets writable_paths_mode but declares no writable_paths — a mode without a scope is inert (nothing to jail)
+```
+
+**Fix:** Add `writable_paths: <globs>` on the same node or branch (or on the
+branch's target agent), or remove `writable_paths_mode`.
+
+```dip
+agent Recorder
+  prompt: "record"
+  writable_paths_mode: prefer   # DIP164: no writable_paths — nothing to jail
+```
+
+---
+
+### DIP165: `writable_paths_mode: prefer` Runs UNJAILED Without Landlock
+
+**Severity**: Hint
+
+An agent node or parallel branch declares `writable_paths_mode: prefer`. Under
+`require` (the default) a node whose `writable_paths` jail cannot be installed
+refuses to start. Under `prefer`, a **host-capability** refusal — no Landlock
+ABI v3, i.e. macOS or Linux < 6.2 — instead degrades the node to an
+**UNJAILED** run: the Bash subprocess has its full pre-jail write reach. The
+runtime records a `jail_degraded` event, warns in the TUI and `doctor`, and
+marks the run manifest. Authoring refusals (malformed globs, bad
+`working_dir`) and backend refusals (`claude-code` / `acp`) still refuse in
+both modes.
+
+`prefer` turns a guarantee into best-effort and creates a mixed-fleet
+asymmetry (Linux CI enforces, a macOS dev box does not). **Operator-facing copy
+must never describe a `prefer` node as sandboxed.** The hint fires once per
+`prefer` declaration; it is informational — the author opted in knowingly.
+
+```text
+hint[DIP165]: node "Recorder" has writable_paths_mode: prefer — it runs UNJAILED on hosts without Landlock ABI v3 (macOS, Linux < 6.2); the write jail is best-effort there, not a guarantee, and operator copy must not describe this node as sandboxed
+```
+
+**Fix:** Keep `prefer` only when an unjailed run on those hosts is acceptable;
+use `require` (or omit the field) to refuse to start instead.
+
+```dip
+agent Recorder
+  prompt: "record"
+  writable_paths: workspace/**
+  writable_paths_mode: prefer   # DIP165: UNJAILED on macOS / Linux < 6.2
+```
+
+---
+
 ## Running Validation
 
 ### Structural validation only
@@ -1641,7 +1735,7 @@ Runs DIP001–DIP010. Exit code 0 if all pass, 1 if any errors.
 dippin lint pipeline.dip
 ```
 
-Runs all DIP001–DIP010 errors and DIP101–DIP162 warnings. Exit code 1 only for errors; warnings alone exit 0.
+Runs all DIP001–DIP010 errors and DIP101–DIP165 warnings. Exit code 1 only for errors; warnings alone exit 0.
 
 ### JSON output for CI
 

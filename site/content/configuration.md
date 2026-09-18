@@ -134,6 +134,7 @@ Agent nodes carry their own tool-safety fields (these are per-node, not defaults
 |-------|------|-------------|
 | `tool_access` | String | LLM tool-catalog gate. Set to `none` to strip the model's tool registry on this agent. DIP139 warns on unknown values; the runtime fail-closes. |
 | `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded; a present-but-empty value is rejected by `dippin validate`/`pack`. |
+| `writable_paths_mode` | `require` \| `prefer` | How a host-capability jail refusal is handled. `require` (default when absent): refuse to start on a host without Landlock ABI v3 (macOS, Linux < 6.2). `prefer`: run **UNJAILED** there with a recorded `jail_degraded` event — not sandboxed on such hosts. Exact match only: DIP163 (error) rejects `Prefer`, `"prefer "`, etc. DIP164 hints when set without `writable_paths`; DIP165 hints on every `prefer`. Also a per-branch `parallel` override. |
 
 <div class="caveat-card">
   <h4>tool_access does not cross file or context boundaries</h4>

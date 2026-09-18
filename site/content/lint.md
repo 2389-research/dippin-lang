@@ -1,15 +1,15 @@
 ---
 title: "Lint Rules"
-description: "62 semantic lint checks (DIP101–DIP162) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
+description: "65 semantic lint checks (DIP101–DIP165) that flag likely bugs and questionable patterns, grouped by concern. Run with dippin lint."
 section_label: "Diagnostics"
-subtitle: "Semantic lint: 62 checks (DIP101–DIP162) grouped by concern."
+subtitle: "Semantic lint: 65 checks (DIP101–DIP165) grouped by concern."
 ---
 
 ## Semantic Warnings vs Errors
 
 Semantic lint flags likely bugs or questionable patterns beyond the structural checks that [`dippin validate`](/validation/) enforces. Run `dippin lint` to see both levels at once.
 
-Most semantic diagnostics are **warnings** or **hints** — they don't block execution, and warnings alone exit 0. The exception is **DIP155–DIP158**, which are **error-severity**: they fail `lint` and `check` just like a structural error, and must be fixed.
+Most semantic diagnostics are **warnings** or **hints** — they don't block execution, and warnings alone exit 0. The exception is **DIP155–DIP158** and **DIP163**, which are **error-severity**: they fail `lint` and `check` just like a structural error, and must be fixed.
 
 ## Routing & Reachability
 
@@ -267,6 +267,36 @@ An agent node (or a parallel-branch override) sets `last_response_truncate` to a
 warning[DIP148]: agent "Writer" last_response_truncate is -1; cannot be negative
 ```
 
+### DIP163 — `writable_paths_mode` must be exactly `require` or `prefer`
+
+**Severity:** Error
+
+An agent node or a parallel per-branch override sets `writable_paths_mode` to anything other than **exactly** `require` or `prefer`. The value is matched verbatim — no trimming, no case-folding — because the runtime fails closed on the same exact-match check at load time and refuses to load the node. `Prefer`, `preferred`, and a quoted `"prefer "` (trailing space) all fire; the message quotes the value so a stray space is visible. Absent is fine (it means `require`); a bare `writable_paths_mode:` is a parse error. Error severity: it fails `lint` and `check`.
+
+```text
+error[DIP163]: node "Recorder" has writable_paths_mode "Prefer" — the only legal values are exactly require and prefer (no case-folding, no surrounding whitespace); the runtime refuses to load this node
+```
+
+### DIP164 — `writable_paths_mode` set without `writable_paths`
+
+**Severity:** Hint
+
+A mode is declared with no `writable_paths` to scope it — on an agent, the node declares no globs; on a parallel branch, neither the branch nor its target agent does (a branch with no globs of its own inherits the target's). The mode only governs how a jail refusal is handled; with no jail it is inert. Add `writable_paths: <globs>` or remove the mode.
+
+```text
+hint[DIP164]: node "Recorder" sets writable_paths_mode but declares no writable_paths — a mode without a scope is inert (nothing to jail)
+```
+
+### DIP165 — `writable_paths_mode: prefer` runs UNJAILED without Landlock
+
+**Severity:** Hint
+
+The node (or branch) opted into `prefer`: on a host without Landlock ABI v3 (macOS, Linux < 6.2) the runtime degrades it to an **UNJAILED** run — the Bash subprocess has its full pre-jail write reach — instead of refusing to start, and records a `jail_degraded` event. Authoring refusals (malformed globs) and backend refusals (`claude-code` / `acp`) still refuse in both modes. The jail is best-effort there, not a guarantee; **operator-facing copy must never describe a `prefer` node as sandboxed**. Fires once per `prefer` declaration; informational.
+
+```text
+hint[DIP165]: node "Recorder" has writable_paths_mode: prefer — it runs UNJAILED on hosts without Landlock ABI v3 (macOS, Linux < 6.2); the write jail is best-effort there, not a guarantee, and operator copy must not describe this node as sandboxed
+```
+
 ## Budgets & Retries
 
 <div class="diag-card warning">
@@ -308,4 +338,4 @@ warning[DIP145]: workflow budget default max_cost_cents is -5; budgets cannot be
 
 ## Full Catalog
 
-This page groups the semantic diagnostics by concern and highlights the most common ones. For every code (DIP001–DIP010, DIP101–DIP162) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 (and the error-severity DIP155–DIP158) are documented there.
+This page groups the semantic diagnostics by concern and highlights the most common ones. For every code (DIP001–DIP010, DIP101–DIP165) with full descriptions, run `dippin explain <code>` or see the [generated language spec](https://github.com/2389-research/dippin-lang/blob/main/cmd/dippin/generated-spec.md). Codes DIP135–DIP142 (and the error-severity DIP155–DIP158 and DIP163) are documented there.

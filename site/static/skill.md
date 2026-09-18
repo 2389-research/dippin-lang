@@ -76,6 +76,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `working_dir` | string | Per-node working directory override for isolated execution. |
 | `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. An enforcing runtime is required. See "Agent Tool Access" below. |
 | `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded. An enforcing runtime is required. See "Writable Paths" below. |
+| `writable_paths_mode` | `require` \| `prefer` | How a host-capability jail refusal is handled. `require` (default when absent): refuse to start on a host without Landlock ABI v3. `prefer`: run **UNJAILED** there with a recorded `jail_degraded` event — not sandboxed on such hosts. Exact match only (DIP163 rejects `Prefer`, `"prefer "`, …); DIP164 hints when set without `writable_paths`; DIP165 hints on every `prefer`. See "Writable Paths" below. |
 | `max_turns` | int | Max conversation turns |
 | `cmd_timeout` | duration | e.g. `30s`, `5m` |
 | `auto_status` | bool | Parses `STATUS: success/fail` → `ctx.outcome` |
@@ -129,6 +130,19 @@ A node-level glob list bounding where the agent's tools may write. Shape: comma-
 **Lint:** DIP141 fires when `writable_paths` is set alongside `tool_access: none` on the same object (dead config — no tools to bound). DIP142 fires on unsafe entries: absolute paths, `~`, Windows drive letters, `..` escapes, or brace-expansion fragments (`*.{md` from `*.{md,yaml}` being comma-split). Use workspace-relative globs (e.g. `.ai/sprints/**`).
 
 `writable_paths` may also be set per-branch on a block-form `parallel` node; an omitted branch value **inherits the target agent's** setting — it never resets to unbounded.
+
+**Writable Paths Mode (`writable_paths_mode:`)** — *added v0.75.0; typed field, was a `params:` passthrough.*
+
+Selects how the runtime treats a **host-capability** jail refusal — a host without Landlock ABI v3 (macOS, Linux < 6.2). The only two values, matched **exactly** (no trimming, no case-folding — the runtime fails closed on anything else at load time):
+
+- `require` (default when absent) — the node refuses to start where the jail cannot be installed. Byte-for-byte the pre-existing behavior.
+- `prefer` — the node degrades to an **UNJAILED** run instead: the Bash subprocess has its full pre-jail write reach; the runtime records a `jail_degraded` event, prints a warning naming the node, warns in `doctor`, and marks the run manifest. `prefer` turns a guarantee into best-effort and creates a mixed-fleet asymmetry (Linux CI enforces, a macOS dev box does not). **Never describe a `prefer` node as sandboxed in operator-facing copy.**
+
+Authoring refusals (malformed globs, bad `working_dir`, empty list) and backend refusals (`claude-code` / `acp`) still refuse in **both** modes — only the host check degrades.
+
+**Lint:** DIP163 (Error — fails `lint`/`check`) fires on any value other than exactly `require`/`prefer` (`Prefer`, `preferred`, a quoted `"prefer "`); the message quotes the value. A bare `writable_paths_mode:` is a parse error. DIP164 (Hint) fires when a mode is set with no `writable_paths` to scope it (for a branch: neither the branch nor its target agent declares globs). DIP165 (Hint) fires once per `prefer` declaration as the UNJAILED reminder. `dippin fmt` re-emits the value verbatim (quoted if it carries whitespace) right after `writable_paths`; it never adds the field when absent.
+
+`writable_paths_mode` may also be set per-branch on a block-form `parallel` node; an omitted branch value **inherits the target agent's** mode.
 
 ### human — user decision gate
 
@@ -229,7 +243,7 @@ The two slots are independent — an agent may use any combination of inline `pr
   fan_in Merge <- WorkerA, WorkerB, WorkerC
 ```
 
-Both inline (`parallel P -> A, B`) and block form (`parallel P` with `branch:` lines) are supported; block form additionally allows per-branch `model` / `provider` / `fidelity` / `tool_access` / `writable_paths` / `last_response_truncate` overrides (an omitted per-branch value inherits the target agent's setting). Every `parallel` must have a matching `fan_in` with identical target/source sets (DIP007) — this applies to both forms. Wire edges from each target to the `fan_in` node in the `edges` block. All targets execute concurrently with independent context copies.
+Both inline (`parallel P -> A, B`) and block form (`parallel P` with `branch:` lines) are supported; block form additionally allows per-branch `model` / `provider` / `fidelity` / `tool_access` / `writable_paths` / `writable_paths_mode` / `last_response_truncate` overrides (an omitted per-branch value inherits the target agent's setting). Every `parallel` must have a matching `fan_in` with identical target/source sets (DIP007) — this applies to both forms. Wire edges from each target to the `fan_in` node in the `edges` block. All targets execute concurrently with independent context copies.
 
 ### subgraph — embed another workflow
 
@@ -395,7 +409,7 @@ Use `dippin help` (not `--help`) to see all commands.
 |---------|---------|
 | `dippin parse <file>` | Output IR as JSON |
 | `dippin validate <file>` | Structural checks only (DIP001-DIP010) |
-| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP162) |
+| `dippin lint <file>` | Full validation + semantic warnings (DIP001–DIP165) |
 | `dippin check <file>` | All-in-one. JSON output by default — **use this for automated workflows** |
 | `dippin fmt <file>` | Print canonical format to stdout |
 | `dippin fmt --check <file>` | Exit 1 if not formatted |
@@ -541,6 +555,9 @@ The primary loop for authoring .dip files:
 | DIP160 | A `subgraph` node's call-site binding omits an input the referenced child declares `required: true` — a cross-file check (Warning) | Add the missing input to the node's binding (`inputs:` dip 2 / `params:` dip 1) |
 | DIP161 | An agent pins a `provider`/`model` in the catalog but flagged `deprecated` — retired on the first-party API, still billed on passthrough (Bedrock/Vertex). Complements DIP108, which flags models not in the catalog (Warning) | Pin a current, non-deprecated model for the provider |
 | DIP162 | An agent `model:` is a family alias (`family@selector`, e.g. `opus@latest`) that resolves to no eligible model — unknown family, invalid selector, or every member deprecated/preview. A resolvable alias is valid and does not fire DIP108/DIP162; `dippin fmt` pins it to a concrete id (Warning) | Use a known family and a valid selector (`latest`, `stable`, `sota`), or pin a concrete model id |
+| DIP163 | `writable_paths_mode` (agent node or parallel branch) is not **exactly** `require` or `prefer` — `Prefer`, `preferred`, a quoted `"prefer "` all fire; the runtime refuses to load the node on the same exact-match check (Error) | Write `writable_paths_mode: require` or `writable_paths_mode: prefer`, or omit the field (absent = require) |
+| DIP164 | `writable_paths_mode` set with no `writable_paths` to scope it — for a branch, neither the branch nor its target agent declares globs; the mode is inert (Hint) | Add `writable_paths: <globs>` on the node/branch (or the branch's target agent), or remove the mode |
+| DIP165 | `writable_paths_mode: prefer` — the node runs **UNJAILED** on hosts without Landlock ABI v3 (macOS, Linux < 6.2); best-effort, not a guarantee; operator copy must not call it sandboxed. Once per `prefer` declaration (Hint) | Keep `prefer` only if an unjailed run there is acceptable; use `require` (default) to refuse to start instead |
 
 ## Best Practices
 

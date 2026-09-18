@@ -24,10 +24,14 @@ workflow AgentWritablePaths
     prompt: "Record the validation failure."
     writable_paths: workspace/.validation-failed
 
+  # writable_paths_mode: prefer — on a host without Landlock ABI v3 (macOS, Linux < 6.2)
+  # this node runs UNJAILED (recorded as jail_degraded) instead of refusing to start.
+  # It is NOT sandboxed there; DIP165 is the reminder. Omit (= require) to refuse instead.
   agent RecoveryManager
     model: claude-sonnet-4-6
     prompt: "Write the recovery analysis, the redecompose request, and the journal entry."
     writable_paths: .ai/sprints/**, .ai/managers/recovery-journal.md
+    writable_paths_mode: prefer
 
   edges
     Review -> L6Failed

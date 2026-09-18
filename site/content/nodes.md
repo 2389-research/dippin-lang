@@ -70,6 +70,7 @@ Agent nodes invoke an LLM. They are the most configurable node kind. Key fields 
 | `prompt_prefix` / `prompt_suffix` | `none` | Set to `none` to opt this agent out of the corresponding `defaults` prompt cascade (#175). |
 | `tool_access` | String | LLM tool-catalog gate. Set to `none` to strip the model's tool registry on this agent. DIP139 warns on unknown values; the runtime fail-closes. |
 | `writable_paths` | CSV (globs) | Comma-separated glob list bounding where this agent's tools may write (e.g. `workspace/**, .ai/sprints/**`). Absent = unbounded; a present-but-empty value is rejected by `dippin validate`/`pack`. Enforced by the runtime. |
+| `writable_paths_mode` | `require` \| `prefer` | How a host-capability jail refusal is handled. `require` (default when absent): refuse to start on a host without Landlock ABI v3 (macOS, Linux < 6.2). `prefer`: run **UNJAILED** there with a recorded `jail_degraded` event — not sandboxed on such hosts. Exact match only: DIP163 (error) rejects `Prefer`, `"prefer "`, etc. DIP164 hints when set without `writable_paths`; DIP165 hints on every `prefer`. Also a per-branch `parallel` override. |
 | `last_response_truncate` | Integer | Caps how much of the prior node's response is carried into this agent's context, in characters. `0`/unset = no truncation (a negative value raises DIP148). |
 | `reasoning_effort` | String | Extended thinking effort level: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. Controls how much reasoning budget the LLM spends. |
 | `fidelity` | String | Checkpoint fidelity level for state persistence. |
@@ -131,7 +132,7 @@ Parallel nodes fan execution out to multiple branches that run concurrently. Eve
   parallel FanOut -> TaskA, TaskB, TaskC
 ```
 
-Use **block form** when branches need different models, providers, fidelity levels, or tool access. Each `branch:` entry declares a fan-out target (equivalent to an inline `->` target) and attaches per-branch overrides for `model`, `provider`, `fidelity`, `tool_access`, `writable_paths`, and `last_response_truncate`. The fan-in node must still list the same target IDs. An omitted branch `tool_access` or `writable_paths` inherits the target agent's setting — it never re-grants the full catalog or resets to unbounded.
+Use **block form** when branches need different models, providers, fidelity levels, or tool access. Each `branch:` entry declares a fan-out target (equivalent to an inline `->` target) and attaches per-branch overrides for `model`, `provider`, `fidelity`, `tool_access`, `writable_paths`, `writable_paths_mode`, and `last_response_truncate`. The fan-in node must still list the same target IDs. An omitted branch `tool_access` or `writable_paths` inherits the target agent's setting — it never re-grants the full catalog or resets to unbounded.
 
 ```
   parallel split
