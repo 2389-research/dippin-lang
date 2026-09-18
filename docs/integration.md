@@ -91,7 +91,27 @@ if err := parser.ResolveFileDirectives(workflow, filepath.Dir(path)); err != nil
 
 The CLI commands `lint`, `validate`, and `pack` call this automatically. Direct `Parse()` callers — including adapters, LSP servers, and WASM hosts — do not need to call it unless they require the inlined content.
 
-**`*_file` security constraints.** `ResolveFileDirectives` enforces: relative paths only (absolute paths are rejected), no `..`-based or symlink-based parent escape, leaf symlinks rejected atomically on Unix via `O_NOFOLLOW`, and a 4 MiB per-file cap. Error messages name only the user-written path, never the resolved absolute path.
+**Embedded / bundled workflows: `ResolveFileDirectivesFS`.** A host that ships a workflow and its sidecar files inside its binary (`go:embed`), or holds them in any other `fs.FS`, resolves the same directives with `parser.ResolveFileDirectivesFS(workflow, fsys, baseDir)` — no temp-dir materialization needed. The cascade semantics are identical to `ResolveFileDirectives`; only the reader differs. Paths are slash-separated and resolved as `path.Join(baseDir, p)`; `baseDir` is the directory of the `.dip` inside the FS (`"."` for the root):
+
+```go
+import "embed"
+
+//go:embed workflows
+var bundled embed.FS
+
+data, _ := bundled.ReadFile("workflows/build_product.dip")
+workflow, err := parser.NewParser(string(data), "build_product.dip").Parse()
+if err != nil {
+    return err
+}
+if err := parser.ResolveFileDirectivesFS(workflow, bundled, "workflows"); err != nil {
+    return err // names only the user-written path, never the joined FS name
+}
+```
+
+The FS variant keeps the lexical rules (relative paths only, no `..` segment, `fs.ValidPath` on the joined name), the 4 MiB cap, and rejects a directory named by a directive. Symlinks are enforced when the FS can express them: if `fsys` implements `fs.ReadLinkFS` (`os.DirFS`, `fstest.MapFS`), every component of the directive path below `baseDir` is `Lstat`-checked and any symlink — leaf or parent — is rejected, so an `os.DirFS` can never read host content outside its root through a link. An FS that cannot report symlinks (`embed.FS`) is trusted to be self-contained. An `os.DirFS` is checked component-by-component via `fs.ReadLinkFS`, but Lstat-then-Open is not atomic on a live tree — `ResolveFileDirectives` is the race-hardened path for disk-backed workflows; its `O_NOFOLLOW` single-fd open and `EvalSymlinks` containment do not apply to the FS variant.
+
+**`*_file` security constraints.** `ResolveFileDirectives` (disk) enforces: relative paths only (absolute paths are rejected), no `..`-based or symlink-based parent escape, leaf symlinks rejected atomically on Unix via `O_NOFOLLOW`, and a 4 MiB per-file cap. Error messages name only the user-written path, never the resolved absolute path.
 
 **DOT round-trip lossiness.** `export.ExportDOT` inlines the resolved command text as `tool_command=` in DOT output (`applyToolPromptAttrs` in `export/dot.go`). As a result, export-to-DOT then `dippin migrate` back yields `command:` (inline form), not `command_file:`. The `*_file` directive is not preserved through a DOT round-trip.
 

@@ -51,6 +51,7 @@ dippin-lang/
 │   ├── parse_stylesheet.go # Stylesheet section parsing
 │   ├── parse_helpers.go   # Shared utilities
 │   ├── resolve.go      # ResolveFileDirectives: post-parse pass loading *_file/@file directives from disk (parser stays pure)
+│   ├── resolve_fs.go   # ResolveFileDirectivesFS: same pass over an fs.FS (embed.FS / bundled workflows); shares the cascade via directiveReader
 │   ├── resolve_nofollow_unix.go  # O_NOFOLLOW leaf-symlink rejection (build tag: unix)
 │   └── resolve_nofollow_other.go # oNoFollow=0 fallback (non-unix: js/wasm, Windows)
 │
@@ -342,7 +343,7 @@ The parser (`parser.go`) is a **recursive descent parser** that consumes the tok
 
 **Multiline handling**: For `prompt:` and `command:` fields, the parser collects all indented lines until outdent and joins them as the multiline content.
 
-**Purity**: `NewParser`/`Parse` are pure — no filesystem I/O. File-directive fields (`prompt_file`, `command_file`, `system_prompt_file`) are parsed and stored as-is; the field is set, but the content is left empty. Resolving those directives is a separate post-parse pass (`parser.ResolveFileDirectives`) invoked by CLI entry points after parsing. LSP and WASM contexts skip it intentionally and operate on the unresolved IR (field set, content empty).
+**Purity**: `NewParser`/`Parse` are pure — no filesystem I/O. File-directive fields (`prompt_file`, `command_file`, `system_prompt_file`) are parsed and stored as-is; the field is set, but the content is left empty. Resolving those directives is a separate post-parse pass (`parser.ResolveFileDirectives`, or `parser.ResolveFileDirectivesFS` over an `fs.FS` for embedded workflows) invoked by CLI entry points after parsing. LSP and WASM contexts skip it intentionally and operate on the unresolved IR (field set, content empty).
 
 **Leaf-symlink hardening**: `ResolveFileDirectives` opens each directive file with O_NOFOLLOW (via `resolve_nofollow_unix.go`, build tag `unix`) so that if the final path component is a symlink, `open()` fails atomically with ELOOP — closing the leaf TOCTOU race that a separate `Lstat`+`ReadFile` pair leaves open. The open, `fstat`, and `read` all operate on the same file descriptor, so nothing is re-resolved by pathname between checks and the read. On non-unix targets (`resolve_nofollow_other.go`: `oNoFollow=0`), the fd-based fstat→read still closes the fstat-to-read race, but atomic leaf-symlink rejection is unix-only.
 
