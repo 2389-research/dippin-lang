@@ -57,3 +57,19 @@ func TestParity_BranchLastResponseTruncateDiff(t *testing.T) {
 		t.Fatalf("expected a branch last_response_truncate difference, got none")
 	}
 }
+
+func TestParity_AgentWritablePathsModeDiff(t *testing.T) {
+	a := ir.AgentConfig{WritablePathsMode: "prefer"}
+	b := ir.AgentConfig{WritablePathsMode: ""}
+	if diffs := compareAgentConfigs("N", "", a, b); len(diffs) == 0 {
+		t.Fatalf("expected a writable_paths_mode difference, got none")
+	}
+}
+
+func TestParity_BranchWritablePathsModeDiff(t *testing.T) {
+	a := ir.ParallelConfig{Branches: []ir.BranchConfig{{Target: "x", WritablePathsMode: "prefer"}}}
+	b := ir.ParallelConfig{Branches: []ir.BranchConfig{{Target: "x", WritablePathsMode: "require"}}}
+	if diffs := compareParallelBranches("N", a, b); len(diffs) == 0 {
+		t.Fatalf("expected a branch writable_paths_mode difference, got none")
+	}
+}

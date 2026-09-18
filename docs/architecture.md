@@ -57,7 +57,7 @@ dippin-lang/
 │
 ├── validator/          # Graph validation + semantic linting
 │   ├── codes.go        # Error code constants (DIP001–DIP010)
-│   ├── lint_codes.go   # Warning code constants (DIP101–DIP162)
+│   ├── lint_codes.go   # Warning code constants (DIP101–DIP165)
 │   ├── diagnostic.go   # Diagnostic type, Result, Severity
 │   ├── validate.go     # 10 structural checks
 │   ├── lint.go         # Lint orchestration
@@ -70,6 +70,7 @@ dippin-lang/
 │   ├── lint_manager_loop.go  # DIP135–DIP137 (manager_loop structural checks)
 │   ├── lint_tool_access.go   # DIP139, DIP140 (tool_access value + params bypass)
 │   ├── lint_writable_paths.go # DIP141, DIP142 (writable_paths safety)
+│   ├── lint_writable_paths_mode.go # DIP163–DIP165 (writable_paths_mode: exact value, inert mode, prefer = UNJAILED without Landlock)
 │   ├── lint_subgraph_tool_access.go # DIP143 (subgraph tool_access inheritance)
 │   ├── lint_failure_route.go # DIP144 (agent node missing failure route)
 │   ├── lint_budget.go        # DIP145 (negative budget default)
@@ -380,6 +381,7 @@ Checks semantic quality — patterns that are likely bugs. Decomposed into focus
 - **Manager loop** (`lint_manager_loop.go`): DIP135–DIP137 — subgraph_ref existence, control-field validity, unbounded loop detection
 - **Tool access** (`lint_tool_access.go`): DIP139, DIP140 — tool_access value validation and params bypass detection
 - **Writable paths** (`lint_writable_paths.go`): DIP141, DIP142 — dead config and unsafe path entry detection
+- **Writable paths mode** (`lint_writable_paths_mode.go`): DIP163 (error — value not exactly `require`/`prefer`), DIP164 (mode set without `writable_paths`), DIP165 (`prefer` runs UNJAILED on hosts without Landlock ABI v3)
 - **Subgraph tool access** (`lint_subgraph_tool_access.go`): DIP143 — subgraph does not inherit parent tool_access restrictions
 - **Failure route** (`lint_failure_route.go`): DIP144 — agent node missing failure route
 - **Budget** (`lint_budget.go`): DIP145 — negative graph budget default

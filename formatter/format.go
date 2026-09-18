@@ -447,9 +447,9 @@ func branchHasFields(b ir.BranchConfig) bool {
 }
 
 // branchHasSandboxFields reports whether a branch carries any sandbox/limit field
-// (writable_paths or last_response_truncate).
+// (writable_paths, writable_paths_mode, or last_response_truncate).
 func branchHasSandboxFields(b ir.BranchConfig) bool {
-	return len(b.WritablePaths) > 0 || b.LastResponseTruncate > 0
+	return len(b.WritablePaths) > 0 || b.WritablePathsMode != "" || b.LastResponseTruncate > 0
 }
 
 // writeBranchFields writes the optional fields within a branch.
@@ -457,6 +457,9 @@ func writeBranchFields(wr *writer, b ir.BranchConfig) {
 	writeBranchScalarFields(wr, b)
 	if len(b.WritablePaths) > 0 {
 		wr.line("writable_paths: %s", strings.Join(b.WritablePaths, ", "))
+	}
+	if b.WritablePathsMode != "" {
+		wr.line("writable_paths_mode: %s", quoteValue(b.WritablePathsMode))
 	}
 	if b.LastResponseTruncate > 0 {
 		wr.line("last_response_truncate: %d", b.LastResponseTruncate)
@@ -621,9 +624,14 @@ func writeAgentRuntimeFields(wr *writer, cfg ir.AgentConfig) {
 }
 
 // writeAgentSandboxFields writes sandbox/limit fields for agent nodes.
+// writable_paths_mode is re-emitted verbatim (quoted when it carries
+// whitespace) so fmt never launders a value DIP163 must still see.
 func writeAgentSandboxFields(wr *writer, cfg ir.AgentConfig) {
 	if len(cfg.WritablePaths) > 0 {
 		wr.line("writable_paths: %s", strings.Join(cfg.WritablePaths, ", "))
+	}
+	if cfg.WritablePathsMode != "" {
+		wr.line("writable_paths_mode: %s", quoteValue(cfg.WritablePathsMode))
 	}
 	if cfg.LastResponseTruncate > 0 {
 		wr.line("last_response_truncate: %d", cfg.LastResponseTruncate)

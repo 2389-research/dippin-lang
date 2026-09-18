@@ -130,6 +130,7 @@ agent_field ::= "prompt" ":" field_value
               | "working_dir" ":" field_value
               | "tool_access" ":" field_value
               | "writable_paths" ":" field_value      /* comma-separated path globs; non-empty required */
+              | "writable_paths_mode" ":" field_value /* "require" (default) | "prefer"; exact match, DIP163 */
               | "max_turns" ":" INTEGER
               | "cmd_timeout" ":" DURATION
               | "goal_gate" ":" BOOLEAN
@@ -200,6 +201,7 @@ branch_field ::= "model" ":" field_value
                | "fidelity" ":" field_value
                | "tool_access" ":" field_value          /* "" = inherit agent's; "none" = strip tools */
                | "writable_paths" ":" field_value        /* per-branch override of path globs */
+               | "writable_paths_mode" ":" field_value   /* per-branch override of jail mode */
 
 fan_in_node ::= "fan_in" IDENTIFIER "<-" identifier_list NEWLINE
 

@@ -524,8 +524,46 @@ func nodeValidationExplanations() map[string]Explanation {
 	}
 }
 
-// safetyExplanations returns explanations for tool-safety lint rules (DIP138–DIP148).
+// safetyExplanations returns explanations for tool-safety lint rules
+// (DIP138–DIP148 and the writable_paths_mode trio DIP163–DIP165).
 func safetyExplanations() map[string]Explanation {
+	m := writablePathsModeExplanations()
+	for k, v := range toolSafetyExplanations() {
+		m[k] = v
+	}
+	return m
+}
+
+// writablePathsModeExplanations covers the writable_paths_mode checks (issue #307,
+// tracker #648): DIP163 (error), DIP164 (hint), DIP165 (hint).
+func writablePathsModeExplanations() map[string]Explanation {
+	return map[string]Explanation{
+		DIP163: {
+			Code:    DIP163,
+			Summary: "writable_paths_mode must be exactly require or prefer",
+			Trigger: "An agent node or a parallel per-branch override sets writable_paths_mode to anything other than exactly `require` or `prefer`. The value is matched verbatim — `Prefer`, `preferred`, and a quoted \"prefer \" (trailing space) all fire — because the runtime fails closed on the same exact-match check at load time and refuses to load the node. Error severity: it fails `dippin lint` / `dippin check`. (A bare `writable_paths_mode:` with no value is rejected earlier, as a parse error.) Migration: the key used to ride the generic `params:` passthrough — a `params: writable_paths_mode:` entry now fires DIP133 (params key shadows a first-class field); move it to the typed field so this check can see it.",
+			Fix:     "Write `writable_paths_mode: require` (refuse to start on a host without Landlock ABI v3) or `writable_paths_mode: prefer` (run UNJAILED there, recorded as jail_degraded), or omit the field — absent means require.",
+			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths: workspace/**\n  writable_paths_mode: Prefer   # DIP163: not exactly require|prefer",
+		},
+		DIP164: {
+			Code:    DIP164,
+			Summary: "writable_paths_mode set without writable_paths (inert)",
+			Trigger: "An agent node sets writable_paths_mode while neither it nor any block-form parallel branch targeting it declares writable_paths (a branch with globs of its own inherits the agent's mode, so the mode is not inert there), or a parallel branch sets writable_paths_mode while neither the branch nor its target agent declares writable_paths. The mode only governs how a writable_paths jail refusal is handled; with no globs there is no jail, so the mode does nothing.",
+			Fix:     "Add `writable_paths: <globs>` on the node, on a parallel branch that targets it, or (for a branch mode) on the branch or its target agent — or remove writable_paths_mode.",
+			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths_mode: prefer   # DIP164: no writable_paths — nothing to jail",
+		},
+		DIP165: {
+			Code:    DIP165,
+			Summary: "writable_paths_mode: prefer runs UNJAILED on hosts without Landlock",
+			Trigger: "An agent node or parallel branch declares `writable_paths_mode: prefer`. On a host without Landlock ABI v3 (macOS, Linux < 6.2) the runtime degrades the node to an UNJAILED run — the Bash subprocess has its full pre-jail write reach — instead of refusing to start; it records a jail_degraded event, warns in the TUI/doctor, and marks the run manifest. Authoring refusals (malformed globs, bad working_dir) and backend refusals (claude-code/acp) still refuse in both modes. Fires once per prefer declaration; informational — the author opted in.",
+			Fix:     "Keep prefer only when an unjailed run on those hosts is acceptable, and never describe the node as sandboxed in operator-facing copy. Use `require` (the default) to refuse to start instead.",
+			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths: workspace/**\n  writable_paths_mode: prefer   # DIP165: UNJAILED on macOS / Linux < 6.2",
+		},
+	}
+}
+
+// toolSafetyExplanations covers the tool-safety rules DIP138–DIP148.
+func toolSafetyExplanations() map[string]Explanation {
 	return map[string]Explanation{
 		DIP138: {
 			Code:    DIP138,

@@ -67,6 +67,9 @@ const (
 	DIP160 = "DIP160" // subgraph params omits a required input of the referenced child (cross-file)
 	DIP161 = "DIP161" // agent pins a model flagged deprecated in the catalog (retired first-party, still billed on passthrough)
 	DIP162 = "DIP162" // agent model is a family alias that resolves to no eligible model (unknown family/selector or all members ineligible)
+	DIP163 = "DIP163" // writable_paths_mode is not exactly require or prefer (error — the runtime refuses to load the node)
+	DIP164 = "DIP164" // writable_paths_mode set without writable_paths (mode without a scope is inert)
+	DIP165 = "DIP165" // writable_paths_mode: prefer runs UNJAILED on hosts without Landlock ABI v3 (not sandboxed there)
 )
 
 func init() {
@@ -139,4 +142,7 @@ var linterCodeDescriptions = map[string]string{
 	DIP160: "subgraph params omits a required input of the referenced child",
 	DIP161: "agent pins a deprecated model (retired first-party, still billed on passthrough)",
 	DIP162: "unresolvable model alias — no eligible model in that family/selector",
+	DIP163: "writable_paths_mode must be exactly require or prefer",
+	DIP164: "writable_paths_mode set without writable_paths (inert)",
+	DIP165: "writable_paths_mode: prefer runs UNJAILED on hosts without Landlock",
 }

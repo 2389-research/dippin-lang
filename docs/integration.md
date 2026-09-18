@@ -131,7 +131,7 @@ if result.HasErrors() {
     }
 }
 
-// Semantic lint (DIP101–DIP162; DIP146 is CLI/cross-file only) — warnings
+// Semantic lint (DIP101–DIP165; DIP146 is CLI/cross-file only) — warnings
 lintResult := validator.Lint(workflow)
 for _, d := range lintResult.Diagnostics {
     fmt.Println(d.String())
@@ -442,6 +442,14 @@ func FromDippinIR(w *ir.Workflow) *Graph {
             // dippin carries and lints (DIP141, DIP142); the runtime enforces.
             if len(cfg.WritablePaths) > 0 {
                 node.Attrs["writable_paths"] = strings.Join(cfg.WritablePaths, ",")
+            }
+            // writable_paths_mode: verbatim; "" means require. Validate with an
+            // EXACT match ("require" | "prefer") and refuse to load anything else
+            // (dippin's DIP163 rejects the same set at lint time). Under prefer,
+            // only a host-capability jail refusal (no Landlock ABI v3) degrades —
+            // to an UNJAILED run with a recorded jail_degraded event.
+            if cfg.WritablePathsMode != "" {
+                node.Attrs["writable_paths_mode"] = cfg.WritablePathsMode
             }
         case ir.HumanConfig:
             if cfg.Mode != "" {
@@ -830,6 +838,7 @@ Dippin is a **language and toolchain**, not a runtime. It does not:
 - Handle human interaction UI
 - Run shell commands
 - Enforce `tool_access` restrictions — `ToolAccess` is a hint that the runtime must enforce; without an enforcing runtime, `tool_access: none` is a no-op
+- Honor `writable_paths_mode` (`AgentConfig.WritablePathsMode` / `BranchConfig.WritablePathsMode`, stored verbatim; `""` = `require`): validate it with an exact match at load time (dippin's DIP163 does the same at lint time), and under `prefer` degrade only a *host-capability* jail refusal (no Landlock ABI v3) to an UNJAILED run with a recorded `jail_degraded` event — never describe such a node as sandboxed. Authoring and backend refusals still refuse in both modes.
 - Enforce `writable_paths` as a write-jail — dippin carries and lints these fields (DIP141, DIP142); the runtime is responsible for the fs-level jail; a runtime that does not enforce `writable_paths` **must refuse to start** (version skew is a safety requirement)
 
 These responsibilities stay in the consuming project (e.g., the runtime's engine, handler registry, and UI). Dippin's job is to parse, validate, format, and export — the consuming project does everything else.

@@ -210,17 +210,20 @@ There are **8 node kinds**: `agent`, `human`, `tool`, `parallel`, `fan_in`, `con
 
 ### Agent node: tool_access and writable_paths
 
-Two security-scoped fields are available on `agent` nodes:
+Three security-scoped fields are available on `agent` nodes:
 
 - **`tool_access: none`** — strips the LLM's tool catalog for that node. The agent sees no tools and cannot make tool calls. Scoped to the node only; no downstream taint. Other values are linted as DIP139 and fail closed at the runtime.
 
 - **`writable_paths: <glob,glob>`** — bounds where the agent's tools may write, as a comma-separated list of globs resolved against the session root (e.g. `workspace/**,.ai/sprints/**`). Absent means unbounded. A present-but-empty value is a parse error. Malformed values fail closed at the runtime (deny-all / refuse-to-start).
+
+- **`writable_paths_mode: require | prefer`** — how the runtime treats a *host-capability* refusal of that jail (no Landlock ABI v3: macOS, Linux < 6.2). `require` (default when absent) refuses to start. `prefer` degrades to an **UNJAILED** run with a recorded `jail_degraded` event — the node is not sandboxed on such hosts, and operator copy must not describe it as such. Authoring and backend refusals still refuse in both modes. The value is matched exactly: anything other than `require` / `prefer` (e.g. `Prefer`, a quoted `"prefer "`) is DIP163, an error that fails `lint`/`check`; a bare `writable_paths_mode:` is a parse error. DIP164 hints when the mode is set without `writable_paths`; DIP165 hints on every `prefer` declaration.
 
 The two fields address different axes — `tool_access` controls *whether* the agent has tools, `writable_paths` controls *where* its tools may write. Setting both `tool_access: none` and `writable_paths` on the same agent (or branch) is dead config and lints as DIP141: with no tools, there is nothing left to bound.
 
 ```dippin
   agent Coder
     writable_paths: workspace/**,tmp/**
+    writable_paths_mode: prefer   # DIP165 reminds: UNJAILED where Landlock is unavailable
     prompt:
       Implement the feature, writing only under workspace/ and tmp/.
 ```
@@ -269,6 +272,7 @@ Per-branch overridable fields:
 | `fidelity` | Checkpoint fidelity for this branch |
 | `tool_access` | Tool-catalog gate (`none` to strip; omit to inherit the target agent's setting) |
 | `writable_paths` | Write-scope globs; omit to inherit the target agent's setting — empty never resets to unbounded |
+| `writable_paths_mode` | `require` \| `prefer` — how a host-capability jail refusal is handled; omit to inherit the target agent's mode |
 
 An omitted field inherits the target agent's value. An inline-form parallel (`->`) and a block-form parallel are mutually exclusive on the same node.
 

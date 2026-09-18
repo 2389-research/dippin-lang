@@ -82,7 +82,7 @@ Supported providers: Anthropic, OpenAI, Google/Gemini, DeepSeek, xAI/Grok, Mistr
 
 ## Lint Rules
 
-72 diagnostic codes: DIP001-DIP010 (structural errors), DIP101-DIP162 (semantic lint — mostly warnings; DIP155-DIP158 are error-severity and fail `lint`/`check`; DIP161 warns on agents pinned to a `deprecated` catalog model; DIP162 warns on an unresolvable `family@selector` model alias). DIP101/DIP102 suppress automatically when source node conditions are exhaustive (success/fail pairs, contains/not-contains complementary pairs). DIP121/DIP122 only fire when source nodes declare writes/outputs (advisory metadata).
+75 diagnostic codes: DIP001-DIP010 (structural errors), DIP101-DIP165 (semantic lint — mostly warnings; DIP155-DIP158 and DIP163 are error-severity and fail `lint`/`check`; DIP161 warns on agents pinned to a `deprecated` catalog model; DIP162 warns on an unresolvable `family@selector` model alias; DIP163-DIP165 cover `writable_paths_mode` — DIP163 rejects any value other than exactly `require`/`prefer`, DIP164 hints on a mode with no `writable_paths`, DIP165 hints that a `prefer` node runs UNJAILED on hosts without Landlock). DIP101/DIP102 suppress automatically when source node conditions are exhaustive (success/fail pairs, contains/not-contains complementary pairs). DIP121/DIP122 only fire when source nodes declare writes/outputs (advisory metadata).
 
 ## Testing
 

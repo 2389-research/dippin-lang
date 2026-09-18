@@ -30,7 +30,7 @@ graph LR
 | Shell scripts | `tool_command="#!/bin/sh\nset -eu\nif..."` | Real multiline, real syntax |
 | Model config | Untyped `llm_model="..."` attribute | Typed `model:` field with validation |
 | Branching | `condition="context.x!=y && context.a==b"` | `when ctx.x != "y" and ctx.a == "b"` |
-| Validation | Silent — typos in attrs are ignored | Diagnostic codes (DIP001–DIP010, DIP101–DIP162) |
+| Validation | Silent — typos in attrs are ignored | Diagnostic codes (DIP001–DIP010, DIP101–DIP165) |
 | Node types | Shape overloading (`box`=agent, `hexagon`=human) | Explicit `agent`, `tool`, `human` keywords |
 | Composition | No import/include system | `subgraph` with ref (v2) |
 
@@ -131,7 +131,7 @@ Every analysis command (`validate`, `lint`, `doctor`, `parse`, `cost`, `coverage
 |---------|-------------|
 | `dippin parse <file>` | Parse and output IR as JSON |
 | `dippin validate <file>` | Structural validation (DIP001–DIP010) |
-| `dippin lint <file>` | Validation + semantic warnings (DIP101–DIP162) |
+| `dippin lint <file>` | Validation + semantic warnings (DIP101–DIP165) |
 | `dippin check [--format json\|text] <file>` | Parse+validate+lint in one shot (JSON default, for LLM tooling) |
 | `dippin fmt [--check] [--write] <file>` | Format to canonical style |
 | `dippin new [--name N] [--write F] <template>` | Generate a starter .dip from a template |
@@ -391,7 +391,7 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 | DIP008 | Duplicate node ID |
 | DIP009 | Duplicate edge |
 
-### Warnings (DIP101–DIP162 — selected; see [docs/validation.md](docs/validation.md) for the full catalog)
+### Warnings (DIP101–DIP165 — selected; see [docs/validation.md](docs/validation.md) for the full catalog)
 
 | Code | What it catches |
 |------|----------------|
@@ -424,6 +424,9 @@ error[DIP003]: unknown node reference "InterpretX" in edge
 | DIP135 | Manager loop subgraph_ref missing or file does not exist |
 | DIP136 | Manager loop control field has invalid value |
 | DIP137 | Manager loop is unbounded (no `stop_condition` AND `max_cycles: 0`) |
+| DIP163 | `writable_paths_mode` not exactly `require`/`prefer` (error — fails `lint`/`check`; no trimming or case-folding) |
+| DIP164 | `writable_paths_mode` set without `writable_paths` (inert; hint) |
+| DIP165 | `writable_paths_mode: prefer` runs UNJAILED on hosts without Landlock ABI v3 (hint) |
 
 ## Simulation
 

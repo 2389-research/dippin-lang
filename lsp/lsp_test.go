@@ -623,3 +623,12 @@ func TestTruncateStr(t *testing.T) {
 		t.Errorf("expected first 80 chars + ..., got %s", got)
 	}
 }
+
+func TestFieldCompletionsIncludesWritablePathsMode(t *testing.T) {
+	for _, it := range fieldCompletions() {
+		if it.Label == "writable_paths_mode:" {
+			return
+		}
+	}
+	t.Error("missing completion for 'writable_paths_mode:' (issue #307)")
+}

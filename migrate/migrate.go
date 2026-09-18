@@ -432,14 +432,17 @@ func applyRuntimeAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	applyRuntimeSafetyAttrs(cfg, attrs)
 }
 
-// applyRuntimeSafetyAttrs applies the tool_access, writable_paths, and
-// last_response_truncate safety attrs.
+// applyRuntimeSafetyAttrs applies the tool_access, writable_paths,
+// writable_paths_mode, and last_response_truncate safety attrs.
 func applyRuntimeSafetyAttrs(cfg *ir.AgentConfig, attrs map[string]string) {
 	if v, ok := attrs["tool_access"]; ok && strings.TrimSpace(v) != "" {
 		cfg.ToolAccess = v
 	}
 	if v, ok := attrs["writable_paths"]; ok {
 		cfg.WritablePaths = splitComma(v)
+	}
+	if v, ok := attrs["writable_paths_mode"]; ok {
+		cfg.WritablePathsMode = v // verbatim; DIP163 validates
 	}
 	applyLastResponseTruncate(cfg, attrs)
 }
@@ -683,12 +686,13 @@ func parseBranchToken(s string) ir.BranchConfig {
 // cap with the extra target case + malformed guard, and makes adding a key
 // (e.g. tool_access for #58) a one-line change.
 var branchFieldSetters = map[string]func(*ir.BranchConfig, string){
-	"target":         func(b *ir.BranchConfig, v string) { b.Target = v },
-	"model":          func(b *ir.BranchConfig, v string) { b.Model = v },
-	"provider":       func(b *ir.BranchConfig, v string) { b.Provider = v },
-	"fidelity":       func(b *ir.BranchConfig, v string) { b.Fidelity = v },
-	"tool_access":    func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
-	"writable_paths": func(b *ir.BranchConfig, v string) { b.WritablePaths = splitComma(v) },
+	"target":              func(b *ir.BranchConfig, v string) { b.Target = v },
+	"model":               func(b *ir.BranchConfig, v string) { b.Model = v },
+	"provider":            func(b *ir.BranchConfig, v string) { b.Provider = v },
+	"fidelity":            func(b *ir.BranchConfig, v string) { b.Fidelity = v },
+	"tool_access":         func(b *ir.BranchConfig, v string) { b.ToolAccess = v },
+	"writable_paths":      func(b *ir.BranchConfig, v string) { b.WritablePaths = splitComma(v) },
+	"writable_paths_mode": func(b *ir.BranchConfig, v string) { b.WritablePathsMode = v },
 	"last_response_truncate": func(b *ir.BranchConfig, v string) {
 		if n, err := strconv.Atoi(v); err == nil {
 			b.LastResponseTruncate = n
