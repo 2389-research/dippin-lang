@@ -548,8 +548,8 @@ func writablePathsModeExplanations() map[string]Explanation {
 		DIP164: {
 			Code:    DIP164,
 			Summary: "writable_paths_mode set without writable_paths (inert)",
-			Trigger: "An agent node sets writable_paths_mode but declares no writable_paths, or a parallel branch sets writable_paths_mode while neither the branch nor its target agent declares writable_paths. The mode only governs how a writable_paths jail refusal is handled; with no globs there is no jail, so the mode does nothing.",
-			Fix:     "Add `writable_paths: <globs>` on the same node or branch (or on the branch's target agent, which the branch inherits), or remove writable_paths_mode.",
+			Trigger: "An agent node sets writable_paths_mode while neither it nor any block-form parallel branch targeting it declares writable_paths (a branch with globs of its own inherits the agent's mode, so the mode is not inert there), or a parallel branch sets writable_paths_mode while neither the branch nor its target agent declares writable_paths. The mode only governs how a writable_paths jail refusal is handled; with no globs there is no jail, so the mode does nothing.",
+			Fix:     "Add `writable_paths: <globs>` on the node, on a parallel branch that targets it, or (for a branch mode) on the branch or its target agent — or remove writable_paths_mode.",
 			Example: "agent Recorder\n  prompt: \"record\"\n  writable_paths_mode: prefer   # DIP164: no writable_paths — nothing to jail",
 		},
 		DIP165: {

@@ -253,3 +253,28 @@ func TestLint_WritablePathsMode_PreferHasNoErrors(t *testing.T) {
 		}
 	}
 }
+
+// Agent-level DIP164 must respect inherited scope: a block-form parallel branch
+// that targets the agent and declares its own writable_paths inherits the
+// agent's mode (tracker C1), so the agent's mode is not inert.
+func TestLint_DIP164_AgentScopedByBranch(t *testing.T) {
+	cases := []struct {
+		name   string
+		branch []string
+		want   bool
+	}{
+		{"branch targeting agent declares paths", []string{"writable_paths: workspace/**"}, false},
+		{"branch targeting agent declares no paths", []string{"model: claude-sonnet-4-6"}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			diags := lintSrc(t, modeBranchSrc([]string{"writable_paths_mode: prefer"}, tc.branch...))
+			if got := hasCode(diags, DIP164); got != tc.want {
+				t.Errorf("agent DIP164 fired=%v, want %v; diags=%v", got, tc.want, codes(diags))
+			}
+			if n := len(onlyCode(diags, DIP165)); n != 1 {
+				t.Errorf("DIP165 should be unaffected (want 1 for the agent prefer), got %d", n)
+			}
+		})
+	}
+}

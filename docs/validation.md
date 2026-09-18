@@ -1663,10 +1663,12 @@ agent Recorder
 
 **Severity**: Hint
 
-An agent node sets `writable_paths_mode` but declares no `writable_paths`, or a
-parallel branch sets `writable_paths_mode` while **neither** the branch **nor**
-its target agent declares `writable_paths` (a branch with no globs of its own
-inherits the target's). The mode only governs how a `writable_paths` jail
+An agent node sets `writable_paths_mode` while neither it **nor any block-form
+parallel branch targeting it** declares `writable_paths` (a branch with globs of
+its own inherits the agent's mode, so the agent's mode governs that branch's
+jail and is not inert), or a parallel branch sets `writable_paths_mode` while
+**neither** the branch **nor** its target agent declares `writable_paths` (a
+branch with no globs of its own inherits the target's). The mode only governs how a `writable_paths` jail
 refusal is handled — with no globs there is no jail, so the mode is inert.
 
 ```text

@@ -30,7 +30,8 @@ func lintWritablePathsMode(w *ir.Workflow) []Diagnostic {
 func checkNodeWritablePathsModeByKind(w *ir.Workflow, n *ir.Node) []Diagnostic {
 	switch cfg := n.Config.(type) {
 	case ir.AgentConfig:
-		return checkWritablePathsModeObject(n, "", cfg.WritablePathsMode, len(cfg.WritablePaths) > 0)
+		hasScope := len(cfg.WritablePaths) > 0 || branchTargetsWithScope(w, n.ID)
+		return checkWritablePathsModeObject(n, "", cfg.WritablePathsMode, hasScope)
 	case ir.ParallelConfig:
 		return checkBranchWritablePathsMode(w, n, cfg.Branches)
 	default:
@@ -50,8 +51,31 @@ func checkBranchWritablePathsMode(w *ir.Workflow, n *ir.Node, branches []ir.Bran
 	return diags
 }
 
+// branchTargetsWithScope reports whether any block-form parallel branch targets
+// the named agent and declares writable_paths of its own. Such a branch inherits
+// the agent's writable_paths_mode (tracker C1), so the agent's mode governs
+// that branch's jail and is not inert even when the agent has no globs. The
+// mirror image of targetHasWritablePaths.
+func branchTargetsWithScope(w *ir.Workflow, agentID string) bool {
+	for _, n := range w.Nodes {
+		if cfg, ok := n.Config.(ir.ParallelConfig); ok && anyBranchWithScope(cfg.Branches, agentID) {
+			return true
+		}
+	}
+	return false
+}
+
+func anyBranchWithScope(branches []ir.BranchConfig, agentID string) bool {
+	for _, b := range branches {
+		if b.Target == agentID && len(b.WritablePaths) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // targetHasWritablePaths reports whether the named node is an agent that
-// declares writable_paths.
+// declares writable_paths. The mirror image of branchTargetsWithScope.
 func targetHasWritablePaths(w *ir.Workflow, target string) bool {
 	t := w.Node(target)
 	if t == nil {
@@ -110,7 +134,7 @@ func dip164Diagnostic(n *ir.Node, branch string) Diagnostic {
 		Severity: SeverityHint,
 		Message:  fmt.Sprintf("%s sets writable_paths_mode but declares no writable_paths — a mode without a scope is inert (nothing to jail)", modeSubject(n, branch)),
 		Location: n.Source,
-		Help:     "add writable_paths: <globs> on the same node/branch (or on the branch's target agent) so the mode has a jail to govern, or remove writable_paths_mode.",
+		Help:     "add writable_paths: <globs> on the node, on a parallel branch that targets it, or (for a branch mode) on the branch or its target agent — so the mode has a jail to govern — or remove writable_paths_mode.",
 	}
 }
 

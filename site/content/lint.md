@@ -281,7 +281,7 @@ error[DIP163]: node "Recorder" has writable_paths_mode "Prefer" — the only leg
 
 **Severity:** Hint
 
-A mode is declared with no `writable_paths` to scope it — on an agent, the node declares no globs; on a parallel branch, neither the branch nor its target agent does (a branch with no globs of its own inherits the target's). The mode only governs how a jail refusal is handled; with no jail it is inert. Add `writable_paths: <globs>` or remove the mode.
+A mode is declared with no `writable_paths` to scope it — on an agent, neither the node nor any block-form parallel branch targeting it declares globs (a branch with its own globs inherits the agent's mode); on a parallel branch, neither the branch nor its target agent does (a branch with no globs of its own inherits the target's). The mode only governs how a jail refusal is handled; with no jail it is inert. Add `writable_paths: <globs>` or remove the mode.
 
 ```text
 hint[DIP164]: node "Recorder" sets writable_paths_mode but declares no writable_paths — a mode without a scope is inert (nothing to jail)
