@@ -53,10 +53,12 @@ func ResolveFileDirectives(w *ir.Workflow, baseDir string) error {
 // symlink — leaf or parent — is rejected, so an os.DirFS can never read host
 // content from outside its root through a link. An FS that does not implement
 // ReadLinkFS cannot report symlinks and is trusted to be self-contained
-// (embed.FS, fstest.MapFS without symlink entries). For a disk-backed tree
-// prefer ResolveFileDirectives, or pass an os.DirFS, which is checked. The
-// disk-only O_NOFOLLOW single-fd open and EvalSymlinks containment do not
-// apply here. Error messages name only the user-written path, as on disk.
+// (embed.FS, fstest.MapFS without symlink entries). An os.DirFS is checked
+// component-by-component via fs.ReadLinkFS, but Lstat-then-Open is not atomic
+// on a live tree — ResolveFileDirectives (O_NOFOLLOW single-fd open, EvalSymlinks
+// containment) is the race-hardened path for disk-backed workflows; neither of
+// those disk-only mechanisms applies here. Error messages name only the
+// user-written path, as on disk.
 func ResolveFileDirectivesFS(w *ir.Workflow, fsys fs.FS, baseDir string) error {
 	return resolveDirectives(w, fsReader(fsys, baseDir))
 }

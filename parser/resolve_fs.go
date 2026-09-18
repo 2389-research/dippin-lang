@@ -32,9 +32,9 @@ func loadDirectiveFileFS(fsys fs.FS, baseDir, p string) ([]byte, error) {
 // fsResolve is the fs.FS counterpart of safeResolve: a purely lexical check
 // that p is relative, contains no ".." segment, and joins with baseDir to an
 // fs.ValidPath name. The checks run on p BEFORE joining so a ".." can never be
-// canceled out by a deeper prefix (e.g. "legit/../../x"). There is no
-// symlink-chain containment step here: an fs.FS has no symlink semantics of its
-// own, so lexical containment is complete for it.
+// canceled out by a deeper prefix (e.g. "legit/../../x"). Symlink components
+// are handled separately by rejectSymlinkComponents, which runs after this
+// lexical step on any FS that implements fs.ReadLinkFS.
 func fsResolve(baseDir, p string) (string, error) {
 	if path.IsAbs(p) {
 		return "", fmt.Errorf("absolute paths not allowed: %q", p)
