@@ -11,6 +11,12 @@ import (
 // Per-node scenario values (e.g., --scenario NodeName.outcome=fail) are
 // applied first, then global defaults fill in any remaining keys.
 func (s *simulator) applyNodeDefaults(node *ir.Node) {
+	// Record whether THIS node determines ctx.outcome, before applying
+	// scenario overrides — used by currentNodeFailed to scope the `else`
+	// fail-gate to genuine failures of the current node rather than a stale
+	// value inherited from an earlier node via the flat context map (#306).
+	s.nodeOwnsOutcome = s.computeOwnsOutcome(node)
+
 	// Apply per-node scenario overrides for this node.
 	s.applyNodeScenario(node.ID)
 
@@ -22,6 +28,23 @@ func (s *simulator) applyNodeDefaults(node *ir.Node) {
 		s.setContextDefaultForNode("outcome", "success", node.ID)
 		s.deriveToolMarker(tc, node.ID)
 	}
+}
+
+// computeOwnsOutcome reports whether node itself supplies ctx.outcome: a
+// scenario override names it (globally as "outcome", or as "NodeID.outcome"),
+// or the node is an auto-status agent or a tool (both default ctx.outcome to
+// "success" unless a scenario overrides it). Any other node kind with no
+// outcome scenario leaves ctx.outcome untouched — so whatever value is
+// sitting in the flat context map belongs to a different node, not this one.
+func (s *simulator) computeOwnsOutcome(node *ir.Node) bool {
+	if s.scenarioHasKey("outcome", node.ID) {
+		return true
+	}
+	if ac, ok := node.Config.(ir.AgentConfig); ok && ac.AutoStatus {
+		return true
+	}
+	_, isTool := node.Config.(ir.ToolConfig)
+	return isTool
 }
 
 // applyNodeScenario applies per-node scenario values matching "NodeID.key".
