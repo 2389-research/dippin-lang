@@ -445,7 +445,7 @@ parity check failed: 2 difference(s) found
 Dry-run a workflow's execution graph without calling LLMs or running commands. Emits JSONL events to stdout.
 
 ```bash
-dippin simulate [--scenario key=val] [--interactive] [--all-paths] <file>
+dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] <file>
 ```
 
 **Flags**:
@@ -455,6 +455,7 @@ dippin simulate [--scenario key=val] [--interactive] [--all-paths] <file>
 | `--scenario key=val` | Inject context values (repeatable). Use `NodeID.key=val` for per-node overrides. |
 | `--interactive` | Prompt at human nodes instead of auto-selecting |
 | `--all-paths` | Enumerate all possible paths through the graph |
+| `--max-node-visits N` | Once a node has been visited more than N times, take its loop-exit edge instead of looping again. Use it for loops a fixed scenario can't end, such as a worklist drained by on-disk state. `dippin test` uses 3; the default 0 means no limit, so such loops stop at the 500-step cap with an error. Ignored by `--all-paths`. |
 
 **Output**: JSONL (one JSON object per line) with event types:
 

@@ -197,6 +197,7 @@ func printGlobalUsage(w io.Writer) {
 	fmt.Fprintln(w, "                                    --scenario key=val  Inject context values")
 	fmt.Fprintln(w, "                                    --interactive       Prompt at human nodes")
 	fmt.Fprintln(w, "                                    --all-paths         Enumerate all paths")
+	fmt.Fprintln(w, "                                    --max-node-visits N Exit a loop after N visits to a node")
 	fmt.Fprintln(w, "  cost <file>                       Estimate workflow execution cost")
 	fmt.Fprintln(w, "  coverage <file>                   Analyze edge coverage and reachability")
 	fmt.Fprintln(w, "  doctor <file>                     Health report card (grade A-F, suggestions)")

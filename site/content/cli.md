@@ -115,8 +115,8 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 
 <div class="cmd-card">
   <h3>simulate</h3>
-  <div class="cmd-usage">dippin simulate [--scenario key=val] [--interactive] [--all-paths] &lt;file&gt;</div>
-  <p>Dry-run a workflow's execution graph without calling LLMs or running commands. Emits JSONL events (pipeline_start, node_enter, node_exit, edge_traverse, pipeline_end). Use <code>--scenario</code> to inject context values and <code>--all-paths</code> to enumerate all possible paths.</p>
+  <div class="cmd-usage">dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] &lt;file&gt;</div>
+  <p>Dry-run a workflow's execution graph without calling LLMs or running commands. Emits JSONL events (pipeline_start, node_enter, node_exit, edge_traverse, pipeline_end). Use <code>--scenario</code> to inject context values and <code>--all-paths</code> to enumerate all possible paths. Use <code>--max-node-visits N</code> to take a loop's exit once a node has been visited more than N times, for loops a fixed scenario can't end.</p>
 </div>
 
 <div class="cmd-card">

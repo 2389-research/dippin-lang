@@ -18,6 +18,7 @@ import (
 //   - --scenario key=val: inject context values to explore different paths
 //   - --interactive: prompt at human nodes via stdin
 //   - --all-paths: enumerate all possible execution paths
+//   - --max-node-visits N: force a loop's exit once a node is visited more than N times
 func (c *CLI) CmdSimulate(args []string) ExitCode {
 	fs := flag.NewFlagSet("simulate", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
@@ -26,6 +27,7 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 	fs.Var(&scenarios, "scenario", "inject context value (key=val), repeatable")
 	interactive := fs.Bool("interactive", false, "prompt at human nodes")
 	allPaths := fs.Bool("all-paths", false, "enumerate all possible execution paths")
+	maxNodeVisits := fs.Int("max-node-visits", 0, "force a loop's exit once a node is visited more than N times (0 = no limit)")
 
 	args = reorderSimulateArgs(args)
 
@@ -33,7 +35,7 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 		return ExitUsageError
 	}
 	if fs.NArg() < 1 {
-		fmt.Fprintln(c.Stderr, "usage: dippin simulate [--scenario key=val] [--interactive] [--all-paths] <file>")
+		fmt.Fprintln(c.Stderr, "usage: dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] <file>")
 		return ExitUsageError
 	}
 
@@ -42,6 +44,7 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 	if code != ExitCode(-1) {
 		return code
 	}
+	opts.MaxNodeVisits = *maxNodeVisits
 
 	if *allPaths {
 		return c.simulateAllPaths(w, opts)
@@ -173,7 +176,7 @@ func (s *scenarioFlags) Set(val string) error {
 
 // isValueFlag returns true if the flag name requires a separate value argument.
 func isValueFlag(name string) bool {
-	return name == "scenario"
+	return name == "scenario" || name == "max-node-visits"
 }
 
 // hasFollowingValue returns true if a value-taking flag at position i has a
