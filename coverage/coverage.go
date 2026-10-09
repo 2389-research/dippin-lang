@@ -256,7 +256,8 @@ func collectEchoArgs(args []*syntax.Word, outputs *[]string, seen map[string]boo
 
 // collectPrintfArgs extracts literal args from `printf`. The two-arg
 // `printf '%s' 'value'` and `printf '%s\n' 'value'` patterns extract the
-// value; otherwise the format-string itself is the output literal.
+// value; otherwise the output is what the format string prints (see
+// printfOutput).
 func collectPrintfArgs(args []*syntax.Word, outputs *[]string, seen map[string]bool) {
 	if len(args) == 0 {
 		return
@@ -271,7 +272,29 @@ func collectPrintfArgs(args []*syntax.Word, outputs *[]string, seen map[string]b
 		}
 		return
 	}
-	addOutput(first, outputs, seen)
+	addOutput(printfOutput(first), outputs, seen)
+}
+
+// printfEscapes expands the backslash escapes and %% that printf interprets
+// in its format string.
+var printfEscapes = strings.NewReplacer(
+	`\\`, `\`,
+	`\a`, "\a",
+	`\b`, "\b",
+	`\f`, "\f",
+	`\n`, "\n",
+	`\r`, "\r",
+	`\t`, "\t",
+	`\v`, "\v",
+	`%%`, "%",
+)
+
+// printfOutput returns what printf prints for a format string with no
+// arguments, as edge conditions see it: escapes expanded, then trailing
+// whitespace trimmed, as the runtime trims tool stdout before conditions
+// read it. So printf 'marker\n' yields "marker".
+func printfOutput(format string) string {
+	return strings.TrimRight(printfEscapes.Replace(format), " \t\n\r")
 }
 
 // isFormatTwoArg returns true if printf was invoked with a bare `%s` or
@@ -280,10 +303,10 @@ func isFormatTwoArg(first string, args []*syntax.Word) bool {
 	return (first == "%s" || first == "%s\\n") && len(args) == 2
 }
 
-// addOutput appends a literal output value if it hasn't been seen and
-// isn't itself a format specifier.
+// addOutput appends a literal output value if it is non-empty, hasn't been
+// seen and isn't itself a format specifier.
 func addOutput(val string, outputs *[]string, seen map[string]bool) {
-	if seen[val] || isFormatSpecifier(val) {
+	if val == "" || seen[val] || isFormatSpecifier(val) {
 		return
 	}
 	seen[val] = true
