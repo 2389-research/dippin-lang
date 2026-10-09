@@ -243,6 +243,15 @@ func TestExtractToolOutputs(t *testing.T) {
 		{"stderr_only_redirect", "printf 'ok' 2>err.log", []string{"ok"}},
 		{"stderr_dup_to_stdout", "printf 'ok' 2>&1", []string{"ok"}},
 		{"fd1_explicit_redirect", "printf 'gone' 1>out.log\nprintf 'kept'", []string{"kept"}},
+
+		// DB-003 — a single-argument printf records what it prints, with
+		// trailing whitespace trimmed as the runtime trims tool stdout
+		{"printf_trailing_newline", `printf 'marker\n'`, []string{"marker"}},
+		{"printf_double_quoted_newline", `printf "marker\n"`, []string{"marker"}},
+		{"printf_inner_escape", `printf 'a\tb\n'`, []string{"a\tb"}},
+		{"printf_percent", `printf '100%%\n'`, []string{"100%"}},
+		{"printf_escaped_backslash", `printf 'back\\slash'`, []string{`back\slash`}},
+		{"printf_only_newline", `printf '\n'`, nil},
 	}
 
 	for _, tt := range tests {
