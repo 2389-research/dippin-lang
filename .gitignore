@@ -44,3 +44,4 @@ editors/tree-sitter-dippin/node_modules/
 .claude/worktrees/
 .claude/scheduled_tasks.lock
 .serena/
+.kata.local.toml
