@@ -70,7 +70,7 @@ All expectation fields are optional. Only specified fields are checked.
 
 ### Caveats
 
-**`not_visited` and loop breaking**: The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and **continues execution** rather than stopping. This means nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer `path_contains` (which checks ordering) over `not_visited` (which can be fragile when the simulator continues past a forced loop exit).
+**`not_visited` and loop breaking**: The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and **continues execution** rather than stopping. At a human gate, a scenario such as `"Review.preferred_label": "revise"` applies on every visit, so the forced exit is the gate's `default:` edge, or the first edge other than the one the gate keeps choosing. This means nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer `path_contains` (which checks ordering) over `not_visited` (which can be fragile when the simulator continues past a forced loop exit).
 
 **`immediately_after` for edge routing**: When testing which specific edge a node takes, `immediately_after` is more precise than `path_contains`. Use it to verify that a conditional edge routes to the expected next node.
 

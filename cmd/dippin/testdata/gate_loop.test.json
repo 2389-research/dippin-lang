@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "revise on every visit exits through the gate default",
+      "scenario": {"PlanReview.preferred_label": "revise"},
+      "expect": {
+        "status": "success",
+        "visited": ["Hold", "Done"]
+      }
+    }
+  ]
+}
