@@ -34,7 +34,9 @@ type Options struct {
 
 	// MaxNodeVisits limits how many times a single node can be visited.
 	// When exceeded, the simulator forces the loop-exit edge (the first
-	// conditional edge that doesn't match). 0 means unlimited (use maxSteps only).
+	// conditional edge that doesn't match; at a human gate routed by label,
+	// its default: edge or the first edge other than the one it keeps
+	// choosing). 0 means unlimited (use maxSteps only).
 	MaxNodeVisits int
 
 	// Branch selects specific parallel branch targets to simulate.
@@ -250,8 +252,9 @@ func (s *simulator) visitNode(node *ir.Node) error {
 // resolveNext determines which node to visit after the current one.
 // Resolution order:
 //  1. If there is exactly one unconditional edge, take it.
-//  2. For human nodes with labeled edges, check preferred_label in context,
-//     else the gate's default:.
+//  2. For human nodes, take the edge whose label matches preferred_label in
+//     context, else the gate's default:. Once MaxNodeVisits is exceeded, a
+//     gate routed this way leaves its loop instead (see resolveGate).
 //  3. If MaxNodeVisits is set and this node has been visited too many times,
 //     force the loop-exit edge (first non-matching conditional or unconditional).
 //  4. Try all conditional edges in declaration order; take the first match.
@@ -270,43 +273,74 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 		return edges[0].To, nil
 	}
 
-	// For human nodes with labeled edges, try preferred_label or default: routing.
-	if e := s.resolveByLabel(node, edges); e != nil {
+	// Human gates route by preferred_label or default:, or leave a loop that
+	// has exceeded MaxNodeVisits.
+	if e := s.resolveGate(node, edges); e != nil {
 		return e.To, nil
 	}
 
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveByLabel matches the context's preferred_label against edge labels.
-// With no preferred_label it uses the gate's default:, the answer tracker
-// gives an unattended gate (--auto-approve, or a timeout with a default).
-// Only applies to human nodes with labeled edges. Returns nil if no match or
-// not applicable.
-func (s *simulator) resolveByLabel(node *ir.Node, edges []*ir.Edge) *ir.Edge {
+// resolveGate routes a human node down the edge whose label matches its
+// answer (see gateLabel). Once MaxNodeVisits is exceeded it leaves the loop
+// instead: a per-node preferred_label scenario is re-applied on every visit,
+// so the gate would keep choosing the same edge. Returns nil for other node
+// kinds, or when no label matches, leaving the edge (and any loop bound) to
+// resolveConditionalNext.
+func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	hc, ok := node.Config.(ir.HumanConfig)
 	if !ok {
 		return nil
 	}
-	label := s.ctx["preferred_label"]
-	if label == "" {
-		label = hc.Default
-	}
-	if label == "" {
-		return nil
-	}
+	chosen := findEdgeByLabel(edges, s.gateLabel(hc))
 	// Clear preferred_label so it doesn't leak to downstream human nodes.
 	delete(s.ctx, "preferred_label")
-	return s.matchEdgeLabel(edges, label)
+	if chosen == nil {
+		return nil
+	}
+	if s.shouldBreakLoop(node.ID) {
+		s.emitLoopBreak(node.ID)
+		chosen = gateExitEdge(edges, chosen, findEdgeByLabel(edges, hc.Default))
+	}
+	s.emitEdgeTraverse(chosen)
+	return chosen
 }
 
-// matchEdgeLabel finds the first edge whose label contains the target string
-// (case-insensitive). This allows "yes" to match "[Y] Yes".
-func (s *simulator) matchEdgeLabel(edges []*ir.Edge, target string) *ir.Edge {
+// gateLabel is the answer a human gate gets on this visit: the context's
+// preferred_label, else the gate's default:, the answer tracker gives an
+// unattended gate (--auto-approve, or a timeout with a default).
+func (s *simulator) gateLabel(hc ir.HumanConfig) string {
+	if label := s.ctx["preferred_label"]; label != "" {
+		return label
+	}
+	return hc.Default
+}
+
+// gateExitEdge picks the way out of a gate loop: the default: edge unless it
+// is the looping edge, else the first edge that is not, else the first edge.
+func gateExitEdge(edges []*ir.Edge, looping, def *ir.Edge) *ir.Edge {
+	if def != nil && def != looping {
+		return def
+	}
+	for _, e := range edges {
+		if e != looping {
+			return e
+		}
+	}
+	return edges[0]
+}
+
+// findEdgeByLabel returns the first edge whose label contains target
+// (case-insensitive), or nil when target is empty or no label matches. This
+// allows "yes" to match "[Y] Yes".
+func findEdgeByLabel(edges []*ir.Edge, target string) *ir.Edge {
+	if target == "" {
+		return nil
+	}
 	lower := strings.ToLower(target)
 	for _, e := range edges {
 		if strings.Contains(strings.ToLower(e.Label), lower) {
-			s.emitEdgeTraverse(e)
 			return e
 		}
 	}

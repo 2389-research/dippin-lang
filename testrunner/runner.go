@@ -9,7 +9,7 @@ import (
 
 // defaultMaxNodeVisits is the per-node visit limit for test scenarios.
 // When a node is visited more times than this, the simulator forces the
-// loop-exit edge. This prevents tool-gated loops from spinning to the
+// loop-exit edge. This stops tool- and human-gate-driven loops before the
 // global maxSteps limit while still allowing reasonable loop iterations.
 const defaultMaxNodeVisits = 3
 
