@@ -277,6 +277,7 @@ dippin simulate pipeline.dip --interactive
 - **`--scenario key=val`** (repeatable): injects context values to explore conditional branches (e.g. `--scenario outcome=fail` takes the failure edge).
 - **`--all-paths`**: enumerates every reachable execution path; each path is emitted as a separate JSONL block with a header on stderr.
 - **`--interactive`**: prompts at human nodes via stdin rather than auto-succeeding.
+- **`--max-node-visits N`**: once a node has been visited more than N times, takes its loop-exit edge, so a loop a fixed scenario can't end (such as a worklist drained by on-disk state) still finishes. `dippin test` uses 3; the default 0 means no limit.
 - **`--format dot`**: renders the walked path as a DOT graph (highlights the executed path).
 
 **When to use:** Verify routing logic before running the real pipeline. Check that a `--scenario` reaches the expected node sequence. Use `--all-paths` to audit every branch.

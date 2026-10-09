@@ -431,7 +431,7 @@ Use `dippin help` (not `--help`) to see all commands.
 
 | Command | Purpose |
 |---------|---------|
-| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive. `--interactive` to prompt at human nodes |
+| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive. `--interactive` to prompt at human nodes. `--max-node-visits N` to end a loop a fixed scenario can't |
 | `dippin cost <file>` | Estimate execution cost by model/provider. Requires model/provider on nodes or in defaults |
 | `dippin coverage <file>` | Edge coverage and reachability |
 | `dippin doctor <file>` | Health report card (grade A-F) |
