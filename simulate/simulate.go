@@ -250,7 +250,8 @@ func (s *simulator) visitNode(node *ir.Node) error {
 // resolveNext determines which node to visit after the current one.
 // Resolution order:
 //  1. If there is exactly one unconditional edge, take it.
-//  2. For human nodes with labeled edges, check preferred_label in context.
+//  2. For human nodes with labeled edges, check preferred_label in context,
+//     else the gate's default:.
 //  3. If MaxNodeVisits is set and this node has been visited too many times,
 //     force the loop-exit edge (first non-matching conditional or unconditional).
 //  4. Try all conditional edges in declaration order; take the first match.
@@ -269,7 +270,7 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 		return edges[0].To, nil
 	}
 
-	// For human nodes with labeled edges, try preferred_label routing.
+	// For human nodes with labeled edges, try preferred_label or default: routing.
 	if e := s.resolveByLabel(node, edges); e != nil {
 		return e.To, nil
 	}
@@ -277,14 +278,20 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveByLabel checks if the context has a preferred_label and matches it
-// against edge labels. Only applies to human nodes with labeled edges.
-// Returns nil if no match or not applicable.
+// resolveByLabel matches the context's preferred_label against edge labels.
+// With no preferred_label it uses the gate's default:, the answer tracker
+// gives an unattended gate (--auto-approve, or a timeout with a default).
+// Only applies to human nodes with labeled edges. Returns nil if no match or
+// not applicable.
 func (s *simulator) resolveByLabel(node *ir.Node, edges []*ir.Edge) *ir.Edge {
-	if _, ok := node.Config.(ir.HumanConfig); !ok {
+	hc, ok := node.Config.(ir.HumanConfig)
+	if !ok {
 		return nil
 	}
 	label := s.ctx["preferred_label"]
+	if label == "" {
+		label = hc.Default
+	}
 	if label == "" {
 		return nil
 	}

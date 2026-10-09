@@ -273,7 +273,7 @@ dippin simulate pipeline.dip --interactive
 
 **What it does:** Walks the IR graph from start to exit, visiting each node and emitting a structured event at each step (agent config logged, tool command logged, human node auto-succeeded or prompted). No LLM calls are made and no shell commands are executed. Edge conditions are evaluated against the injected scenario context to select which path to follow.
 
-- **Default (no flags):** follows the happy path (all conditions succeed), emits JSONL to stdout, prints path summary to stderr.
+- **Default (no flags):** follows the happy path (all conditions succeed), emits JSONL to stdout, prints path summary to stderr. A human gate takes the edge its `default:` names, as an unattended run does; `--scenario Gate.preferred_label=<label>` picks another.
 - **`--scenario key=val`** (repeatable): injects context values to explore conditional branches (e.g. `--scenario outcome=fail` takes the failure edge).
 - **`--all-paths`**: enumerates every reachable execution path; each path is emitted as a separate JSONL block with a header on stderr.
 - **`--interactive`**: prompts at human nodes via stdin rather than auto-succeeding.

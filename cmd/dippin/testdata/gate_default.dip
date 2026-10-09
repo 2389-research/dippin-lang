@@ -1,0 +1,32 @@
+workflow GateDefault
+  goal: "Route an unattended gate by its default"
+  start: Start
+  exit: Done
+
+  agent Start
+    prompt:
+      Begin.
+
+  human Review
+    label: "Ship it?"
+    mode: choice
+    default: "hold"
+
+  agent Ship
+    prompt:
+      Ship.
+
+  agent Hold
+    prompt:
+      Hold.
+
+  agent Done
+    prompt:
+      Done.
+
+  edges
+    Start -> Review
+    Review -> Ship  label: "approve"
+    Review -> Hold  label: "hold"
+    Ship -> Done
+    Hold -> Done

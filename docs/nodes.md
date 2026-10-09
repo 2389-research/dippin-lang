@@ -227,7 +227,7 @@ Human nodes pause execution and wait for human input. They support four interact
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `mode` | String | — | Interaction mode: `"choice"` (select from edge labels), `"freeform"` (open text), `"interview"` (structured Q&A from upstream agent output), or `"yes_no"` (binary Y/N prompt). |
-| `default` | String | — | Default selection if no input. Only meaningful for `"choice"` mode. |
+| `default` | String | — | Default selection if no input: the edge label an unattended run takes (`--auto-approve`, or a timeout). Used by `"choice"` and `"freeform"` modes. |
 | `questions_key` | String | `interview_questions` | Context key to read questions from. Interview mode only. |
 | `answers_key` | String | `interview_answers` | Context key to write answers to. Interview mode only. |
 | `timeout` | Duration | — | How long to wait for human input before the `timeout_action` fires (e.g. `5m`, `30s`). `0`/unset = wait indefinitely. |
