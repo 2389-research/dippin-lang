@@ -26,6 +26,11 @@ func (s *simulator) handleChoiceFreeform(node *ir.Node, hc ir.HumanConfig) error
 		return fmt.Errorf("interactive prompt at %q: %w", node.ID, err)
 	}
 	s.updateContext("human_response", response)
+	// The answer also routes the gate, as tracker routes the answer it
+	// collects: resolveByLabel matches preferred_label against edge labels.
+	if response != "" {
+		s.updateContext("preferred_label", response)
+	}
 	return nil
 }
 
