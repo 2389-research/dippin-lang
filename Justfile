@@ -155,8 +155,12 @@ wasm:
     cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" site/static/wasm_exec.js
     @echo "WASM built: site/static/dippin.wasm"
 
+# Install the tree-sitter CLI pinned in package-lock.json, unless already installed
+tree-sitter-deps:
+    cd editors/tree-sitter-dippin && { test -x node_modules/.bin/tree-sitter || npm ci; }
+
 # Regenerate tree-sitter parser from grammar.js
-tree-sitter-generate:
+tree-sitter-generate: tree-sitter-deps
     cd editors/tree-sitter-dippin && npx tree-sitter generate
 
 # Run tree-sitter corpus tests (after regenerate)
