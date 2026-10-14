@@ -7,6 +7,7 @@ package coverage
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/2389-research/dippin-lang/ir"
@@ -257,17 +258,17 @@ func collectEchoArgs(args []*syntax.Word, outputs *[]string, seen map[string]boo
 // collectPrintfArgs extracts literal args from `printf`. The two-arg
 // `printf '%s' 'value'` and `printf '%s\n' 'value'` patterns extract the
 // value; otherwise the output is what the format string prints (see
-// printfOutput).
+// printfOutput). Args are taken as the shell passes them (see shellArgLocal).
 func collectPrintfArgs(args []*syntax.Word, outputs *[]string, seen map[string]bool) {
 	if len(args) == 0 {
 		return
 	}
-	first := extractWordLiteralLocal(args[0])
+	first := shellArgLocal(args[0])
 	if first == "" {
 		return
 	}
 	if isFormatTwoArg(first, args) {
-		if val := extractWordLiteralLocal(args[1]); val != "" {
+		if val := shellArgLocal(args[1]); val != "" {
 			addOutput(val, outputs, seen)
 		}
 		return
@@ -275,26 +276,126 @@ func collectPrintfArgs(args []*syntax.Word, outputs *[]string, seen map[string]b
 	addOutput(printfOutput(first), outputs, seen)
 }
 
-// printfEscapes expands the backslash escapes and %% that printf interprets
-// in its format string.
-var printfEscapes = strings.NewReplacer(
-	`\\`, `\`,
-	`\a`, "\a",
-	`\b`, "\b",
-	`\f`, "\f",
-	`\n`, "\n",
-	`\r`, "\r",
-	`\t`, "\t",
-	`\v`, "\v",
-	`%%`, "%",
-)
+// shellArgLocal returns the argument the shell passes for a simple literal
+// word, after quote removal: single-quoted text is verbatim; inside double
+// quotes a backslash escapes only \ " $ ` and newline; unquoted, a backslash
+// escapes any character. So "a\\nb" reaches printf as a\nb. Returns "" if
+// the word is not a simple literal.
+func shellArgLocal(w *syntax.Word) string {
+	if w == nil || len(w.Parts) != 1 {
+		return ""
+	}
+	switch p := w.Parts[0].(type) {
+	case *syntax.Lit:
+		return unescapeShell(p.Value, isAnyByte)
+	case *syntax.DblQuoted:
+		return unescapeShell(extractDblQuotedLit(p), isDblQuoteEscapable)
+	}
+	return extractPartLiteral(w.Parts[0])
+}
+
+// isAnyByte reports true for every byte: unquoted, a backslash escapes any
+// character.
+func isAnyByte(byte) bool { return true }
+
+// isDblQuoteEscapable reports whether a backslash before c is removed inside
+// double quotes.
+func isDblQuoteEscapable(c byte) bool {
+	return strings.IndexByte("\\\"$`", c) >= 0
+}
+
+// unescapeShell performs the shell's backslash quote removal on raw source
+// text: \<newline> is a line continuation (both removed), \c becomes c when
+// escapable(c), and any other backslash is kept.
+func unescapeShell(raw string, escapable func(byte) bool) string {
+	var b strings.Builder
+	for i := 0; i < len(raw); i++ {
+		if raw[i] != '\\' || i+1 == len(raw) {
+			b.WriteByte(raw[i])
+			continue
+		}
+		i++
+		writeShellEscape(&b, raw[i], escapable)
+	}
+	return b.String()
+}
+
+// writeShellEscape writes what the shell keeps of the escape sequence \c.
+func writeShellEscape(b *strings.Builder, c byte, escapable func(byte) bool) {
+	switch {
+	case c == '\n':
+	case escapable(c):
+		b.WriteByte(c)
+	default:
+		b.WriteByte('\\')
+		b.WriteByte(c)
+	}
+}
+
+// printfSimpleEscapes maps the character after a backslash in a printf
+// format to the byte printf writes for it.
+var printfSimpleEscapes = map[byte]byte{
+	'\\': '\\', 'a': '\a', 'b': '\b', 'f': '\f', 'n': '\n',
+	'r': '\r', 't': '\t', 'v': '\v', '"': '"',
+}
 
 // printfOutput returns what printf prints for a format string with no
-// arguments, as edge conditions see it: escapes expanded, then trailing
-// whitespace trimmed, as the runtime trims tool stdout before conditions
-// read it. So printf 'marker\n' yields "marker".
+// arguments, as edge conditions see it: escapes and %% expanded, then
+// trailing whitespace trimmed, as the runtime trims tool stdout before
+// conditions read it. So printf 'marker\n' yields "marker".
+//
+// Escapes follow the printf builtin of sh, which the runtime runs tool
+// commands with (dash, and bash in POSIX mode): \\ \a \b \f \n \r \t \v \",
+// octal \NNN of one to three digits (so \0101 is \010 then "1"), and any
+// other backslash kept as is. That includes \c: only GNU coreutils' printf
+// binary stops output there; the sh builtin prints it literally.
 func printfOutput(format string) string {
-	return strings.TrimRight(printfEscapes.Replace(format), " \t\n\r")
+	var b strings.Builder
+	for i := 0; i < len(format); {
+		i += writePrintfToken(&b, format[i:])
+	}
+	return strings.TrimRight(b.String(), " \t\n\r")
+}
+
+// writePrintfToken writes the output of the token at the start of s and
+// returns the number of bytes it consumed.
+func writePrintfToken(b *strings.Builder, s string) int {
+	switch {
+	case strings.HasPrefix(s, "%%"):
+		b.WriteByte('%')
+		return 2
+	case s[0] == '\\' && len(s) > 1:
+		return 1 + writePrintfEscape(b, s[1:])
+	}
+	b.WriteByte(s[0])
+	return 1
+}
+
+// writePrintfEscape writes the output of the escape whose text (after the
+// backslash) starts s, and returns the number of bytes of s it consumed.
+func writePrintfEscape(b *strings.Builder, s string) int {
+	if n := octalPrefixLen(s); n > 0 {
+		v, _ := strconv.ParseUint(s[:n], 8, 16)
+		b.WriteByte(byte(v))
+		return n
+	}
+	if c, ok := printfSimpleEscapes[s[0]]; ok {
+		b.WriteByte(c)
+		return 1
+	}
+	b.WriteByte('\\')
+	b.WriteByte(s[0])
+	return 1
+}
+
+// octalPrefixLen returns how many leading bytes of s (at most three) are
+// octal digits.
+func octalPrefixLen(s string) int {
+	n := 0
+	for n < len(s) && n < 3 && s[n] >= '0' && s[n] <= '7' {
+		n++
+	}
+	return n
 }
 
 // isFormatTwoArg returns true if printf was invoked with a bare `%s` or

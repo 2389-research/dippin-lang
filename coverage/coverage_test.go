@@ -252,6 +252,28 @@ func TestExtractToolOutputs(t *testing.T) {
 		{"printf_percent", `printf '100%%\n'`, []string{"100%"}},
 		{"printf_escaped_backslash", `printf 'back\\slash'`, []string{`back\slash`}},
 		{"printf_only_newline", `printf '\n'`, nil},
+
+		// PR #326 review — the shell's quote removal runs before printf sees
+		// the format. Expected values observed from `sh -c` on dash and on
+		// bash in POSIX mode (macOS /bin/sh).
+		{"printf_dq_escaped_backslash_n", `printf "a\\nb"`, []string{"a\nb"}},
+		{"printf_dq_four_backslashes", `printf "a\\\\b"`, []string{`a\b`}},
+		{"printf_dq_escaped_quote", `printf "a\"b"`, []string{`a"b`}},
+		{"printf_dq_escaped_dollar", `printf "a\$b"`, []string{`a$b`}},
+		{"printf_dq_escaped_backtick", "printf \"a\\`b\"", []string{"a`b"}},
+		// sh prints "xy"; the parser splits the word at the continuation, so
+		// it is not a simple literal and nothing is recorded (never a wrong value)
+		{"printf_dq_line_continuation", "printf \"x\\\ny\"", nil},
+		{"printf_dq_unknown_escape_kept", `printf "a\qb"`, []string{`a\qb`}},
+		{"printf_sq_escaped_backslash_n", `printf 'a\\nb'`, []string{`a\nb`}},
+		{"printf_sq_unknown_escape_kept", `printf 'a\qb'`, []string{`a\qb`}},
+		{"printf_bare_escaped_backslash_n", `printf a\\nb`, []string{"a\nb"}},
+		{"printf_bare_backslash_n", `printf a\nb`, []string{"anb"}},
+		{"printf_octal", `printf '\101\60x'`, []string{"A0x"}},
+		{"printf_octal_three_digits_max", `printf '\1012'`, []string{"A2"}},
+		{"printf_octal_leading_zero", `printf '\0101'`, []string{"\b1"}},
+		{"printf_backslash_c_literal_in_sh", `printf 'pass\c'`, []string{`pass\c`}},
+		{"printf_format_two_arg_dq_value", `printf '%s\n' "a\\b"`, []string{`a\b`}},
 	}
 
 	for _, tt := range tests {
