@@ -801,7 +801,7 @@ A human node with `mode: interview` also sets a `default` value. Interview mode 
 ```text
 warning[DIP128]: node "Ask" is mode interview but has default "yes" which is ignored
   --> pipeline.dip:15:3
-  = help: default is only meaningful for choice mode; remove it
+  = help: default is only used by choice (or mode-less) and freeform gates; remove it
 ```
 
 **What triggers it**: `mode: interview` combined with a non-empty `default` field.
