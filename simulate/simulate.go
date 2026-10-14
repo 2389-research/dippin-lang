@@ -33,9 +33,9 @@ type Options struct {
 
 	// MaxNodeVisits limits how many times a single node can be visited.
 	// When exceeded, the simulator forces the loop-exit edge (the first
-	// conditional edge that doesn't match; at a human gate routed by label,
-	// its default: edge or the first edge other than the one it keeps
-	// choosing). 0 means unlimited (use maxSteps only).
+	// conditional edge that doesn't match; at a human gate whose answer takes
+	// a `loop` edge, its default: edge if that leaves the loop, else the
+	// first edge without `loop`). 0 means unlimited (use maxSteps only).
 	MaxNodeVisits int
 
 	// Branch selects specific parallel branch targets to simulate.
@@ -251,9 +251,9 @@ func (s *simulator) visitNode(node *ir.Node) error {
 // resolveNext determines which node to visit after the current one.
 // Resolution order:
 //  1. If there is exactly one unconditional edge, take it.
-//  2. For human nodes, take the edge whose label matches preferred_label in
-//     context, else the gate's default:. Once MaxNodeVisits is exceeded, a
-//     gate routed this way leaves its loop instead (see resolveGate).
+//  2. For human nodes, take the edge preferred_label in context names, else
+//     the one the gate's default: names. Once MaxNodeVisits is exceeded, an
+//     answer that takes a `loop` edge leaves the loop instead (resolveGate).
 //  3. If MaxNodeVisits is set and this node has been visited too many times,
 //     force the loop-exit edge (first non-matching conditional or unconditional).
 //  4. Try all conditional edges in declaration order; take the first match.
@@ -281,12 +281,17 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveGate routes a human node down the edge whose label matches its
-// answer (see gateLabel). Once MaxNodeVisits is exceeded it leaves the loop
-// instead: a per-node preferred_label scenario is re-applied on every visit,
-// so the gate would keep choosing the same edge. Returns nil for other node
-// kinds, or when no label matches, leaving the edge (and any loop bound) to
-// resolveConditionalNext.
+// resolveGate routes a human node by its answer: the context's
+// preferred_label, else the gate's default: (the answer tracker gives an
+// unattended gate — --auto-approve, or a timeout with a default), matched per
+// tracker's rule (see matchGateAnswer: choice: then label:, exact,
+// case-insensitive). Once MaxNodeVisits is exceeded, an answer that takes a
+// `loop` edge back into the loop is overridden with a way out (see
+// gateExitEdge): a per-node preferred_label scenario is re-applied on every
+// visit, and an unattended default: can name the loop edge, so the gate would
+// keep re-entering. An answer that already leaves is never overridden.
+// Returns nil for other node kinds, or when no edge matches, leaving the edge
+// (and any loop bound) to resolveConditionalNext.
 func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	hc, ok := node.Config.(ir.HumanConfig)
 	if !ok {
@@ -299,22 +304,22 @@ func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	if chosen == nil {
 		return nil
 	}
-	if s.shouldBreakLoop(node.ID) {
+	if chosen.Restart && s.shouldBreakLoop(node.ID) {
 		s.emitLoopBreak(node.ID)
-		chosen = gateExitEdge(edges, chosen, matchGateAnswer(edges, gateDefault(hc)))
+		chosen = gateExitEdge(edges, matchGateAnswer(edges, gateDefault(hc)))
 	}
 	s.emitEdgeTraverse(chosen)
 	return chosen
 }
 
-// gateExitEdge picks the way out of a gate loop: the default: edge unless it
-// is the looping edge, else the first edge that is not, else the first edge.
-func gateExitEdge(edges []*ir.Edge, looping, def *ir.Edge) *ir.Edge {
-	if def != nil && def != looping {
+// gateExitEdge picks the way out of a gate loop: the default: edge when it
+// is not a `loop` edge, else the first edge that is not, else the first edge.
+func gateExitEdge(edges []*ir.Edge, def *ir.Edge) *ir.Edge {
+	if def != nil && !def.Restart {
 		return def
 	}
 	for _, e := range edges {
-		if e != looping {
+		if !e.Restart {
 			return e
 		}
 	}

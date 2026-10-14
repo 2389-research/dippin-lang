@@ -116,3 +116,60 @@ func TestGateLoop_ConditionalGateKeepsConditionalExit(t *testing.T) {
 	res := runGateLoop(t, src, map[string]string{"outcome": "fail"})
 	assertPathContains(t, res.Path, "Done")
 }
+
+// visitGate resolves PlanReview's next edge as the simulator would on its
+// visit-th visit, answering with answer (as a typed --interactive answer or
+// a per-visit preferred_label does). s carries visits across calls.
+func visitGate(t *testing.T, s *simulator, visit int, answer string) string {
+	t.Helper()
+	s.nodeVisits["PlanReview"] = visit
+	s.ctx["preferred_label"] = answer
+	node := s.workflow.Node("PlanReview")
+	e := s.resolveGate(node, s.workflow.EdgesFrom("PlanReview"))
+	if e == nil {
+		t.Fatalf("visit %d answer %q: no edge", visit, answer)
+	}
+	return e.To
+}
+
+func newGateLoopSim(t *testing.T, defaultField string) *simulator {
+	t.Helper()
+	return &simulator{
+		workflow:   mustParseElseWorkflow(t, planLoopSrc(defaultField)),
+		opts:       Options{MaxNodeVisits: 3},
+		ctx:        map[string]string{},
+		visited:    map[string]bool{},
+		nodeVisits: map[string]int{},
+	}
+}
+
+// Past the visit bound, only an answer that takes the `loop` edge is
+// overridden. "revise" three times then "approve" must leave through
+// approve — even when default: names the loop edge (which used to send the
+// run back into the loop until the 500-step limit) or another exit (which
+// used to silently reroute approve to Hold).
+func TestGateLoop_BoundKeepsAnAnswerThatLeaves(t *testing.T) {
+	for _, def := range []string{`    default: "revise"`, `    default: "hold"`, ""} {
+		s := newGateLoopSim(t, def)
+		for visit := 1; visit <= 3; visit++ {
+			if to := visitGate(t, s, visit, "revise"); to != "Plan" {
+				t.Fatalf("%q: visit %d revise -> %s, want Plan", def, visit, to)
+			}
+		}
+		if to := visitGate(t, s, 4, "approve"); to != "Done" {
+			t.Errorf("%q: past the bound, approve -> %s, want Done", def, to)
+		}
+	}
+}
+
+// Past the bound, a loop answer leaves through default: unless default:
+// is itself the loop edge, then through the first edge without `loop`.
+func TestGateLoop_BoundOverridesOnlyTheLoopEdge(t *testing.T) {
+	cases := map[string]string{`    default: "hold"`: "Hold", `    default: "revise"`: "Done", "": "Done"}
+	for def, want := range cases {
+		s := newGateLoopSim(t, def)
+		if to := visitGate(t, s, 4, "revise"); to != want {
+			t.Errorf("%q: past the bound, revise -> %s, want %s", def, to, want)
+		}
+	}
+}
