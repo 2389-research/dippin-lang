@@ -114,8 +114,10 @@ cache fields per entry rather than assuming a global convention:
   their cache traffic should overlay its own default until dippin verifies them.
 
 So the rule for a consumer: **overlay a default cache rate only where both
-`CacheReadMult` and `CachedInputPerM` are `0`** (`pricing.CacheGaps()` lists
-exactly these) — every other model is authoritative in the catalog.
+`CacheReadMult` and `CachedInputPerM` are `0`** — every other model is
+authoritative in the catalog. `pricing.CacheGaps()` lists the priced,
+non-deprecated subset of those (the ones dippin still owes a rate for); unpriced
+and deprecated entries can also carry zero cache fields without appearing there.
 
 ## Keeping prices current
 

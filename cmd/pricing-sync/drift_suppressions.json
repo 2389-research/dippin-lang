@@ -1036,7 +1036,7 @@
     "model": "muse-wonder",
     "kind": "new",
     "aggregator_value": "4/20",
-    "reason": "OpenRouter alias naming. The first-party id is muse-wonder-1.0 (proposed ADD at 4/20), and Meta's docs name no un-versioned alias.",
+    "reason": "OpenRouter alias naming. The first-party id is muse-wonder-1.0 (already in catalog at 4/20), and Meta's docs name no un-versioned alias.",
     "review_by": "2026-12-15"
   },
   {

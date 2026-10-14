@@ -289,7 +289,7 @@
       "maturity": "stable",
       "input_per_m": 4,
       "output_per_m": 20,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
       "as_of": "2026-10-14",
       "cache_read_mult": 0.05,
       "cache_write_mult": 1.25
@@ -306,7 +306,7 @@
       "maturity": "stable",
       "input_per_m": 2,
       "output_per_m": 10,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
       "as_of": "2026-10-14",
       "cache_read_mult": 0.05,
       "cache_write_mult": 1.25
@@ -323,7 +323,7 @@
       "maturity": "stable",
       "input_per_m": 0.1,
       "output_per_m": 0.5,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
       "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
@@ -337,7 +337,7 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 10,
       "output_per_m": 50,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
       "as_of": "2026-10-14",
       "cache_read_mult": 0.025,
       "cache_write_mult": 1.25
