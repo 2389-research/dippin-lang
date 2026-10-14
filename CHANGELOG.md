@@ -4,6 +4,27 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.77.0] — 2026-10-14
+
+### Added
+- **Claude 5.5 family + every model released since the last sync** ([#327](https://github.com/2389-research/dippin-lang/issues/327), [#319](https://github.com/2389-research/dippin-lang/issues/319), [#292](https://github.com/2389-research/dippin-lang/issues/292) report). `claude-opus-5-5`/`claude-sonnet-5-5`/`claude-haiku-5-5` no longer trip DIP108 or price at $0, so `opus@latest` / `sonnet@latest` / `haiku@latest` now resolve to the 5.5 models and `@stable` to the generation before. Every price was confirmed against the provider's official page (as_of 2026-10-14):
+  - anthropic `claude-opus-5-5` 4/20, `claude-sonnet-5-5` 2/10 (both cache read **0.05×**, not the 0.1× #319 suggested — $0.20 on $4 is 0.05×), `claude-haiku-5-5` 0.10/0.50 (base tier; >100K-token prompts bill 5×), `claude-mythos-5-1` 10/50 (0.025× read, like Fable 5.1)
+  - openai `gpt-6-luna` 0.10/0.50, `gpt-6-sol` 2/10, `gpt-6.1-sol` 2/10 (cache read 0.05×)
+  - gemini `gemini-4-argon` 4/20 (durable rate; $2/$10 is introductory through 2026-11-30; cache read 0.05×)
+  - grok `grok-4.7` 2/6; meta `muse-wonder-1.0` 4/20 (preview); zai `glm-5.3-flashx` 0.37/1.25
+  - moonshot `kimi-k2.6` and `kimi-k2.7-code` 0.95/4, `kimi-k2.7-code-highspeed` 1.90/8
+  - mistral `mistral-large-4` 1.36/4.18 (preview; list price — 0.68/2.09 is an open-ended sale), `mistral-medium-3-5` 1.5/7.5; Mistral's official API names `ministral-{14b,8b,3b}-2512`, `codestral-2508` and `mistral-large-4-0` are aliases of their catalog entries
+  - **Qwen is now priced**: Alibaba Cloud publishes USD rates publicly (Singapore/International, base tier). `qwen3.8-max` 2/6, `qwen3.8-flash` 0.15/0.47, `qwen3.7-max` 2.5/7.5, `qwen3.7-flash` 0.03/0.13 (≤32K tier), `qwen3.6-flash` 0.25/1.5, `qwen3.6-plus` 0.5/3. `qwen3.7-plus` stays unpriced — its only published rate is a "limited-time 20% off" with no end date.
+
+  Catalog is now **144** entries.
+
+### Changed
+- **Repriced to match official pages:** `claude-sonnet-5` 3/15 → **2/10** (Anthropic made the launch price permanent); `mistral-small`/`mistral-small-2603` 0.1/0.3 → 0.15/0.6; `mistral-medium-3` → 1.5/7.5 (the id now serves Medium 3.5); `mistral-nemo` 0.02/0.04 → 0.15/0.15; `command-r-08-2024` 0.5/1.5 → 0.15/0.6; `command-r-plus` 2.5/10 → 3/15.
+- **Cache rates corrected:** Mistral now publishes a 10% cached-input rate, so live Mistral models move from `cache_read_mult: 1` to `0.1`. OpenAI `o3`/`o4-mini` 0.1× → 0.25×, `o3-mini` → 0.5×, and every `-pro` model → 1× (OpenAI publishes no cached discount for them — 0.1× understated cache-heavy pro runs 10×). `gpt-5.6-luna`/`-terra` gain `cache_write_mult: 1.25`.
+- **Newly `deprecated: true`** (already shut down on the first-party API; DIP161 now warns): `gemini-3.5-flash`, `gemini-3.7-flash`, `grok-4-1-fast-{reasoning,non-reasoning}`, `MiniMax-M2`, `MiniMax-M2.1`, `magistral-medium`. Models with only an *announced* shutdown (`claude-sonnet-4-5` 2026-11-30; OpenAI `gpt-4.1-nano`/`o3-mini`/`o4-mini` 2026-10-23, `gpt-5`/`o3` family 2026-12-11, `gpt-4o`/`gpt-4.1` 2027-01-14) stay undeprecated until they retire.
+- `gpt-5.6-sol` stays at the printed 4/20; OpenAI now calls that a promotion running through at least 2026-11-21 (implied list 5/30, not printed).
+- `pricing-sync` drift report fully dispositioned: 105 stale entries re-verified, and every remaining aggregator candidate is suppressed with a reason. Malformed `disagree` suppressions (which never matched) were rebuilt in the `md:… or:…` key format.
+
 ## [v0.76.0] — 2026-09-18
 
 ### Changed

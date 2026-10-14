@@ -18,6 +18,7 @@ import (
 //   - --scenario key=val: inject context values to explore different paths
 //   - --interactive: prompt at human nodes via stdin
 //   - --all-paths: enumerate all possible execution paths
+//   - --max-node-visits N: force a loop's exit once a node is visited more than N times
 func (c *CLI) CmdSimulate(args []string) ExitCode {
 	fs := flag.NewFlagSet("simulate", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
@@ -26,15 +27,15 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 	fs.Var(&scenarios, "scenario", "inject context value (key=val), repeatable")
 	interactive := fs.Bool("interactive", false, "prompt at human nodes")
 	allPaths := fs.Bool("all-paths", false, "enumerate all possible execution paths")
+	maxNodeVisits := fs.Int("max-node-visits", 0, "force a loop's exit once a node is visited more than N times (0 = no limit)")
 
 	args = reorderSimulateArgs(args)
 
 	if err := fs.Parse(args); err != nil {
 		return ExitUsageError
 	}
-	if fs.NArg() < 1 {
-		fmt.Fprintln(c.Stderr, "usage: dippin simulate [--scenario key=val] [--interactive] [--all-paths] <file>")
-		return ExitUsageError
+	if code := c.checkSimulateArgs(fs.NArg(), *maxNodeVisits, *allPaths); code != ExitOK {
+		return code
 	}
 
 	path := fs.Arg(0)
@@ -42,11 +43,37 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 	if code != ExitCode(-1) {
 		return code
 	}
+	opts.MaxNodeVisits = *maxNodeVisits
 
 	if *allPaths {
 		return c.simulateAllPaths(w, opts)
 	}
 	return c.simulateSingle(w, opts)
+}
+
+// checkSimulateArgs reports usage errors in the parsed simulate arguments: a
+// missing file argument or an invalid --max-node-visits.
+func (c *CLI) checkSimulateArgs(nArg, maxNodeVisits int, allPaths bool) ExitCode {
+	if nArg < 1 {
+		fmt.Fprintln(c.Stderr, "usage: dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] <file>")
+		return ExitUsageError
+	}
+	return c.checkMaxNodeVisits(maxNodeVisits, allPaths)
+}
+
+// checkMaxNodeVisits rejects a negative --max-node-visits and its use with
+// --all-paths. The path enumerator has its own fixed revisit cap and never
+// forces a loop's exit edge, so the flag would be silently ignored there.
+func (c *CLI) checkMaxNodeVisits(n int, allPaths bool) ExitCode {
+	if n < 0 {
+		fmt.Fprintf(c.Stderr, "--max-node-visits must be >= 0, got %d\n", n)
+		return ExitUsageError
+	}
+	if allPaths && n > 0 {
+		fmt.Fprintln(c.Stderr, "--max-node-visits cannot be combined with --all-paths")
+		return ExitUsageError
+	}
+	return ExitOK
 }
 
 // prepareSimulation loads and validates the workflow, then builds simulation options.
@@ -173,7 +200,7 @@ func (s *scenarioFlags) Set(val string) error {
 
 // isValueFlag returns true if the flag name requires a separate value argument.
 func isValueFlag(name string) bool {
-	return name == "scenario"
+	return name == "scenario" || name == "max-node-visits"
 }
 
 // hasFollowingValue returns true if a value-taking flag at position i has a

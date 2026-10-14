@@ -1,0 +1,27 @@
+workflow PrintfNewline
+  goal: "Route on printf markers that end in a newline"
+  start: RunTool
+  exit: Done
+
+  tool RunTool
+    timeout: 30s
+    command:
+      #!/bin/sh
+      if run-checks; then
+        printf 'pass\n'
+      else
+        printf 'fail\n'
+      fi
+
+  agent Fixup
+    prompt:
+      Fix.
+
+  agent Done
+    prompt:
+      Done.
+
+  edges
+    RunTool -> Done   when ctx.tool_stdout = pass
+    RunTool -> Fixup  when ctx.tool_stdout = fail
+    Fixup -> Done
