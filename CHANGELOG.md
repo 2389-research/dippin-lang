@@ -4,6 +4,23 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.78.0] — 2026-10-14
+
+Simulator gate routing now matches tracker. Before this release `dippin simulate` and `dippin test` could take a different path through a human gate than the runtime would, and some gate loops could never be tested.
+
+### Fixed
+- **Human gates route the way tracker does** ([#322](https://github.com/2389-research/dippin-lang/pull/322)). With no `preferred_label`, a gate now takes its `default:`, which is the answer tracker's `--auto-approve` gives, where before it took its first edge. A gate declared `default: hold` used to simulate as approve → ship. Answers match an edge's `choice:` first, then its `label:`, then the target node, exactly and case-insensitively, as in tracker's `edgeRoutingKey`/`matchFreeformLabel`. Before, only `label:` was compared, by substring. `default:` applies to choice, unset and freeform gates and is ignored by `yes_no`, as in tracker. DIP128's help text and `docs/nodes.md` previously said otherwise and are corrected. A scenario `preferred_label` still falls back to the documented substring match, after an exact match fails.
+- **`simulate --interactive` routes by the typed answer** ([#323](https://github.com/2389-research/dippin-lang/pull/323)). The answer was collected and then ignored, so the gate always took its first edge. Answers match by `choice:`/`label:` or a 1-based option number, never by substring, so `n` no longer picks "Continue". An answer is recorded only at a gate that chooses between edges, so it can't leak to a later gate. A per-prompt stdin scanner that swallowed input meant for later gates is replaced by one shared reader.
+- **A human gate's revise/retry loop can be bounded** ([#324](https://github.com/2389-research/dippin-lang/pull/324)). Gate routing returned before the `MaxNodeVisits` loop breaker ran, so a per-node scenario such as `"PlanReview.preferred_label": "revise"` looped until the 500-step limit, even under `dippin test`. Past the limit, an answer that takes a `loop` edge is now overridden with the gate's `default:`, or the first edge without `loop`. An answer that already leaves the loop is never overridden.
+- **Coverage records what a single-argument `printf` prints** ([#326](https://github.com/2389-research/dippin-lang/pull/326)). Coverage recorded the format string, so `printf 'marker\n'` never matched `ctx.tool_stdout = marker` and the tool showed as partially covered. Shell quoting is now applied first: single quotes pass text through unchanged, double quotes collapse `\\ \" \$` and backquote escapes, and unquoted words drop their backslashes. Then printf's escapes are expanded (`\\ \a \b \f \n \r \t \v \"`, octal, `%%`), and trailing whitespace is trimmed as tracker does. `\c` stays literal, because the `printf` built into `sh`/`bash` that tools run under prints it unchanged.
+- **`just check` works on a fresh checkout** ([#321](https://github.com/2389-research/dippin-lang/pull/321)). A new `tree-sitter-deps` recipe installs the pinned `tree-sitter-cli` before the tree-sitter recipes run.
+
+### Added
+- **`dippin simulate --max-node-visits N`** ([#325](https://github.com/2389-research/dippin-lang/pull/325)) bounds loops from the CLI. Before, only `dippin test` set the limit, so a loop that pulls items until a list is empty always hit the 500-step limit. The default, 0, leaves runs unbounded. A negative N, or the flag combined with `--all-paths`, is a usage error (exit 2): path enumeration has its own revisit limit and never forces a loop's exit edge.
+
+### Known differences from tracker
+Tracker evaluates edge conditions before `preferred_label`; when no answer matches, it falls back by edge weight, then target; and `yes_no` sets the outcome. The simulator still checks the label first, takes the first edge, and does not set the `yes_no` outcome. These predate this release.
+
 ## [v0.77.0] — 2026-10-14
 
 ### Added
