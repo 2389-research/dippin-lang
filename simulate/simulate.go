@@ -34,7 +34,9 @@ type Options struct {
 
 	// MaxNodeVisits limits how many times a single node can be visited.
 	// When exceeded, the simulator forces the loop-exit edge (the first
-	// conditional edge that doesn't match). 0 means unlimited (use maxSteps only).
+	// conditional edge that doesn't match; at a human gate whose answer takes
+	// a `loop` edge, its default: edge if that leaves the loop, else the
+	// first edge without `loop`). 0 means unlimited (use maxSteps only).
 	MaxNodeVisits int
 
 	// Branch selects specific parallel branch targets to simulate.
@@ -146,7 +148,7 @@ type simulator struct {
 	nodeOwnsOutcome bool
 
 	// answer is the --interactive answer typed at the human gate being
-	// visited (see recordGateAnswer); resolveByLabel consumes and clears it.
+	// visited (see recordGateAnswer); resolveGate consumes and clears it.
 	answer *gateAnswer
 
 	// stdin reads --interactive answers. One scanner serves every prompt so
@@ -258,8 +260,9 @@ func (s *simulator) visitNode(node *ir.Node) error {
 // resolveNext determines which node to visit after the current one.
 // Resolution order:
 //  1. If there is exactly one unconditional edge, take it.
-//  2. For human nodes with labeled edges, check preferred_label in context,
-//     else the gate's default:.
+//  2. For human nodes, take the edge preferred_label in context names, else
+//     the one the gate's default: names. Once MaxNodeVisits is exceeded, an
+//     answer that takes a `loop` edge leaves the loop instead (resolveGate).
 //  3. If MaxNodeVisits is set and this node has been visited too many times,
 //     force the loop-exit edge (first non-matching conditional or unconditional).
 //  4. Try all conditional edges in declaration order; take the first match.
@@ -278,22 +281,27 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 		return edges[0].To, nil
 	}
 
-	// For human nodes with labeled edges, try preferred_label or default: routing.
-	if e := s.resolveByLabel(node, edges); e != nil {
+	// Human gates route by preferred_label or default:, or leave a loop that
+	// has exceeded MaxNodeVisits.
+	if e := s.resolveGate(node, edges); e != nil {
 		return e.To, nil
 	}
 
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveByLabel routes a human node by its answer: an --interactive answer
+// resolveGate routes a human node by its answer: an --interactive answer
 // typed at it, else the context's preferred_label, else the gate's default:
-// (the answer tracker gives an
-// unattended gate — --auto-approve, or a timeout with a default). The answer
-// is matched per tracker's rule (see matchGateAnswer: choice: then label:,
-// exact, case-insensitive). Returns nil if not a human node or no edge
-// matches.
-func (s *simulator) resolveByLabel(node *ir.Node, edges []*ir.Edge) *ir.Edge {
+// (the answer tracker gives an unattended gate — --auto-approve, or a timeout
+// with a default), matched per tracker's rule (see matchGateAnswer: choice:
+// then label:, exact, case-insensitive). Once MaxNodeVisits is exceeded, an
+// answer that takes a `loop` edge back into the loop is overridden with a way
+// out (see gateExitEdge): a per-node preferred_label scenario is re-applied on
+// every visit, and an unattended default: can name the loop edge, so the gate
+// would keep re-entering. An answer that already leaves is never overridden.
+// Returns nil for other node kinds, or when no edge matches, leaving the edge
+// (and any loop bound) to resolveConditionalNext.
+func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	hc, ok := node.Config.(ir.HumanConfig)
 	if !ok {
 		return nil
@@ -302,17 +310,42 @@ func (s *simulator) resolveByLabel(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	// Clear preferred_label and any typed answer so neither leaks to a
 	// downstream human node.
 	delete(s.ctx, "preferred_label")
-	e := matchGateLabel(edges, preferred, gateDefault(hc))
+	chosen := s.gateAnswerEdge(edges, preferred, gateDefault(hc))
+	if chosen == nil {
+		return nil
+	}
+	if chosen.Restart && s.shouldBreakLoop(node.ID) {
+		s.emitLoopBreak(node.ID)
+		chosen = gateExitEdge(edges, matchGateAnswer(edges, gateDefault(hc)))
+	}
+	s.emitEdgeTraverse(chosen)
+	return chosen
+}
+
+// gateAnswerEdge picks the edge a gate's answer names and consumes any typed
+// answer. A typed answer decides the gate even when it matched no edge:
+// tracker then routes without a label, never by default:.
+func (s *simulator) gateAnswerEdge(edges []*ir.Edge, preferred, def string) *ir.Edge {
+	e := matchGateLabel(edges, preferred, def)
 	if s.answer != nil {
-		// A typed answer decides the gate even when it matched no edge:
-		// tracker then routes without a label, never by default:.
 		e = s.answer.edge
 		s.answer = nil
 	}
-	if e != nil {
-		s.emitEdgeTraverse(e)
-	}
 	return e
+}
+
+// gateExitEdge picks the way out of a gate loop: the default: edge when it
+// is not a `loop` edge, else the first edge that is not, else the first edge.
+func gateExitEdge(edges []*ir.Edge, def *ir.Edge) *ir.Edge {
+	if def != nil && !def.Restart {
+		return def
+	}
+	for _, e := range edges {
+		if !e.Restart {
+			return e
+		}
+	}
+	return edges[0]
 }
 
 // matchGateLabel picks the edge for a gate's answer: a scenario
