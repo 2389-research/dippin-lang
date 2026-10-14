@@ -163,16 +163,17 @@ func TestLookupProviderAlias(t *testing.T) {
 }
 
 func TestKnownButUnpriced(t *testing.T) {
-	// Qwen is in the catalog (recognized) but has no established price.
-	p, ok := LookupProvider("qwen", "qwen3.7-max")
+	// qwen3.7-plus is in the catalog (recognized) but has no established price:
+	// its published rate is a limited-time discount with no printed list price.
+	p, ok := LookupProvider("qwen", "qwen3.7-plus")
 	if !ok {
-		t.Fatal("qwen3.7-max must be in the catalog")
+		t.Fatal("qwen3.7-plus must be in the catalog")
 	}
 	if p.Priced {
-		t.Error("qwen3.7-max must be Priced=false")
+		t.Error("qwen3.7-plus must be Priced=false")
 	}
 	// Providers() (priced-only) must exclude it.
-	if _, in := Providers()["qwen"]["qwen3.7-max"]; in {
+	if _, in := Providers()["qwen"]["qwen3.7-plus"]; in {
 		t.Error("Providers() must exclude unpriced entries")
 	}
 }
@@ -270,13 +271,14 @@ func TestProviderCachedInputPrices(t *testing.T) {
 	}
 }
 
-// TestNoCacheDiscountProviders covers #232 (tail): Mistral and Cohere publish no
-// cached-input discount on their official pages, so their cache_read_mult is a
+// TestNoCacheDiscountProviders covers #232 (tail): Cohere publishes no
+// cached-input discount on its official page, so its cache_read_mult is a
 // verified 1.0 — cache reads bill at the full input rate. This is distinct from
 // an unverified 0 (which prices cache reads at $0 and signals "overlay me"), so a
-// consumer stops applying a default cache overlay to these providers.
+// consumer stops applying a default cache overlay to this provider. (Mistral was
+// here too until its prompt-caching doc began publishing a 10% cached rate.)
 func TestNoCacheDiscountProviders(t *testing.T) {
-	for _, model := range []string{"mistral-small", "mistral-large-3", "command-r", "command-a-03-2025"} {
+	for _, model := range []string{"command-r", "command-a-03-2025"} {
 		p, ok := Lookup(model)
 		if !ok {
 			t.Errorf("%s not found in catalog", model)

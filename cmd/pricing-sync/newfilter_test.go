@@ -49,11 +49,12 @@ func TestFilterNew_DropsNonNewKinds(t *testing.T) {
 	}
 }
 
-// Qwen carries only priced:false entries (console-gated, no verifiable USD
-// rate), so proposing 50 more Qwen adds is noise we can never action.
+// A provider with no priced catalog entry (here: none at all) is excluded —
+// the allowlist fails closed, so an aggregator-only provider can't flood the
+// report with its entire upstream model list.
 func TestFilterNew_DropsUnpricedProviders(t *testing.T) {
 	got := filterNew([]change{
-		newChange("qwen", "qwen3.8-max"),
+		newChange("acme", "acme-1"),
 		newChange("gemini", "gemini-3.8-flash"),
 	})
 	if len(got) != 1 || got[0].Provider != "gemini" {

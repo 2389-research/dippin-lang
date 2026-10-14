@@ -149,8 +149,8 @@ func TestDiffKeepsPriceRowForCatalogedDatedID(t *testing.T) {
 }
 
 func TestDiffToleranceSuppressesSmallDeltas(t *testing.T) {
-	// sonnet-5 catalog is 3/15; a 4% output bump under a 5% tolerance is ignored.
-	cands := []candidate{{Provider: "anthropic", Model: "claude-sonnet-5", InputPerM: 3, OutputPerM: 15.6}}
+	// sonnet-5 catalog is 2/10; a 4% output bump under a 5% tolerance is ignored.
+	cands := []candidate{{Provider: "anthropic", Model: "claude-sonnet-5", InputPerM: 2, OutputPerM: 10.4}}
 	if got := diff(cands, 0.05); len(got) != 0 {
 		t.Errorf("4%% delta under 5%% tolerance should be suppressed, got %+v", got)
 	}

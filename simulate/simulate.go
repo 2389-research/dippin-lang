@@ -12,6 +12,7 @@
 package simulate
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -145,6 +146,14 @@ type simulator struct {
 	// map by a previously visited node. Recomputed per node in
 	// applyNodeDefaults; consulted by currentNodeFailed.
 	nodeOwnsOutcome bool
+
+	// answer is the --interactive answer typed at the human gate being
+	// visited (see recordGateAnswer); resolveGate consumes and clears it.
+	answer *gateAnswer
+
+	// stdin reads --interactive answers. One scanner serves every prompt so
+	// its read-ahead buffer is not lost between gates.
+	stdin *bufio.Scanner
 }
 
 const maxSteps = 500 // safety valve against infinite loops
@@ -281,15 +290,15 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveGate routes a human node by its answer: the context's
-// preferred_label, else the gate's default: (the answer tracker gives an
-// unattended gate — --auto-approve, or a timeout with a default), matched per
-// tracker's rule (see matchGateAnswer: choice: then label:, exact,
-// case-insensitive). Once MaxNodeVisits is exceeded, an answer that takes a
-// `loop` edge back into the loop is overridden with a way out (see
-// gateExitEdge): a per-node preferred_label scenario is re-applied on every
-// visit, and an unattended default: can name the loop edge, so the gate would
-// keep re-entering. An answer that already leaves is never overridden.
+// resolveGate routes a human node by its answer: an --interactive answer
+// typed at it, else the context's preferred_label, else the gate's default:
+// (the answer tracker gives an unattended gate — --auto-approve, or a timeout
+// with a default), matched per tracker's rule (see matchGateAnswer: choice:
+// then label:, exact, case-insensitive). Once MaxNodeVisits is exceeded, an
+// answer that takes a `loop` edge back into the loop is overridden with a way
+// out (see gateExitEdge): a per-node preferred_label scenario is re-applied on
+// every visit, and an unattended default: can name the loop edge, so the gate
+// would keep re-entering. An answer that already leaves is never overridden.
 // Returns nil for other node kinds, or when no edge matches, leaving the edge
 // (and any loop bound) to resolveConditionalNext.
 func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
@@ -298,9 +307,10 @@ func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 		return nil
 	}
 	preferred := s.ctx["preferred_label"]
-	// Clear preferred_label so it doesn't leak to downstream human nodes.
+	// Clear preferred_label and any typed answer so neither leaks to a
+	// downstream human node.
 	delete(s.ctx, "preferred_label")
-	chosen := matchGateLabel(edges, preferred, gateDefault(hc))
+	chosen := s.gateAnswerEdge(edges, preferred, gateDefault(hc))
 	if chosen == nil {
 		return nil
 	}
@@ -310,6 +320,18 @@ func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	}
 	s.emitEdgeTraverse(chosen)
 	return chosen
+}
+
+// gateAnswerEdge picks the edge a gate's answer names and consumes any typed
+// answer. A typed answer decides the gate even when it matched no edge:
+// tracker then routes without a label, never by default:.
+func (s *simulator) gateAnswerEdge(edges []*ir.Edge, preferred, def string) *ir.Edge {
+	e := matchGateLabel(edges, preferred, def)
+	if s.answer != nil {
+		e = s.answer.edge
+		s.answer = nil
+	}
+	return e
 }
 
 // gateExitEdge picks the way out of a gate loop: the default: edge when it

@@ -36,7 +36,7 @@ type ModelPrice struct {
     CacheReadMult         float64 // cache-read/input ratio (0 = unverified; 1 = verified no discount)
     CacheWriteMult        float64
     Aliases               []string
-    Priced                bool    // false = in catalog but no established price (e.g. Qwen)
+    Priced                bool    // false = in catalog but no established price (e.g. qwen3.7-plus)
     Deprecated            bool    // true = retired on the first-party provider API, still priced for Bedrock/Vertex passthrough (#224)
     Source, AsOf          string  // provenance: published-price URL + verification date
 }
@@ -54,7 +54,7 @@ func LookupProvider(provider, model string) (ModelPrice, bool)
   `kimi→moonshot`.
 - **Policy is the caller's.** `found=false` means unknown — you decide what that
   means (tracker's budget path: treat as `$0` + warning, never a hard fail). A
-  `found=true` with `Priced=false` means recognized-but-unpriced (e.g. Qwen):
+  `found=true` with `Priced=false` means recognized-but-unpriced (e.g. qwen3.7-plus):
   price it as `$0`, but don't warn that the model is unknown.
 
 ## How tracker should integrate
@@ -97,21 +97,27 @@ Cache read rates **are** populated (as of `v0.57.0`+), so `pricing.Cost` bills
 cache traffic for most providers directly — no consumer overlay needed. Read the
 cache fields per entry rather than assuming a global convention:
 
-- **Populated with a verified rate:** Anthropic (`0.1×` read / `1.25×` write),
-  OpenAI (per-family — gpt-4o `0.5×`, gpt-4.1 `0.25×`, GPT-5 `0.1×`), Gemini
-  (`0.1×` read), and DeepSeek, Z.AI/GLM, xAI/Grok, Moonshot/Kimi (absolute
-  `CachedInputPerM` from their published cache-hit prices).
-- **Verified no discount:** Mistral and Cohere carry `CacheReadMult: 1` — their
-  official pages publish no cached-input rate, so a cache read bills at the full
-  input rate. `1` is deliberately distinct from `0`.
-- **Still unverified (`0`):** MiniMax (official page is audio-only) and Qwen
-  (unpriced/console-gated). For these two only, `Cost` prices cache reads at `$0`,
-  so a consumer that bills their cache traffic should overlay its own default
-  until dippin verifies them.
+- **Populated with a verified rate:** Anthropic (`0.1×` read / `1.25×` write;
+  Opus/Sonnet 5.5 read at `0.05×`, Fable/Mythos 5.1 at `0.025×`), OpenAI
+  (per-family — gpt-4o `0.5×`, gpt-4.1 `0.25×`, GPT-5 `0.1×`, gpt-6.1-sol
+  `0.05×`), Gemini (`0.1×` read; gemini-4-argon `0.05×`), Mistral (`0.1×` read),
+  Qwen (qwen3.7-max `0.2×` implicit; qwen3.6-flash `0.1×`/`1.25×` explicit), and
+  DeepSeek, Z.AI/GLM, xAI/Grok, Moonshot/Kimi, Meta (absolute `CachedInputPerM`
+  from their published cache-hit prices). Never assume a provider-wide rate —
+  newer models increasingly deviate from their siblings.
+- **Verified no discount:** Cohere and OpenAI's `-pro` models carry
+  `CacheReadMult: 1` — the official pages publish no cached-input rate, so a
+  cache read bills at the full input rate. `1` is deliberately distinct from `0`.
+- **Still unverified (`0`):** MiniMax (cache columns published but not yet
+  human-confirmed, #292) and qwen3.8-max/flash (non-standard rate, console-gated).
+  For these only, `Cost` prices cache reads at `$0`, so a consumer that bills
+  their cache traffic should overlay its own default until dippin verifies them.
 
 So the rule for a consumer: **overlay a default cache rate only where both
-`CacheReadMult` and `CachedInputPerM` are `0`** (i.e. MiniMax/Qwen today) — every
-other provider is authoritative in the catalog.
+`CacheReadMult` and `CachedInputPerM` are `0`** — every other model is
+authoritative in the catalog. `pricing.CacheGaps()` lists the priced,
+non-deprecated subset of those (the ones dippin still owes a rate for); unpriced
+and deprecated entries can also carry zero cache fields without appearing there.
 
 ## Keeping prices current
 

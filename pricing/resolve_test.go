@@ -7,13 +7,13 @@ func TestResolveAlias(t *testing.T) {
 		provider, family, selector, want string
 		ok                               bool
 	}{
-		{"anthropic", "opus", "latest", "claude-opus-5", true},
-		{"anthropic", "opus", "sota", "claude-opus-5", true},
-		{"anthropic", "opus", "stable", "claude-opus-4-8", true},
-		{"anthropic", "sonnet", "latest", "claude-sonnet-5", true},
-		{"anthropic", "sonnet", "stable", "claude-sonnet-4-6", true},
-		{"anthropic", "haiku", "latest", "claude-haiku-4-5", true}, // haiku-3-5 is deprecated → excluded
-		{"anthropic", "haiku", "stable", "claude-haiku-4-5", true}, // only one eligible → falls back to latest
+		{"anthropic", "opus", "latest", "claude-opus-5-5", true},
+		{"anthropic", "opus", "sota", "claude-opus-5-5", true},
+		{"anthropic", "opus", "stable", "claude-opus-5", true},
+		{"anthropic", "sonnet", "latest", "claude-sonnet-5-5", true},
+		{"anthropic", "sonnet", "stable", "claude-sonnet-5", true},
+		{"anthropic", "haiku", "latest", "claude-haiku-5-5", true},
+		{"anthropic", "haiku", "stable", "claude-haiku-4-5", true}, // haiku-3-5 is deprecated → excluded
 		{"anthropic", "nope", "latest", "", false},
 		{"anthropic", "opus", "bogus", "", false},
 	}
@@ -52,15 +52,15 @@ func TestResolveModelRef(t *testing.T) {
 		wantProvider             string
 		wantResolved, wantAlias  bool
 	}{
-		{"anthropic", "opus@latest", "claude-opus-5", "anthropic", true, true},
-		{"anthropic", "opus@stable", "claude-opus-4-8", "anthropic", true, true},
-		{"anthropic", "sonnet@latest", "claude-sonnet-5", "anthropic", true, true},
-		{"", "anthropic/opus@stable", "claude-opus-4-8", "anthropic", true, true},     // provider from prefix
-		{"openai", "anthropic/opus@latest", "claude-opus-5", "anthropic", true, true}, // prefix overrides node
-		{"anthropic", "bogus@latest", "", "anthropic", false, true},                   // alias, unresolvable
-		{"anthropic", "opus@newest", "", "", false, false},                            // bad selector → not an alias
-		{"anthropic", "claude-opus-5", "", "", false, false},                          // concrete id
-		{"anthropic", "", "", "", false, false},                                       // empty
+		{"anthropic", "opus@latest", "claude-opus-5-5", "anthropic", true, true},
+		{"anthropic", "opus@stable", "claude-opus-5", "anthropic", true, true},
+		{"anthropic", "sonnet@latest", "claude-sonnet-5-5", "anthropic", true, true},
+		{"", "anthropic/opus@stable", "claude-opus-5", "anthropic", true, true},         // provider from prefix
+		{"openai", "anthropic/opus@latest", "claude-opus-5-5", "anthropic", true, true}, // prefix overrides node
+		{"anthropic", "bogus@latest", "", "anthropic", false, true},                     // alias, unresolvable
+		{"anthropic", "opus@newest", "", "", false, false},                              // bad selector → not an alias
+		{"anthropic", "claude-opus-5", "", "", false, false},                            // concrete id
+		{"anthropic", "", "", "", false, false},                                         // empty
 	}
 	for _, c := range cases {
 		concrete, provider, resolved, isAlias := ResolveModelRef(c.nodeProvider, c.modelValue)
