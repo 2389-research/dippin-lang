@@ -12,6 +12,7 @@
 package simulate
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -143,6 +144,14 @@ type simulator struct {
 	// map by a previously visited node. Recomputed per node in
 	// applyNodeDefaults; consulted by currentNodeFailed.
 	nodeOwnsOutcome bool
+
+	// answer is the --interactive answer typed at the human gate being
+	// visited (see recordGateAnswer); resolveByLabel consumes and clears it.
+	answer *gateAnswer
+
+	// stdin reads --interactive answers. One scanner serves every prompt so
+	// its read-ahead buffer is not lost between gates.
+	stdin *bufio.Scanner
 }
 
 const maxSteps = 500 // safety valve against infinite loops
@@ -277,8 +286,9 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveByLabel routes a human node by its answer: the context's
-// preferred_label, else the gate's default: (the answer tracker gives an
+// resolveByLabel routes a human node by its answer: an --interactive answer
+// typed at it, else the context's preferred_label, else the gate's default:
+// (the answer tracker gives an
 // unattended gate — --auto-approve, or a timeout with a default). The answer
 // is matched per tracker's rule (see matchGateAnswer: choice: then label:,
 // exact, case-insensitive). Returns nil if not a human node or no edge
@@ -289,9 +299,16 @@ func (s *simulator) resolveByLabel(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 		return nil
 	}
 	preferred := s.ctx["preferred_label"]
-	// Clear preferred_label so it doesn't leak to downstream human nodes.
+	// Clear preferred_label and any typed answer so neither leaks to a
+	// downstream human node.
 	delete(s.ctx, "preferred_label")
 	e := matchGateLabel(edges, preferred, gateDefault(hc))
+	if s.answer != nil {
+		// A typed answer decides the gate even when it matched no edge:
+		// tracker then routes without a label, never by default:.
+		e = s.answer.edge
+		s.answer = nil
+	}
 	if e != nil {
 		s.emitEdgeTraverse(e)
 	}
