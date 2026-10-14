@@ -455,7 +455,7 @@ dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-v
 | `--scenario key=val` | Inject context values (repeatable). Use `NodeID.key=val` for per-node overrides. |
 | `--interactive` | Prompt at human nodes instead of auto-selecting |
 | `--all-paths` | Enumerate all possible paths through the graph |
-| `--max-node-visits N` | Once a node has been visited more than N times, take its loop-exit edge instead of looping again. Use it for loops a fixed scenario can't end, such as a worklist drained by on-disk state. `dippin test` uses 3; the default 0 means no limit, so such loops stop at the 500-step cap with an error. Ignored by `--all-paths`. |
+| `--max-node-visits N` | Once a node has been visited more than N times, take its loop-exit edge instead of looping again. Use it for loops a fixed scenario can't end, such as a worklist drained by on-disk state. `dippin test` uses 3; the default 0 means no limit, so such loops stop at the 500-step cap with an error. Must be 0 or greater; combining a nonzero N with `--all-paths` is a usage error (exit 2), since path enumeration uses its own fixed revisit cap. |
 
 **Output**: JSONL (one JSON object per line) with event types:
 

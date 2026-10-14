@@ -34,9 +34,8 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 	if err := fs.Parse(args); err != nil {
 		return ExitUsageError
 	}
-	if fs.NArg() < 1 {
-		fmt.Fprintln(c.Stderr, "usage: dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] <file>")
-		return ExitUsageError
+	if code := c.checkSimulateArgs(fs.NArg(), *maxNodeVisits, *allPaths); code != ExitOK {
+		return code
 	}
 
 	path := fs.Arg(0)
@@ -50,6 +49,31 @@ func (c *CLI) CmdSimulate(args []string) ExitCode {
 		return c.simulateAllPaths(w, opts)
 	}
 	return c.simulateSingle(w, opts)
+}
+
+// checkSimulateArgs reports usage errors in the parsed simulate arguments: a
+// missing file argument or an invalid --max-node-visits.
+func (c *CLI) checkSimulateArgs(nArg, maxNodeVisits int, allPaths bool) ExitCode {
+	if nArg < 1 {
+		fmt.Fprintln(c.Stderr, "usage: dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] <file>")
+		return ExitUsageError
+	}
+	return c.checkMaxNodeVisits(maxNodeVisits, allPaths)
+}
+
+// checkMaxNodeVisits rejects a negative --max-node-visits and its use with
+// --all-paths. The path enumerator has its own fixed revisit cap and never
+// forces a loop's exit edge, so the flag would be silently ignored there.
+func (c *CLI) checkMaxNodeVisits(n int, allPaths bool) ExitCode {
+	if n < 0 {
+		fmt.Fprintf(c.Stderr, "--max-node-visits must be >= 0, got %d\n", n)
+		return ExitUsageError
+	}
+	if allPaths && n > 0 {
+		fmt.Fprintln(c.Stderr, "--max-node-visits cannot be combined with --all-paths")
+		return ExitUsageError
+	}
+	return ExitOK
 }
 
 // prepareSimulation loads and validates the workflow, then builds simulation options.

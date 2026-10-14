@@ -86,3 +86,34 @@ func TestReorderSimulateArgs_MaxNodeVisitsValue(t *testing.T) {
 		t.Errorf("reorderSimulateArgs = %v, want %v", got, want)
 	}
 }
+
+// A negative --max-node-visits is a usage error, not a silent "no limit".
+func TestCmdSimulate_MaxNodeVisitsNegative(t *testing.T) {
+	dipFile := writeWorklist(t)
+	for name, args := range map[string][]string{
+		"flag=value form": {"simulate", "--max-node-visits=-1", dipFile},
+		"separate value":  {"simulate", "--max-node-visits", "-2", dipFile},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, stderr, code := runCLI(t, args...)
+			if code != ExitUsageError {
+				t.Fatalf("expected exit %d, got %d; stderr: %s", ExitUsageError, code, stderr)
+			}
+			if !strings.Contains(stderr, "--max-node-visits must be >= 0") {
+				t.Errorf("expected a negative-value error, got: %s", stderr)
+			}
+		})
+	}
+}
+
+// --all-paths does not honor --max-node-visits, so combining them is a usage
+// error rather than a silently ignored flag.
+func TestCmdSimulate_MaxNodeVisitsWithAllPaths(t *testing.T) {
+	_, stderr, code := runCLI(t, "simulate", "--all-paths", "--max-node-visits", "3", writeWorklist(t))
+	if code != ExitUsageError {
+		t.Fatalf("expected exit %d, got %d; stderr: %s", ExitUsageError, code, stderr)
+	}
+	if !strings.Contains(stderr, "cannot be combined with --all-paths") {
+		t.Errorf("expected a flag-combination error, got: %s", stderr)
+	}
+}
