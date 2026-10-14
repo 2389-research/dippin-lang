@@ -46,7 +46,7 @@ func lintInterviewDefault(w *ir.Workflow) []Diagnostic {
 				Severity: SeverityWarning,
 				Message:  fmt.Sprintf("node %q is mode interview but has default %q which is ignored", n.ID, cfg.Default),
 				Location: n.Source,
-				Help:     "default is only meaningful for choice mode; remove it",
+				Help:     "default is only used by choice (or mode-less) and freeform gates; remove it",
 			})
 		}
 	}
@@ -90,11 +90,13 @@ func lintHumanChoiceKey(w *ir.Workflow) []Diagnostic {
 	return diags
 }
 
-// nonRoutingHumanModes are the human gate modes whose outgoing edge labels are
-// display text, not the routing key the runtime matches a selection against:
-// freeform takes open text, and interview collects answers (the same reason
-// DIP129 says "interview does not route by label"). DIP150 does not flag their
-// labeled edges. Every other mode — choice, yes_no, and the unset default (a
+// nonRoutingHumanModes are the human gate modes DIP150 does not flag:
+// interview collects answers and never routes by label (the same reason
+// DIP129 says "interview does not route by label"), and freeform takes open
+// text whose labels are offered as suggestions. Note tracker does route a
+// freeform gate when its answer (typed, or its default: on an unattended run)
+// equals an edge's choice:/label: exactly (case-insensitive) — the simulator
+// mirrors that — but a freeform gate is not expected to, so no hint. Every other mode — choice, yes_no, and the unset default (a
 // mode-less human gate with labeled edges is the canonical multi-choice gate) —
 // routes by label/selection in Phase 0.
 var nonRoutingHumanModes = map[string]bool{
