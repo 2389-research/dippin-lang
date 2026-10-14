@@ -20,8 +20,8 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 10,
       "output_per_m": 50,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -34,8 +34,8 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 10,
       "output_per_m": 50,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-09-02",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.025,
       "cache_write_mult": 1.25
     },
@@ -48,8 +48,8 @@
       "maturity": "stable",
       "input_per_m": 0.8,
       "output_per_m": 4,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25,
       "deprecated": true
@@ -66,8 +66,8 @@
       "maturity": "stable",
       "input_per_m": 1,
       "output_per_m": 5,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -80,8 +80,8 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 10,
       "output_per_m": 50,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -94,7 +94,7 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "priced": false,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-21"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "anthropic",
@@ -105,8 +105,8 @@
       "maturity": "stable",
       "input_per_m": 15,
       "output_per_m": 75,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25,
       "deprecated": true
@@ -120,8 +120,8 @@
       "maturity": "stable",
       "input_per_m": 15,
       "output_per_m": 75,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25,
       "deprecated": true
@@ -138,8 +138,8 @@
       "maturity": "stable",
       "input_per_m": 5,
       "output_per_m": 25,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -155,8 +155,8 @@
       "maturity": "stable",
       "input_per_m": 5,
       "output_per_m": 25,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -172,8 +172,8 @@
       "maturity": "stable",
       "input_per_m": 5,
       "output_per_m": 25,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -189,8 +189,8 @@
       "maturity": "stable",
       "input_per_m": 5,
       "output_per_m": 25,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -206,8 +206,8 @@
       "maturity": "stable",
       "input_per_m": 5,
       "output_per_m": 25,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -220,8 +220,8 @@
       "maturity": "stable",
       "input_per_m": 3,
       "output_per_m": 15,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25,
       "deprecated": true
@@ -239,7 +239,7 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -255,8 +255,8 @@
       "maturity": "stable",
       "input_per_m": 3,
       "output_per_m": 15,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -270,11 +270,76 @@
       "family": "sonnet",
       "rank": 50,
       "maturity": "stable",
-      "input_per_m": 3,
-      "output_per_m": 15,
-      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "as_of": "2026-08-10",
+      "input_per_m": 2,
+      "output_per_m": 10,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-opus-5-5",
+      "display_name": "Claude Opus 5.5",
+      "context_window": 1000000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "family": "opus",
+      "rank": 55,
+      "maturity": "stable",
+      "input_per_m": 4,
+      "output_per_m": 20,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.05,
+      "cache_write_mult": 1.25
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "display_name": "Claude Sonnet 5.5",
+      "context_window": 1000000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "family": "sonnet",
+      "rank": 55,
+      "maturity": "stable",
+      "input_per_m": 2,
+      "output_per_m": 10,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.05,
+      "cache_write_mult": 1.25
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "display_name": "Claude Haiku 5.5",
+      "context_window": 1000000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "family": "haiku",
+      "rank": 55,
+      "maturity": "stable",
+      "input_per_m": 0.1,
+      "output_per_m": 0.5,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-mythos-5-1",
+      "display_name": "Claude Mythos 5.1",
+      "context_window": 1000000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 10,
+      "output_per_m": 50,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.025,
       "cache_write_mult": 1.25
     },
     {
@@ -300,8 +365,8 @@
       "deprecated": true,
       "input_per_m": 0.5,
       "output_per_m": 1.5,
-      "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-08-10",
+      "source": "https://cohere.com/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -311,10 +376,10 @@
       "context_window": 128000,
       "max_output": 4000,
       "capabilities": ["tools"],
-      "input_per_m": 0.5,
-      "output_per_m": 1.5,
-      "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-08-10",
+      "input_per_m": 0.15,
+      "output_per_m": 0.6,
+      "source": "https://cohere.com/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -325,10 +390,10 @@
       "max_output": 4000,
       "capabilities": ["tools"],
       "deprecated": true,
-      "input_per_m": 2.5,
-      "output_per_m": 10,
-      "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-08-10",
+      "input_per_m": 3,
+      "output_per_m": 15,
+      "source": "https://cohere.com/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -340,8 +405,8 @@
       "capabilities": ["tools"],
       "input_per_m": 2.5,
       "output_per_m": 10,
-      "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-08-10",
+      "source": "https://cohere.com/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -350,8 +415,8 @@
       "display_name": "Command R7B",
       "input_per_m": 0.0375,
       "output_per_m": 0.15,
-      "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-08-10",
+      "source": "https://cohere.com/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -363,8 +428,8 @@
       "capabilities": ["tools"],
       "input_per_m": 0.0375,
       "output_per_m": 0.15,
-      "source": "https://docs.cohere.com/docs/models",
-      "as_of": "2026-08-10",
+      "source": "https://cohere.com/pricing",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -374,7 +439,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-09-18",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.006,
       "deprecated": true
     },
@@ -385,7 +450,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-09-18",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.006,
       "deprecated": true
     },
@@ -399,7 +464,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-09-18",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.006
     },
     {
@@ -412,7 +477,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-09-18",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.006,
       "deprecated": true
     },
@@ -426,7 +491,7 @@
       "input_per_m": 1.32,
       "output_per_m": 3.96,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-09-18",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.044
     },
     {
@@ -439,7 +504,7 @@
       "input_per_m": 1.32,
       "output_per_m": 3.96,
       "source": "https://api-docs.deepseek.com/quick_start/pricing",
-      "as_of": "2026-09-18",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.044
     },
     {
@@ -453,7 +518,7 @@
       "input_per_m": 0.1,
       "output_per_m": 0.4,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -466,7 +531,7 @@
       "input_per_m": 0.3,
       "output_per_m": 2.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -479,7 +544,7 @@
       "input_per_m": 0.1,
       "output_per_m": 0.4,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -492,7 +557,7 @@
       "input_per_m": 1.25,
       "output_per_m": 10,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -505,7 +570,7 @@
       "input_per_m": 0.5,
       "output_per_m": 3,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -518,7 +583,7 @@
       "input_per_m": 0.25,
       "output_per_m": 1.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -531,7 +596,7 @@
       "input_per_m": 0.25,
       "output_per_m": 1.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -544,7 +609,7 @@
       "input_per_m": 2,
       "output_per_m": 12,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -553,7 +618,7 @@
       "input_per_m": 2,
       "output_per_m": 12,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -567,7 +632,8 @@
       "output_per_m": 9,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
       "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "cache_read_mult": 0.1,
+      "deprecated": true
     },
     {
       "provider": "gemini",
@@ -579,7 +645,7 @@
       "input_per_m": 0.3,
       "output_per_m": 2.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -592,7 +658,7 @@
       "input_per_m": 1.5,
       "output_per_m": 7.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -605,8 +671,9 @@
       "input_per_m": 1.5,
       "output_per_m": 7.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-09-02",
-      "cache_read_mult": 0.1
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "deprecated": true
     },
     {
       "provider": "gemini",
@@ -618,8 +685,21 @@
       "input_per_m": 1.5,
       "output_per_m": 7.5,
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "as_of": "2026-09-02",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-4-argon",
+      "display_name": "Gemini 4 Argon",
+      "context_window": 1048576,
+      "max_output": 65536,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 4,
+      "output_per_m": 20,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.05
     },
     {
       "provider": "grok",
@@ -627,7 +707,8 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-25"
+      "as_of": "2026-08-25",
+      "deprecated": true
     },
     {
       "provider": "grok",
@@ -635,7 +716,8 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-25"
+      "as_of": "2026-08-25",
+      "deprecated": true
     },
     {
       "provider": "grok",
@@ -645,7 +727,7 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.2
     },
     {
@@ -656,7 +738,7 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.2
     },
     {
@@ -667,7 +749,7 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-12",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.2
     },
     {
@@ -679,7 +761,7 @@
       "input_per_m": 1.25,
       "output_per_m": 2.5,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.2
     },
     {
@@ -691,7 +773,7 @@
       "input_per_m": 2,
       "output_per_m": 6,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.3
     },
     {
@@ -703,7 +785,7 @@
       "input_per_m": 2,
       "output_per_m": 6,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-12",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.5
     },
     {
@@ -714,8 +796,20 @@
       "input_per_m": 1,
       "output_per_m": 2,
       "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-12",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.2
+    },
+    {
+      "provider": "grok",
+      "model": "grok-4.7",
+      "display_name": "Grok 4.7",
+      "context_window": 500000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 2,
+      "output_per_m": 6,
+      "source": "https://docs.x.ai/docs/models",
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.5
     },
     {
       "provider": "minimax",
@@ -726,7 +820,8 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14",
+      "deprecated": true
     },
     {
       "provider": "minimax",
@@ -737,7 +832,8 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14",
+      "deprecated": true
     },
     {
       "provider": "minimax",
@@ -748,7 +844,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "minimax",
@@ -759,7 +855,7 @@
       "input_per_m": 0.6,
       "output_per_m": 2.4,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-09-02"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "minimax",
@@ -770,7 +866,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "minimax",
@@ -781,7 +877,7 @@
       "input_per_m": 0.6,
       "output_per_m": 2.4,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "minimax",
@@ -792,7 +888,7 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "mistral",
@@ -801,9 +897,12 @@
       "capabilities": ["tools"],
       "input_per_m": 0.3,
       "output_per_m": 0.9,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/inference/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "aliases": [
+        "codestral-2508"
+      ]
     },
     {
       "provider": "mistral",
@@ -812,9 +911,10 @@
       "capabilities": ["tools", "reasoning"],
       "input_per_m": 2,
       "output_per_m": 5,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/models/magistral-medium-1-2-25-09",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "deprecated": true
     },
     {
       "provider": "mistral",
@@ -823,9 +923,12 @@
       "capabilities": ["tools", "vision"],
       "input_per_m": 0.2,
       "output_per_m": 0.2,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/models/ministral-3-14b-25-12",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "aliases": [
+        "ministral-14b-2512"
+      ]
     },
     {
       "provider": "mistral",
@@ -834,9 +937,12 @@
       "capabilities": ["tools", "vision"],
       "input_per_m": 0.1,
       "output_per_m": 0.1,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/models/ministral-3-3b-25-12",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "aliases": [
+        "ministral-3b-2512"
+      ]
     },
     {
       "provider": "mistral",
@@ -845,9 +951,12 @@
       "capabilities": ["tools", "vision"],
       "input_per_m": 0.15,
       "output_per_m": 0.15,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/models/ministral-3-8b-25-12",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "aliases": [
+        "ministral-8b-2512"
+      ]
     },
     {
       "provider": "mistral",
@@ -856,8 +965,8 @@
       "deprecated": true,
       "input_per_m": 0.1,
       "output_per_m": 0.1,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
+      "source": "https://docs.mistral.ai/models/ministral-8b-24-1",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -867,19 +976,22 @@
       "capabilities": ["tools", "vision"],
       "input_per_m": 0.5,
       "output_per_m": 1.5,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/models/mistral-large-3-25-12",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "context_window": 256000
     },
     {
       "provider": "mistral",
       "model": "mistral-medium-3",
-      "display_name": "Mistral Medium 3",
-      "input_per_m": 0.4,
-      "output_per_m": 2,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "display_name": "Mistral Medium 3.5",
+      "input_per_m": 1.5,
+      "output_per_m": 7.5,
+      "source": "https://docs.mistral.ai/models/mistral-medium-3-5-26-04",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "context_window": 256000,
+      "capabilities": ["tools", "vision", "reasoning"]
     },
     {
       "provider": "mistral",
@@ -889,8 +1001,8 @@
       "deprecated": true,
       "input_per_m": 0.4,
       "output_per_m": 2,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
+      "source": "https://docs.mistral.ai/models/mistral-medium-3-1-25-08",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
@@ -900,41 +1012,71 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1.5,
       "output_per_m": 7.5,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "source": "https://docs.mistral.ai/models/mistral-medium-3-5-26-04",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "context_window": 256000
     },
     {
       "provider": "mistral",
       "model": "mistral-nemo",
       "display_name": "Mistral Nemo 12B",
       "deprecated": true,
-      "input_per_m": 0.02,
-      "output_per_m": 0.04,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
+      "input_per_m": 0.15,
+      "output_per_m": 0.15,
+      "source": "https://docs.mistral.ai/models/mistral-nemo-12b-24-07",
+      "as_of": "2026-10-14",
       "cache_read_mult": 1
     },
     {
       "provider": "mistral",
       "model": "mistral-small",
       "capabilities": ["tools", "reasoning"],
-      "input_per_m": 0.1,
-      "output_per_m": 0.3,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "input_per_m": 0.15,
+      "output_per_m": 0.6,
+      "source": "https://docs.mistral.ai/models/mistral-small-4-0-26-03",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "mistral",
       "model": "mistral-small-2603",
       "display_name": "Mistral Small 4",
       "capabilities": ["tools", "reasoning"],
-      "input_per_m": 0.1,
-      "output_per_m": 0.3,
-      "source": "https://docs.mistral.ai/getting-started/models/models_overview/",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 1
+      "input_per_m": 0.15,
+      "output_per_m": 0.6,
+      "source": "https://docs.mistral.ai/models/mistral-small-4-0-26-03",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "context_window": 256000
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-large-4",
+      "display_name": "Mistral Large 4",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "maturity": "preview",
+      "input_per_m": 1.36,
+      "output_per_m": 4.18,
+      "source": "https://docs.mistral.ai/models/mistral-large-4-0",
+      "as_of": "2026-10-14",
+      "aliases": [
+        "mistral-large-4-0"
+      ],
+      "cached_input_per_m": 0.14
+    },
+    {
+      "provider": "mistral",
+      "model": "mistral-medium-3-5",
+      "display_name": "Mistral Medium 3.5",
+      "context_window": 256000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 1.5,
+      "output_per_m": 7.5,
+      "source": "https://docs.mistral.ai/models/mistral-medium-3-5-26-04",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "moonshot",
@@ -945,8 +1087,44 @@
       "input_per_m": 3,
       "output_per_m": 15,
       "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.3
+    },
+    {
+      "provider": "moonshot",
+      "model": "kimi-k2.6",
+      "display_name": "Kimi K2.6",
+      "context_window": 262144,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 0.95,
+      "output_per_m": 4,
+      "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.16
+    },
+    {
+      "provider": "moonshot",
+      "model": "kimi-k2.7-code",
+      "display_name": "Kimi K2.7 Code",
+      "context_window": 262144,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 0.95,
+      "output_per_m": 4,
+      "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.19
+    },
+    {
+      "provider": "moonshot",
+      "model": "kimi-k2.7-code-highspeed",
+      "display_name": "Kimi K2.7 Code (highspeed)",
+      "context_window": 262144,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 1.9,
+      "output_per_m": 8,
+      "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.38
     },
     {
       "provider": "openai",
@@ -958,7 +1136,7 @@
       "input_per_m": 2,
       "output_per_m": 8,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.25
     },
     {
@@ -971,7 +1149,7 @@
       "input_per_m": 0.4,
       "output_per_m": 1.6,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.25
     },
     {
@@ -984,7 +1162,7 @@
       "input_per_m": 0.1,
       "output_per_m": 0.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.25
     },
     {
@@ -997,7 +1175,7 @@
       "input_per_m": 2.5,
       "output_per_m": 10,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.5
     },
     {
@@ -1010,7 +1188,7 @@
       "input_per_m": 0.15,
       "output_per_m": 0.6,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.5
     },
     {
@@ -1023,7 +1201,7 @@
       "input_per_m": 1.25,
       "output_per_m": 10,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1036,7 +1214,7 @@
       "input_per_m": 0.25,
       "output_per_m": 2,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1049,7 +1227,7 @@
       "input_per_m": 0.05,
       "output_per_m": 0.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1061,9 +1239,9 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 15,
       "output_per_m": 120,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "source": "https://developers.openai.com/api/docs/models/gpt-5-pro",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 1
     },
     {
       "provider": "openai",
@@ -1075,7 +1253,7 @@
       "input_per_m": 1.25,
       "output_per_m": 10,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1088,7 +1266,7 @@
       "input_per_m": 1.75,
       "output_per_m": 14,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "aliases": [
         "gpt-5.2-codex"
       ],
@@ -1103,9 +1281,9 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 21,
       "output_per_m": 168,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.2-pro",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 1
     },
     {
       "provider": "openai",
@@ -1116,8 +1294,8 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 1.75,
       "output_per_m": 14,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.3-codex",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1130,7 +1308,7 @@
       "input_per_m": 2.5,
       "output_per_m": 15,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1143,7 +1321,7 @@
       "input_per_m": 0.75,
       "output_per_m": 4.5,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1156,7 +1334,7 @@
       "input_per_m": 0.2,
       "output_per_m": 1.25,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1169,8 +1347,8 @@
       "input_per_m": 30,
       "output_per_m": 180,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "as_of": "2026-10-14",
+      "cache_read_mult": 1
     },
     {
       "provider": "openai",
@@ -1182,7 +1360,7 @@
       "input_per_m": 5,
       "output_per_m": 30,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1
     },
     {
@@ -1194,9 +1372,9 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 30,
       "output_per_m": 180,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.5-pro",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 1
     },
     {
       "provider": "openai",
@@ -1207,9 +1385,10 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 0.2,
       "output_per_m": 1.2,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "openai",
@@ -1220,8 +1399,8 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 4,
       "output_per_m": 20,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-09-08",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
       "cache_write_mult": 1.25
     },
@@ -1234,22 +1413,24 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 2,
       "output_per_m": 12,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "openai",
       "model": "gpt-6-astra",
       "display_name": "GPT-6 Astra",
       "context_window": 1050000,
-      "capabilities": ["vision"],
+      "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 10,
       "output_per_m": 50,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-09-08",
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "as_of": "2026-10-14",
       "cache_read_mult": 0.1,
-      "cache_write_mult": 1.25
+      "cache_write_mult": 1.25,
+      "max_output": 128000
     },
     {
       "provider": "openai",
@@ -1261,8 +1442,8 @@
       "input_per_m": 2,
       "output_per_m": 8,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.25
     },
     {
       "provider": "openai",
@@ -1274,8 +1455,8 @@
       "input_per_m": 1.1,
       "output_per_m": 4.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.5
     },
     {
       "provider": "openai",
@@ -1286,9 +1467,9 @@
       "capabilities": ["tools", "vision", "reasoning"],
       "input_per_m": 20,
       "output_per_m": 80,
-      "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "source": "https://developers.openai.com/api/docs/models/o3-pro",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 1
     },
     {
       "provider": "openai",
@@ -1300,8 +1481,50 @@
       "input_per_m": 1.1,
       "output_per_m": 4.4,
       "source": "https://developers.openai.com/api/docs/pricing",
-      "as_of": "2026-08-10",
-      "cache_read_mult": 0.1
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.25
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "display_name": "GPT-6 Luna",
+      "context_window": 1050000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 0.1,
+      "output_per_m": 0.5,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "display_name": "GPT-6 Sol",
+      "context_window": 1050000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 2,
+      "output_per_m": 10,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6.1-sol",
+      "display_name": "GPT-6.1 Sol",
+      "context_window": 1050000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 2,
+      "output_per_m": 10,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.05,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "qwen",
@@ -1309,9 +1532,12 @@
       "context_window": 1000000,
       "max_output": 65536,
       "capabilities": ["tools", "vision", "reasoning"],
-      "priced": false,
-      "source": "https://www.alibabacloud.com/help/en/model-studio/models",
-      "as_of": "2026-08-07"
+      "input_per_m": 0.25,
+      "output_per_m": 1.5,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
     },
     {
       "provider": "qwen",
@@ -1319,9 +1545,11 @@
       "context_window": 1000000,
       "max_output": 65536,
       "capabilities": ["tools", "reasoning"],
-      "priced": false,
-      "source": "https://www.alibabacloud.com/help/en/model-studio/models",
-      "as_of": "2026-08-07"
+      "input_per_m": 2.5,
+      "output_per_m": 7.5,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.2
     },
     {
       "provider": "qwen",
@@ -1334,6 +1562,46 @@
       "as_of": "2026-08-07"
     },
     {
+      "provider": "qwen",
+      "model": "qwen3.8-max",
+      "capabilities": ["reasoning"],
+      "input_per_m": 2,
+      "output_per_m": 6,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-14",
+      "aliases": [
+        "qwen3.8-max-0902"
+      ]
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.8-flash",
+      "input_per_m": 0.15,
+      "output_per_m": 0.47,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-14"
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.7-flash",
+      "input_per_m": 0.03,
+      "output_per_m": 0.13,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.2
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.6-plus",
+      "capabilities": ["reasoning"],
+      "input_per_m": 0.5,
+      "output_per_m": 3,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-14",
+      "cache_read_mult": 0.1,
+      "cache_write_mult": 1.25
+    },
+    {
       "provider": "zai",
       "model": "glm-4.5",
       "display_name": "GLM-4.5",
@@ -1343,7 +1611,7 @@
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.11
     },
     {
@@ -1356,7 +1624,7 @@
       "input_per_m": 0.2,
       "output_per_m": 1.1,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.03
     },
     {
@@ -1369,7 +1637,7 @@
       "input_per_m": 1.1,
       "output_per_m": 4.5,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.22
     },
     {
@@ -1381,7 +1649,7 @@
       "capabilities": ["tools", "reasoning"],
       "priced": false,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "zai",
@@ -1393,7 +1661,7 @@
       "input_per_m": 2.2,
       "output_per_m": 8.9,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.45
     },
     {
@@ -1406,7 +1674,7 @@
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.11
     },
     {
@@ -1419,7 +1687,7 @@
       "input_per_m": 0.6,
       "output_per_m": 2.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.11
     },
     {
@@ -1431,7 +1699,7 @@
       "capabilities": ["tools", "reasoning"],
       "priced": false,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-07"
+      "as_of": "2026-10-14"
     },
     {
       "provider": "zai",
@@ -1443,7 +1711,7 @@
       "input_per_m": 0.07,
       "output_per_m": 0.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.01
     },
     {
@@ -1456,7 +1724,7 @@
       "input_per_m": 1,
       "output_per_m": 3.2,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.2
     },
     {
@@ -1482,7 +1750,7 @@
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.26
     },
     {
@@ -1495,7 +1763,7 @@
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-08-10",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.26
     },
     {
@@ -1508,19 +1776,34 @@
       "input_per_m": 1.4,
       "output_per_m": 4.4,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-09-02",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.26
     },
     {
       "provider": "zai",
       "model": "glm-5.3-flash",
       "display_name": "GLM-5.3-Flash",
-      "capabilities": ["tools", "reasoning"],
+      "capabilities": ["tools", "reasoning", "vision"],
       "input_per_m": 0.15,
       "output_per_m": 0.5,
       "source": "https://docs.z.ai/guides/overview/pricing",
-      "as_of": "2026-09-18",
-      "cached_input_per_m": 0.03
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.03,
+      "context_window": 1048576,
+      "max_output": 131072
+    },
+    {
+      "provider": "zai",
+      "model": "glm-5.3-flashx",
+      "display_name": "GLM-5.3-FlashX",
+      "context_window": 1048576,
+      "max_output": 131072,
+      "capabilities": ["tools", "reasoning", "vision"],
+      "input_per_m": 0.37,
+      "output_per_m": 1.25,
+      "source": "https://docs.z.ai/guides/overview/pricing",
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.075
     },
     {
       "provider": "meta",
@@ -1529,8 +1812,8 @@
       "context_window": 1000000,
       "input_per_m": 1.25,
       "output_per_m": 4.25,
-      "source": "https://developer.meta.com/ai/products/meta-model-api/",
-      "as_of": "2026-09-02",
+      "source": "https://dev.meta.ai/products/meta-model-api/",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.15,
       "family": "muse-spark",
       "rank": 1
@@ -1542,8 +1825,8 @@
       "context_window": 1000000,
       "input_per_m": 1.25,
       "output_per_m": 4.25,
-      "source": "https://developer.meta.com/ai/products/meta-model-api/",
-      "as_of": "2026-09-02",
+      "source": "https://dev.meta.ai/products/meta-model-api/",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.15,
       "family": "muse-spark",
       "rank": 2
@@ -1555,8 +1838,8 @@
       "context_window": 1000000,
       "input_per_m": 0.1,
       "output_per_m": 0.2,
-      "source": "https://developer.meta.com/ai/products/meta-model-api/",
-      "as_of": "2026-09-02",
+      "source": "https://dev.meta.ai/products/meta-model-api/",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.002
     },
     {
@@ -1566,8 +1849,8 @@
       "context_window": 1000000,
       "input_per_m": 1.25,
       "output_per_m": 4.25,
-      "source": "https://developer.meta.com/ai/products/meta-model-api/",
-      "as_of": "2026-09-02",
+      "source": "https://dev.meta.ai/products/meta-model-api/",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.15,
       "family": "muse-spark",
       "rank": 3
@@ -1579,9 +1862,24 @@
       "context_window": 1000000,
       "input_per_m": 0.1,
       "output_per_m": 0.2,
-      "source": "https://developer.meta.com/ai/products/meta-model-api/",
-      "as_of": "2026-09-02",
+      "source": "https://dev.meta.ai/products/meta-model-api/",
+      "as_of": "2026-10-14",
       "cached_input_per_m": 0.002
+    },
+    {
+      "provider": "meta",
+      "model": "muse-wonder-1.0",
+      "display_name": "Muse Wonder 1.0",
+      "context_window": 1000000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "family": "muse-wonder",
+      "rank": 1,
+      "maturity": "preview",
+      "input_per_m": 4,
+      "output_per_m": 20,
+      "source": "https://dev.meta.ai/products/meta-model-api/",
+      "as_of": "2026-10-14",
+      "cached_input_per_m": 0.2
     }
   ]
 }

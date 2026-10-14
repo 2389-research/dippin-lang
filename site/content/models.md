@@ -118,7 +118,7 @@ An `agent`'s `model:` may be a **family alias** instead of a concrete id:
 or the self-contained `anthropic/opus@stable`. It lets an author say "the current
 top Opus" rather than pinning an id that silently rots when the provider retires a
 model. `dippin fmt` **pins** a resolvable alias in place to its concrete catalog
-id (author-time, one-way — e.g. `opus@latest` → `claude-opus-5`); after that the
+id (author-time, one-way — e.g. `opus@latest` → `claude-opus-5-5`); after that the
 value is a normal id and prices/lints like any other. Resolution excludes
 deprecated, preview, and unpriced members, so an alias can never pin to a retired
 or unpriced model. An alias that resolves to nothing is left untouched by `fmt`
