@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 	"sync/atomic"
 
 	"github.com/2389-research/dippin-lang/event"
@@ -293,28 +292,19 @@ func (s *simulator) resolveGate(node *ir.Node, edges []*ir.Edge) *ir.Edge {
 	if !ok {
 		return nil
 	}
-	chosen := findEdgeByLabel(edges, s.gateLabel(hc))
+	preferred := s.ctx["preferred_label"]
 	// Clear preferred_label so it doesn't leak to downstream human nodes.
 	delete(s.ctx, "preferred_label")
+	chosen := matchGateLabel(edges, preferred, gateDefault(hc))
 	if chosen == nil {
 		return nil
 	}
 	if s.shouldBreakLoop(node.ID) {
 		s.emitLoopBreak(node.ID)
-		chosen = gateExitEdge(edges, chosen, findEdgeByLabel(edges, hc.Default))
+		chosen = gateExitEdge(edges, chosen, matchGateAnswer(edges, gateDefault(hc)))
 	}
 	s.emitEdgeTraverse(chosen)
 	return chosen
-}
-
-// gateLabel is the answer a human gate gets on this visit: the context's
-// preferred_label, else the gate's default:, the answer tracker gives an
-// unattended gate (--auto-approve, or a timeout with a default).
-func (s *simulator) gateLabel(hc ir.HumanConfig) string {
-	if label := s.ctx["preferred_label"]; label != "" {
-		return label
-	}
-	return hc.Default
 }
 
 // gateExitEdge picks the way out of a gate loop: the default: edge unless it
@@ -331,20 +321,17 @@ func gateExitEdge(edges []*ir.Edge, looping, def *ir.Edge) *ir.Edge {
 	return edges[0]
 }
 
-// findEdgeByLabel returns the first edge whose label contains target
-// (case-insensitive), or nil when target is empty or no label matches. This
-// allows "yes" to match "[Y] Yes".
-func findEdgeByLabel(edges []*ir.Edge, target string) *ir.Edge {
-	if target == "" {
-		return nil
+// matchGateLabel picks the edge for a gate's answer: a scenario
+// preferred_label when set (exact match, then the legacy label-substring
+// convenience), else the gate's default: (exact match only).
+func matchGateLabel(edges []*ir.Edge, preferred, def string) *ir.Edge {
+	if preferred == "" {
+		return matchGateAnswer(edges, def)
 	}
-	lower := strings.ToLower(target)
-	for _, e := range edges {
-		if strings.Contains(strings.ToLower(e.Label), lower) {
-			return e
-		}
+	if e := matchGateAnswer(edges, preferred); e != nil {
+		return e
 	}
-	return nil
+	return findEdgeByLabelSubstring(edges, preferred)
 }
 
 // resolveConditionalNext handles edge resolution for nodes with multiple

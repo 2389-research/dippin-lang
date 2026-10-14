@@ -1,6 +1,9 @@
 package simulate
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // gateDefaultSrc builds a workflow whose Review gate offers "approve" (first
 // edge) and "hold" (second edge). defaultField is spliced into the gate body,
@@ -57,11 +60,49 @@ func TestGateDefault_UnattendedRunTakesDefault(t *testing.T) {
 	assertPathNotContains(t, path, "Ship")
 }
 
-// Tracker's auto-approve also answers a freeform gate with its default:.
-func TestGateDefault_FreeformGateTakesDefault(t *testing.T) {
-	path := runGateDefault(t, gateDefaultSrc("freeform", `    default: "hold"`), nil)
+// Tracker's auto-approve also answers a freeform gate with its default:
+// (AutoApproveFreeformInterviewer.AskFreeformWithLabels), and a mode-less gate
+// is a choice gate there.
+func TestGateDefault_FreeformAndUnsetModeTakeDefault(t *testing.T) {
+	for _, mode := range []string{"freeform", ""} {
+		src := gateDefaultSrc(mode, `    default: "hold"`)
+		if mode == "" {
+			src = strings.Replace(src, "    mode: \n", "", 1)
+		}
+		path := runGateDefault(t, src, nil)
+		assertPathContains(t, path, "Hold")
+		assertPathNotContains(t, path, "Ship")
+	}
+}
+
+// Tracker's yes_no gate never consults default: (executeYesNo offers Yes/No
+// with no default), so the simulator does not route by it there either.
+func TestGateDefault_YesNoIgnoresDefault(t *testing.T) {
+	path := runGateDefault(t, gateDefaultSrc("yes_no", `    default: "hold"`), nil)
+	assertPathContains(t, path, "Ship")
+	assertPathNotContains(t, path, "Hold")
+}
+
+// default: routes by an edge's choice: key before its label: (tracker's
+// edgeRoutingKey; ir.Edge.Choice, #130).
+func TestGateDefault_MatchesChoiceKey(t *testing.T) {
+	src := strings.NewReplacer(
+		`Review -> Ship  label: "approve"`, `Review -> Hold  label: "Put on hold"  choice: "hold"`,
+		`Review -> Hold  label: "hold"`, `Review -> Ship  label: "Ship now"  choice: "approve"`,
+	).Replace(gateDefaultSrc("choice", `    default: "approve"`))
+	path := runGateDefault(t, src, nil)
+	assertPathContains(t, path, "Ship")
+	assertPathNotContains(t, path, "Hold")
+}
+
+// A default: picks an edge only on an exact (case-insensitive) match, as in
+// tracker; it is not a substring of a label.
+func TestGateDefault_NoSubstringMatch(t *testing.T) {
+	path := runGateDefault(t, gateDefaultSrc("choice", `    default: "ol"`), nil)
+	assertPathContains(t, path, "Ship")
+	assertPathNotContains(t, path, "Hold")
+	path = runGateDefault(t, gateDefaultSrc("choice", `    default: "HOLD"`), nil)
 	assertPathContains(t, path, "Hold")
-	assertPathNotContains(t, path, "Ship")
 }
 
 func TestGateDefault_PreferredLabelOverridesDefault(t *testing.T) {
