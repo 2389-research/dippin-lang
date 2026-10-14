@@ -410,7 +410,7 @@ warning[DIP108]: unknown model/provider combination
 edge router has an id the static catalog cannot know. Declare the provider as
 `openai-compat` and DIP108 stays quiet for *any* model id under it — the model is
 treated as known-but-unpriced (`Priced=false`, `$0` in `dippin cost`), the same
-state a Qwen catalog entry carries. No `--extra-models` spec is needed. The
+state an unpriced catalog entry like `qwen3.7-plus` carries. No `--extra-models` spec is needed. The
 exemption is scoped to that provider name: `openai` with an uncatalogued id, or an
 undeclared gateway name, still fires DIP108. An id containing `@` under
 `openai-compat` is an opaque id, not a family alias (no DIP162).
@@ -1608,7 +1608,7 @@ An `agent` node's `model:` is a **family alias** — `[<provider>/]<family>@<sel
 `latest`, `stable`, or `sota`. The alias lets an author say "the current top
 Opus" instead of pinning a concrete id that silently rots when a provider retires
 a model. `dippin fmt` resolves a valid alias **in place** (author-time, one-way)
-to its concrete catalog id — e.g. `opus@latest` → `claude-opus-5` — and the
+to its concrete catalog id — e.g. `opus@latest` → `claude-opus-5-5` — and the
 resolution excludes any deprecated, preview, or unpriced member.
 
 DIP162 fires when an alias resolves to **no eligible model**: the family is

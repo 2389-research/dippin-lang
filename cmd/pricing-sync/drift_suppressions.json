@@ -1,37 +1,5 @@
 [
   {
-    "provider": "anthropic",
-    "model": "claude-sonnet-5",
-    "kind": "price",
-    "aggregator_value": "2/10",
-    "reason": "models.dev reports the introductory rate; catalog 3/15 is the durable list price. Dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
-  },
-  {
-    "provider": "cohere",
-    "model": "command-r-08-2024",
-    "kind": "price",
-    "aggregator_value": "0.15/0.6",
-    "reason": "Cohere's official pricing page is JS-gated and not machine-verifiable; catalog value is the last human-verified rate. Dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
-  },
-  {
-    "provider": "mistral",
-    "model": "mistral-nemo",
-    "kind": "price",
-    "aggregator_value": "0.15/0.15",
-    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable; catalog value is the last human-verified rate. Dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
-  },
-  {
-    "provider": "mistral",
-    "model": "mistral-small-2603",
-    "kind": "price",
-    "aggregator_value": "0.15/0.6",
-    "reason": "Mistral's official pricing page is JS-gated and not machine-verifiable; catalog value is the last human-verified rate. Dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
-  },
-  {
     "provider": "gemini",
     "model": "gemini-3.6-flash",
     "kind": "price",
@@ -44,48 +12,40 @@
     "model": "gemini-2.0-flash",
     "kind": "deprecated",
     "aggregator_value": "deprecated",
-    "reason": "models.dev flags this deprecated, but it remains callable on the first-party Google API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
+    "reason": "Shut down on the first-party Gemini API (changelog: gemini-2.0-flash 2026-06-01, gemini-3.1-flash-lite-preview 2026-05-25); the catalog already marks it deprecated and keeps it priced for passthrough. Aggregator agrees; nothing to change.",
+    "review_by": "2027-01-15"
   },
   {
     "provider": "gemini",
     "model": "gemini-3.1-flash-lite-preview",
     "kind": "deprecated",
     "aggregator_value": "deprecated",
-    "reason": "models.dev flags this deprecated, but it remains callable on the first-party Google API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
-  },
-  {
-    "provider": "openai",
-    "model": "gpt-5.6-sol",
-    "kind": "price",
-    "aggregator_value": "4/20",
-    "reason": "models.dev reports an introductory rate; catalog 5/30 remains the durable list price from OpenAI's pricing page.",
-    "review_by": "2026-11-23"
+    "reason": "Shut down on the first-party Gemini API (changelog: gemini-2.0-flash 2026-06-01, gemini-3.1-flash-lite-preview 2026-05-25); the catalog already marks it deprecated and keeps it priced for passthrough. Aggregator agrees; nothing to change.",
+    "review_by": "2027-01-15"
   },
   {
     "provider": "openai",
     "model": "gpt-4.1-nano",
     "kind": "deprecated",
     "aggregator_value": "deprecated",
-    "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
+    "reason": "OpenAI's deprecations page schedules shutdown for 2026-10-23; the model is still callable on the first-party API until then, and the catalog's Deprecated flag means already retired (#224). Re-surfaces after shutdown so the entry can be flipped.",
+    "review_by": "2026-10-24"
   },
   {
     "provider": "openai",
     "model": "o3-mini",
     "kind": "deprecated",
     "aggregator_value": "deprecated",
-    "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
+    "reason": "OpenAI's deprecations page schedules shutdown for 2026-10-23; the model is still callable on the first-party API until then, and the catalog's Deprecated flag means already retired (#224). Re-surfaces after shutdown so the entry can be flipped.",
+    "review_by": "2026-10-24"
   },
   {
     "provider": "openai",
     "model": "o4-mini",
     "kind": "deprecated",
     "aggregator_value": "deprecated",
-    "reason": "models.dev flags this deprecated, but it remains callable on the first-party OpenAI API. Unreliable aggregator deprecation flag; dispositioned in the #201/#206 triage.",
-    "review_by": "2026-11-08"
+    "reason": "OpenAI's deprecations page schedules shutdown for 2026-10-23; the model is still callable on the first-party API until then, and the catalog's Deprecated flag means already retired (#224). Re-surfaces after shutdown so the entry can be flipped.",
+    "review_by": "2026-10-24"
   },
   {
     "provider": "cohere",
@@ -417,22 +377,6 @@
   },
   {
     "provider": "moonshot",
-    "model": "kimi-k2.6",
-    "kind": "new",
-    "aggregator_value": "0.95/4",
-    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
-    "review_by": "2026-12-01"
-  },
-  {
-    "provider": "moonshot",
-    "model": "kimi-k2.7-code",
-    "kind": "new",
-    "aggregator_value": "0.95/4",
-    "reason": "Superseded K2 generation. The catalog carries Moonshot's current K3 generation only, and K2 rates are not on the chat-k3 pricing page we verify against.",
-    "review_by": "2026-12-01"
-  },
-  {
-    "provider": "moonshot",
     "model": "kimi-k2.7-code-highspeed",
     "kind": "new",
     "aggregator_value": "1.9/8",
@@ -726,5 +670,1549 @@
     "aggregator_value": "md:1.4/4.4 or:0.966/3.036",
     "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
     "review_by": "2026-12-07"
+  },
+  {
+    "provider": "anthropic",
+    "model": "claude-haiku-5.5",
+    "kind": "new",
+    "aggregator_value": "0.1/0.5",
+    "reason": "OpenRouter dotted duplicate of first-party id claude-haiku-5-5 (added).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "anthropic",
+    "model": "claude-opus-5.5",
+    "kind": "new",
+    "aggregator_value": "4/20",
+    "reason": "OpenRouter dotted duplicate of first-party id claude-opus-5-5 (added).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "anthropic",
+    "model": "claude-sonnet-5.5",
+    "kind": "new",
+    "aggregator_value": "2/10",
+    "reason": "OpenRouter dotted duplicate of first-party id claude-sonnet-5-5 (added).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4",
+    "kind": "new",
+    "aggregator_value": "3/15",
+    "reason": "OpenRouter naming of Claude Sonnet 4 (claude-sonnet-4-20250514), already in catalog as claude-sonnet-4-0 with deprecated:true; retired on the first-party API June 15, 2026 (Bedrock/Google Cloud only).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "kind": "price",
+    "aggregator_value": "0.32/0.89",
+    "reason": "deepseek-chat was discontinued on DeepSeek's first-party API 2026-07-24 (Updates page); OpenRouter's rate is a third-party host of open weights. Catalog keeps it deprecated at the flash-tier PEAK list rate 0.3/1.2.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "kind": "price",
+    "aggregator_value": "0.15/0.6",
+    "reason": "models.dev reports DeepSeek's OFF-PEAK rate (half of peak). Official pricing page lists deepseek-flash peak 0.30/1.20 (off-peak 0.15/0.60); catalog carries the peak list rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "kind": "price",
+    "aggregator_value": "0.091/0.182",
+    "reason": "OpenRouter rate is below even DeepSeek's off-peak rate (stale V4-Flash pricing or reseller). Official page: legacy name deepseek-v4-flash is retired, routed to V4.1-Flash and billed at the Flash price (peak 0.30/1.20); catalog matches.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "kind": "price",
+    "aggregator_value": "0.15/0.6",
+    "reason": "models.dev reports the OFF-PEAK Flash rate. Legacy name is billed at the Flash price; catalog carries the peak list rate 0.30/1.20.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Catalog agrees: entry is already deprecated:true. Official pricing footnote says deepseek-v4-flash is retired but still accepted and billed at the Flash price, so the entry stays (deprecated) to avoid $0 billing.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "kind": "price",
+    "aggregator_value": "0.66/1.98",
+    "reason": "models.dev reports the OFF-PEAK rate. Official page: deepseek-v4-pro peak 1.32/3.96 (off-peak 0.66/1.98); catalog carries peak.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "kind": "price",
+    "aggregator_value": "0.3802/0.7604",
+    "reason": "OpenRouter rate is below even the official off-peak rate (reseller/third-party host). Official peak list 1.32/3.96; catalog matches.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro-0813",
+    "kind": "price",
+    "aggregator_value": "0.66/1.98",
+    "reason": "OpenRouter reports the OFF-PEAK rate. DeepSeek-V4-Pro-0813 is the version behind deepseek-v4-pro, peak 1.32/3.96; catalog matches.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k3",
+    "kind": "price",
+    "aggregator_value": "0.5/15",
+    "reason": "OpenRouter input rate is not Moonshot's. Official chat-k3 page: kimi-k3 input (cache miss) $3.00, cached $0.30, output $15.00, no promotions listed; catalog matches.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-chat-v3-0324",
+    "kind": "new",
+    "aggregator_value": "0.29/1.14",
+    "reason": "Open-weights DeepSeek-V3 snapshot hosted by third parties on OpenRouter; not a first-party DeepSeek API model id (first-party lists only deepseek-flash and deepseek-v4-pro).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-chat-v3.1",
+    "kind": "new",
+    "aggregator_value": "0.25/0.95",
+    "reason": "Open-weights V3.1 hosted by third parties; superseded generation not on DeepSeek's first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-r1",
+    "kind": "new",
+    "aggregator_value": "0.7/2.5",
+    "reason": "Open-weights R1 hosted by third parties; superseded generation not on DeepSeek's first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-r1-0528",
+    "kind": "new",
+    "aggregator_value": "0.5/2.15",
+    "reason": "Open-weights R1 snapshot hosted by third parties; not a first-party API id.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v3.1-terminus",
+    "kind": "new",
+    "aggregator_value": "0.27/1",
+    "reason": "Open-weights V3.1-Terminus hosted by third parties; superseded generation not on DeepSeek's first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v3.2",
+    "kind": "new",
+    "aggregator_value": "0.259/0.8",
+    "reason": "Open-weights V3.2 hosted by third parties; superseded generation not on DeepSeek's first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v3.2-exp",
+    "kind": "new",
+    "aggregator_value": "0.27/0.41",
+    "reason": "Open-weights experimental V3.2 hosted by third parties; not on DeepSeek's first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash-0731",
+    "kind": "new",
+    "aggregator_value": "0.016/0.64",
+    "reason": "OpenRouter dated-snapshot naming of the retired V4-Flash public beta (2026-07-31); not a documented first-party id. First-party legacy name deepseek-v4-flash is already in the catalog (deprecated).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash-vision-exp",
+    "kind": "new",
+    "aggregator_value": "0.2156/0.6468",
+    "reason": "Retired experimental SKU: official pricing footnote says deepseek-v4-flash-vision-exp is still accepted but retired, served by V4.1-Flash and billed at the Flash price (peak 0.30/1.20). Use deepseek-flash.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash-vision-exp",
+    "kind": "new",
+    "aggregator_value": "0.15/0.6",
+    "reason": "Retired experimental SKU (models.dev shows off-peak Flash rate); official footnote: legacy name routed to V4.1-Flash, billed at Flash peak 0.30/1.20. Use deepseek-flash.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4.1-flash",
+    "kind": "new",
+    "aggregator_value": "0.15/0.6",
+    "reason": "OpenRouter naming for DeepSeek-V4.1-Flash, whose first-party API id is deepseek-flash (already in catalog at peak 0.30/1.20); 0.15/0.6 is the off-peak rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2",
+    "kind": "new",
+    "aggregator_value": "0.57/2.3",
+    "reason": "Moonshot models page: kimi-k2 series discontinued 2026-05-25 (migrate to kimi-k3). Plain 'kimi-k2' is not a first-party id; OpenRouter rate is third-party hosted open weights.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2-0905",
+    "kind": "new",
+    "aggregator_value": "0.6/2.5",
+    "reason": "OpenRouter naming of kimi-k2-0905-preview, which Moonshot's models page lists as discontinued 2026-05-25.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.5",
+    "kind": "new",
+    "aggregator_value": "0.5/2.5",
+    "reason": "Moonshot models page: kimi-k2.5 discontinued 2026-08-31; not on the current pricing page. OpenRouter rate is third-party hosted open weights.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-nano-banana-2.1",
+    "kind": "new",
+    "aggregator_value": "1.5/7.5",
+    "reason": "Image-generation SKU (\"An update to Nano Banana 2 (Gemini 3.1 Flash Image), built for high-efficiency image generation and conversational editing\"). Its output is billed per image ($30/MTok images). This is a non-chat SKU outside the catalog's text-generation scope, like the other Nano Banana / omni / deep-research SKUs.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemma-2-27b-it",
+    "kind": "new",
+    "aggregator_value": "0.65/0.65",
+    "reason": "Open-weights model that the Gemini API does not serve. It is absent from the Gemini API models, pricing and changelog pages. The only Gemma pricing row is Gemma 4. The OpenRouter price is a third-party host's rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemma-3-12b-it",
+    "kind": "new",
+    "aggregator_value": "0.05/0.15",
+    "reason": "Open-weights model with no first-party paid price. The Gemini API pricing page lists only Gemma 4, at free tier only. Gemma 3 is not on the current models or pricing pages. The OpenRouter price is a third-party host's rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemma-3-27b-it",
+    "kind": "new",
+    "aggregator_value": "0.08/0.45",
+    "reason": "Open-weights model. It was once released on the Gemini API (old changelog entry) but is no longer on the models or pricing pages, and it never had a paid-tier price. The OpenRouter price is a third-party host's rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemma-3-4b-it",
+    "kind": "new",
+    "aggregator_value": "0.05/0.1",
+    "reason": "Open-weights model with no first-party paid price. Gemma 3 is not on the current Gemini API models or pricing pages. The OpenRouter price is a third-party host's rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemma-4-26b-a4b-it",
+    "kind": "new",
+    "aggregator_value": "0.0765/0.255",
+    "reason": "Open-weights model. It is served on the Gemini API (changelog: \"Released gemma-4-26b-a4b-it and gemma-4-31b-it ... through the Gemini API\"), but the official pricing page's Gemma 4 row reads Free Tier \"Free of charge\" and Paid Tier \"Not available\". There is no first-party USD rate. The OpenRouter price is a third-party host's rate. It could be added as \"priced\": false if wanted (see notes).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemma-4-31b-it",
+    "kind": "new",
+    "aggregator_value": "0.09/0.34",
+    "reason": "Open-weights model. It is served free-tier only on the Gemini API; the pricing page's Gemma 4 row shows Paid Tier \"Not available\". There is no first-party USD rate. The OpenRouter price is a third-party host's rate. It could be added as \"priced\": false if wanted (see notes).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "grok",
+    "model": "grok-4.20",
+    "kind": "new",
+    "aggregator_value": "1.25/2.5",
+    "reason": "OpenRouter alias naming; xAI's first-party models page lists grok-4.20 only as dated ids grok-4.20-0309-reasoning / -non-reasoning, both already in catalog at the same 1.25/2.5 (cached 0.2).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "grok",
+    "model": "grok-4.20-multi-agent",
+    "kind": "new",
+    "aggregator_value": "1.25/2.5",
+    "reason": "OpenRouter alias of grok-4.20-multi-agent-0309, which is already in catalog at the same 1.25/2.5; the first-party models page lists only the -0309 id.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-3.1-70b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.4/0.4",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-3.1-8b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.05/0.08",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-3.2-1b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.027/0.201",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-3.2-3b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.05/0.33",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-3.3-70b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.59/0.79",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-4-maverick",
+    "kind": "new",
+    "aggregator_value": "0.1875/0.6525",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-4-scout",
+    "kind": "new",
+    "aggregator_value": "0.18/0.59",
+    "reason": "Open-weights Llama hosted by third parties on OpenRouter. Meta Model API (dev.meta.ai) neither serves nor prices any Llama model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "llama-guard-4-12b",
+    "kind": "new",
+    "aggregator_value": "0.18/0.18",
+    "reason": "Safety classifier, not a chat model. Open weights hosted by third parties on OpenRouter; not served or priced by Meta Model API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "muse-glimmer-30b",
+    "kind": "new",
+    "aggregator_value": "0.3/1.2",
+    "reason": "Muse Glimmer is open-weight and self-hosted. Meta docs (dev.meta.ai/docs/models.md) say you 'don't call it over Model API', and the model list endpoint excludes it. No first-party price; OpenRouter rate is from a third-party host.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "meta",
+    "model": "muse-wonder",
+    "kind": "new",
+    "aggregator_value": "4/20",
+    "reason": "OpenRouter alias naming. The first-party id is muse-wonder-1.0 (proposed ADD at 4/20), and Meta's docs name no un-versioned alias.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-nemo",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Catalog already marks mistral-nemo deprecated; official page: open-mistral-nemo-2407 'Status: Deprecated', retired 2026-07-31. (Price separately corrected to official 0.15/0.15.)",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-nemo",
+    "kind": "price",
+    "aggregator_value": "0.029/0.03",
+    "reason": "OpenRouter reseller rate. Official Mistral page lists Mistral Nemo 12B at 'Input $0.15 /M Tokens; Output $0.15 /M Tokens'; catalog is being corrected to 0.15/0.15, not to this value. Model retired 2026-07-31.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-a",
+    "kind": "new",
+    "aggregator_value": "2.5/10",
+    "reason": "OpenRouter id for command-a-03-2025, already in the catalog; 'command-a' is not a first-party API name on docs.cohere.com/docs/models.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "cohere",
+    "model": "command-a-plus",
+    "kind": "new",
+    "aggregator_value": "0.3/1.5",
+    "reason": "OpenRouter id; first-party API name is command-a-plus-05-2026. 0.3/1.5 appears nowhere on cohere.com/pricing (the Command A+ card shows $2.50/$10.00, but the page also lists Command A+ as 'Free' in its open-model table). Not carried until a human confirms the API price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "glm-5-2",
+    "kind": "new",
+    "aggregator_value": "1.4/4.4",
+    "reason": "Not a first-party id. Mistral does host this model as 'zai-glm-5-2' (official 1.4/4.4, cached 0.14), but it is Deprecated (2026-09-29) and retires 2026-10-31; superseded by zai-glm-5-3.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "OpenRouter 'mistral-large' = Mistral Large 2 (2407) at its old 2/6 rate; Large 2.0 retired 2025-03-30 per docs.mistral.ai/models. First-party mistral-large-latest now resolves to Large 3 (0.5/1.5, catalog mistral-large-3).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-2407",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "Mistral Large 2.0 (mistral-large-2407) Retired 2025-03-30 per docs.mistral.ai/models.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-medium-3.1",
+    "kind": "new",
+    "aggregator_value": "0.4/2",
+    "reason": "OpenRouter dotted name for mistral-medium-2508 (catalog: mistral-medium-3-1-2508, deprecated); retired 2026-08-31.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-saba",
+    "kind": "new",
+    "aggregator_value": "0.2/0.6",
+    "reason": "Mistral Saba (mistral-saba-2502) Retired 2025-09-30 per docs.mistral.ai/models.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-small-24b-instruct-2501",
+    "kind": "new",
+    "aggregator_value": "0.05/0.08",
+    "reason": "OpenRouter open-weights naming of Mistral Small 3.0 (mistral-small-2501), Retired 2025-11-30 on the first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-small-3.1-24b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.351/0.555",
+    "reason": "OpenRouter open-weights naming of Mistral Small 3.1 (mistral-small-2503), Retired 2025-11-30 on the first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-small-3.2-24b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.075/0.2",
+    "reason": "OpenRouter open-weights naming of Mistral Small 3.2 (mistral-small-2506; official 0.1/0.3), Deprecated, retired 2026-07-31.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mixtral-8x22b-instruct",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "OpenRouter naming of open-mixtral-8x22b, Retired 2025-03-30 per docs.mistral.ai/models.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "zai-glm-5-3",
+    "kind": "new",
+    "aggregator_value": "1.4/4.4",
+    "reason": "Z.AI's GLM-5.3 hosted on Mistral's API (third-party hosted). The catalog carries GLM under its first-party provider (zai/glm-5.3, same 1.4/4.4); cross-hosted SKUs are not duplicated per host.",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-3.5-turbo-0613",
+    "kind": "new",
+    "aggregator_value": "1/2",
+    "reason": "Not on OpenAI's pricing page and no model page (404); retired legacy snapshot. Superseded generation the catalog deliberately does not carry.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-3.5-turbo-16k",
+    "kind": "new",
+    "aggregator_value": "3/4",
+    "reason": "Not on OpenAI's pricing page and no model page (404); retired legacy id. Superseded generation the catalog deliberately does not carry.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-3.5-turbo-instruct",
+    "kind": "new",
+    "aggregator_value": "1.5/2",
+    "reason": "Shut down on the first-party API 2026-09-28 per OpenAI deprecations page (2025-09-26 notice); legacy completions-only model, superseded generation.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.1-codex",
+    "kind": "new",
+    "aggregator_value": "1.25/10",
+    "reason": "Shut down on OpenAI's API July 23, 2026 per the deprecations page (2026-04-22 'July 2026 shutdown' notice); not callable first-party.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.1-codex-max",
+    "kind": "new",
+    "aggregator_value": "1.25/10",
+    "reason": "Shut down on OpenAI's API July 23, 2026 per the deprecations page (2026-04-22 'July 2026 shutdown' notice); not callable first-party.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.1-codex-mini",
+    "kind": "new",
+    "aggregator_value": "0.25/2",
+    "reason": "Shut down on OpenAI's API July 23, 2026 per the deprecations page (2026-04-22 'July 2026 shutdown' notice); not callable first-party.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.2-chat",
+    "kind": "new",
+    "aggregator_value": "1.75/14",
+    "reason": "OpenRouter naming of gpt-5.2-chat-latest (no 'gpt-5.2-chat' model page, 404); gpt-5.2-chat-latest was shut down Aug 10, 2026 per deprecations page.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.6-luna-pro",
+    "kind": "new",
+    "aggregator_value": "0.2/1.2",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.6-sol-pro",
+    "kind": "new",
+    "aggregator_value": "4/20",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-5.6-terra-pro",
+    "kind": "new",
+    "aggregator_value": "2/12",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-6-astra-pro",
+    "kind": "new",
+    "aggregator_value": "10/50",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-6-luna-pro",
+    "kind": "new",
+    "aggregator_value": "0.1/0.5",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-6-sol-pro",
+    "kind": "new",
+    "aggregator_value": "2/10",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-6.1-sol-pro",
+    "kind": "new",
+    "aggregator_value": "2/10",
+    "reason": "Not a first-party model id: no OpenAI model page (404) and absent from the pricing page. OpenAI exposes 'pro' as a request parameter (deprecations page: 'gpt-5.6-sol (reasoning.mode: pro)'); OpenRouter's -pro variant is priced identically to the base model, which the catalog already carries/adds.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-chat-latest",
+    "kind": "new",
+    "aggregator_value": "5/30",
+    "reason": "No OpenAI model page (404) and not on the pricing page; OpenRouter alias, not a first-party id.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-daybreak-blue-latest",
+    "kind": "new",
+    "aggregator_value": "4/20",
+    "reason": "Official model page: 'This alias is deprecated, please use the latest cyber model available to you'; access-gated Daybreak program alias that resolves to gpt-5.6-sol (already in catalog). Not a distinct model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-daybreak-red-latest",
+    "kind": "new",
+    "aggregator_value": "12.5/75",
+    "reason": "Official model page: 'This alias is deprecated'; access-gated Daybreak cyber alias resolving to gpt-5.6-cyber (trusted-access only, not generally available).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-oss-120b",
+    "kind": "new",
+    "aggregator_value": "0.037/0.17",
+    "reason": "Open-weights model; OpenAI model page has no pricing and the official pricing page lists no rate. OpenRouter price is a third-party host rate — unverifiable first-party.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-oss-20b",
+    "kind": "new",
+    "aggregator_value": "0.018/0.09",
+    "reason": "Open-weights model; OpenAI model page has no pricing and the official pricing page lists no rate. OpenRouter price is a third-party host rate — unverifiable first-party.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-oss-safeguard-20b",
+    "kind": "new",
+    "aggregator_value": "0.075/0.3",
+    "reason": "Open-weights safety classifier; no OpenAI model page (404), not on pricing page. Third-party-hosted only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "o3-mini-high",
+    "kind": "new",
+    "aggregator_value": "1.1/4.4",
+    "reason": "OpenRouter reasoning-effort variant of o3-mini (no OpenAI model page, 404); first-party uses reasoning_effort param. o3-mini itself shuts down Oct 23, 2026.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "o4-mini-high",
+    "kind": "new",
+    "aggregator_value": "1.1/4.4",
+    "reason": "OpenRouter reasoning-effort variant of o4-mini (no OpenAI model page, 404); first-party uses reasoning_effort param. o4-mini itself shuts down Oct 23, 2026.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6",
+    "kind": "price",
+    "aggregator_value": "0.5/2",
+    "reason": "Official Z.AI pricing page (2026-10-14) lists GLM-4.6 at $0.6 input / $2.2 output; OpenRouter value is a reseller/regional rate, not the first-party list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "price",
+    "aggregator_value": "1.33/4.18",
+    "reason": "Official Z.AI pricing page (2026-10-14) lists GLM-5.1 at $1.4/$4.4 (cached $0.26); OpenRouter's 1.33/4.18 is a reseller/discounted rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.2",
+    "kind": "price",
+    "aggregator_value": "0.04/7",
+    "reason": "Official Z.AI pricing page (2026-10-14) lists GLM-5.2 at $1.4/$4.4 with no promotion noted; OpenRouter's 0.04/7 is an anomalous third-party/reseller endpoint price, not Z.AI's list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3",
+    "kind": "price",
+    "aggregator_value": "0.079/4.8",
+    "reason": "Official Z.AI pricing page (2026-10-14) lists GLM-5.3 at $1.4/$4.4 with no promotion noted; OpenRouter's 0.079/4.8 is an anomalous third-party/reseller endpoint price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3-prime",
+    "kind": "new",
+    "aggregator_value": "2.8/8.8",
+    "reason": "Not on Z.AI's first-party pricing page, model docs, llms.txt or llms-full.txt (docs.z.ai/guides/llm/glm-5.3-prime is 404). Aggregator listings show it served via Alibaba Cloud — not verifiable as a first-party Z.AI API model.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "minimax",
+    "model": "minimax-01",
+    "kind": "new",
+    "aggregator_value": "0.2/1.1",
+    "reason": "Superseded older generation: absent from MiniMax's official Model List (neither available nor retired) and from the pay-as-you-go pricing page; not callable/priced on the first-party API.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "minimax",
+    "model": "minimax-m1",
+    "kind": "new",
+    "aggregator_value": "0.55/2.2",
+    "reason": "Superseded older generation: absent from MiniMax's official Model List and pricing page; no first-party price to verify.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "minimax",
+    "model": "minimax-m2-her",
+    "kind": "new",
+    "aggregator_value": "0.3/1.2",
+    "reason": "MiniMax Model List explicitly lists '| M2-her | LLM | Retired |' — retired on the first-party API; not on the pricing page.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "kind": "price",
+    "aggregator_value": "0.3751/0.7503",
+    "reason": "Official DeepSeek pricing page (verified 2026-10-14) lists the PEAK list rate the catalog carries; models.dev shows the half-price off-peak rate and OpenRouter a fluctuating reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-4-argon",
+    "kind": "price",
+    "aggregator_value": "2/10",
+    "reason": "Introductory rate: the official Gemini pricing page prints $2/$10 through 2026-11-30, then $4/$20 from 2026-12-01. Catalog carries the durable 4/20, as for gemini-3.6/3.7/3.8-flash.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-4",
+    "kind": "price",
+    "aggregator_value": "0.68/2.09",
+    "reason": "Sale price: docs.mistral.ai lists Mistral Large 4 (Public Preview) at a list 1.36/4.18 (cached 0.14); 0.68/2.09 is the 50% sale with no published end date. Catalog carries list.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-4-0",
+    "kind": "price",
+    "aggregator_value": "0.68/2.09",
+    "reason": "Sale price: docs.mistral.ai lists Mistral Large 4 (Public Preview) at a list 1.36/4.18 (cached 0.14); 0.68/2.09 is the 50% sale with no published end date. Catalog carries list.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-medium-3",
+    "kind": "price",
+    "aggregator_value": "0.4/2",
+    "reason": "Stale OpenRouter rate for Medium 3.0. On Mistral's API, 'mistral-medium-3' is now an API name of Mistral Medium 3.5 at 1.5/7.5 (docs.mistral.ai, verified 2026-10-14).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.6",
+    "kind": "price",
+    "aggregator_value": "0.65/3.41",
+    "reason": "Official Moonshot pricing page (platform.kimi.ai, verified 2026-10-14) matches the catalog; OpenRouter's lower rate is a reseller rate. models.dev agrees with the catalog.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.7-code",
+    "kind": "price",
+    "aggregator_value": "0.6712/3.35",
+    "reason": "Official Moonshot pricing page (platform.kimi.ai, verified 2026-10-14) matches the catalog; OpenRouter's lower rate is a reseller rate. models.dev agrees with the catalog.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-flash",
+    "kind": "price",
+    "aggregator_value": "0.1875/1.125",
+    "reason": "Aggregators report a discounted/regional rate; the official Alibaba Cloud model-pricing page (Singapore/International, <=256K tier) lists 0.25/1.5 (verified 2026-10-14).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.7-max",
+    "kind": "price",
+    "aggregator_value": "1.475/4.425",
+    "reason": "OpenRouter reseller/regional rate; official Alibaba Cloud model-pricing page (Singapore/International) lists 2.5/7.5 (verified 2026-10-14). models.dev agrees with the catalog.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "deepseek-v4-flash-0731",
+    "kind": "new",
+    "aggregator_value": "0.2/0.4",
+    "reason": "Third-party model hosted on Alibaba Cloud Model Studio; the catalog carries it under its first-party provider. Cross-hosted SKUs are not duplicated per host.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "glm-5.2",
+    "kind": "new",
+    "aggregator_value": "1.4/4.4",
+    "reason": "Third-party model hosted on Alibaba Cloud Model Studio; the catalog carries it under its first-party provider. Cross-hosted SKUs are not duplicated per host.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "kimi-k3",
+    "kind": "new",
+    "aggregator_value": "3/15",
+    "reason": "Third-party model hosted on Alibaba Cloud Model Studio; the catalog carries it under its first-party provider. Cross-hosted SKUs are not duplicated per host.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qvq-max",
+    "kind": "new",
+    "aggregator_value": "1.2/4.8",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-2.5-72b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.36/0.4",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-2.5-7b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.1/0.2",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-2.5-coder-32b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.66/1",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-flash",
+    "kind": "new",
+    "aggregator_value": "0.05/0.4",
+    "reason": "Legacy Qwen commercial tier or rolling alias (qwen-max/plus/turbo/flash, QwQ/QVQ); the catalog carries current-generation snapshots (qwen3.8-*/qwen3.7-*/qwen3.6-flash) only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-max",
+    "kind": "new",
+    "aggregator_value": "1.6/6.4",
+    "reason": "Legacy Qwen commercial tier or rolling alias (qwen-max/plus/turbo/flash, QwQ/QVQ); the catalog carries current-generation snapshots (qwen3.8-*/qwen3.7-*/qwen3.6-flash) only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-mt-plus",
+    "kind": "new",
+    "aggregator_value": "2.46/7.37",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-mt-turbo",
+    "kind": "new",
+    "aggregator_value": "0.16/0.49",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-omni-turbo",
+    "kind": "new",
+    "aggregator_value": "0.07/0.27",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-plus",
+    "kind": "new",
+    "aggregator_value": "0.4/1.2",
+    "reason": "Legacy Qwen commercial tier or rolling alias (qwen-max/plus/turbo/flash, QwQ/QVQ); the catalog carries current-generation snapshots (qwen3.8-*/qwen3.7-*/qwen3.6-flash) only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-plus",
+    "kind": "new",
+    "aggregator_value": "0.26/0.78",
+    "reason": "Legacy Qwen commercial tier or rolling alias (qwen-max/plus/turbo/flash, QwQ/QVQ); the catalog carries current-generation snapshots (qwen3.8-*/qwen3.7-*/qwen3.6-flash) only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-plus-character-ja",
+    "kind": "new",
+    "aggregator_value": "0.5/1.4",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-turbo",
+    "kind": "new",
+    "aggregator_value": "0.05/0.2",
+    "reason": "Legacy Qwen commercial tier or rolling alias (qwen-max/plus/turbo/flash, QwQ/QVQ); the catalog carries current-generation snapshots (qwen3.8-*/qwen3.7-*/qwen3.6-flash) only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-vl-max",
+    "kind": "new",
+    "aggregator_value": "0.8/3.2",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen-vl-plus",
+    "kind": "new",
+    "aggregator_value": "0.21/0.63",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-14b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.35/1.4",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-32b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.7/2.8",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-72b-instruct",
+    "kind": "new",
+    "aggregator_value": "1.4/5.6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-7b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.175/0.7",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-omni-7b",
+    "kind": "new",
+    "aggregator_value": "0.1/0.4",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-vl-72b-instruct",
+    "kind": "new",
+    "aggregator_value": "2.8/8.4",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2-5-vl-7b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.35/1.05",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen2.5-vl-72b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.8/1",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-14b",
+    "kind": "new",
+    "aggregator_value": "0.12/0.24",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-14b",
+    "kind": "new",
+    "aggregator_value": "0.35/1.4",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-235b-a22b",
+    "kind": "new",
+    "aggregator_value": "0.7/2.8",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-235b-a22b-2507",
+    "kind": "new",
+    "aggregator_value": "0.09/0.55",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-235b-a22b-thinking-2507",
+    "kind": "new",
+    "aggregator_value": "0.45/3.5",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-30b-a3b",
+    "kind": "new",
+    "aggregator_value": "0.12/0.5",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-30b-a3b-instruct-2507",
+    "kind": "new",
+    "aggregator_value": "0.1/0.3",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-32b",
+    "kind": "new",
+    "aggregator_value": "0.08/0.28",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-32b",
+    "kind": "new",
+    "aggregator_value": "0.7/2.8",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-8b",
+    "kind": "new",
+    "aggregator_value": "0.18/0.7",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder",
+    "kind": "new",
+    "aggregator_value": "0.3/1",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-30b-a3b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.07/0.28",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-30b-a3b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.45/2.25",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-480b-a35b-instruct",
+    "kind": "new",
+    "aggregator_value": "1.5/7.5",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-flash",
+    "kind": "new",
+    "aggregator_value": "0.3/1.5",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-flash",
+    "kind": "new",
+    "aggregator_value": "0.195/0.975",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-next",
+    "kind": "new",
+    "aggregator_value": "0.12/0.8",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-coder-plus",
+    "kind": "new",
+    "aggregator_value": "1/5",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-max",
+    "kind": "new",
+    "aggregator_value": "1.2/6",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-next-80b-a3b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.5/2",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-next-80b-a3b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.1/1.1",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-next-80b-a3b-thinking",
+    "kind": "new",
+    "aggregator_value": "0.15/1.2",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-next-80b-a3b-thinking",
+    "kind": "new",
+    "aggregator_value": "0.5/6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-omni-flash",
+    "kind": "new",
+    "aggregator_value": "0.43/1.66",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-235b-a22b",
+    "kind": "new",
+    "aggregator_value": "0.7/2.8",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-235b-a22b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.21/1.9",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-30b-a3b",
+    "kind": "new",
+    "aggregator_value": "0.2/0.8",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-30b-a3b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.15/0.6",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-30b-a3b-thinking",
+    "kind": "new",
+    "aggregator_value": "0.29/1",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-8b-instruct",
+    "kind": "new",
+    "aggregator_value": "0.25/0.75",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3-vl-plus",
+    "kind": "new",
+    "aggregator_value": "0.2/1.6",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-122b-a10b",
+    "kind": "new",
+    "aggregator_value": "0.26/2.08",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-122b-a10b",
+    "kind": "new",
+    "aggregator_value": "0.4/3.2",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-27b",
+    "kind": "new",
+    "aggregator_value": "0.3/2.4",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-27b",
+    "kind": "new",
+    "aggregator_value": "0.26/2.6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-35b-a3b",
+    "kind": "new",
+    "aggregator_value": "0.15/1",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-35b-a3b",
+    "kind": "new",
+    "aggregator_value": "0.25/2",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-397b-a17b",
+    "kind": "new",
+    "aggregator_value": "0.6/3.6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-397b-a17b",
+    "kind": "new",
+    "aggregator_value": "0.5/3.6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-9b",
+    "kind": "new",
+    "aggregator_value": "0.1/0.15",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-flash",
+    "kind": "new",
+    "aggregator_value": "0.1/0.4",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-flash-02-23",
+    "kind": "new",
+    "aggregator_value": "0.065/0.26",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-plus",
+    "kind": "new",
+    "aggregator_value": "0.4/2.4",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-plus-02-15",
+    "kind": "new",
+    "aggregator_value": "0.26/1.56",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.5-plus-20260420",
+    "kind": "new",
+    "aggregator_value": "0.3/1.8",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-27b",
+    "kind": "new",
+    "aggregator_value": "0.32/3.2",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-27b",
+    "kind": "new",
+    "aggregator_value": "0.6/3.6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-35b-a3b",
+    "kind": "new",
+    "aggregator_value": "0.1/0.95",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-35b-a3b",
+    "kind": "new",
+    "aggregator_value": "0.248/1.485",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-max-preview",
+    "kind": "new",
+    "aggregator_value": "1.3/7.8",
+    "reason": "Superseded Qwen generation (Qwen2.5/Qwen3/Qwen3.5/Qwen3.6 tiers); the catalog carries the current qwen3.8/3.7 tiers. Re-surfaces if the aggregator value changes.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.8-2.4t-a95b",
+    "kind": "new",
+    "aggregator_value": "2/6",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.8-27b",
+    "kind": "new",
+    "aggregator_value": "0.04/2.3",
+    "reason": "Open-weights Qwen size variant, hosted by third parties (OpenRouter/models.dev); not a priced first-party Model Studio tier the catalog carries.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.8-omni-flash",
+    "kind": "new",
+    "aggregator_value": "0.15/0.47",
+    "reason": "Specialty Qwen SKU (translation / omni-modal / vision-language / role-play); out of scope for the catalog's general text tiers.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwq-plus",
+    "kind": "new",
+    "aggregator_value": "0.8/2.4",
+    "reason": "Legacy Qwen commercial tier or rolling alias (qwen-max/plus/turbo/flash, QwQ/QVQ); the catalog carries current-generation snapshots (qwen3.8-*/qwen3.7-*/qwen3.6-flash) only.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.8-max-prime",
+    "kind": "new",
+    "aggregator_value": "4/12",
+    "reason": "Listed only in Alibaba Cloud Model Studio's China (Beijing) price table (3.301/9.902); no Singapore/International USD price, which is the region the catalog carries. OpenRouter's 4/12 matches no official number.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "kind": "disagree",
+    "aggregator_value": "md:0.15/0.6 or:0.091/0.182",
+    "reason": "Both aggregators are below DeepSeek's official PEAK list rate (verified 2026-10-14): models.dev shows the half-price off-peak rate, OpenRouter a fluctuating reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "kind": "disagree",
+    "aggregator_value": "md:0.66/1.98 or:0.3751/0.7503",
+    "reason": "Both aggregators are below DeepSeek's official PEAK list rate (verified 2026-10-14): models.dev shows the half-price off-peak rate, OpenRouter a fluctuating reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-nemo",
+    "kind": "disagree",
+    "aggregator_value": "md:0.15/0.15 or:0.029/0.03",
+    "reason": "models.dev matches the official Mistral page (0.15/0.15, verified 2026-10-14); OpenRouter's is a reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.6",
+    "kind": "disagree",
+    "aggregator_value": "md:0.95/4 or:0.65/3.41",
+    "reason": "models.dev matches the official Moonshot pricing page (verified 2026-10-14); OpenRouter's lower rate is a reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k2.7-code",
+    "kind": "disagree",
+    "aggregator_value": "md:0.95/4 or:0.6712/3.35",
+    "reason": "models.dev matches the official Moonshot pricing page (verified 2026-10-14); OpenRouter's lower rate is a reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "moonshot",
+    "model": "kimi-k3",
+    "kind": "disagree",
+    "aggregator_value": "md:3/15 or:0.5/15",
+    "reason": "models.dev matches the official Moonshot pricing page (verified 2026-10-14); OpenRouter's lower rate is a reseller rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-plus",
+    "kind": "price",
+    "aggregator_value": "0.325/1.95",
+    "reason": "models.dev matches the official Alibaba Cloud model-pricing page (Singapore/International, verified 2026-10-14); OpenRouter's lower rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-plus",
+    "kind": "disagree",
+    "aggregator_value": "md:0.5/3 or:0.325/1.95",
+    "reason": "models.dev matches the official Alibaba Cloud model-pricing page (Singapore/International, verified 2026-10-14); OpenRouter's lower rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.7-max",
+    "kind": "disagree",
+    "aggregator_value": "md:2.5/7.5 or:1.475/4.425",
+    "reason": "models.dev matches the official Alibaba Cloud model-pricing page (Singapore/International, verified 2026-10-14); OpenRouter's lower rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6",
+    "kind": "disagree",
+    "aggregator_value": "md:0.6/2.2 or:0.5/2",
+    "reason": "models.dev matches the official Z.AI pricing page (verified 2026-10-14, no promotion); OpenRouter's differing rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "disagree",
+    "aggregator_value": "md:1.4/4.4 or:1.33/4.18",
+    "reason": "models.dev matches the official Z.AI pricing page (verified 2026-10-14, no promotion); OpenRouter's differing rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.2",
+    "kind": "disagree",
+    "aggregator_value": "md:1.4/4.4 or:0.04/7",
+    "reason": "models.dev matches the official Z.AI pricing page (verified 2026-10-14, no promotion); OpenRouter's differing rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3",
+    "kind": "disagree",
+    "aggregator_value": "md:1.4/4.4 or:0.079/4.8",
+    "reason": "models.dev matches the official Z.AI pricing page (verified 2026-10-14, no promotion); OpenRouter's differing rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
   }
 ]

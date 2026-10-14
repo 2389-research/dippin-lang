@@ -11,9 +11,6 @@ import (
 // — so a newly added priced model cannot ship without either a verified cache
 // rate in prices.json or a deliberate, reasoned entry here.
 var knownCacheGaps = []string{
-	// grok-4-1-fast-*: superseded, absent from the current x.ai models page.
-	"grok/grok-4-1-fast-non-reasoning",
-	"grok/grok-4-1-fast-reasoning",
 	// MiniMax: the pricing page does now show "Prompt caching Read"/"Write"
 	// columns for these models, so the earlier "publishes no token cache price"
 	// note is stale. It is still not reliably machine-readable: two automated
@@ -21,13 +18,16 @@ var knownCacheGaps = []string{
 	// for <=512k with $0.12/M above it), and M3 shows no write price at all.
 	// Left as a gap rather than committing an unconfirmed number — a human must
 	// read the table and set the rates. Tracked in #292.
-	"minimax/MiniMax-M2",
-	"minimax/MiniMax-M2.1",
 	"minimax/MiniMax-M2.5",
 	"minimax/MiniMax-M2.5-highspeed",
 	"minimax/MiniMax-M2.7",
 	"minimax/MiniMax-M2.7-highspeed",
 	"minimax/MiniMax-M3",
+	// qwen3.8-*: Alibaba's Context Cache page lists both under implicit and
+	// explicit caching but says their hit price is not the standard 20%/10% of
+	// input and defers to the login-gated console. No public rate to commit.
+	"qwen/qwen3.8-flash",
+	"qwen/qwen3.8-max",
 }
 
 func TestCacheGapsAllowlist(t *testing.T) {
