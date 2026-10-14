@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "unattended run takes the gate default",
+      "scenario": {},
+      "expect": {
+        "status": "success",
+        "visited": ["Hold"],
+        "not_visited": ["Ship"]
+      }
+    },
+    {
+      "name": "preferred_label overrides the gate default",
+      "scenario": {"Review.preferred_label": "approve"},
+      "expect": {
+        "status": "success",
+        "visited": ["Ship"],
+        "not_visited": ["Hold"]
+      }
+    }
+  ]
+}

@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 	"sync/atomic"
 
 	"github.com/2389-research/dippin-lang/event"
@@ -250,7 +249,8 @@ func (s *simulator) visitNode(node *ir.Node) error {
 // resolveNext determines which node to visit after the current one.
 // Resolution order:
 //  1. If there is exactly one unconditional edge, take it.
-//  2. For human nodes with labeled edges, check preferred_label in context.
+//  2. For human nodes with labeled edges, check preferred_label in context,
+//     else the gate's default:.
 //  3. If MaxNodeVisits is set and this node has been visited too many times,
 //     force the loop-exit edge (first non-matching conditional or unconditional).
 //  4. Try all conditional edges in declaration order; take the first match.
@@ -269,7 +269,7 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 		return edges[0].To, nil
 	}
 
-	// For human nodes with labeled edges, try preferred_label routing.
+	// For human nodes with labeled edges, try preferred_label or default: routing.
 	if e := s.resolveByLabel(node, edges); e != nil {
 		return e.To, nil
 	}
@@ -277,33 +277,38 @@ func (s *simulator) resolveNext(node *ir.Node) (string, error) {
 	return s.resolveConditionalNext(node.ID, edges)
 }
 
-// resolveByLabel checks if the context has a preferred_label and matches it
-// against edge labels. Only applies to human nodes with labeled edges.
-// Returns nil if no match or not applicable.
+// resolveByLabel routes a human node by its answer: the context's
+// preferred_label, else the gate's default: (the answer tracker gives an
+// unattended gate — --auto-approve, or a timeout with a default). The answer
+// is matched per tracker's rule (see matchGateAnswer: choice: then label:,
+// exact, case-insensitive). Returns nil if not a human node or no edge
+// matches.
 func (s *simulator) resolveByLabel(node *ir.Node, edges []*ir.Edge) *ir.Edge {
-	if _, ok := node.Config.(ir.HumanConfig); !ok {
+	hc, ok := node.Config.(ir.HumanConfig)
+	if !ok {
 		return nil
 	}
-	label := s.ctx["preferred_label"]
-	if label == "" {
-		return nil
-	}
+	preferred := s.ctx["preferred_label"]
 	// Clear preferred_label so it doesn't leak to downstream human nodes.
 	delete(s.ctx, "preferred_label")
-	return s.matchEdgeLabel(edges, label)
+	e := matchGateLabel(edges, preferred, gateDefault(hc))
+	if e != nil {
+		s.emitEdgeTraverse(e)
+	}
+	return e
 }
 
-// matchEdgeLabel finds the first edge whose label contains the target string
-// (case-insensitive). This allows "yes" to match "[Y] Yes".
-func (s *simulator) matchEdgeLabel(edges []*ir.Edge, target string) *ir.Edge {
-	lower := strings.ToLower(target)
-	for _, e := range edges {
-		if strings.Contains(strings.ToLower(e.Label), lower) {
-			s.emitEdgeTraverse(e)
-			return e
-		}
+// matchGateLabel picks the edge for a gate's answer: a scenario
+// preferred_label when set (exact match, then the legacy label-substring
+// convenience), else the gate's default: (exact match only).
+func matchGateLabel(edges []*ir.Edge, preferred, def string) *ir.Edge {
+	if preferred == "" {
+		return matchGateAnswer(edges, def)
 	}
-	return nil
+	if e := matchGateAnswer(edges, preferred); e != nil {
+		return e
+	}
+	return findEdgeByLabelSubstring(edges, preferred)
 }
 
 // resolveConditionalNext handles edge resolution for nodes with multiple
