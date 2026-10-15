@@ -71,7 +71,7 @@ Indentation: 2 spaces. Comments: `#` line comments (literal inside multiline blo
 | `system_prompt` | multiline | System message |
 | `system_prompt_file` | string | Path (relative to `.dip` source directory) to an external file whose contents become the agent's `system_prompt`. Mutually exclusive with `system_prompt:`. See "Prompt File Directives" below. |
 | `model` | string | Must be valid model ID (DIP108) |
-| `provider` | string | anthropic, openai, google, deepseek, xai, mistral, cohere |
+| `provider` | string | anthropic, openai, gemini (alias `google`), deepseek, grok (alias `xai`), mistral, cohere, zai, moonshot (alias `kimi`), minimax, qwen, meta; `openai-compat` for a BYOK / OpenAI-compatible gateway (any model id, unpriced, no DIP108) |
 | `backend` | string | Per-node backend override (e.g., `native`, `claude-code`, `acp`) |
 | `working_dir` | string | Per-node working directory override for isolated execution. |
 | `tool_access` | string | LLM tool-catalog gate. Only one explicit value: `none` (no tools). Omitted = full catalog. Invalid values are fail-closed at runtime and warned by DIP139. An enforcing runtime is required. See "Agent Tool Access" below. |
@@ -154,7 +154,7 @@ Authoring refusals (malformed globs, bad `working_dir`, empty list) and backend 
 | Field | Type | Notes |
 |-------|------|-------|
 | `mode` | string | **Required.** `choice`, `freeform`, `interview`, or `yes_no` (DIP127) |
-| `default` | string | Default choice (meaningless in interview mode — DIP128) |
+| `default` | string | The answer an unattended run (`--auto-approve`, timeout) gives; routes like a typed answer. Used by `choice`/mode-less and `freeform`; ignored by `yes_no` and `interview` (DIP128) |
 | `prompt` | multiline | Prompt text |
 | `questions_key` | string | Context key for interview questions |
 | `answers_key` | string | Context key for interview answers |
@@ -431,7 +431,7 @@ Use `dippin help` (not `--help`) to see all commands.
 
 | Command | Purpose |
 |---------|---------|
-| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive. `--interactive` to prompt at human nodes. `--max-node-visits N` to end a loop a fixed scenario can't |
+| `dippin simulate <file>` | Dry-run (JSONL events). `--scenario key=val` to inject context. `--all-paths` for exhaustive. `--interactive` to prompt at human nodes (routes by the typed `choice:`/`label:` or option number). `--max-node-visits N` to end a loop a fixed scenario can't |
 | `dippin cost <file>` | Estimate execution cost by model/provider. Requires model/provider on nodes or in defaults |
 | `dippin coverage <file>` | Edge coverage and reachability |
 | `dippin doctor <file>` | Health report card (grade A-F) |
@@ -441,7 +441,7 @@ Use `dippin help` (not `--help`) to see all commands.
 | `dippin explain <code>` | Explain a diagnostic code (e.g. `dippin explain DIP005`) |
 | `dippin unused <file>` | Detect dead-branch nodes and wasted cost |
 | `dippin graph <file>` | Render ASCII DAG of the workflow. `--compact` for a denser layout |
-| `dippin test <file>` | Run `.test.json` scenario tests. `--verbose --coverage` for details |
+| `dippin test <file>` | Run `.test.json` scenario tests. `--verbose --coverage` for details. Each node is capped at 3 visits; past that a loop (including a gate's `preferred_label` revise loop) takes its exit edge |
 | `dippin watch <file>` | Watch for changes, re-validate on save |
 | `dippin lsp` | Start LSP server on stdio (for editor integration) |
 
@@ -619,7 +619,7 @@ The primary loop for authoring .dip files:
 | `ctx.tool_stdout` | Tool command stdout |
 | `ctx.tool_marker` | Tool stdout regex match (when `marker_grep` declared) |
 | `ctx.tool_route` | A routing value the runtime extracts from the tool's stdout — populated when the tool emits a routing sentinel the runtime recognizes (format defined by the runtime); `route_required: true` additionally fails the node if none is emitted |
-| `ctx.preferred_label` | Human choice selection (maps to edge label) |
+| `ctx.preferred_label` | Human gate answer. Routes to the edge whose `choice:`, else `label:`, else target node ID equals it (exact, case-insensitive; a `--scenario`/test value also falls back to substring). Unset → the gate's `default:` edge. Per-gate in scenarios: `Gate.preferred_label` |
 | `ctx.interview_answers` | Interview mode answers (via `answers_key`) |
 | `params.<key>` | Parent subgraph params |
 | `graph.<field>` | Workflow-level metadata |
