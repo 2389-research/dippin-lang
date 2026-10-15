@@ -162,12 +162,13 @@ The `scenario` object maps context keys to values. The simulator resolves condit
 | `outcome` | Maps to `ctx.outcome` — the most common routing variable |
 | `status` | Maps to `ctx.status` |
 | `tool_stdout` | Maps to `ctx.tool_stdout` — tool command output |
+| `<Gate>.preferred_label` | A human gate's answer. Matches an edge's `choice:`, then `label:`, then target node ID (exact, case-insensitive), falling back to a substring match. Without it a gate takes its `default:` edge |
 
 ## Caveats
 
 <div class="caveat-card">
   <h4>not_visited and loop breaking</h4>
-  <p>The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and continues execution rather than stopping. Nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer <code>path_contains</code> over <code>not_visited</code>.</p>
+  <p>The test runner limits per-node visits to 3. When a loop exceeds this limit, the simulator forces the loop-exit edge and continues execution rather than stopping. At a human gate, a scenario such as <code>"Review.preferred_label": "revise"</code> applies on every visit, so once that answer would take a <code>loop</code> edge past the limit, the forced exit is the gate's <code>default:</code> edge if that is not a <code>loop</code> edge, else the first edge without <code>loop</code>. An answer that already leaves the loop is never overridden. Nodes downstream of the loop-exit can be visited even though the loop was broken. For edge-routing assertions in workflows with loops, prefer <code>path_contains</code> over <code>not_visited</code>.</p>
 </div>
 
 <div class="caveat-card">

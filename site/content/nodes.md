@@ -101,12 +101,14 @@ Human nodes pause execution and wait for human input. Four modes: `choice` (pred
 | Field | Type | Description |
 |-------|------|-------------|
 | `mode` | String | Interaction mode: `choice`, `freeform`, `interview`, or `yes_no`. |
-| `default` | String | Default selection if no input. Only meaningful for `choice` mode. |
+| `default` | String | The answer an unattended run gives (`--auto-approve`, or a timeout). Used by `choice` (and mode-less) and `freeform` gates; `yes_no` and `interview` ignore it (DIP128 warns on interview). |
 | `prompt` | Block | Prompt text shown to the human (also the interview fallback when no questions are detected). |
 | `questions_key` | String | Context key to read questions from. Interview mode only (default `interview_questions`). |
 | `answers_key` | String | Context key to write answers to. Interview mode only (default `interview_answers`). |
 | `timeout` | Duration | How long to wait for input before `timeout_action` fires (e.g. `5m`). `0`/unset = wait indefinitely. |
 | `timeout_action` | String | What to do when `timeout` elapses: `fail` (the node fails), `default` (use the `default` selection), or empty. Empty falls back to the node's `default` answer if one is set, otherwise fails. Any other value is a parse error. |
+
+An answer — typed, or the `default:` on an unattended run — picks the outgoing edge whose `choice:` key equals it, else the one whose `label:` does, else the one whose target node ID does. Matching is exact and case-insensitive, never a substring: `default: hold` routes to an edge labelled `hold`, not to one labelled `hold off`. `dippin simulate` and `dippin test` route gates the same way (see [simulate](/analysis/#simulate)).
 
 ## tool
 

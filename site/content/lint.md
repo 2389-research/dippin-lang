@@ -195,9 +195,9 @@ hint[DIP154]: agent "A" sets prompt_suffix: none but no defaults prompt_suffix c
 <div class="diag-card warning">
   <span class="diag-code">DIP128</span> — Interview mode with meaningless default
   <p>A human node with <code>mode: interview</code> has a <code>default:</code> value, which has no effect in interview mode — answers come from the extracted question list.</p>
-  <pre>warning[DIP128]: human node "GatherRequirements" has mode: interview with a default value
+  <pre>warning[DIP128]: node "GatherRequirements" is mode interview but has default "yes" which is ignored
   --&gt; pipeline.dip:28:5
-  = help: remove the default field — it is ignored in interview mode</pre>
+  = help: default is only used by choice (or mode-less) and freeform gates; remove it</pre>
 </div>
 
 <div class="diag-card warning">

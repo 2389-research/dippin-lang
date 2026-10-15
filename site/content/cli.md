@@ -116,7 +116,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>simulate</h3>
   <div class="cmd-usage">dippin simulate [--scenario key=val] [--interactive] [--all-paths] [--max-node-visits N] &lt;file&gt;</div>
-  <p>Dry-run a workflow's execution graph without calling LLMs or running commands. Emits JSONL events (pipeline_start, node_enter, node_exit, edge_traverse, pipeline_end). Use <code>--scenario</code> to inject context values and <code>--all-paths</code> to enumerate all possible paths. Use <code>--max-node-visits N</code> to take a loop's exit once a node has been visited more than N times, for loops a fixed scenario can't end. N must be 0 or greater, and a nonzero N cannot be combined with <code>--all-paths</code> (usage error, exit 2).</p>
+  <p>Dry-run a workflow's execution graph without calling LLMs or running commands. Emits JSONL events (pipeline_start, node_enter, node_exit, edge_traverse, pipeline_end). Use <code>--scenario</code> to inject context values and <code>--all-paths</code> to enumerate all possible paths. A human gate takes the edge its <code>default:</code> names unless a scenario sets <code>preferred_label</code>; with <code>--interactive</code> it prompts and routes by the typed answer (an edge's <code>choice:</code> or <code>label:</code>, exact and case-insensitive, or a 1-based option number). Use <code>--max-node-visits N</code> to take a loop's exit once a node has been visited more than N times, for loops a fixed scenario can't end; <code>dippin test</code> uses 3, and the default 0 means no limit, so such loops stop at the 500-step cap with an error. N must be 0 or greater, and a nonzero N cannot be combined with <code>--all-paths</code> (usage error, exit 2).</p>
 </div>
 
 <div class="cmd-card">
@@ -144,7 +144,7 @@ Bundle commands (`pack`, `unpack`, `inspect`) use a finer ladder so tooling can 
 <div class="cmd-card">
   <h3>test</h3>
   <div class="cmd-usage">dippin test [--verbose] [--coverage] &lt;file.dip&gt;</div>
-  <p>Run scenario tests defined in <code>.test.json</code> files against a workflow. Auto-discovers the test file from the workflow path. Use <code>--verbose</code> to show execution paths. Use <code>--coverage</code> to report node and edge coverage across all test scenarios.</p>
+  <p>Run scenario tests defined in <code>.test.json</code> files against a workflow. Auto-discovers the test file from the workflow path. Use <code>--verbose</code> to show execution paths. Use <code>--coverage</code> to report node and edge coverage across all test scenarios. Each node is capped at 3 visits; past that, a loop takes its exit edge and the run continues.</p>
 </div>
 
 <div class="cmd-card">
