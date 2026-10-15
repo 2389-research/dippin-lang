@@ -31,6 +31,8 @@ just validate-examples  # run dippin validate on all examples/*.dip
 just lint-examples      # run dippin lint on all examples/*.dip
 just cover              # generate test coverage report
 just cover-html         # open coverage in browser
+just docs-sync-check   # docs/X.md changes must reach site/content/X.md (also in check/CI)
+just release-check v0.X.0  # pre-tag gate: CHANGELOG entry, docs/site sync, no stale versions
 just setup-hooks        # install pre-commit hook (required for first checkout)
 just clean              # remove build artifacts
 ```
@@ -64,13 +66,21 @@ Key gotcha: The parser stores edge conditions as `Condition.Raw` (plain text). `
 
 ## Versioning
 
-Tag semver releases after batches of meaningful changes. Downstream consumers **always pin to a specific dippin version, never `@latest`** — so merged work on `main` is invisible to them until it's tagged. Cutting a tag is what delivers a feature to consumers; they then bump their pin to adopt it. Update CHANGELOG.md when tagging.
+Tag semver releases after batches of meaningful changes. Downstream consumers **always pin to a specific dippin version, never `@latest`** — so merged work on `main` is invisible to them until it's tagged. Cutting a tag is what delivers a feature to consumers; they then bump their pin to adopt it.
 
-```sh
-git tag -a v0.X.0 -m "description" && git push origin v0.X.0
-```
+**Every release updates the website and documentation — no exceptions.** The site (dippin.org, Hugo in `site/`) has two kinds of pages:
+- *Generated at deploy* (nothing to do by hand): `/changelog` from CHANGELOG.md, `llms-full.txt` from `docs/` via gen-spec, `/prices.json` + `/models.json` from `pricing/prices.json`.
+- *Hand-written* (must be updated in the same PR as the change): `site/content/*.md` are rewrites of `docs/*.md` with their own structure — when a PR changes `docs/X.md`, it also changes `site/content/X.md` (enforced by `scripts/docs-sync-check.sh` in `just check`, pre-commit and CI; for a docs change with genuinely nothing user-facing, add a `Site-Sync: none` commit trailer). Also keep `site/static/skill.md` (the hosted Claude Code skill), README.md and AGENTS.md true. Never hard-code "the current/recommended version is vX" — link to the releases page instead.
 
-GoReleaser is configured (`.goreleaser.yml`) — pushing a tag triggers GitHub Actions to build cross-platform binaries and publish to Homebrew tap.
+Release checklist:
+1. Changelog PR: add `## [v0.X.0] — YYYY-MM-DD` to CHANGELOG.md; review that every user-facing change in the release is reflected in `docs/`, its `site/content/` twin, and `site/static/skill.md` where relevant.
+2. After it merges, on an up-to-date `main`: `just release-check v0.X.0` (fails on a missing CHANGELOG entry, docs/site drift since the last tag, or stale version claims).
+3. Tag and push:
+   ```sh
+   git tag -a v0.X.0 -m "description" && git push origin v0.X.0
+   ```
+4. Verify: the GoReleaser run succeeds (`.goreleaser.yml` builds cross-platform binaries and publishes to the Homebrew tap), the main-branch CI "Deploy Site" job succeeded, and https://dippin.org/changelog/ shows the new version.
+5. Open an adoption issue on downstream consumers (e.g. tracker) to bump their pin.
 
 ## Model Catalog & Pricing
 

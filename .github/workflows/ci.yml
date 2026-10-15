@@ -47,6 +47,9 @@ jobs:
             exit 1
           fi
 
+      - name: Docs changes reached the website (site/content twins)
+        run: ./scripts/docs-sync-check.sh
+
       - name: Build
         run: go build ./...
 
