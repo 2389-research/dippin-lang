@@ -57,7 +57,7 @@ $ dippin cost pipeline.dip
 
 ## coverage
 
-Analyze edge coverage and reachability. For tool nodes, extracts possible outputs from `printf`/`echo` patterns in the command, then checks whether outgoing edge conditions cover those outputs.
+Analyze edge coverage and reachability. For tool nodes, extracts possible outputs from `printf`/`echo` patterns in the command, then checks whether outgoing edge conditions cover those outputs. The extracted value is what the command prints, not its source text: shell quoting is applied, a single-argument `printf`'s escapes (`\n`, `\t`, octal, `%%`, …) are expanded, and trailing whitespace is trimmed as the runtime does — so `printf 'marker\n'` covers `ctx.tool_stdout = marker`.
 
 <div class="terminal">
   <div class="terminal-bar">
@@ -159,8 +159,11 @@ Suggest cheaper model substitutions without sacrificing quality. Rules include: 
 
 Dry-run a workflow without real side effects, emitting JSONL events to stdout. It walks the IR graph from start to exit, logging each node visited — no LLM calls and no shell commands run. Use `--scenario key=val` to inject context and explore conditional branches, `--all-paths` to enumerate every reachable path, and `--interactive` to prompt at human nodes.
 
+With no flags it follows the happy path (all conditions succeed). A human gate takes the edge its `default:` names, as an unattended run does; `--scenario Gate.preferred_label=<label>` picks another. `--interactive` prompts at each gate and routes by the typed answer — an edge's `choice:` or `label:` (exact, case-insensitive) or a 1-based option number. `--max-node-visits N` takes a node's loop-exit edge once it has been visited more than N times, so a loop a fixed scenario can't end (such as a worklist drained by on-disk state) still finishes; `dippin test` uses 3, and the default 0 means no limit.
+
 ```
 $ dippin simulate pipeline.dip --scenario outcome=fail
+$ dippin simulate pipeline.dip --scenario Review.preferred_label=revise --max-node-visits 3
 ```
 
 **When to use:** Verify routing logic before running the real pipeline — confirm a scenario reaches the expected node sequence, or audit every branch with `--all-paths`.
