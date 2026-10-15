@@ -8,6 +8,9 @@ echo "=== pre-commit: gen-spec auto-regenerate ==="
 ./scripts/gen-spec.sh
 git add cmd/dippin/generated-spec.md
 
+echo "=== pre-commit: docs/site sync ==="
+./scripts/docs-sync-check.sh
+
 echo "=== pre-commit: go build ==="
 go build ./...
 

@@ -109,7 +109,7 @@ releasecheck:
     go test ./releasecheck/ -count=1 -race
 
 # Run the full pre-commit check suite (mirrors CI exactly)
-check: spec-check build vet fmt-check lint-go test-race releasecheck complexity validate-examples validate-grammar pack-examples tree-sitter-test
+check: docs-sync-check spec-check build vet fmt-check lint-go test-race releasecheck complexity validate-examples validate-grammar pack-examples tree-sitter-test
     @echo "All checks passed."
 
 # Generate test coverage report (excludes untestable files: main.go, cmd_lsp.go)
@@ -138,6 +138,16 @@ release tag msg:
 # Start Hugo dev server (builds WASM and changelog first)
 site-serve: build wasm changelog-md
     cd site && hugo serve
+
+# Fail if a docs/X.md change wasn't carried to its website twin site/content/X.md
+# (base: merge-base with origin/main, or pass a ref). Skip: SITE_SYNC=skip.
+docs-sync-check base="":
+    ./scripts/docs-sync-check.sh {{base}}
+
+# Pre-tag release gate: CHANGELOG entry, docs/site in sync since the last tag,
+# no stale "current version" claims. Run before `git tag` (e.g. just release-check v0.79.0).
+release-check version:
+    ./scripts/release-check.sh {{version}}
 
 # Regenerate site/content/changelog.md from CHANGELOG.md
 changelog-md:
