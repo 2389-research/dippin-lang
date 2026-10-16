@@ -501,7 +501,7 @@
     "kind": "price",
     "aggregator_value": "0.75/3.75",
     "reason": "models.dev reports the introductory rate; the official page prints \"$0.75 through December 31, 2026. $1.50 starting January 1, 2027\" and the catalog carries the durable 1.5/7.5. Same disposition as gemini-3.6-flash.",
-    "review_by": "2027-01-15"
+    "review_by": "2027-01-05"
   },
   {
     "provider": "zai",
@@ -534,16 +534,8 @@
     "kind": "price",
     "aggregator_value": "*",
     "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07",
+    "review_by": "2026-11-19",
     "source": "openrouter"
-  },
-  {
-    "provider": "minimax",
-    "model": "MiniMax-M2.5",
-    "kind": "disagree",
-    "aggregator_value": "md:0.3/1.2 or:0.27/1.08",
-    "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
   },
   {
     "provider": "mistral",
@@ -573,7 +565,7 @@
     "provider": "openai",
     "model": "gpt-5.6-sol",
     "kind": "disagree",
-    "aggregator_value": "md:4/20 or:*",
+    "aggregator_value": "md:4/20 or:2/10",
     "reason": "OpenRouter lists a 50%-off promotional rate; models.dev agrees with the catalog's verified $4/$20 list price. Dispositioned in the 2026-09-08 triage.",
     "review_by": "2026-12-07"
   },
