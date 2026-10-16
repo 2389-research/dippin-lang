@@ -15,15 +15,17 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
   Catalog is now **153** entries.
 - **Documented first-party aliases now resolve** instead of tripping DIP108:
-  - xAI: `grok-4.20`, `grok-4.20-reasoning`, `grok-4.20-non-reasoning`, `grok-4.20-multi-agent` (and their `-latest` forms); `grok-4.3-latest`, `grok-4.5-latest`; `grok-build-latest`; `grok-code-fast`, `grok-code-fast-1`, `grok-code-fast-1-0825`
+  - xAI: `grok-4.20`, `grok-4.20-reasoning`, `grok-4.20-non-reasoning`, `grok-4.20-multi-agent` (and their `-latest` forms); `grok-4.3-latest`, `grok-4.5-latest`; `grok-build-latest`
   - Mistral: `mistral-large-2512`, `mistral-large-latest`, `mistral-medium-latest`, `mistral-small-latest`, `ministral-{14b,8b,3b}-latest`, `codestral-latest`
   - OpenAI: `gpt-5.6` → `gpt-5.6-sol`
-  - Qwen: `qwen3.7-max-preview`
   - `qwen3.8-max-0902` was already an alias.
 
 ### Changed
 - **`qwen3.7-plus` is priced at $0.40/$1.60** (cache read 0.2×). Alibaba's page prints "List price $0.4 (Limited-time 20% off)", so $0.40 is the printed list price. OpenRouter's $0.32/$1.28 is exactly the 20%-off rate. v0.77.0 had misread this as a promo with no printed list price.
-- **`gpt-5.2-codex` is its own `deprecated` entry.** It shut down 2026-07-23, but as an alias of the live `gpt-5.2` it could never trigger DIP161.
+- **Retired or preview IDs get their own entries, not aliases**, since an alias inherits its target's `deprecated` and `maturity` flags:
+  - `gpt-5.2-codex` shut down 2026-07-23. It is now `deprecated`; as an alias of the live `gpt-5.2` it could never trigger DIP161.
+  - `grok-code-fast-1` (and its spellings `grok-code-fast`, `grok-code-fast-1-0825`) was retired 2026-05-15 and redirects to `grok-build-0.1`. It is now `deprecated`, billed at `grok-build-0.1`'s rate.
+  - `qwen3.7-max-preview` is a thinking-only preview snapshot. It now carries `maturity: preview`, so family-alias resolution and preview-excluding consumers skip it.
 - **OpenAI context windows corrected** against the model pages:
   - `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5.4-mini`, `gpt-5.4-nano` and `gpt-5.3-codex` go from 272K to **400K**.
   - `gpt-5.6-luna`/`-sol`/`-terra` go from 922K, which was the max *input*, to the **1.05M** context window.

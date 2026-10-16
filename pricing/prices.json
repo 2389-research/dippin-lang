@@ -844,8 +844,20 @@
       "output_per_m": 2,
       "source": "https://docs.x.ai/docs/models",
       "as_of": "2026-10-14",
+      "cached_input_per_m": 0.2
+    },
+    {
+      "provider": "grok",
+      "model": "grok-code-fast-1",
+      "display_name": "Grok Code Fast 1",
+      "context_window": 256000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 1,
+      "output_per_m": 2,
+      "source": "https://docs.x.ai/developers/migration/may-15-retirement",
+      "as_of": "2026-10-16",
+      "deprecated": true,
       "aliases": [
-        "grok-code-fast-1",
         "grok-code-fast",
         "grok-code-fast-1-0825"
       ],
@@ -1642,9 +1654,19 @@
       "output_per_m": 7.5,
       "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
       "as_of": "2026-10-14",
-      "aliases": [
-        "qwen3.7-max-preview"
-      ],
+      "cache_read_mult": 0.2
+    },
+    {
+      "provider": "qwen",
+      "model": "qwen3.7-max-preview",
+      "context_window": 1000000,
+      "max_output": 65536,
+      "capabilities": ["tools", "reasoning"],
+      "maturity": "preview",
+      "input_per_m": 2.5,
+      "output_per_m": 7.5,
+      "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+      "as_of": "2026-10-16",
       "cache_read_mult": 0.2
     },
     {
