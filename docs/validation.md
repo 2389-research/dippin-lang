@@ -410,7 +410,7 @@ warning[DIP108]: unknown model/provider combination
 edge router has an id the static catalog cannot know. Declare the provider as
 `openai-compat` and DIP108 stays quiet for *any* model id under it — the model is
 treated as known-but-unpriced (`Priced=false`, `$0` in `dippin cost`), the same
-state an unpriced catalog entry like `qwen3.7-plus` carries. No `--extra-models` spec is needed. The
+state an unpriced catalog entry like `glm-4.7-flash` carries. No `--extra-models` spec is needed. The
 exemption is scoped to that provider name: `openai` with an uncatalogued id, or an
 undeclared gateway name, still fires DIP108. An id containing `@` under
 `openai-compat` is an opaque id, not a family alias (no DIP162).

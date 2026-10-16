@@ -40,7 +40,7 @@ type ModelPrice struct {
     CacheReadMult         float64 // cache-read/input ratio (0 = unverified; 1 = verified no discount)
     CacheWriteMult        float64
     Aliases               []string
-    Priced                bool    // false = in catalog but no established price (e.g. qwen3.7-plus)
+    Priced                bool    // false = in catalog but no established price (e.g. glm-4.7-flash, a free tier)
     Deprecated            bool    // true = retired on the first-party provider API, still priced for Bedrock/Vertex passthrough (#224)
     Source, AsOf          string  // provenance: published-price URL + verification date
 }
@@ -58,7 +58,7 @@ func LookupProvider(provider, model string) (ModelPrice, bool)
   `kimi→moonshot`.
 - **Policy is the caller's.** `found=false` means unknown — you decide what that
   means (tracker's budget path: treat as `$0` + warning, never a hard fail). A
-  `found=true` with `Priced=false` means recognized-but-unpriced (e.g. qwen3.7-plus):
+  `found=true` with `Priced=false` means recognized-but-unpriced (e.g. glm-4.7-flash):
   price it as `$0`, but don't warn that the model is unknown.
 
 ## How tracker should integrate

@@ -2137,5 +2137,49 @@
     "aggregator_value": "*",
     "reason": "Open-weight release (816B, 1M context). Meta's docs: \"You don't call it over Model API\"; no first-party price. OpenRouter's 1.25/4.25 is its own launch-partner rate.",
     "review_by": "2027-01-15"
+  },
+  {
+    "provider": "cohere",
+    "model": "c4ai-aya-expanse-32b",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "0/0",
+    "reason": "models.dev carries no price for this model (0/0); cohere.com/pricing FAQ lists Aya Expanse 32B at $0.50/$1.50 (verified 2026-10-16).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "ministral-3b-latest",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "0.04/0.04",
+    "reason": "models.dev maps the -latest alias to the retired Ministral 3B 2410 rate. Mistral's model page lists 'API names: ministral-3b-2512, ministral-3b-latest' at 0.1/0.1 (verified 2026-10-16).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "ministral-8b-latest",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "0.1/0.1",
+    "reason": "models.dev maps the -latest alias to the retired Ministral 8B 2410 rate. Mistral's model page lists 'API names: ministral-8b-2512, ministral-8b-latest' at 0.15/0.15 (verified 2026-10-16).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.7-plus",
+    "kind": "price",
+    "source": "openrouter",
+    "aggregator_value": "0.32/1.28",
+    "reason": "OpenRouter passes through the 'Limited-time 20% off' promotion (exactly 0.8x). Alibaba's model-pricing page prints 'List price $0.4' / '$1.6', which the catalog carries; models.dev agrees.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.7-plus",
+    "kind": "disagree",
+    "aggregator_value": "md:0.4/1.6 or:0.32/1.28",
+    "reason": "OpenRouter passes through the 'Limited-time 20% off' promotion; models.dev matches the printed list price 0.4/1.6 the catalog carries. Exact match: a different OpenRouter rate means the promotion changed.",
+    "review_by": "2026-12-15"
   }
 ]

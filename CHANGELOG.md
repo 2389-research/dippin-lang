@@ -4,6 +4,50 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.79.0] — 2026-10-16
+
+### Added
+- **Every actively released first-party model is in the catalog.** This sweep built each provider's model list from its official models and pricing pages, not from the aggregator feed, which had missed models such as qwen3.8. All 12 providers were compared against the catalog in both directions. Each price was verified, as_of 2026-10-16:
+  - openai `chat-latest` $5/$30 (cache read 0.1×)
+  - gemini `gemini-robotics-er-2-preview` $2/$10 (preview; $1/$5 is introductory through 2026-12-31)
+  - zai `glm-4.6v` $0.30/$0.90, `glm-4.6v-flashx` $0.04/$0.40, `glm-4.5v` $0.60/$1.80, `glm-4-32b-0414-128k` $0.10/$0.10, and `glm-4.6v-flash` (free, unpriced)
+  - cohere `c4ai-aya-expanse-32b` $0.50/$1.50
+
+  Catalog is now **153** entries.
+- **Documented first-party aliases now resolve** instead of tripping DIP108:
+  - xAI: `grok-4.20`, `grok-4.20-reasoning`, `grok-4.20-non-reasoning`, `grok-4.20-multi-agent` (and their `-latest` forms); `grok-4.3-latest`, `grok-4.5-latest`; `grok-build-latest`; `grok-code-fast`, `grok-code-fast-1`, `grok-code-fast-1-0825`
+  - Mistral: `mistral-large-2512`, `mistral-large-latest`, `mistral-medium-latest`, `mistral-small-latest`, `ministral-{14b,8b,3b}-latest`, `codestral-latest`
+  - OpenAI: `gpt-5.6` → `gpt-5.6-sol`
+  - Qwen: `qwen3.7-max-preview`
+  - `qwen3.8-max-0902` was already an alias.
+
+### Changed
+- **`qwen3.7-plus` is priced at $0.40/$1.60** (cache read 0.2×). Alibaba's page prints "List price $0.4 (Limited-time 20% off)", so $0.40 is the printed list price. OpenRouter's $0.32/$1.28 is exactly the 20%-off rate. v0.77.0 had misread this as a promo with no printed list price.
+- **`gpt-5.2-codex` is its own `deprecated` entry.** It shut down 2026-07-23, but as an alias of the live `gpt-5.2` it could never trigger DIP161.
+- **OpenAI context windows corrected** against the model pages:
+  - `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5.4-mini`, `gpt-5.4-nano` and `gpt-5.3-codex` go from 272K to **400K**.
+  - `gpt-5.6-luna`/`-sol`/`-terra` go from 922K, which was the max *input*, to the **1.05M** context window.
+- **Meta Muse entries** now cite the page that prints their prices (dev.meta.ai/docs/pricing-rate-limits) and Meta's stated 1,048,576-token context window ([#333](https://github.com/2389-research/dippin-lang/pull/333)).
+- **`pricing-sync` suppressions accept `*` wildcards and an optional `source` scope** ([#333](https://github.com/2389-research/dippin-lang/pull/333)). OpenRouter's daily reseller-rate churn had been re-flagging dismissed models every morning. A row like `md:1.4/4.4 or:*` stays quiet while models.dev agrees with the catalog. An OpenRouter-scoped `*` never hides a models.dev change.
+
+### Notes
+- Verified as **not** first-party model ids, so DIP108 is correct to flag them:
+  - `gpt-astra-latest`, `gpt-6-astra-pro` and `gpt-6-astra-fast`. "pro" is `reasoning.mode` and "fast" is a service tier; `gpt-6-astra` is the only Astra model.
+  - `muse-spark-open`, which is open-weight and not served on Meta's Model API.
+- Deliberately not added:
+  - Approval-gated models (OpenAI cyber/Rosalind)
+  - Subscription-only models (MiniMax M3.1 Flash, Muse Wonder Full, `grok-4.7-fast`)
+  - Cohere Command A+, whose price is contradictory on Cohere's own page
+  - `gemini-flash-latest`, whose current target is undocumented
+- Announced but not yet retired, so these are not marked deprecated:
+  - OpenAI `gpt-4.1-nano`/`o3-mini`/`o4-mini` (2026-10-23)
+  - MiniMax M2.5/M2.7 (2026-11-18)
+  - `claude-sonnet-4-5` (2026-11-30)
+  - OpenAI `gpt-5`/`o3` family (2026-12-11)
+  - `gpt-4o`/`gpt-4.1` (2027-01-14)
+  - `gpt-5.1`/`gpt-5.3-codex`/`gpt-5.4-nano` (2027-04-01)
+  - `gemini-3.1-flash-lite` (2027-05-07)
+
 ## [v0.78.0] — 2026-10-14
 
 Simulator gate routing now matches tracker. Before this release `dippin simulate` and `dippin test` could take a different path through a human gate than the runtime would, and some gate loops could never be tested.
