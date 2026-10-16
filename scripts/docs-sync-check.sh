@@ -12,8 +12,9 @@
 #   Uncommitted changes in the working tree are included.
 #
 # Escape hatches, for a docs change with nothing to carry to the site (typo,
-# internal note): a commit in the range with the trailer `Site-Sync: none`
-# (works in CI), or SITE_SYNC=skip in the environment (local pre-commit).
+# internal note): the trailer `Site-Sync: none` on the commit(s) that changed
+# that docs file (works in CI; exempts only the files those commits touched),
+# or SITE_SYNC=skip in the environment (local pre-commit).
 set -e
 
 if [ "${SITE_SYNC:-}" = "skip" ]; then
@@ -30,19 +31,33 @@ if [ -z "$base" ]; then
   exit 0
 fi
 
-if git log --format=%B "$base"..HEAD 2>/dev/null | grep -qi '^Site-Sync: *none'; then
-  echo "docs-sync-check: skipped (Site-Sync: none trailer in $base..HEAD)"
-  exit 0
-fi
+# exempt_by_trailer FILE: true when every commit in range that touched FILE
+# carries a `Site-Sync: none` trailer and the working tree adds nothing
+# uncommitted to it. The trailer vouches for that commit's own docs edits
+# only, never for the whole range (a release spans many PRs).
+exempt_by_trailer() {
+  git diff --quiet HEAD -- "$1" 2>/dev/null || return 1
+  shas=$(git log --format=%H "$base"..HEAD -- "$1" 2>/dev/null)
+  [ -n "$shas" ] || return 1
+  for sha in $shas; do
+    git log -1 --format=%B "$sha" | grep -qi '^Site-Sync: *none' || return 1
+  done
+  return 0
+}
 
 changed=$(git diff --name-only "$base" -- docs site/content)
 stale=""
 for f in $(printf '%s\n' "$changed" | grep '^docs/[^/]*\.md$' || true); do
   twin="site/content/$(basename "$f")"
   [ -f "$twin" ] || continue
-  if ! printf '%s\n' "$changed" | grep -qx "$twin"; then
-    stale="$stale  $f changed, but $twin did not\n"
+  if printf '%s\n' "$changed" | grep -qx "$twin"; then
+    continue
   fi
+  if exempt_by_trailer "$f"; then
+    echo "docs-sync-check: $f exempt (Site-Sync: none on every commit touching it)"
+    continue
+  fi
+  stale="$stale  $f changed, but $twin did not\n"
 done
 
 if [ -n "$stale" ]; then
