@@ -372,8 +372,8 @@ func TestMetaMuseCatalog(t *testing.T) {
 		if got := Cost(Usage{CacheRead: 1_000_000}, p); got != want.cached {
 			t.Errorf("%s cache-read cost = %v, want %v", model, got, want.cached)
 		}
-		if p.ContextWindow != 1_000_000 {
-			t.Errorf("%s context window = %d, want 1000000", model, p.ContextWindow)
+		if p.ContextWindow != 1_048_576 { // dev.meta.ai/docs/models: 1,048,576 tokens
+			t.Errorf("%s context window = %d, want 1048576", model, p.ContextWindow)
 		}
 	}
 
