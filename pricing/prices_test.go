@@ -163,17 +163,17 @@ func TestLookupProviderAlias(t *testing.T) {
 }
 
 func TestKnownButUnpriced(t *testing.T) {
-	// qwen3.7-plus is in the catalog (recognized) but has no established price:
-	// its published rate is a limited-time discount with no printed list price.
-	p, ok := LookupProvider("qwen", "qwen3.7-plus")
+	// glm-4.7-flash is in the catalog (recognized) but has no per-token price:
+	// Z.AI serves it free, so it is Priced=false rather than "unknown".
+	p, ok := LookupProvider("zai", "glm-4.7-flash")
 	if !ok {
-		t.Fatal("qwen3.7-plus must be in the catalog")
+		t.Fatal("glm-4.7-flash must be in the catalog")
 	}
 	if p.Priced {
-		t.Error("qwen3.7-plus must be Priced=false")
+		t.Error("glm-4.7-flash must be Priced=false")
 	}
 	// Providers() (priced-only) must exclude it.
-	if _, in := Providers()["qwen"]["qwen3.7-plus"]; in {
+	if _, in := Providers()["zai"]["glm-4.7-flash"]; in {
 		t.Error("Providers() must exclude unpriced entries")
 	}
 }

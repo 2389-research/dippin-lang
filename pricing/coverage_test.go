@@ -11,6 +11,9 @@ import (
 // — so a newly added priced model cannot ship without either a verified cache
 // rate in prices.json or a deliberate, reasoned entry here.
 var knownCacheGaps = []string{
+	// glm-4-32b-0414-128k: Z.AI's pricing page lists no cached-input rate for it
+	// (every other GLM entry has one). Unknown, not "no discount".
+	"zai/glm-4-32b-0414-128k",
 	// MiniMax: the pricing page does now show "Prompt caching Read"/"Write"
 	// columns for these models, so the earlier "publishes no token cache price"
 	// note is stale. It is still not reliably machine-readable: two automated
