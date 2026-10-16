@@ -138,7 +138,10 @@ releases):
 - A daily GitHub Action opens a rolling issue when it detects price/deprecation
   drift for existing models **or** new upstream models the catalog is missing.
   Persistent non-candidates (models we deliberately don't carry) are silenced
-  via `cmd/pricing-sync/drift_suppressions.json`.
+  via `cmd/pricing-sync/drift_suppressions.json`. An entry's `aggregator_value`
+  may use `*` wildcards (with an optional `source` scope such as `"openrouter"`)
+  for values that churn daily without meaning anything, like reseller rates; the
+  row re-surfaces as soon as the literal part (e.g. the models.dev price) moves.
 
 When dippin cuts a new tag with refreshed prices, tracker bumps its pin to adopt
 it — the same flow tracker already uses for every other dippin feature.

@@ -103,7 +103,7 @@ jobs:
             echo
             echo "> ⚠️ **Human-gated.** Confirm each candidate against the model's official \`source\` URL before editing \`pricing/prices.json\`. the aggregators (models.dev, OpenRouter) are detection aids, not authorities — they can reflect introductory or discounted rates (an intro price vs. the durable list price)."
             echo
-            echo "> Already-dispositioned candidates are filtered by \`cmd/pricing-sync/drift_suppressions.json\` (they re-surface if the aggregator value changes or the entry's \`review_by\` passes). To silence a persistent false alarm, add an entry there."
+            echo "> Already-dispositioned candidates are filtered by \`cmd/pricing-sync/drift_suppressions.json\` (they re-surface if the aggregator value changes or the entry's \`review_by\` passes). To silence a persistent false alarm, add an entry there. For a value that churns without meaning anything (OpenRouter reseller rates), use a \`*\` wildcard in \`aggregator_value\` — e.g. \`md:1.4/4.4 or:*\`, or \`*\` with \`\"source\": \"openrouter\"\` — so the row stays quiet until the stable part changes."
             echo
             echo '### Price / deprecation drift (`sync --existing-only --tolerance 0.02`)'
             echo '```'

@@ -38,6 +38,64 @@ func TestApplySuppressions_ReSurfacesOnChangedAggValue(t *testing.T) {
 	}
 }
 
+// OpenRouter's reseller rates churn daily; a wildcard keeps a dispositioned row
+// quiet while the stable part (here: models.dev agreeing with the catalog)
+// holds, and re-surfaces it the moment that part changes.
+func TestApplySuppressions_WildcardValue(t *testing.T) {
+	sups := []suppression{{Provider: "zai", Model: "glm-5.2", Kind: "disagree", Aggregator: "md:1.4/4.4 or:*", ReviewBy: "2026-11-08"}}
+	cases := []struct {
+		agg      string
+		suppress bool
+	}{
+		{"md:1.4/4.4 or:0.04/7", true},
+		{"md:1.4/4.4 or:0.037/7", true},
+		{"md:0.7/2.2 or:0.037/7", false}, // models.dev moved: re-surface
+	}
+	for _, c := range cases {
+		changes := []change{{Kind: "disagree", Provider: "zai", Model: "glm-5.2", Agg: c.agg}}
+		if _, n := applySuppressions(changes, sups, testNow); (n == 1) != c.suppress {
+			t.Errorf("agg %q: suppressed=%v, want %v", c.agg, n == 1, c.suppress)
+		}
+	}
+}
+
+// A source-scoped wildcard hides only that aggregator's rows: an
+// "openrouter" reseller-rate disposition must not swallow a models.dev price
+// change for the same model.
+func TestApplySuppressions_SourceScoped(t *testing.T) {
+	sups := []suppression{{Provider: "moonshot", Model: "kimi-k3", Kind: "price", Aggregator: "*", Source: "openrouter", ReviewBy: "2026-11-08"}}
+	changes := []change{
+		{Kind: "price", Provider: "moonshot", Model: "kimi-k3", Agg: "0.304/11.94", Source: "openrouter"},
+		{Kind: "price", Provider: "moonshot", Model: "kimi-k3", Agg: "2/10", Source: "models.dev"},
+	}
+	kept, n := applySuppressions(changes, sups, testNow)
+	if n != 1 || len(kept) != 1 || kept[0].Source != "models.dev" {
+		t.Errorf("want only the models.dev row kept; kept=%+v suppressed=%d", kept, n)
+	}
+}
+
+func TestWildcardMatch(t *testing.T) {
+	cases := []struct {
+		pattern, value string
+		want           bool
+	}{
+		{"2/10", "2/10", true},
+		{"2/10", "2/100", false},
+		{"*", "anything/at all", true},
+		{"md:3/15 or:*", "md:3/15 or:0.5/15", true},
+		{"md:3/15 or:*", "md:3/150 or:0.5/15", false},
+		{"*/15", "0.304/15", true},
+		{"*/15", "0.304/11.94", false},
+		{"a*b*c", "aXXbYYc", true},
+		{"a*b*c", "aXXcYYb", false},
+	}
+	for _, c := range cases {
+		if got := wildcardMatch(c.pattern, c.value); got != c.want {
+			t.Errorf("wildcardMatch(%q, %q) = %v, want %v", c.pattern, c.value, got, c.want)
+		}
+	}
+}
+
 func TestApplySuppressions_ExpiredReviewByReSurfaces(t *testing.T) {
 	changes := []change{{Kind: "price", Provider: "anthropic", Model: "claude-sonnet-5", Agg: "2/10"}}
 	sups := []suppression{{Provider: "anthropic", Model: "claude-sonnet-5", Kind: "price", Aggregator: "2/10", ReviewBy: "2026-01-01"}}
@@ -56,12 +114,17 @@ func TestEmbeddedSuppressionsWellFormed(t *testing.T) {
 		t.Fatalf("embedded drift_suppressions.json does not parse: %v", err)
 	}
 	validKind := map[string]bool{"price": true, "deprecated": true, "new": true, "disagree": true}
+	validSource := map[string]bool{"": true, "openrouter": true, "models.dev": true, "both": true}
 	for _, s := range sups {
 		if s.Provider == "" || s.Model == "" || s.Aggregator == "" || s.Reason == "" {
 			t.Errorf("incomplete suppression: %+v", s)
 		}
 		if !validKind[s.Kind] {
 			t.Errorf("%s/%s: invalid kind %q", s.Provider, s.Model, s.Kind)
+		}
+		// A misspelled source would silently suppress nothing.
+		if !validSource[s.Source] {
+			t.Errorf("%s/%s: invalid source %q (want openrouter, models.dev or both)", s.Provider, s.Model, s.Source)
 		}
 		if _, err := time.Parse("2006-01-02", s.ReviewBy); err != nil {
 			t.Errorf("%s/%s: review_by %q is not YYYY-MM-DD", s.Provider, s.Model, s.ReviewBy)
