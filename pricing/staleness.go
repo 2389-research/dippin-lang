@@ -69,6 +69,11 @@ func isAliasKey(_ string, id string, p ModelPrice) bool {
 }
 
 // evaluateStaleness classifies a single entry; ok is false when it is fresh.
+// A deprecated entry still needs a source and a well-formed date, but is never
+// "stale": a model retired on its first-party API has no price page left to
+// re-verify against (providers drop retired models from their pricing pages),
+// so an age check on it can only nag. Unpriced entries are still age-checked —
+// a provider can start publishing a price (Qwen did in v0.77.0).
 func evaluateStaleness(provider, id string, p ModelPrice, now time.Time, maxAge time.Duration) (Staleness, bool) {
 	s := Staleness{Provider: provider, Model: id, AsOf: p.AsOf, AgeDays: -1}
 	if p.Source == "" {
@@ -82,7 +87,7 @@ func evaluateStaleness(provider, id string, p ModelPrice, now time.Time, maxAge 
 	}
 	age := now.Sub(t)
 	s.AgeDays = int(age.Hours() / 24)
-	if age > maxAge {
+	if age > maxAge && !p.Deprecated {
 		s.Reason = "stale"
 		return s, true
 	}

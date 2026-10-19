@@ -128,7 +128,10 @@ and deprecated entries can also carry zero cache fields without appearing there.
 dippin owns the freshness process (you consume a pinned tag and adopt new
 releases):
 
-- `just check-prices` — flags catalog entries overdue for re-verification.
+- `just check-prices` — flags catalog entries overdue for re-verification
+  (45 days). Deprecated entries are exempt from the age check — a retired
+  model has no price page left to re-verify against — but still need a
+  source and date.
 - `just sync-prices` — diffs `prices.json` against models.dev **and OpenRouter**
   (cross-referenced: a model the two aggregators price differently is reported
   as a `disagree` candidate) and reports candidates (report-only; a human
