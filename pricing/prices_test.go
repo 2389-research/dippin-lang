@@ -278,7 +278,7 @@ func TestProviderCachedInputPrices(t *testing.T) {
 // consumer stops applying a default cache overlay to this provider. (Mistral was
 // here too until its prompt-caching doc began publishing a 10% cached rate.)
 func TestNoCacheDiscountProviders(t *testing.T) {
-	for _, model := range []string{"command-r", "command-a-03-2025"} {
+	for _, model := range []string{"command-r", "command-r-08-2024"} {
 		p, ok := Lookup(model)
 		if !ok {
 			t.Errorf("%s not found in catalog", model)

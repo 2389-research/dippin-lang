@@ -4,6 +4,26 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.80.0] — 2026-10-19
+
+### Added
+- **`MiniMax-M3.1-Flash`** at $0.15/$0.60 (cache read 0.1×, 1M context, vision + reasoning). It's newly available pay-as-you-go; it had been subscription-only ([#336](https://github.com/2389-research/dippin-lang/pull/336)).
+- **MiniMax cache rates** for the current models ([#292](https://github.com/2389-research/dippin-lang/issues/292), [#336](https://github.com/2389-research/dippin-lang/pull/336)). The pay-as-you-go page now prints a clean "Prompt caching Read" column: M3 at 0.2× (base tier) and M3.1-Flash at 0.1×. A human confirmed both on 2026-10-19. The M2.x models retire 2026-11-18 and remain cache gaps until then.
+- **`TestAliasesInheritCorrectFlags`.** An alias shares its target's `deprecated` and `maturity` flags, so an alias that looks like a preview must point at a preview entry, and a known-retired slug can't resolve to a live entry. This pitfall was caught twice in review on #334 (`gpt-5.2-codex`, `grok-code-fast-1`, `qwen3.7-max-preview`).
+- **Muse Spark capabilities.** All five `muse-spark-*` entries now list `vision` and `reasoning`, per Meta's model docs.
+
+### Changed
+- **New per-entry flag `price_unlisted`** (`ModelPrice.PriceUnlisted`). It means the provider no longer prints this price anywhere, so the last-verified rate is kept and `just check-prices` skips the 45-day age check for it. The entry still needs a source and a valid date. The exemption is explicit per entry, not implied by `deprecated`, because many deprecated models still have a published price that must keep being re-verified. `gemini-3.5-flash` carries the flag.
+- **`grok-4-1-fast-*` re-verified** against xAI's retirement notice: they redirect to `grok-4.3` and are billed at its $1.25/$2.50, which matches the catalog.
+- **`glm-5-turbo` and `command-a-03-2025` are now `"priced": false`.** Both are still callable, but neither provider publishes a price any more:
+  - `glm-5-turbo` was dropped from Z.AI's pricing page and from the API reference's model list.
+  - `command-a-03-2025` is "Live" in Cohere's docs but missing from cohere.com/pricing.
+
+  Both are still recognized, so they don't trip DIP108, and both now price at $0. They become priced again if their providers publish a rate.
+- **Drift dispositions** ([#336](https://github.com/2389-research/dippin-lang/pull/336)):
+  - `deepseek-v4.1-flash-1017` is DeepSeek's 2026-10-17 version label behind `deepseek-flash`, at unchanged prices.
+  - OpenRouter's `glm-4.7` rate is reseller pricing.
+
 ## [v0.79.0] — 2026-10-16
 
 ### Added
