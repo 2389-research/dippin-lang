@@ -609,7 +609,7 @@
     "kind": "price",
     "aggregator_value": "*",
     "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07",
+    "review_by": "2026-12-15",
     "source": "openrouter"
   },
   {
@@ -618,7 +618,7 @@
     "kind": "disagree",
     "aggregator_value": "md:0.6/2.2 or:0.4/1.75",
     "reason": "OpenRouter reports a CNY-converted/regional rate below the durable USD list price; the catalog (verified within 45 days) and models.dev agree on the list price. Dispositioned in the 2026-09-08 OpenRouter cross-reference triage.",
-    "review_by": "2026-12-07"
+    "review_by": "2026-12-15"
   },
   {
     "provider": "zai",
