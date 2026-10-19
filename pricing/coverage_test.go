@@ -14,18 +14,14 @@ var knownCacheGaps = []string{
 	// glm-4-32b-0414-128k: Z.AI's pricing page lists no cached-input rate for it
 	// (every other GLM entry has one). Unknown, not "no discount".
 	"zai/glm-4-32b-0414-128k",
-	// MiniMax: the pricing page does now show "Prompt caching Read"/"Write"
-	// columns for these models, so the earlier "publishes no token cache price"
-	// note is stale. It is still not reliably machine-readable: two automated
-	// reads of the same page disagreed on the read rate ($0.03/M vs. $0.06/M
-	// for <=512k with $0.12/M above it), and M3 shows no write price at all.
-	// Left as a gap rather than committing an unconfirmed number — a human must
-	// read the table and set the rates. Tracked in #292.
+	// MiniMax M2.x: retiring 2026-11-18 and no longer on the pay-as-you-go
+	// page, so their cache rates can't be confirmed. M3 / M3.1-Flash carry the
+	// rates printed in the page's "Prompt caching Read" column, confirmed by a
+	// human on 2026-10-19 (#292).
 	"minimax/MiniMax-M2.5",
 	"minimax/MiniMax-M2.5-highspeed",
 	"minimax/MiniMax-M2.7",
 	"minimax/MiniMax-M2.7-highspeed",
-	"minimax/MiniMax-M3",
 	// qwen3.8-*: Alibaba's Context Cache page lists both under implicit and
 	// explicit caching but says their hit price is not the standard 20%/10% of
 	// input and defers to the login-gated console. No public rate to commit.
