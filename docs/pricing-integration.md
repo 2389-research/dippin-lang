@@ -112,8 +112,8 @@ cache fields per entry rather than assuming a global convention:
 - **Verified no discount:** Cohere and OpenAI's `-pro` models carry
   `CacheReadMult: 1` — the official pages publish no cached-input rate, so a
   cache read bills at the full input rate. `1` is deliberately distinct from `0`.
-- **Still unverified (`0`):** MiniMax (cache columns published but not yet
-  human-confirmed, #292) and qwen3.8-max/flash (non-standard rate, console-gated).
+- **Still unverified (`0`):** MiniMax M2.x (retiring 2026-11-18; M3 and
+  M3.1-Flash are verified at `0.2×` / `0.1×` read, #292) and qwen3.8-max/flash (non-standard rate, console-gated).
   For these only, `Cost` prices cache reads at `$0`, so a consumer that bills
   their cache traffic should overlay its own default until dippin verifies them.
 

@@ -952,7 +952,20 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-10-14"
+      "as_of": "2026-10-19",
+      "cache_read_mult": 0.2
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M3.1-Flash",
+      "display_name": "MiniMax M3.1 Flash",
+      "context_window": 1000000,
+      "capabilities": ["vision", "reasoning"],
+      "input_per_m": 0.15,
+      "output_per_m": 0.6,
+      "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
+      "as_of": "2026-10-19",
+      "cache_read_mult": 0.1
     },
     {
       "provider": "mistral",
