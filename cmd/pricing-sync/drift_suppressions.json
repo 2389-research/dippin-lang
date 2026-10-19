@@ -2181,5 +2181,21 @@
     "aggregator_value": "md:0.4/1.6 or:0.32/1.28",
     "reason": "OpenRouter passes through the 'Limited-time 20% off' promotion; models.dev matches the printed list price 0.4/1.6 the catalog carries. Exact match: a different OpenRouter rate means the promotion changed.",
     "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-v4.1-flash-1017",
+    "kind": "new",
+    "aggregator_value": "*",
+    "reason": "Version label, not a callable id. DeepSeek's pricing page lists `deepseek-flash` with 'model version: DeepSeek-V4.1-Flash-1017' (released 2026-10-17, news261017) at unchanged prices; the catalog's deepseek-flash entry covers it. OpenRouter's two values were DeepSeek's off-peak (Sat) and peak (Mon) rates.",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.7",
+    "kind": "disagree",
+    "aggregator_value": "md:0.6/2.2 or:*",
+    "reason": "models.dev matches Z.AI's official GLM-4.7 rate 0.6/2.2 (cached 0.11; no promo on token rates, verified 2026-10-19); OpenRouter's 10%-lower rate is its own reseller pricing.",
+    "review_by": "2026-12-15"
   }
 ]
