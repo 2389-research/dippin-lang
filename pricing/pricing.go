@@ -36,6 +36,7 @@ type ModelPrice struct {
 	CacheWriteMult  float64
 	Aliases         []string
 	Priced          bool   // false = in the catalog but no established price (e.g. Qwen, free tiers)
+	PriceUnlisted   bool   // true = the provider no longer prints this entry's price anywhere (typically a retired model dropped from the pricing page); the last-verified rate is kept and the 45-day re-verification check skips it
 	Deprecated      bool   // true = retired on the first-party provider API (still priced for passthrough platforms like Bedrock/Vertex, so kept in the catalog); a consumer treating the catalog as a first-party allowlist should filter these out
 	Source          string // published-price URL
 	AsOf            string // YYYY-MM-DD the price was verified against Source

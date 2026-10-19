@@ -15,6 +15,7 @@ type fileEntry struct {
 	Aliases         []string `json:"aliases,omitempty"`
 	Priced          *bool    `json:"priced,omitempty"` // nil = priced
 	Deprecated      bool     `json:"deprecated,omitempty"`
+	PriceUnlisted   bool     `json:"price_unlisted,omitempty"`
 	Source          string   `json:"source"`
 	AsOf            string   `json:"as_of"`
 	// Drift metadata (#264) + capability metadata (#267); all optional.
@@ -87,6 +88,7 @@ func (idx *catalogIndex) add(e fileEntry) {
 		Aliases:         e.Aliases,
 		Priced:          e.Priced == nil || *e.Priced,
 		Deprecated:      e.Deprecated,
+		PriceUnlisted:   e.PriceUnlisted,
 		Source:          e.Source,
 		AsOf:            e.AsOf,
 		Family:          e.Family,

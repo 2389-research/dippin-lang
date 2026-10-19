@@ -48,6 +48,7 @@ Each entry describes one model and its published price:
 | `cached_input_per_m` | Absolute cached-input price per million tokens, when published that way |
 | `priced` | `false` marks a known-but-unpriced model |
 | `deprecated` | `true` marks a model retired first-party but still billed on passthrough |
+| `price_unlisted` | `true` when the provider no longer prints this price anywhere; the last-verified rate is kept and re-verification skips it |
 | `family` / `rank` / `maturity` | Optional drift-resistance metadata (see [below](#drift-resistance--capability-metadata)) — the family a model belongs to, its ordering within that family (higher `rank` = newer), and `stable`/`preview` |
 | `context_window` / `max_output` / `capabilities` | Optional capability metadata — max input/output tokens and capability tags (`tools`, `vision`, `reasoning`) |
 

@@ -643,6 +643,7 @@
       "source": "https://ai.google.dev/gemini-api/docs/pricing",
       "as_of": "2026-08-10",
       "deprecated": true,
+      "price_unlisted": true,
       "cache_read_mult": 0.1
     },
     {
@@ -730,8 +731,8 @@
       "model": "grok-4-1-fast-non-reasoning",
       "input_per_m": 1.25,
       "output_per_m": 2.5,
-      "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-25",
+      "source": "https://docs.x.ai/developers/migration/may-15-retirement",
+      "as_of": "2026-10-19",
       "deprecated": true
     },
     {
@@ -739,8 +740,8 @@
       "model": "grok-4-1-fast-reasoning",
       "input_per_m": 1.25,
       "output_per_m": 2.5,
-      "source": "https://docs.x.ai/docs/models",
-      "as_of": "2026-08-25",
+      "source": "https://docs.x.ai/developers/migration/may-15-retirement",
+      "as_of": "2026-10-19",
       "deprecated": true
     },
     {

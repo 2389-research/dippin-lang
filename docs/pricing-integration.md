@@ -42,6 +42,7 @@ type ModelPrice struct {
     Aliases               []string
     Priced                bool    // false = in catalog but no established price (e.g. glm-4.7-flash, a free tier)
     Deprecated            bool    // true = retired on the first-party provider API, still priced for Bedrock/Vertex passthrough (#224)
+    PriceUnlisted         bool    // true = provider no longer prints this price anywhere; last-verified rate kept
     Source, AsOf          string  // provenance: published-price URL + verification date
 }
 
@@ -129,9 +130,10 @@ dippin owns the freshness process (you consume a pinned tag and adopt new
 releases):
 
 - `just check-prices` — flags catalog entries overdue for re-verification
-  (45 days). Deprecated entries are exempt from the age check — a retired
-  model has no price page left to re-verify against — but still need a
-  source and date.
+  (45 days). Only entries marked `price_unlisted` (the provider no longer
+  prints the price anywhere) skip the age check; they still need a source
+  and date. Deprecated models with a still-published price keep being
+  re-verified.
 - `just sync-prices` — diffs `prices.json` against models.dev **and OpenRouter**
   (cross-referenced: a model the two aggregators price differently is reported
   as a `disagree` candidate) and reports candidates (report-only; a human

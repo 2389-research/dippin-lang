@@ -6,14 +6,20 @@ import (
 	"testing"
 )
 
-// retiredSlugs are model ids a provider has retired (or folded into another
-// model) that must never be modeled as an alias of a live entry: an alias
-// inherits its target's Deprecated flag, so DIP161 could never warn on them.
-// Each must be its own deprecated entry instead. Found in review twice in one
-// week (#334: gpt-5.2-codex, grok-code-fast-1); add new ones as they retire.
-var retiredSlugs = map[string][]string{
-	"openai": {"gpt-5.2-codex"},
-	"grok":   {"grok-code-fast-1", "grok-code-fast", "grok-code-fast-1-0825", "grok-4-1-fast-reasoning", "grok-4-1-fast-non-reasoning"},
+// retiredSlugs maps each retired (or folded-in) model slug to the canonical
+// catalog entry that must own it: the slug itself, or — for an alternate
+// spelling of the same retired model — that model's entry. An alias inherits
+// its owner's price, Deprecated flag and metadata, so a retired slug must never
+// hang off a live entry or an unrelated deprecated one; DIP161 and pricing
+// would silently describe the wrong model. Found in review on #334 and #337;
+// add new ones as models retire.
+var retiredSlugs = map[string]string{
+	"openai/gpt-5.2-codex":             "gpt-5.2-codex",
+	"grok/grok-code-fast-1":            "grok-code-fast-1",
+	"grok/grok-code-fast":              "grok-code-fast-1",
+	"grok/grok-code-fast-1-0825":       "grok-code-fast-1",
+	"grok/grok-4-1-fast-reasoning":     "grok-4-1-fast-reasoning",
+	"grok/grok-4-1-fast-non-reasoning": "grok-4-1-fast-non-reasoning",
 }
 
 // TestAliasesInheritCorrectFlags guards the alias pitfall: an alias is the same
@@ -27,16 +33,29 @@ func TestAliasesInheritCorrectFlags(t *testing.T) {
 			}
 		}
 	}
-	for provider, slugs := range retiredSlugs {
-		for _, slug := range slugs {
-			p, ok := LookupProvider(provider, slug)
-			if !ok {
-				t.Errorf("%s/%s: retired slug must still resolve (as a deprecated entry)", provider, slug)
-				continue
-			}
-			if !p.Deprecated {
-				t.Errorf("%s/%s: retired slug resolves to a live entry; it must be its own deprecated entry, not an alias", provider, slug)
-			}
+	checkRetiredSlugs(t, loadEntriesForTest(t))
+}
+
+// checkRetiredSlugs requires each retired slug to resolve, in the raw catalog
+// data, to exactly its designated deprecated owner entry.
+func checkRetiredSlugs(t *testing.T, entries []fileEntry) {
+	t.Helper()
+	owner := map[string]fileEntry{}
+	for _, e := range entries {
+		owner[e.Provider+"/"+e.Model] = e
+		for _, a := range e.Aliases {
+			owner[e.Provider+"/"+a] = e
+		}
+	}
+	for key, want := range retiredSlugs {
+		e, ok := owner[key]
+		switch {
+		case !ok:
+			t.Errorf("%s: retired slug must still resolve (as entry %s)", key, want)
+		case e.Model != want:
+			t.Errorf("%s: retired slug is owned by %s, want %s; an alias inherits its owner's price and flags", key, e.Model, want)
+		case !e.Deprecated:
+			t.Errorf("%s: owner %s must be deprecated", key, e.Model)
 		}
 	}
 }

@@ -12,9 +12,8 @@ func TestStaleEntriesFlagsOldAsOf(t *testing.T) {
 		t.Errorf("with a 1-year window in early Aug 2026, want 0 stale, got %d: %+v", len(got), got)
 	}
 
-	// Far enough ahead that every live entry has aged out of a 60-day window:
-	// all of them are reported as stale, and no deprecated entry is (retired
-	// models have no price page left to re-verify against).
+	// Far enough ahead that every entry has aged out of a 60-day window: all of
+	// them are reported as stale except the explicit price_unlisted ones.
 	now := time.Date(2028, 1, 1, 0, 0, 0, 0, time.UTC)
 	stale := StaleEntries(now, 60*24*time.Hour)
 	if len(stale) == 0 {
@@ -24,8 +23,8 @@ func TestStaleEntriesFlagsOldAsOf(t *testing.T) {
 		if s.Reason != "stale" {
 			t.Errorf("%s/%s: reason %q, want stale", s.Provider, s.Model, s.Reason)
 		}
-		if p, _ := LookupProvider(s.Provider, s.Model); p.Deprecated {
-			t.Errorf("%s/%s is deprecated and must not be reported stale", s.Provider, s.Model)
+		if p, _ := LookupProvider(s.Provider, s.Model); p.PriceUnlisted {
+			t.Errorf("%s/%s is price_unlisted and must not be reported stale", s.Provider, s.Model)
 		}
 	}
 }
@@ -50,9 +49,10 @@ func TestStaleEntriesDeterministicOrder(t *testing.T) {
 	}
 }
 
-// A retired (deprecated) model has no price page left to re-verify against, so
-// age alone never flags it; a missing source or bad date still does.
-func TestStaleEntriesSkipsDeprecatedByAge(t *testing.T) {
+// Only an explicit PriceUnlisted entry is exempt from the age check: a
+// deprecated model with a still-published price keeps being re-verified, and a
+// missing source or bad date is always flagged.
+func TestStaleEntriesSkipsOnlyPriceUnlistedByAge(t *testing.T) {
 	now := time.Date(2027, 6, 1, 0, 0, 0, 0, time.UTC)
 	window := 45 * 24 * time.Hour
 	old := ModelPrice{Source: "https://example.com/pricing", AsOf: "2026-01-01"}
@@ -60,10 +60,14 @@ func TestStaleEntriesSkipsDeprecatedByAge(t *testing.T) {
 		t.Error("an old live entry must be stale")
 	}
 	old.Deprecated = true
-	if s, ok := evaluateStaleness("p", "retired", old, now, window); ok {
-		t.Errorf("an old deprecated entry must not be flagged by age, got %+v", s)
+	if _, ok := evaluateStaleness("p", "legacy", old, now, window); !ok {
+		t.Error("an old deprecated entry whose price is still published must stay stale-checked")
 	}
-	noSource := ModelPrice{Deprecated: true, AsOf: "2026-01-01"}
+	old.PriceUnlisted = true
+	if s, ok := evaluateStaleness("p", "retired", old, now, window); ok {
+		t.Errorf("an old price_unlisted entry must not be flagged by age, got %+v", s)
+	}
+	noSource := ModelPrice{PriceUnlisted: true, AsOf: "2026-01-01"}
 	if s, ok := evaluateStaleness("p", "retired", noSource, now, window); !ok || s.Reason != "no-source" {
 		t.Errorf("a deprecated entry without a source must still be flagged no-source, got %+v ok=%v", s, ok)
 	}

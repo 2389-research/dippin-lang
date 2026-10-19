@@ -33,6 +33,7 @@
         "cache_write_mult": { "type": "number", "description": "Cache-write rate as a fraction of the input rate." },
         "priced": { "type": "boolean", "description": "false = known but unpriced (priced at $0)." },
         "deprecated": { "type": "boolean", "description": "true = retired on the first-party API but still billed on passthrough platforms." },
+        "price_unlisted": { "type": "boolean", "description": "true = the provider no longer prints this price anywhere; the last-verified rate is kept and re-verification is skipped." },
         "family": { "type": "string", "description": "Family within the provider, e.g. 'opus'. Enables family-reference resolution." },
         "rank": { "type": "integer", "description": "Ordering within the family; higher = newer." },
         "maturity": { "type": "string", "enum": ["stable", "preview"], "description": "Release maturity; preview models are excluded from family-reference resolution." },

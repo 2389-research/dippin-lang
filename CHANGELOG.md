@@ -13,7 +13,8 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 - **Muse Spark capabilities.** All five `muse-spark-*` entries now list `vision` and `reasoning`, per Meta's model docs.
 
 ### Changed
-- **`just check-prices` no longer flags deprecated entries by age.** A retired model has no price page left to re-verify against, so the check could only nag. Deprecated entries still need a source and a valid date.
+- **New per-entry flag `price_unlisted`** (`ModelPrice.PriceUnlisted`). It means the provider no longer prints this price anywhere, so the last-verified rate is kept and `just check-prices` skips the 45-day age check for it. The entry still needs a source and a valid date. The exemption is explicit per entry, not implied by `deprecated`, because many deprecated models still have a published price that must keep being re-verified. `gemini-3.5-flash` carries the flag.
+- **`grok-4-1-fast-*` re-verified** against xAI's retirement notice: they redirect to `grok-4.3` and are billed at its $1.25/$2.50, which matches the catalog.
 - **`glm-5-turbo` and `command-a-03-2025` are now `"priced": false`.** Both are still callable, but neither provider publishes a price any more:
   - `glm-5-turbo` was dropped from Z.AI's pricing page and from the API reference's model list.
   - `command-a-03-2025` is "Live" in Cohere's docs but missing from cohere.com/pricing.
