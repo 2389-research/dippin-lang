@@ -907,7 +907,8 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-10-14"
+      "as_of": "2026-10-14",
+      "price_unlisted": true
     },
     {
       "provider": "minimax",
@@ -918,7 +919,8 @@
       "input_per_m": 0.6,
       "output_per_m": 2.4,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-10-14"
+      "as_of": "2026-10-14",
+      "price_unlisted": true
     },
     {
       "provider": "minimax",
@@ -929,7 +931,8 @@
       "input_per_m": 0.3,
       "output_per_m": 1.2,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-10-14"
+      "as_of": "2026-10-14",
+      "price_unlisted": true
     },
     {
       "provider": "minimax",
@@ -940,7 +943,8 @@
       "input_per_m": 0.6,
       "output_per_m": 2.4,
       "source": "https://platform.minimax.io/docs/guides/pricing-paygo",
-      "as_of": "2026-10-14"
+      "as_of": "2026-10-14",
+      "price_unlisted": true
     },
     {
       "provider": "minimax",
@@ -1215,6 +1219,30 @@
       "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
       "as_of": "2026-10-14",
       "cached_input_per_m": 0.38
+    },
+    {
+      "provider": "moonshot",
+      "model": "kimi-k3.1-pro",
+      "display_name": "Kimi K3.1 Pro",
+      "context_window": 1048576,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 2,
+      "output_per_m": 10,
+      "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
+      "as_of": "2026-10-23",
+      "cached_input_per_m": 0.2
+    },
+    {
+      "provider": "moonshot",
+      "model": "kimi-k3.1-pro-highspeed",
+      "display_name": "Kimi K3.1 Pro (highspeed)",
+      "context_window": 1048576,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "input_per_m": 4,
+      "output_per_m": 20,
+      "source": "https://platform.kimi.ai/docs/pricing/chat-k3",
+      "as_of": "2026-10-23",
+      "cached_input_per_m": 0.2
     },
     {
       "provider": "openai",
@@ -1678,8 +1706,8 @@
       "input_per_m": 2.5,
       "output_per_m": 7.5,
       "source": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
-      "as_of": "2026-10-16",
-      "cache_read_mult": 0.2
+      "as_of": "2026-10-23",
+      "cache_read_mult": 1
     },
     {
       "provider": "qwen",
@@ -1867,8 +1895,19 @@
       "max_output": 131072,
       "capabilities": ["tools", "reasoning"],
       "priced": false,
-      "source": "https://docs.z.ai/guides/glm-5-turbo",
-      "as_of": "2026-10-19"
+      "source": "https://docs.z.ai/guides/llm/glm-5-turbo",
+      "as_of": "2026-10-23"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-5v-turbo",
+      "display_name": "GLM-5V-Turbo",
+      "context_window": 200000,
+      "max_output": 128000,
+      "capabilities": ["tools", "vision", "reasoning"],
+      "priced": false,
+      "source": "https://docs.z.ai/guides/vlm/glm-5v-turbo",
+      "as_of": "2026-10-23"
     },
     {
       "provider": "zai",

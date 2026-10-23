@@ -2197,5 +2197,295 @@
     "aggregator_value": "md:0.6/2.2 or:*",
     "reason": "models.dev matches Z.AI's official GLM-4.7 rate 0.6/2.2 (cached 0.11; no promo on token rates, verified 2026-10-19); OpenRouter's 10%-lower rate is its own reseller pricing.",
     "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5-air",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5-airx",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5-x",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.7",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.7-flashx",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.2",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3-flashx",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6v",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6v-flashx",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5v",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4-32b-0414-128k",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "*",
+    "reason": "models.dev switched to Z.AI's CNY prices from bigmodel.cn converted at ~0.1494 USD/CNY (2026-10-23); Z.AI's official USD page (docs.z.ai/guides/overview/pricing) is unchanged and is what the catalog carries (re-verified 2026-10-23). models.dev's Z.AI numbers will now drift with the exchange rate, so they carry no signal for the USD list price.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:1.4/4.4",
+    "reason": "models.dev reports CNY-converted prices (see the price rows); OpenRouter matches Z.AI's official USD list price, which the catalog carries. Quiet while OpenRouter agrees.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3-flashx",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:0.37/1.25",
+    "reason": "models.dev reports CNY-converted prices (see the price rows); OpenRouter matches Z.AI's official USD list price, which the catalog carries. Quiet while OpenRouter agrees.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:1/3.2",
+    "reason": "models.dev reports CNY-converted prices (see the price rows); OpenRouter matches Z.AI's official USD list price, which the catalog carries. Quiet while OpenRouter agrees.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5v",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:0.6/1.8",
+    "reason": "models.dev reports CNY-converted prices (see the price rows); OpenRouter matches Z.AI's official USD list price, which the catalog carries. Quiet while OpenRouter agrees.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.2",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:*",
+    "reason": "Neither aggregator reflects Z.AI's USD list price: models.dev is CNY-converted and OpenRouter shows an anomalous reseller endpoint. Official 1.4/4.4 (cached 0.26) re-verified on docs.z.ai 2026-10-23.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:*",
+    "reason": "Neither aggregator reflects Z.AI's USD list price: models.dev is CNY-converted and OpenRouter shows an anomalous reseller endpoint. Official 1.4/4.4 (cached 0.26) re-verified on docs.z.ai 2026-10-23.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "kind": "price",
+    "source": "openrouter",
+    "aggregator_value": "*",
+    "reason": "deepseek-chat was discontinued on DeepSeek's first-party API (2026-07-24) and is deprecated in the catalog at the flash rate; OpenRouter's churning rate is a third-party host.",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Catalog agrees: already deprecated (listed Retired on MiniMax's model list).",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.1",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Catalog agrees: already deprecated (listed Retired on MiniMax's model list).",
+    "review_by": "2027-01-15"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.5",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Retirement announced for 2026-11-18 (closed to new users 2026-10-19); the catalog sets deprecated only once it has retired (#224) and marks the price price_unlisted meanwhile. Re-surfaces the day after retirement so it can be flipped.",
+    "review_by": "2026-11-19"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.5-highspeed",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Retirement announced for 2026-11-18 (closed to new users 2026-10-19); the catalog sets deprecated only once it has retired (#224) and marks the price price_unlisted meanwhile. Re-surfaces the day after retirement so it can be flipped.",
+    "review_by": "2026-11-19"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Retirement announced for 2026-11-18 (closed to new users 2026-10-19); the catalog sets deprecated only once it has retired (#224) and marks the price price_unlisted meanwhile. Re-surfaces the day after retirement so it can be flipped.",
+    "review_by": "2026-11-19"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7-highspeed",
+    "kind": "deprecated",
+    "aggregator_value": "deprecated",
+    "reason": "Retirement announced for 2026-11-18 (closed to new users 2026-10-19); the catalog sets deprecated only once it has retired (#224) and marks the price price_unlisted meanwhile. Re-surfaces the day after retirement so it can be flipped.",
+    "review_by": "2026-11-19"
+  },
+  {
+    "provider": "qwen",
+    "model": "qwen3.6-flash",
+    "kind": "disagree",
+    "aggregator_value": "md:0.25/1.5 or:*",
+    "reason": "models.dev matches the official Alibaba Cloud Singapore/International list price 0.25/1.5; OpenRouter's lower rate is a reseller/regional rate.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.7",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:*",
+    "reason": "Neither aggregator reflects Z.AI's USD list price: models.dev is CNY-converted (2026-10-23) and OpenRouter's is reseller pricing. Official 0.6/2.2 (cached 0.11) re-verified on docs.z.ai 2026-10-23.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-pro-latest",
+    "kind": "new",
+    "aggregator_value": "*",
+    "reason": "Rolling alias whose current target Google does not document: the last official statement (changelog 2026-01-21) pointed it at gemini-3-pro-preview, shut down 2026-03-09. models.dev's 2/12 matches gemini-3.1-pro-preview, but that's an aggregator guess. Add as an alias only once an official page names the target (re-checked 2026-10-23).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "zai-glm-5-3-flash",
+    "kind": "new",
+    "aggregator_value": "*",
+    "reason": "Z.AI's GLM-5.3-Flash hosted on Mistral's API (third-party hosted, since 2026-10-22). The catalog carries GLM under its first-party provider (zai/glm-5.3-flash, same 0.15/0.5); cross-hosted SKUs are not duplicated per host.",
+    "review_by": "2027-01-15"
   }
 ]
