@@ -4,6 +4,26 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.81.0] — 2026-10-23
+
+### Added
+- **Moonshot `kimi-k3.1-pro` at $2/$10 and `kimi-k3.1-pro-highspeed` at $4/$20** (cached input $0.20, 1,048,576 context). Both launched after the 2026-10-16 sweep and were verified against platform.kimi.ai.
+- **Z.AI `glm-5v-turbo`** (200K context, 128K output; tools, vision and reasoning) as known but unpriced. Z.AI publishes only a CNY price for it, so it gets the same treatment as `glm-5-turbo`. It no longer trips DIP108.
+
+### Changed
+- **MiniMax M2.5, M2.5-highspeed, M2.7 and M2.7-highspeed now carry `price_unlisted`.** They closed to new users on 2026-10-19, dropped off the pricing page, and retire 2026-11-18. They become `deprecated` after that date; the drift suppressions re-surface them on 2026-11-19.
+- **`qwen3.7-max-preview` now has `cache_read_mult: 1`**, down from 0.2. Alibaba lists no caching for this model, so it gets no discount.
+- **`glm-5-turbo`'s source** moved to docs.z.ai/guides/llm/glm-5-turbo.
+- **`pricing-sync` dispositions:**
+  - models.dev began reporting Z.AI at CNY prices from bigmodel.cn, converted at about 0.1494 USD/CNY. Z.AI's official USD page is unchanged. These rows are suppressed with a models.dev-scoped wildcard. Disagreement rows stay live wherever OpenRouter still matches the official price.
+  - `gemini-pro-latest` is suppressed because its current target is undocumented.
+  - Mistral-hosted `zai-glm-5-3-flash` is a cross-hosted SKU.
+
+### Notes
+- 2026-10-23 official-page sweep of all 12 providers. Since 10-16, no other text-model launches or price changes were found. The full sweep re-verified every live price and cache field.
+- OpenAI's shutdown of `gpt-4.1-nano`, `o3-mini` and `o4-mini` was scheduled for today, but the deprecations page still reads "will be shut down". They become `deprecated` once it says "was". Their suppression re-surfaces them on 2026-10-24.
+- **New known gap:** cache-write rates that depend on cache lifetime. OpenAI's 12-hour cache (added 2026-10-20) writes at 2.5×, and Moonshot K3's 1-hour cache at 2×. The catalog has one write rate, so these are estimated low. Tracked with the long-context tiers in [#329](https://github.com/2389-research/dippin-lang/issues/329).
+
 ## [v0.80.0] — 2026-10-19
 
 ### Added
