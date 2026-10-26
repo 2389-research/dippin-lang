@@ -197,3 +197,8 @@ sync-prices:
 # Action's new-model section runs). Filtered to actionable text-model adds.
 new-prices:
     go run ./cmd/pricing-sync sync --new-only --tolerance 0.02
+
+# Report price/deprecation drift on EXISTING entries, suppressions applied
+# (what the daily Action's drift section runs — reproduces the #292 report).
+drift-prices:
+    go run ./cmd/pricing-sync sync --existing-only --tolerance 0.02

@@ -275,7 +275,7 @@ func appendCatalogChange(out []change, c candidate, tol float64) []change {
 	if !p.Priced {
 		return out
 	}
-	if c.Deprecated {
+	if deprecationDrift(p, c) {
 		out = append(out, change{Kind: "deprecated", Provider: c.Provider, Model: id,
 			Detail: "aggregator marks deprecated", Agg: "deprecated", Source: c.Source})
 	}
@@ -285,6 +285,13 @@ func appendCatalogChange(out []change, c candidate, tol float64) []change {
 				p.InputPerM, p.OutputPerM, agg), Agg: agg, Source: c.Source})
 	}
 	return out
+}
+
+// deprecationDrift reports an aggregator's deprecated mark only while the
+// catalog still calls the model live; once the entry is deprecated:true the
+// two agree and there is nothing to review.
+func deprecationDrift(p pricing.ModelPrice, c candidate) bool {
+	return c.Deprecated && !p.Deprecated
 }
 
 // displayID prefers the catalog's spelling of a matched model (change rows and
