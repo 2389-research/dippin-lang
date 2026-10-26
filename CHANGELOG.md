@@ -4,6 +4,8 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.82.0] — 2026-10-26
+
 ### Changed
 - **OpenAI `gpt-4.1-nano`, `o3-mini` and `o4-mini` are now `deprecated`.** The deprecations page says access "was shut down on October 23, 2026". Recommended replacements are `gpt-5.6-luna`, `gpt-5.6-sol` and `gpt-5.6-terra`. All three are still priced because they bill via passthrough, and their prices still appear on the pricing page. DIP161 now warns on agents that pin them.
 - **`pricing-sync` no longer reports a `deprecated` candidate when the catalog already marks the model deprecated.** The aggregator and the catalog agree, so the report no longer needs a "Catalog agrees" suppression.
