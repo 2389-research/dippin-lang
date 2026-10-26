@@ -140,6 +140,10 @@ releases):
   confirms against each official `source`).
 - `just new-prices` — reports only upstream models missing from the catalog,
   filtered to actionable text-model adds on priced providers.
+- `just drift-prices` — reports only price/deprecation drift on existing
+  entries with `drift_suppressions.json` applied (exactly the daily Action's
+  drift section). A `deprecated` mark is drift only while the catalog entry is
+  not yet `deprecated: true`.
 - A daily GitHub Action opens a rolling issue when it detects price/deprecation
   drift for existing models **or** new upstream models the catalog is missing.
   Persistent non-candidates (models we deliberately don't carry) are silenced

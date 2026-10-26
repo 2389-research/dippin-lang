@@ -24,30 +24,6 @@
     "review_by": "2027-01-15"
   },
   {
-    "provider": "openai",
-    "model": "gpt-4.1-nano",
-    "kind": "deprecated",
-    "aggregator_value": "deprecated",
-    "reason": "OpenAI's deprecations page schedules shutdown for 2026-10-23; the model is still callable on the first-party API until then, and the catalog's Deprecated flag means already retired (#224). Re-surfaces after shutdown so the entry can be flipped.",
-    "review_by": "2026-10-24"
-  },
-  {
-    "provider": "openai",
-    "model": "o3-mini",
-    "kind": "deprecated",
-    "aggregator_value": "deprecated",
-    "reason": "OpenAI's deprecations page schedules shutdown for 2026-10-23; the model is still callable on the first-party API until then, and the catalog's Deprecated flag means already retired (#224). Re-surfaces after shutdown so the entry can be flipped.",
-    "review_by": "2026-10-24"
-  },
-  {
-    "provider": "openai",
-    "model": "o4-mini",
-    "kind": "deprecated",
-    "aggregator_value": "deprecated",
-    "reason": "OpenAI's deprecations page schedules shutdown for 2026-10-23; the model is still callable on the first-party API until then, and the catalog's Deprecated flag means already retired (#224). Re-surfaces after shutdown so the entry can be flipped.",
-    "review_by": "2026-10-24"
-  },
-  {
     "provider": "cohere",
     "model": "command-a-plus-05-2026",
     "kind": "new",
@@ -2487,5 +2463,29 @@
     "aggregator_value": "*",
     "reason": "Z.AI's GLM-5.3-Flash hosted on Mistral's API (third-party hosted, since 2026-10-22). The catalog carries GLM under its first-party provider (zai/glm-5.3-flash, same 0.15/0.5); cross-hosted SKUs are not duplicated per host.",
     "review_by": "2027-01-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.5-air",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:0.13/0.85",
+    "reason": "models.dev now reports Z.AI's CNY (bigmodel.cn) prices converted at a daily USD/CNY rate, so its value drifts with the exchange rate and carries no signal; Z.AI's official USD page (docs.z.ai/guides/overview/pricing) re-verified 2026-10-26 matches the catalog. OpenRouter's 0.13/0.85 is the regional rate dispositioned 2026-09-08; kept literal so a change re-surfaces.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-4.6v",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:0.3/0.9",
+    "reason": "models.dev now reports Z.AI's CNY (bigmodel.cn) prices converted at a daily USD/CNY rate, so its value drifts with the exchange rate and carries no signal; Z.AI's official USD page (docs.z.ai/guides/overview/pricing) re-verified 2026-10-26 matches the catalog. OpenRouter matches the official 0.3/0.9; kept literal so a change re-surfaces.",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:*",
+    "reason": "models.dev now reports Z.AI's CNY (bigmodel.cn) prices converted at a daily USD/CNY rate, so its value drifts with the exchange rate and carries no signal; Z.AI's official USD page (docs.z.ai/guides/overview/pricing) re-verified 2026-10-26 matches the catalog. OpenRouter's rate is a daily-shifting reseller rate (see its price suppression).",
+    "review_by": "2026-12-15"
   }
 ]

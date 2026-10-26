@@ -4,6 +4,16 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.82.0] — 2026-10-26
+
+### Changed
+- **OpenAI `gpt-4.1-nano`, `o3-mini` and `o4-mini` are now `deprecated`.** The deprecations page says access "was shut down on October 23, 2026". Recommended replacements are `gpt-5.6-luna`, `gpt-5.6-sol` and `gpt-5.6-terra`. All three are still priced because they bill via passthrough, and their prices still appear on the pricing page. DIP161 now warns on agents that pin them.
+- **`pricing-sync` no longer reports a `deprecated` candidate when the catalog already marks the model deprecated.** The aggregator and the catalog agree, so the report no longer needs a "Catalog agrees" suppression.
+- **`pricing-sync` dispositions:** models.dev-wildcard `disagree` suppressions for Z.AI `glm-4.5-air`, `glm-4.6v` and `glm-5.3-flash`. The 2026-10-23 CNY sweep missed them. Z.AI's official USD page was re-verified on 2026-10-26 and is unchanged.
+
+### Added
+- `just drift-prices` runs the daily Action's suppressed `--existing-only` drift check, which produces the [#292](https://github.com/2389-research/dippin-lang/issues/292) report, locally.
+
 ## [v0.81.0] — 2026-10-23
 
 ### Added

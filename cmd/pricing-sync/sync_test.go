@@ -211,6 +211,21 @@ func TestDiffKeepsPriceRowForCatalogedDatedID(t *testing.T) {
 	}
 }
 
+// TestDiffDeprecatedOnlyWhenCatalogDisagrees: an aggregator's deprecated mark
+// is drift only while the catalog still calls the model live. Once the entry
+// carries deprecated:true the two agree and there is nothing to review — no
+// "Catalog agrees" suppression should be needed to silence it.
+func TestDiffDeprecatedOnlyWhenCatalogDisagrees(t *testing.T) {
+	agrees := []candidate{{Provider: "anthropic", Model: "claude-haiku-3-5", InputPerM: 0.8, OutputPerM: 4, Deprecated: true}}
+	if got := diff(agrees, 0); len(got) != 0 {
+		t.Errorf("catalog already deprecated: want no change row, got %+v", got)
+	}
+	live := []candidate{{Provider: "anthropic", Model: "claude-sonnet-5", InputPerM: 2, OutputPerM: 10, Deprecated: true}}
+	if got := diff(live, 0); len(got) != 1 || got[0].Kind != "deprecated" {
+		t.Errorf("catalog still live: want one deprecated row, got %+v", got)
+	}
+}
+
 func TestDiffToleranceSuppressesSmallDeltas(t *testing.T) {
 	// sonnet-5 catalog is 2/10; a 4% output bump under a 5% tolerance is ignored.
 	cands := []candidate{{Provider: "anthropic", Model: "claude-sonnet-5", InputPerM: 2, OutputPerM: 10.4}}
