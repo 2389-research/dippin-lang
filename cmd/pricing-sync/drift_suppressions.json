@@ -1946,8 +1946,8 @@
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "kind": "disagree",
-    "aggregator_value": "md:0.15/0.6 or:0.091/0.182",
-    "reason": "Both aggregators are below DeepSeek's official PEAK list rate (verified 2026-10-14): models.dev shows the half-price off-peak rate, OpenRouter a fluctuating reseller rate.",
+    "aggregator_value": "md:0.15/0.6 or:*",
+    "reason": "Catalog entry is deprecated:true at the official Flash price (0.3/1.2; retired but still billed per DeepSeek's pricing footnote). OpenRouter carries a reseller rate that shifts (0.091/0.182 on 10-15, 0.05/0.45 on 10-27), so it is wildcarded; models.dev stays literal so a change there re-surfaces.",
     "review_by": "2026-12-15"
   },
   {
@@ -2486,6 +2486,22 @@
     "kind": "disagree",
     "aggregator_value": "md:* or:*",
     "reason": "models.dev now reports Z.AI's CNY (bigmodel.cn) prices converted at a daily USD/CNY rate, so its value drifts with the exchange rate and carries no signal; Z.AI's official USD page (docs.z.ai/guides/overview/pricing) re-verified 2026-10-26 matches the catalog. OpenRouter's rate is a daily-shifting reseller rate (see its price suppression).",
+    "review_by": "2026-12-15"
+  },
+  {
+    "provider": "openai",
+    "model": "gpt-6.1-terra-pro",
+    "kind": "new",
+    "aggregator_value": "*",
+    "reason": "OpenRouter-only listing: absent from OpenAI's pricing page and its developers.openai.com model page 404s (checked 2026-10-27), so there is no first-party price to carry. Re-check at review_by in case OpenAI publishes it.",
+    "review_by": "2026-11-27"
+  },
+  {
+    "provider": "zai",
+    "model": "glm-5.1",
+    "kind": "disagree",
+    "aggregator_value": "md:* or:0.966/3.036",
+    "reason": "models.dev now reports Z.AI's CNY (bigmodel.cn) prices converted at a daily USD/CNY rate (glm-5.1 switched 2026-10-27), so its value carries no signal; Z.AI's official USD page re-verified 2026-10-27 at 1.4/4.4, matching the catalog. OpenRouter's 0.966/3.036 is the regional rate already dispositioned; kept literal so a change re-surfaces.",
     "review_by": "2026-12-15"
   }
 ]

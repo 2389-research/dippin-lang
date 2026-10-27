@@ -104,7 +104,7 @@ cache fields per entry rather than assuming a global convention:
 
 - **Populated with a verified rate:** Anthropic (`0.1×` read / `1.25×` write;
   Opus/Sonnet 5.5 read at `0.05×`, Fable/Mythos 5.1 at `0.025×`), OpenAI
-  (per-family — gpt-4o `0.5×`, gpt-4.1 `0.25×`, GPT-5 `0.1×`, gpt-6.1-sol
+  (per-family — gpt-4o `0.5×`, gpt-4.1 `0.25×`, GPT-5 `0.1×`, gpt-6.1-sol/terra
   `0.05×`), Gemini (`0.1×` read; gemini-4-argon `0.05×`), Mistral (`0.1×` read),
   Qwen (qwen3.7-max `0.2×` implicit; qwen3.6-flash `0.1×`/`1.25×` explicit), and
   DeepSeek, Z.AI/GLM, xAI/Grok, Moonshot/Kimi, Meta (absolute `CachedInputPerM`
