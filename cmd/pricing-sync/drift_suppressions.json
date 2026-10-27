@@ -2493,6 +2493,7 @@
     "model": "gpt-6.1-terra-pro",
     "kind": "new",
     "aggregator_value": "*",
+    "source": "openrouter",
     "reason": "OpenRouter-only listing: absent from OpenAI's pricing page and its developers.openai.com model page 404s (checked 2026-10-27), so there is no first-party price to carry. Re-check at review_by in case OpenAI publishes it.",
     "review_by": "2026-11-27"
   },

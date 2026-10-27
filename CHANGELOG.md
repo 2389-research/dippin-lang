@@ -11,7 +11,7 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ### Changed
 - **`pricing-sync` dispositions:**
-  - `gpt-6.1-terra-pro` is suppressed. Only OpenRouter lists it: it's not on OpenAI's pricing page and its model page returns 404.
+  - `gpt-6.1-terra-pro` is suppressed. Only OpenRouter lists it: it's not on OpenAI's pricing page and its model page returns 404. The suppression is scoped to `source: openrouter`, so a models.dev listing brings it back for review.
   - The `deepseek-v4-flash` disagree row now uses an OpenRouter wildcard (`md:0.15/0.6 or:*`), because OpenRouter's reseller rate keeps shifting.
   - `glm-5.1` gets a models.dev-wildcard disagree row. models.dev switched it to CNY-converted pricing. Z.AI's official USD price of 1.4/4.4 was re-verified on 2026-10-27.
 
