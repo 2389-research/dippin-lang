@@ -4,6 +4,17 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.83.0] — 2026-10-27
+
+### Added
+- **OpenAI `gpt-6.1-terra`** at $1 input and $5 output per MTok. Cached input is $0.05 (0.05×) and cache writes are $1.25 (1.25×), the same convention as `gpt-6.1-sol`. It has a 1,050,000 context window and 128,000 max output, with tools, vision and reasoning. Verified against OpenAI's pricing and model pages on 2026-10-27. Before this release it tripped DIP108 and was priced at $0.
+
+### Changed
+- **`pricing-sync` dispositions:**
+  - `gpt-6.1-terra-pro` is suppressed. Only OpenRouter lists it: it's not on OpenAI's pricing page and its model page returns 404. The suppression is scoped to `source: openrouter`, so a models.dev listing brings it back for review.
+  - The `deepseek-v4-flash` disagree row now uses an OpenRouter wildcard (`md:0.15/0.6 or:*`), because OpenRouter's reseller rate keeps shifting.
+  - `glm-5.1` gets a models.dev-wildcard disagree row. models.dev switched it to CNY-converted pricing. Z.AI's official USD price of 1.4/4.4 was re-verified on 2026-10-27.
+
 ## [v0.82.0] — 2026-10-26
 
 ### Changed
