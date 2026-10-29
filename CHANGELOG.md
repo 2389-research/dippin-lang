@@ -4,6 +4,8 @@ All notable changes to dippin-lang are documented here. Versions follow [semver]
 
 ## [Unreleased]
 
+## [v0.84.0] — 2026-10-29
+
 ### Added
 - **Mistral-hosted `deepseek-v4-1-flash-1017`** at $0.3 input and $1.2 output per MTok, with cached input at $0.007. It has a 1,000,000-token context, 128,000 max output, tools and reasoning, and is text-only. Mistral lists it as Public Preview, so it carries `maturity: preview`, and `ResolveAlias` excludes it. Mistral released it on 2026-10-28 as a third-party DeepSeek model. Mistral publishes its own price page for it, and that cached rate differs from DeepSeek's first-party $0.006, so it gets its own entry under `mistral` rather than being suppressed as a duplicate. Verified against docs.mistral.ai on 2026-10-29. Before this entry, a `.dip` using it under `provider: mistral` tripped DIP108.
 
