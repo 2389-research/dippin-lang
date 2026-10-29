@@ -1176,6 +1176,7 @@
       "provider": "mistral",
       "model": "deepseek-v4-1-flash-1017",
       "display_name": "DeepSeek V4.1 Flash 1017 (Mistral-hosted)",
+      "maturity": "preview",
       "context_window": 1000000,
       "max_output": 128000,
       "capabilities": ["tools", "reasoning"],
