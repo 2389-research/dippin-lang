@@ -1349,14 +1349,6 @@
   },
   {
     "provider": "mistral",
-    "model": "mistral-large-4-0",
-    "kind": "price",
-    "aggregator_value": "0.68/2.09",
-    "reason": "Sale price: docs.mistral.ai lists Mistral Large 4 (Public Preview) at a list 1.36/4.18 (cached 0.14); 0.68/2.09 is the 50% sale with no published end date. Catalog carries list.",
-    "review_by": "2026-12-15"
-  },
-  {
-    "provider": "mistral",
     "model": "mistral-medium-3",
     "kind": "price",
     "aggregator_value": "0.4/2",
@@ -2504,5 +2496,14 @@
     "aggregator_value": "md:* or:0.966/3.036",
     "reason": "models.dev now reports Z.AI's CNY (bigmodel.cn) prices converted at a daily USD/CNY rate (glm-5.1 switched 2026-10-27), so its value carries no signal; Z.AI's official USD page re-verified 2026-10-27 at 1.4/4.4, matching the catalog. OpenRouter's 0.966/3.036 is the regional rate already dispositioned; kept literal so a change re-surfaces.",
     "review_by": "2026-12-15"
+  },
+  {
+    "provider": "mistral",
+    "model": "mistral-large-4",
+    "kind": "price",
+    "source": "models.dev",
+    "aggregator_value": "1.36/4.18",
+    "reason": "models.dev still carries the pre-2026-10-29 list price; docs.mistral.ai/models/mistral-large-4-0 now shows 0.7/0.07/2.1 as the sole price (no struck-through original), which the catalog carries. Literal so any further models.dev change re-surfaces.",
+    "review_by": "2026-11-29"
   }
 ]
